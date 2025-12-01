@@ -130,7 +130,7 @@ export default function QuoteReview() {
 
             {/* Vendor Info */}
             <div className="flex items-center gap-3 sm:gap-4 mb-4 sm:mb-6">
-              <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-gradient-to-br from-purple-400 to-pink-400 flex-shrink-0" />
+              <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-linear-to-br from-purple-400 to-pink-400 shrink-0" />
               <div>
                 <p className="font-bold text-base sm:text-lg">
                   Celebrations by Design
@@ -143,10 +143,7 @@ export default function QuoteReview() {
 
             {/* Alert */}
             <div className="flex items-center gap-2 sm:gap-3 bg-yellow-500/10 border border-yellow-500/30 rounded-lg px-3 sm:px-4 py-2.5 sm:py-3 mb-6 sm:mb-8">
-              <AlertTriangle
-                size={18}
-                className="text-yellow-500 flex-shrink-0"
-              />
+              <AlertTriangle size={18} className="text-yellow-500 shrink-0" />
               <span className="text-yellow-500 font-medium text-xs sm:text-sm">
                 Awaiting Your Response. Expires in 3 days.
               </span>

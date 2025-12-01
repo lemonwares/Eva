@@ -141,7 +141,7 @@ export default function VendorSearch() {
             <button className="p-2 hover:bg-gray-100 rounded-full">
               <Moon size={20} className="text-gray-600" />
             </button>
-            <div className="w-9 h-9 rounded-full bg-gradient-to-br from-orange-300 to-orange-400" />
+            <div className="w-9 h-9 rounded-full bg-linear-to-br from-orange-300 to-orange-400" />
           </nav>
 
           {/* Mobile Menu Button */}
@@ -196,7 +196,7 @@ export default function VendorSearch() {
                 Messages
               </a>
               <div className="flex items-center gap-3 pt-3 border-t border-gray-200">
-                <div className="w-9 h-9 rounded-full bg-gradient-to-br from-orange-300 to-orange-400" />
+                <div className="w-9 h-9 rounded-full bg-linear-to-br from-orange-300 to-orange-400" />
                 <span className="text-gray-900 font-medium">My Account</span>
               </div>
             </nav>
@@ -220,7 +220,7 @@ export default function VendorSearch() {
         <aside
           className={`${
             filtersOpen ? "block" : "hidden"
-          } lg:block w-full lg:w-64 flex-shrink-0`}
+          } lg:block w-full lg:w-64 shrink-0`}
         >
           <div className="bg-white lg:bg-transparent rounded-xl lg:rounded-none p-4 lg:p-0 border border-gray-200 lg:border-0">
             <h2 className="text-lg lg:text-xl font-bold text-gray-900 mb-4 lg:mb-6">
@@ -306,7 +306,7 @@ export default function VendorSearch() {
               >
                 {/* Image */}
                 <div className="relative h-40 sm:h-48 bg-gray-200">
-                  <div className="absolute inset-0 bg-gradient-to-br from-gray-300 to-gray-400" />
+                  <div className="absolute inset-0 bg-linear-to-br from-gray-300 to-gray-400" />
                   {/* Score Badge */}
                   <div className="absolute top-3 sm:top-4 right-3 sm:right-4">
                     <div className="relative w-12 h-12 sm:w-14 sm:h-14">

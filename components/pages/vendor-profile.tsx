@@ -119,7 +119,7 @@ export default function VendorProfile() {
             <button className="p-2 hover:bg-green-900/20 rounded-full relative">
               <Bell size={20} className="text-gray-400" />
             </button>
-            <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-gradient-to-br from-orange-300 to-orange-400" />
+            <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-linear-to-br from-orange-300 to-orange-400" />
 
             {/* Mobile Menu Button */}
             <button
@@ -177,7 +177,7 @@ export default function VendorProfile() {
         {/* Profile Header */}
         <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4 sm:gap-6 mb-8 sm:mb-10">
           <div className="flex flex-col sm:flex-row items-center sm:items-start gap-4 sm:gap-6 text-center sm:text-left">
-            <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-full bg-gradient-to-br from-gray-600 to-gray-700 overflow-hidden flex-shrink-0">
+            <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-full bg-linear-to-br from-gray-600 to-gray-700 overflow-hidden shrink-0">
               <div className="w-full h-full bg-gray-500" />
             </div>
             <div>
@@ -210,7 +210,7 @@ export default function VendorProfile() {
                     : "aspect-square sm:h-28"
                 }`}
               >
-                <div className="w-full h-full bg-gradient-to-br from-gray-600 to-gray-700" />
+                <div className="w-full h-full bg-linear-to-br from-gray-600 to-gray-700" />
               </div>
             ))}
           </div>
@@ -312,7 +312,7 @@ export default function VendorProfile() {
                 >
                   <div className="flex items-start sm:items-center justify-between mb-2 sm:mb-3 gap-2">
                     <div className="flex items-center gap-2 sm:gap-3">
-                      <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-gray-600 flex-shrink-0" />
+                      <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-gray-600 shrink-0" />
                       <div>
                         <p className="font-semibold text-sm sm:text-base">
                           {review.name}

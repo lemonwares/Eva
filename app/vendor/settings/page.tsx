@@ -69,7 +69,7 @@ export default function VendorSettingsPage() {
     <VendorLayout title="Settings">
       <div className="flex flex-col lg:flex-row gap-6">
         {/* Sidebar Navigation */}
-        <div className="lg:w-64 flex-shrink-0">
+        <div className="lg:w-64 shrink-0">
           <div
             className={`${
               darkMode
@@ -136,7 +136,7 @@ export default function VendorSettingsPage() {
                 {/* Avatar */}
                 <div className="flex items-center gap-4 mb-6">
                   <div className="relative">
-                    <div className="w-20 h-20 rounded-xl bg-gradient-to-br from-accent to-green-600 flex items-center justify-center text-white text-2xl font-bold">
+                    <div className="w-20 h-20 rounded-xl bg-linear-to-br from-accent to-green-600 flex items-center justify-center text-white text-2xl font-bold">
                       JD
                     </div>
                     <button className="absolute -bottom-2 -right-2 p-2 rounded-full bg-accent text-white hover:bg-accent/80 transition-colors">

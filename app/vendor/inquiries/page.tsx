@@ -85,7 +85,7 @@ function InquiriesContent() {
 
       {/* Filter Sidebar */}
       <aside
-        className={`fixed lg:static inset-y-0 left-0 z-50 w-64 lg:w-48 flex-shrink-0 ${
+        className={`fixed lg:static inset-y-0 left-0 z-50 w-64 lg:w-48 shrink-0 ${
           darkMode ? "bg-[#0f0f0f]" : "bg-white"
         } lg:bg-transparent p-4 sm:p-6 lg:p-0 transform transition-transform duration-300 lg:transform-none ${
           filterSidebarOpen
@@ -185,7 +185,7 @@ function InquiriesContent() {
               <div className="flex items-start justify-between mb-4">
                 <div className="flex items-center gap-3">
                   <div
-                    className={`w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-gradient-to-br ${inquiry.initialsColor} flex items-center justify-center text-white font-bold text-sm`}
+                    className={`w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-linear-to-br ${inquiry.initialsColor} flex items-center justify-center text-white font-bold text-sm`}
                   >
                     {inquiry.initials}
                   </div>

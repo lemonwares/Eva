@@ -194,7 +194,7 @@ function DashboardContent() {
                 className={`p-4 transition-colors flex items-center justify-between border-b last:border-b-0 ${cardBorder} ${hoverBg}`}
               >
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-accent/50 to-pink-500/50 flex items-center justify-center text-white font-medium text-sm">
+                  <div className="w-10 h-10 rounded-full bg-linear-to-br from-accent/50 to-pink-500/50 flex items-center justify-center text-white font-medium text-sm">
                     {inquiry.name
                       .split(" ")
                       .map((n) => n[0])

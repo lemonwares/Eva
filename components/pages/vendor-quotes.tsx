@@ -98,7 +98,7 @@ export default function VendorQuotes() {
             <button className="p-2 hover:bg-gray-800 rounded-full">
               <Moon size={20} className="text-gray-400" />
             </button>
-            <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-gradient-to-br from-blue-400 to-cyan-400" />
+            <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-linear-to-br from-blue-400 to-cyan-400" />
 
             {/* Mobile Menu Button */}
             <button

@@ -232,7 +232,7 @@ export default function VendorCalendarPage() {
                 } border-b border-r ${
                   day
                     ? `${darkMode ? "hover:bg-white/5" : "hover:bg-gray-50"}`
-                    : `${darkMode ? "bg-white/[0.02]" : "bg-gray-50/50"}`
+                    : `${darkMode ? "bg-white/2" : "bg-gray-50/50"}`
                 } transition-colors`}
               >
                 {day && (

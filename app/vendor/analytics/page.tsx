@@ -209,7 +209,7 @@ export default function VendorAnalyticsPage() {
           {monthlyData.map((data, idx) => (
             <div key={idx} className="flex-1 flex flex-col items-center gap-2">
               <div
-                className="w-full bg-gradient-to-t from-accent/80 to-accent rounded-t-lg transition-all hover:from-accent hover:to-accent/80"
+                className="w-full bg-linear-to-t from-accent/80 to-accent rounded-t-lg transition-all hover:from-accent hover:to-accent/80"
                 style={{
                   height: `${(data.revenue / maxRevenue) * 100}%`,
                   minHeight: "20px",

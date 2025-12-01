@@ -104,7 +104,7 @@ export default function VendorBookings() {
         {/* Logo */}
         <div className="p-4 sm:p-6 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-pink-400 to-pink-600" />
+            <div className="w-10 h-10 rounded-full bg-linear-to-br from-pink-400 to-pink-600" />
             <div>
               <p className="font-bold">EVA Platform</p>
               <p className="text-gray-500 text-sm">Vendor Portal</p>

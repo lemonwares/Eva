@@ -104,7 +104,7 @@ export default function VendorLayoutHeader({
             </>
           )}
 
-          <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-gradient-to-br from-accent/80 to-pink-500 border-2 border-accent/30" />
+          <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-linear-to-br from-accent/80 to-pink-500 border-2 border-accent/30" />
         </div>
       </div>
     </header>

@@ -140,7 +140,7 @@ export default function ContactVendorModal({
                   onChange={(e) =>
                     setFormData({ ...formData, eventDate: e.target.value })
                   }
-                  className="w-full px-4 py-3 rounded-lg bg-[#252525] text-white border border-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm [color-scheme:dark]"
+                  className="w-full px-4 py-3 rounded-lg bg-[#252525] text-white border border-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm scheme-dark"
                 />
                 <Calendar
                   size={18}

@@ -92,7 +92,7 @@ export default function VendorProfilePage() {
         } rounded-xl border overflow-hidden mb-6`}
       >
         {/* Cover Image */}
-        <div className="relative h-32 sm:h-48 bg-gradient-to-r from-accent/30 to-green-600/30">
+        <div className="relative h-32 sm:h-48 bg-linear-to-r from-accent/30 to-green-600/30">
           <button
             className={`absolute top-4 right-4 p-2 rounded-lg ${
               darkMode
@@ -109,7 +109,7 @@ export default function VendorProfilePage() {
           <div className="flex flex-col sm:flex-row sm:items-end gap-4 -mt-12 sm:-mt-16">
             <div className="relative">
               <div
-                className={`w-24 h-24 sm:w-32 sm:h-32 rounded-xl bg-gradient-to-br from-accent to-green-600 border-4 ${
+                className={`w-24 h-24 sm:w-32 sm:h-32 rounded-xl bg-linear-to-br from-accent to-green-600 border-4 ${
                   darkMode ? "border-[#141414]" : "border-white"
                 } overflow-hidden`}
               >
@@ -350,7 +350,7 @@ export default function VendorProfilePage() {
                   }`}
                 >
                   <div className="flex items-start gap-3 mb-3">
-                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-accent to-green-600 flex items-center justify-center text-white font-medium">
+                    <div className="w-10 h-10 rounded-full bg-linear-to-br from-accent to-green-600 flex items-center justify-center text-white font-medium">
                       {review.author.charAt(0)}
                     </div>
                     <div className="flex-1">

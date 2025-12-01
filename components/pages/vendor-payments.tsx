@@ -135,7 +135,7 @@ export default function VendorPayments() {
             <button className="p-2 hover:bg-green-900/20 rounded-full">
               <Bell size={20} className="text-gray-400" />
             </button>
-            <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-gradient-to-br from-green-400 to-teal-400 border-2 border-green-500" />
+            <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-linear-to-br from-green-400 to-teal-400 border-2 border-green-500" />
 
             {/* Mobile Menu Button */}
             <button

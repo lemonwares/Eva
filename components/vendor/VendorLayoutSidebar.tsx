@@ -66,7 +66,7 @@ export default function VendorLayoutSidebar({
 
       {/* Sidebar */}
       <aside
-        className={`fixed lg:static inset-y-0 left-0 z-50 w-64 h-screen flex-shrink-0 ${
+        className={`fixed lg:static inset-y-0 left-0 z-50 w-64 h-screen shrink-0 ${
           darkMode ? "bg-[#0f0f0f] border-white/10" : "bg-white border-gray-200"
         } border-r flex flex-col transform transition-transform duration-300 ${
           isOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
@@ -80,7 +80,7 @@ export default function VendorLayoutSidebar({
         >
           <div className="flex items-center justify-between mb-0 lg:mb-0">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full bg-gradient-to-br from-accent to-pink-600 flex items-center justify-center">
+              <div className="w-10 h-10 rounded-full bg-linear-to-br from-accent to-pink-600 flex items-center justify-center">
                 <span className="text-white font-bold text-sm">E</span>
               </div>
               <div>
