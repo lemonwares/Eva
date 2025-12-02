@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { IBM_Plex_Sans, DM_Sans } from "next/font/google";
 import "./globals.css";
 
@@ -14,16 +14,19 @@ const dmSans = DM_Sans({
   weight: ["400", "500", "600", "700"],
 });
 
+export const viewport: Viewport = {
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#0f172a" },
+    { media: "(prefers-color-scheme: dark)", color: "#0f172a" },
+  ],
+};
+
 export const metadata: Metadata = {
   title: "EVA - Find Vendors Who Get Your Traditions",
   description:
     "Discover local professionals for your event. Search by postcode, culture, and ceremony to find the perfect fit.",
   applicationName: "EVA",
   manifest: "/manifest.json",
-  themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#0f172a" },
-    { media: "(prefers-color-scheme: dark)", color: "#0f172a" },
-  ],
   icons: {
     icon: [
       { url: "/pwa-icon.svg", type: "image/svg+xml" },
