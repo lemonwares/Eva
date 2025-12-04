@@ -5,13 +5,12 @@
 // Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
 
 generator client {
-  provider = "prisma-client"
-  output   = "../app/generated/prisma"
+  provider = "prisma-client-js"
+  output   = "../node_modules/.prisma/client"
 }
 
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL")
 }
 
 // ============================================
@@ -26,27 +25,28 @@ enum UserRole {
 }
 
 model User {
-  id                String    @id @default(cuid())
-  role              UserRole  @default(CLIENT)
-  name              String
-  email             String    @unique
-  emailVerifiedAt   DateTime? @map("email_verified_at")
-  phone             String?
-  avatar            String?
-  password          String // hashed
-  
+  id              String    @id @default(cuid())
+  role            UserRole  @default(CLIENT)
+  name            String
+  email           String    @unique
+  emailVerifiedAt DateTime? @map("email_verified_at")
+  phone           String?
+  avatar          String?
+  password        String // hashed
+
   // Relationships
-  ownedProviders    Provider[]
-  inquiries         Inquiry[]
-  reviews           Review[]
-  favorites         Favorite[]
-  auditLogs         AuditLog[]
-  passwordResets    PasswordReset[]
+  ownedProviders     Provider[]
+  inquiries          Inquiry[]
+  reviews            Review[]
+  favorites          Favorite[]
+  auditLogs          AuditLog[]
+  passwordResets     PasswordReset[]
   emailVerifications EmailVerification[]
-  sessions          Session[]
-  
-  createdAt         DateTime  @default(now()) @map("created_at")
-  updatedAt         DateTime  @updatedAt @map("updated_at")
+  accounts           Account[] // Add this for NextAuth
+  sessions           Session[]
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
 
   @@index([email])
   @@index([role])
@@ -58,15 +58,15 @@ model User {
 // ============================================
 
 model PasswordReset {
-  id        String   @id @default(cuid())
-  userId    String   @map("user_id")
-  token     String   @unique
-  expiresAt DateTime @map("expires_at")
+  id        String    @id @default(cuid())
+  userId    String    @map("user_id")
+  token     String    @unique
+  expiresAt DateTime  @map("expires_at")
   usedAt    DateTime? @map("used_at")
-  
+
   // Relationships
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
   createdAt DateTime @default(now()) @map("created_at")
 
   @@index([userId])
@@ -76,15 +76,15 @@ model PasswordReset {
 }
 
 model EmailVerification {
-  id        String   @id @default(cuid())
-  userId    String   @map("user_id")
-  token     String   @unique
-  expiresAt DateTime @map("expires_at")
+  id         String    @id @default(cuid())
+  userId     String    @map("user_id")
+  token      String    @unique
+  expiresAt  DateTime  @map("expires_at")
   verifiedAt DateTime? @map("verified_at")
-  
+
   // Relationships
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
   createdAt DateTime @default(now()) @map("created_at")
 
   @@index([userId])
@@ -97,22 +97,22 @@ model EmailVerification {
 // ============================================
 
 model Session {
-  id              String    @id @default(cuid())
-  userId          String    @map("user_id")
-  token           String    @unique
-  ipAddress       String?   @map("ip_address")
-  userAgent       String?   @map("user_agent")
-  
+  id        String  @id @default(cuid())
+  userId    String  @map("user_id")
+  token     String  @unique
+  ipAddress String? @map("ip_address")
+  userAgent String? @map("user_agent")
+
   // For admin impersonation
-  impersonatedBy  String?   @map("impersonated_by") // Admin user ID
-  
-  expiresAt       DateTime  @map("expires_at")
-  lastActivityAt  DateTime  @default(now()) @map("last_activity_at")
-  
+  impersonatedBy String? @map("impersonated_by") // Admin user ID
+
+  expiresAt      DateTime @map("expires_at")
+  lastActivityAt DateTime @default(now()) @map("last_activity_at")
+
   // Relationships
-  user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  
-  createdAt       DateTime  @default(now()) @map("created_at")
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now()) @map("created_at")
 
   @@index([userId])
   @@index([token])
@@ -132,66 +132,66 @@ enum PlanTier {
 }
 
 model Provider {
-  id                    String    @id @default(cuid())
-  ownerUserId           String    @map("owner_user_id")
-  businessName          String    @map("business_name")
-  description           String?   @db.Text
-  
+  id           String  @id @default(cuid())
+  ownerUserId  String  @map("owner_user_id")
+  businessName String  @map("business_name")
+  description  String? @db.Text
+
   // Categories & Services
-  categories            String[]  // Array of category IDs
-  subcategories         String[]  // Array of subcategory IDs
-  cultureTraditionTags  String[]  @map("culture_tradition_tags")
-  
+  categories           String[] // Array of category IDs
+  subcategories        String[] // Array of subcategory IDs
+  cultureTraditionTags String[] @map("culture_tradition_tags")
+
   // Location & Radius
-  serviceRadiusMiles    Float     @map("service_radius_miles")
-  address               String?
-  city                  String?
-  postcode              String
-  geoLat                Float?    @map("geo_lat")
-  geoLng                Float?    @map("geo_lng")
-  
+  serviceRadiusMiles Float   @map("service_radius_miles")
+  address            String?
+  city               String?
+  postcode           String
+  geoLat             Float?  @map("geo_lat")
+  geoLng             Float?  @map("geo_lng")
+
   // Pricing & Contact
-  priceFrom             Float?    @map("price_from")
-  phonePublic           String?   @map("phone_public")
-  website               String?
-  instagram             String?
-  tiktok                String?
-  facebook              String?
-  
+  priceFrom   Float?  @map("price_from")
+  phonePublic String? @map("phone_public")
+  website     String?
+  instagram   String?
+  tiktok      String?
+  facebook    String?
+
   // Media
-  photos                String[]  // Array of photo URLs
-  coverImage            String?   @map("cover_image")
-  
+  photos     String[] // Array of photo URLs
+  coverImage String?  @map("cover_image")
+
   // Status & Verification
-  isVerified            Boolean   @default(false) @map("is_verified")
-  isPublished           Boolean   @default(false) @map("is_published")
-  isFeatured            Boolean   @default(false) @map("is_featured")
-  planTier              PlanTier  @default(FREE) @map("plan_tier")
-  
+  isVerified  Boolean  @default(false) @map("is_verified")
+  isPublished Boolean  @default(false) @map("is_published")
+  isFeatured  Boolean  @default(false) @map("is_featured")
+  planTier    PlanTier @default(FREE) @map("plan_tier")
+
   // Aggregated Metrics
-  averageRating         Float?    @default(0) @map("average_rating")
-  reviewCount           Int       @default(0) @map("review_count")
-  impressionCount       Int       @default(0) @map("impression_count")
-  profileViewCount      Int       @default(0) @map("profile_view_count")
-  inquiryCount          Int       @default(0) @map("inquiry_count")
-  quotesSentCount       Int       @default(0) @map("quotes_sent_count")
-  quotesAcceptedCount   Int       @default(0) @map("quotes_accepted_count")
-  
+  averageRating       Float? @default(0) @map("average_rating")
+  reviewCount         Int    @default(0) @map("review_count")
+  impressionCount     Int    @default(0) @map("impression_count")
+  profileViewCount    Int    @default(0) @map("profile_view_count")
+  inquiryCount        Int    @default(0) @map("inquiry_count")
+  quotesSentCount     Int    @default(0) @map("quotes_sent_count")
+  quotesAcceptedCount Int    @default(0) @map("quotes_accepted_count")
+
   // Stripe Connect (for payments v1.1)
-  stripeAccountId       String?   @unique @map("stripe_account_id")
+  stripeAccountId          String? @unique @map("stripe_account_id")
   stripeOnboardingComplete Boolean @default(false) @map("stripe_onboarding_complete")
-  
+
   // Relationships
-  owner                 User      @relation(fields: [ownerUserId], references: [id], onDelete: Cascade)
-  listings              Listing[]
-  inquiries             Inquiry[]
-  quotes                Quote[]
-  bookings              Booking[]
-  reviews               Review[]
-  favorites             Favorite[]
-  
-  createdAt             DateTime  @default(now()) @map("created_at")
-  updatedAt             DateTime  @updatedAt @map("updated_at")
+  owner     User       @relation(fields: [ownerUserId], references: [id], onDelete: Cascade)
+  listings  Listing[]
+  inquiries Inquiry[]
+  quotes    Quote[]
+  bookings  Booking[]
+  reviews   Review[]
+  favorites Favorite[]
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
 
   @@index([ownerUserId])
   @@index([postcode])
@@ -211,20 +211,20 @@ model Provider {
 // ============================================
 
 model Listing {
-  id                String   @id @default(cuid())
-  providerId        String   @map("provider_id")
-  headline          String
-  longDescription   String?  @db.Text @map("long_description")
-  minPrice          Float?   @map("min_price")
-  maxPrice          Float?   @map("max_price")
-  coverImageUrl     String?  @map("cover_image_url")
-  galleryUrls       String[] @map("gallery_urls")
-  
+  id              String   @id @default(cuid())
+  providerId      String   @map("provider_id")
+  headline        String
+  longDescription String?  @map("long_description") @db.Text
+  minPrice        Float?   @map("min_price")
+  maxPrice        Float?   @map("max_price")
+  coverImageUrl   String?  @map("cover_image_url")
+  galleryUrls     String[] @map("gallery_urls")
+
   // Relationships
-  provider          Provider @relation(fields: [providerId], references: [id], onDelete: Cascade)
-  
-  createdAt         DateTime @default(now()) @map("created_at")
-  updatedAt         DateTime @updatedAt @map("updated_at")
+  provider Provider @relation(fields: [providerId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
 
   @@index([providerId])
   @@map("listings")
@@ -245,33 +245,33 @@ enum InquiryStatus {
 }
 
 model Inquiry {
-  id            String         @id @default(cuid())
-  providerId    String         @map("provider_id")
-  fromUserId    String?        @map("from_user_id") // Nullable for guest inquiries
-  fromName      String         @map("from_name")
-  fromEmail     String         @map("from_email")
-  fromPhone     String?        @map("from_phone")
-  
+  id         String  @id @default(cuid())
+  providerId String  @map("provider_id")
+  fromUserId String? @map("from_user_id") // Nullable for guest inquiries
+  fromName   String  @map("from_name")
+  fromEmail  String  @map("from_email")
+  fromPhone  String? @map("from_phone")
+
   // Event Details
-  eventDate     DateTime?      @map("event_date")
-  guestsCount   Int?           @map("guests_count")
-  budgetRange   String?        @map("budget_range")
-  message       String         @db.Text
-  
+  eventDate   DateTime? @map("event_date")
+  guestsCount Int?      @map("guests_count")
+  budgetRange String?   @map("budget_range")
+  message     String    @db.Text
+
   // Search Context
-  searchPostcode String?       @map("search_postcode")
-  searchRadius   Float?        @map("search_radius")
-  
-  status        InquiryStatus  @default(NEW)
-  messages      Json[]         // Array of message objects {sender, text, timestamp}
-  
+  searchPostcode String? @map("search_postcode")
+  searchRadius   Float?  @map("search_radius")
+
+  status   InquiryStatus @default(NEW)
+  messages Json[] // Array of message objects {sender, text, timestamp}
+
   // Relationships
-  provider      Provider       @relation(fields: [providerId], references: [id], onDelete: Cascade)
-  fromUser      User?          @relation(fields: [fromUserId], references: [id], onDelete: SetNull)
-  quotes        Quote[]
-  
-  createdAt     DateTime       @default(now()) @map("created_at")
-  updatedAt     DateTime       @updatedAt @map("updated_at")
+  provider Provider @relation(fields: [providerId], references: [id], onDelete: Cascade)
+  fromUser User?    @relation(fields: [fromUserId], references: [id], onDelete: SetNull)
+  quotes   Quote[]
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
 
   @@index([providerId])
   @@index([fromUserId])
@@ -303,42 +303,42 @@ enum PaymentMode {
 }
 
 model Quote {
-  id                    String        @id @default(cuid())
-  providerId            String        @map("provider_id")
-  inquiryId             String?       @map("inquiry_id") // Optional - can create quote without inquiry
-  
+  id         String  @id @default(cuid())
+  providerId String  @map("provider_id")
+  inquiryId  String? @map("inquiry_id") // Optional - can create quote without inquiry
+
   // Quote Details
-  items                 Json[]        // Array of {name, qty, unitPrice, totalPrice}
-  subtotal              Float
-  tax                   Float         @default(0)
-  discount              Float         @default(0)
-  totalPrice            Float         @map("total_price")
-  
+  items      Json[] // Array of {name, qty, unitPrice, totalPrice}
+  subtotal   Float
+  tax        Float  @default(0)
+  discount   Float  @default(0)
+  totalPrice Float  @map("total_price")
+
   // Payment Options
-  allowedPaymentModes   PaymentMode[] @map("allowed_payment_modes")
-  depositPercentage     Float         @default(50) @map("deposit_percentage")
-  
+  allowedPaymentModes PaymentMode[] @map("allowed_payment_modes")
+  depositPercentage   Float         @default(50) @map("deposit_percentage")
+
   // Validity
-  validUntil            DateTime      @map("valid_until")
-  
+  validUntil DateTime @map("valid_until")
+
   // Terms & Notes
-  terms                 String?       @db.Text
-  notes                 String?       @db.Text
-  
-  status                QuoteStatus   @default(DRAFT)
-  
+  terms String? @db.Text
+  notes String? @db.Text
+
+  status QuoteStatus @default(DRAFT)
+
   // Tracking
-  sentAt                DateTime?     @map("sent_at")
-  viewedAt              DateTime?     @map("viewed_at")
-  respondedAt           DateTime?     @map("responded_at")
-  
+  // accounts    Account[] @relation("UserAccounts")
+  viewedAt    DateTime? @map("viewed_at")
+  respondedAt DateTime? @map("responded_at")
+
   // Relationships
-  provider              Provider      @relation(fields: [providerId], references: [id], onDelete: Cascade)
-  inquiry               Inquiry?      @relation(fields: [inquiryId], references: [id], onDelete: SetNull)
-  booking               Booking?
-  
-  createdAt             DateTime      @default(now()) @map("created_at")
-  updatedAt             DateTime      @updatedAt @map("updated_at")
+  provider Provider @relation(fields: [providerId], references: [id], onDelete: Cascade)
+  inquiry  Inquiry? @relation(fields: [inquiryId], references: [id], onDelete: SetNull)
+  booking  Booking?
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
 
   @@index([providerId])
   @@index([inquiryId])
@@ -364,52 +364,52 @@ enum BookingStatus {
 }
 
 model Booking {
-  id                String        @id @default(cuid())
-  quoteId           String        @unique @map("quote_id")
-  providerId        String        @map("provider_id")
-  
+  id         String @id @default(cuid())
+  quoteId    String @unique @map("quote_id")
+  providerId String @map("provider_id")
+
   // Client Info
-  clientName        String        @map("client_name")
-  clientEmail       String        @map("client_email")
-  clientPhone       String?       @map("client_phone")
-  
+  clientName  String  @map("client_name")
+  clientEmail String  @map("client_email")
+  clientPhone String? @map("client_phone")
+
   // Event Details
-  eventDate         DateTime      @map("event_date")
-  eventLocation     String?       @map("event_location")
-  guestsCount       Int?          @map("guests_count")
-  specialRequests   String?       @db.Text @map("special_requests")
-  
+  eventDate       DateTime @map("event_date")
+  eventLocation   String?  @map("event_location")
+  guestsCount     Int?     @map("guests_count")
+  specialRequests String?  @map("special_requests") @db.Text
+
   // Pricing
-  paymentMode       PaymentMode   @map("payment_mode")
-  pricingTotal      Float         @map("pricing_total")
-  depositAmount     Float?        @map("deposit_amount")
-  balanceAmount     Float?        @map("balance_amount")
-  
+  paymentMode   PaymentMode @map("payment_mode")
+  pricingTotal  Float       @map("pricing_total")
+  depositAmount Float?      @map("deposit_amount")
+  balanceAmount Float?      @map("balance_amount")
+
   // Payment Tracking
-  depositPaidAt     DateTime?     @map("deposit_paid_at")
-  balanceDueDate    DateTime?     @map("balance_due_date")
-  balancePaidAt     DateTime?     @map("balance_paid_at")
-  
+  depositPaidAt  DateTime? @map("deposit_paid_at")
+  balanceDueDate DateTime? @map("balance_due_date")
+  balancePaidAt  DateTime? @map("balance_paid_at")
+
   // Stripe References (v1.1)
-  stripePaymentIntentId       String? @map("stripe_payment_intent_id")
-  stripeDepositIntentId       String? @map("stripe_deposit_intent_id")
-  stripeBalanceIntentId       String? @map("stripe_balance_intent_id")
-  
-  status            BookingStatus @default(PENDING_PAYMENT)
-  statusTimeline    Json[]        // Array of {status, timestamp, note}
-  
+  stripePaymentIntentId String? @map("stripe_payment_intent_id")
+  stripeDepositIntentId String? @map("stripe_deposit_intent_id")
+  stripeBalanceIntentId String? @map("stripe_balance_intent_id")
+
+  status         BookingStatus @default(PENDING_PAYMENT)
+  statusTimeline Json[] // Array of {status, timestamp, note}
+
   // Completion & Review
-  completedAt       DateTime?     @map("completed_at")
-  reviewInvitedAt   DateTime?     @map("review_invited_at")
-  
+  completedAt     DateTime? @map("completed_at")
+  reviewInvitedAt DateTime? @map("review_invited_at")
+
   // Relationships
-  quote             Quote         @relation(fields: [quoteId], references: [id], onDelete: Restrict)
-  provider          Provider      @relation(fields: [providerId], references: [id], onDelete: Cascade)
-  payments          Payment[]
-  refunds           Refund[]
-  
-  createdAt         DateTime      @default(now()) @map("created_at")
-  updatedAt         DateTime      @updatedAt @map("updated_at")
+  quote    Quote     @relation(fields: [quoteId], references: [id], onDelete: Restrict)
+  provider Provider  @relation(fields: [providerId], references: [id], onDelete: Cascade)
+  payments Payment[]
+  refunds  Refund[]
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
 
   @@index([providerId])
   @@index([quoteId])
@@ -440,27 +440,27 @@ enum PaymentType {
 }
 
 model Payment {
-  id                      String        @id @default(cuid())
-  bookingId               String        @map("booking_id")
-  
-  paymentType             PaymentType   @map("payment_type")
-  amount                  Float
-  currency                String        @default("GBP")
-  
+  id        String @id @default(cuid())
+  bookingId String @map("booking_id")
+
+  paymentType PaymentType @map("payment_type")
+  amount      Float
+  currency    String      @default("USD")
+
   // Stripe
-  stripePaymentIntentId   String?       @unique @map("stripe_payment_intent_id")
-  stripeChargeId          String?       @map("stripe_charge_id")
-  
-  status                  PaymentStatus @default(PENDING)
-  
-  failureReason           String?       @map("failure_reason")
-  metadata                Json?
-  
+  stripePaymentIntentId String? @unique @map("stripe_payment_intent_id")
+  stripeChargeId        String? @map("stripe_charge_id")
+
+  status PaymentStatus @default(PENDING)
+
+  failureReason String? @map("failure_reason")
+  metadata      Json?
+
   // Relationships
-  booking                 Booking       @relation(fields: [bookingId], references: [id], onDelete: Cascade)
-  
-  createdAt               DateTime      @default(now()) @map("created_at")
-  updatedAt               DateTime      @updatedAt @map("updated_at")
+  booking Booking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
 
   @@index([bookingId])
   @@index([status])
@@ -481,25 +481,25 @@ enum RefundStatus {
 }
 
 model Refund {
-  id                String        @id @default(cuid())
-  bookingId         String        @map("booking_id")
-  
-  amount            Float
-  reason            String?       @db.Text
-  
+  id        String @id @default(cuid())
+  bookingId String @map("booking_id")
+
+  amount Float
+  reason String? @db.Text
+
   // Stripe
-  stripeRefundId    String?       @unique @map("stripe_refund_id")
-  
-  status            RefundStatus  @default(PENDING)
-  
-  processedBy       String?       @map("processed_by") // Admin user ID
-  processedAt       DateTime?     @map("processed_at")
-  
+  stripeRefundId String? @unique @map("stripe_refund_id")
+
+  status RefundStatus @default(PENDING)
+
+  processedBy String?   @map("processed_by") // Admin user ID
+  processedAt DateTime? @map("processed_at")
+
   // Relationships
-  booking           Booking       @relation(fields: [bookingId], references: [id], onDelete: Cascade)
-  
-  createdAt         DateTime      @default(now()) @map("created_at")
-  updatedAt         DateTime      @updatedAt @map("updated_at")
+  booking Booking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
 
   @@index([bookingId])
   @@index([status])
@@ -518,27 +518,57 @@ enum PayoutStatus {
   CANCELLED
 }
 
+model Account {
+  id                String  @id @default(cuid())
+  userId            String  @map("user_id")
+  type              String
+  provider          String
+  providerAccountId String  @map("provider_account_id")
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@index([userId])
+  @@map("accounts")
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+  @@map("verification_tokens")
+}
+
 model Payout {
-  id                  String        @id @default(cuid())
-  providerId          String        @map("provider_id")
-  
-  amount              Float
-  currency            String        @default("GBP")
-  
+  id         String @id @default(cuid())
+  providerId String @map("provider_id")
+
+  amount   Float
+  currency String @default("GBP")
+
   // Stripe Connect
-  stripePayoutId      String?       @unique @map("stripe_payout_id")
-  stripeAccountId     String        @map("stripe_account_id")
-  
-  status              PayoutStatus  @default(PENDING)
-  
+  stripePayoutId  String? @unique @map("stripe_payout_id")
+  stripeAccountId String  @map("stripe_account_id")
+
+  status PayoutStatus @default(PENDING)
+
   // Timing
-  arrivalDate         DateTime?     @map("arrival_date")
-  
-  failureReason       String?       @map("failure_reason")
-  metadata            Json?
-  
-  createdAt           DateTime      @default(now()) @map("created_at")
-  updatedAt           DateTime      @updatedAt @map("updated_at")
+  arrivalDate DateTime? @map("arrival_date")
+
+  failureReason String? @map("failure_reason")
+  metadata      Json?
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
 
   @@index([providerId])
   @@index([status])
@@ -551,36 +581,36 @@ model Payout {
 // ============================================
 
 model Review {
-  id                String    @id @default(cuid())
-  providerId        String    @map("provider_id")
-  authorUserId      String?   @map("author_user_id")
-  authorName        String    @map("author_name")
-  authorEmail       String    @map("author_email")
-  
-  rating            Int       // 1-5
-  title             String?
-  body              String    @db.Text
-  photos            String[]  // Array of photo URLs
-  
+  id           String  @id @default(cuid())
+  providerId   String  @map("provider_id")
+  authorUserId String? @map("author_user_id")
+  authorName   String  @map("author_name")
+  authorEmail  String  @map("author_email")
+
+  rating Int // 1-5
+  title  String?
+  body   String   @db.Text
+  photos String[] // Array of photo URLs
+
   // Moderation
-  isFlagged         Boolean   @default(false) @map("is_flagged")
-  isApproved        Boolean   @default(false) @map("is_approved")
-  moderatedAt       DateTime? @map("moderated_at")
-  moderatedBy       String?   @map("moderated_by") // Admin user ID
-  
+  isFlagged   Boolean   @default(false) @map("is_flagged")
+  isApproved  Boolean   @default(false) @map("is_approved")
+  moderatedAt DateTime? @map("moderated_at")
+  moderatedBy String?   @map("moderated_by") // Admin user ID
+
   // Verification
-  isVerifiedBooking Boolean   @default(false) @map("is_verified_booking")
-  
+  isVerifiedBooking Boolean @default(false) @map("is_verified_booking")
+
   // Provider Response
-  providerReply     String?   @db.Text @map("provider_reply")
+  providerReply     String?   @map("provider_reply") @db.Text
   providerRepliedAt DateTime? @map("provider_replied_at")
-  
+
   // Relationships
-  provider          Provider  @relation(fields: [providerId], references: [id], onDelete: Cascade)
-  author            User?     @relation(fields: [authorUserId], references: [id], onDelete: SetNull)
-  
-  createdAt         DateTime  @default(now()) @map("created_at")
-  updatedAt         DateTime  @updatedAt @map("updated_at")
+  provider Provider @relation(fields: [providerId], references: [id], onDelete: Cascade)
+  author   User?    @relation(fields: [authorUserId], references: [id], onDelete: SetNull)
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
 
   @@index([providerId])
   @@index([authorUserId])
@@ -596,15 +626,15 @@ model Review {
 // ============================================
 
 model Favorite {
-  id         String   @id @default(cuid())
-  userId     String   @map("user_id")
-  providerId String   @map("provider_id")
-  
+  id         String @id @default(cuid())
+  userId     String @map("user_id")
+  providerId String @map("provider_id")
+
   // Relationships
-  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  provider   Provider @relation(fields: [providerId], references: [id], onDelete: Cascade)
-  
-  createdAt  DateTime @default(now()) @map("created_at")
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  provider Provider @relation(fields: [providerId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now()) @map("created_at")
 
   @@unique([userId, providerId])
   @@index([userId])
@@ -617,28 +647,28 @@ model Favorite {
 // ============================================
 
 model Category {
-  id            String        @id @default(cuid())
-  name          String        @unique
-  slug          String        @unique
-  description   String?       @db.Text
-  icon          String?       // Icon name or URL
-  coverImage    String?       @map("cover_image")
-  
+  id          String  @id @default(cuid())
+  name        String  @unique
+  slug        String  @unique
+  description String? @db.Text
+  icon        String? // Icon name or URL
+  coverImage  String? @map("cover_image")
+
   // SEO
-  metaTitle     String?       @map("meta_title")
-  metaDescription String?     @db.Text @map("meta_description")
-  seoIntro      String?       @db.Text @map("seo_intro")
-  faqs          Json[]        // Array of {question, answer}
-  
+  metaTitle       String? @map("meta_title")
+  metaDescription String? @map("meta_description") @db.Text
+  seoIntro        String? @map("seo_intro") @db.Text
+  faqs            Json[] // Array of {question, answer}
+
   // Display
-  isFeatured    Boolean       @default(false) @map("is_featured")
-  displayOrder  Int           @default(0) @map("display_order")
-  
+  isFeatured   Boolean @default(false) @map("is_featured")
+  displayOrder Int     @default(0) @map("display_order")
+
   // Relationships
   subcategories Subcategory[]
-  
-  createdAt     DateTime      @default(now()) @map("created_at")
-  updatedAt     DateTime      @updatedAt @map("updated_at")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
 
   @@index([slug])
   @@index([isFeatured])
@@ -647,19 +677,19 @@ model Category {
 }
 
 model Subcategory {
-  id           String    @id @default(cuid())
-  categoryId   String    @map("category_id")
-  name         String
-  slug         String    @unique
-  description  String?   @db.Text
-  
-  displayOrder Int       @default(0) @map("display_order")
-  
+  id          String  @id @default(cuid())
+  categoryId  String  @map("category_id")
+  name        String
+  slug        String  @unique
+  description String? @db.Text
+
+  displayOrder Int @default(0) @map("display_order")
+
   // Relationships
-  category     Category  @relation(fields: [categoryId], references: [id], onDelete: Cascade)
-  
-  createdAt    DateTime  @default(now()) @map("created_at")
-  updatedAt    DateTime  @updatedAt @map("updated_at")
+  category Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
 
   @@index([categoryId])
   @@index([slug])
@@ -671,17 +701,17 @@ model Subcategory {
 // ============================================
 
 model CultureTraditionTag {
-  id           String   @id @default(cuid())
-  name         String   @unique
-  slug         String   @unique
-  description  String?  @db.Text
-  icon         String?  // Icon or emoji
-  
-  displayOrder Int      @default(0) @map("display_order")
-  isActive     Boolean  @default(true) @map("is_active")
-  
-  createdAt    DateTime @default(now()) @map("created_at")
-  updatedAt    DateTime @updatedAt @map("updated_at")
+  id          String  @id @default(cuid())
+  name        String  @unique
+  slug        String  @unique
+  description String? @db.Text
+  icon        String? // Icon or emoji
+
+  displayOrder Int     @default(0) @map("display_order")
+  isActive     Boolean @default(true) @map("is_active")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
 
   @@index([slug])
   @@index([isActive])
@@ -693,29 +723,29 @@ model CultureTraditionTag {
 // ============================================
 
 model City {
-  id              String   @id @default(cuid())
-  name            String   @unique
-  slug            String   @unique
-  county          String?
-  region          String?
-  country         String   @default("UK")
-  
+  id      String  @id @default(cuid())
+  name    String  @unique
+  slug    String  @unique
+  county  String?
+  region  String?
+  country String  @default("UK")
+
   // Coordinates (for city center)
-  latitude        Float?
-  longitude       Float?
-  
+  latitude  Float?
+  longitude Float?
+
   // SEO
-  metaTitle       String?  @map("meta_title")
-  metaDescription String?  @db.Text @map("meta_description")
-  seoIntro        String?  @db.Text @map("seo_intro")
-  faqs            Json[]   // Array of {question, answer}
-  
+  metaTitle       String? @map("meta_title")
+  metaDescription String? @map("meta_description") @db.Text
+  seoIntro        String? @map("seo_intro") @db.Text
+  faqs            Json[] // Array of {question, answer}
+
   // Display
-  isFeatured      Boolean  @default(false) @map("is_featured")
-  displayOrder    Int      @default(0) @map("display_order")
-  
-  createdAt       DateTime @default(now()) @map("created_at")
-  updatedAt       DateTime @updatedAt @map("updated_at")
+  isFeatured   Boolean @default(false) @map("is_featured")
+  displayOrder Int     @default(0) @map("display_order")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
 
   @@index([slug])
   @@index([isFeatured])
@@ -742,36 +772,36 @@ enum ImportType {
 }
 
 model ImportJob {
-  id              String        @id @default(cuid())
-  type            ImportType
-  fileName        String        @map("file_name")
-  fileUrl         String        @map("file_url")
-  
+  id       String     @id @default(cuid())
+  type     ImportType
+  fileName String     @map("file_name")
+  fileUrl  String     @map("file_url")
+
   // Configuration
-  mapping         Json          // Column mapping config
-  isDryRun        Boolean       @default(false) @map("is_dry_run")
-  
+  mapping  Json // Column mapping config
+  isDryRun Boolean @default(false) @map("is_dry_run")
+
   // Progress
-  status          ImportStatus  @default(PENDING)
-  totalRows       Int           @default(0) @map("total_rows")
-  processedRows   Int           @default(0) @map("processed_rows")
-  successfulRows  Int           @default(0) @map("successful_rows")
-  failedRows      Int           @default(0) @map("failed_rows")
-  
+  status         ImportStatus @default(PENDING)
+  totalRows      Int          @default(0) @map("total_rows")
+  processedRows  Int          @default(0) @map("processed_rows")
+  successfulRows Int          @default(0) @map("successful_rows")
+  failedRows     Int          @default(0) @map("failed_rows")
+
   // Results
-  errorFileUrl    String?       @map("error_file_url")
-  summary         Json?         // Detailed summary
-  
+  errorFileUrl String? @map("error_file_url")
+  summary      Json? // Detailed summary
+
   // User
-  createdBy       String        @map("created_by") // Admin user ID
-  
+  createdBy String @map("created_by") // Admin user ID
+
   // Relationships
-  errors          ImportError[]
-  
-  startedAt       DateTime?     @map("started_at")
-  completedAt     DateTime?     @map("completed_at")
-  createdAt       DateTime      @default(now()) @map("created_at")
-  updatedAt       DateTime      @updatedAt @map("updated_at")
+  errors ImportError[]
+
+  startedAt   DateTime? @map("started_at")
+  completedAt DateTime? @map("completed_at")
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
 
   @@index([status])
   @@index([type])
@@ -780,16 +810,16 @@ model ImportJob {
 }
 
 model ImportError {
-  id          String    @id @default(cuid())
-  jobId       String    @map("job_id")
-  rowNumber   Int       @map("row_number")
-  rowData     Json      @map("row_data")
-  errorMessage String   @db.Text @map("error_message")
-  
+  id           String @id @default(cuid())
+  jobId        String @map("job_id")
+  rowNumber    Int    @map("row_number")
+  rowData      Json   @map("row_data")
+  errorMessage String @map("error_message") @db.Text
+
   // Relationships
-  job         ImportJob @relation(fields: [jobId], references: [id], onDelete: Cascade)
-  
-  createdAt   DateTime  @default(now()) @map("created_at")
+  job ImportJob @relation(fields: [jobId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now()) @map("created_at")
 
   @@index([jobId])
   @@map("import_errors")
@@ -800,15 +830,15 @@ model ImportError {
 // ============================================
 
 model FeatureFlag {
-  id          String   @id @default(cuid())
-  key         String   @unique
+  id          String  @id @default(cuid())
+  key         String  @unique
   name        String
-  description String?  @db.Text
-  isEnabled   Boolean  @default(false) @map("is_enabled")
-  config      Json?    // Additional configuration
-  
-  createdAt   DateTime @default(now()) @map("created_at")
-  updatedAt   DateTime @updatedAt @map("updated_at")
+  description String? @db.Text
+  isEnabled   Boolean @default(false) @map("is_enabled")
+  config      Json? // Additional configuration
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
 
   @@index([key])
   @@index([isEnabled])
@@ -838,18 +868,18 @@ enum EmailTemplateType {
 }
 
 model EmailTemplate {
-  id          String            @id @default(cuid())
-  type        EmailTemplateType @unique
-  name        String
-  subject     String
-  htmlBody    String            @db.Text @map("html_body")
-  textBody    String            @db.Text @map("text_body")
-  variables   String[]          // Available variables like {{customerName}}
-  
-  isActive    Boolean           @default(true) @map("is_active")
-  
-  createdAt   DateTime          @default(now()) @map("created_at")
-  updatedAt   DateTime          @updatedAt @map("updated_at")
+  id        String            @id @default(cuid())
+  type      EmailTemplateType @unique
+  name      String
+  subject   String
+  htmlBody  String            @map("html_body") @db.Text
+  textBody  String            @map("text_body") @db.Text
+  variables String[] // Available variables like {{customerName}}
+
+  isActive Boolean @default(true) @map("is_active")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
 
   @@index([type])
   @@map("email_templates")
@@ -883,21 +913,21 @@ enum AuditAction {
 }
 
 model AuditLog {
-  id          String      @id @default(cuid())
-  action      AuditAction
-  userId      String?     @map("user_id") // Who performed the action
-  entityType  String      @map("entity_type") // e.g., "Provider", "Quote"
-  entityId    String      @map("entity_id")
-  
-  changes     Json?       // Before/after snapshot
-  metadata    Json?       // Additional context
-  ipAddress   String?     @map("ip_address")
-  userAgent   String?     @map("user_agent")
-  
+  id         String      @id @default(cuid())
+  action     AuditAction
+  userId     String?     @map("user_id") // Who performed the action
+  entityType String      @map("entity_type") // e.g., "Provider", "Quote"
+  entityId   String      @map("entity_id")
+
+  changes   Json? // Before/after snapshot
+  metadata  Json? // Additional context
+  ipAddress String? @map("ip_address")
+  userAgent String? @map("user_agent")
+
   // Relationships
-  user        User?       @relation(fields: [userId], references: [id], onDelete: SetNull)
-  
-  createdAt   DateTime    @default(now()) @map("created_at")
+  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  createdAt DateTime @default(now()) @map("created_at")
 
   @@index([userId])
   @@index([action])
@@ -911,36 +941,36 @@ model AuditLog {
 // ============================================
 
 model AnalyticsSnapshot {
-  id                      String   @id @default(cuid())
-  date                    DateTime @unique @db.Date
-  
+  id   String   @id @default(cuid())
+  date DateTime @unique @db.Date
+
   // Supply Metrics
-  totalProviders          Int      @default(0) @map("total_providers")
-  verifiedProviders       Int      @default(0) @map("verified_providers")
-  activeProviders         Int      @default(0) @map("active_providers")
-  
+  totalProviders    Int @default(0) @map("total_providers")
+  verifiedProviders Int @default(0) @map("verified_providers")
+  activeProviders   Int @default(0) @map("active_providers")
+
   // Demand Metrics
-  totalSearches           Int      @default(0) @map("total_searches")
-  searchesWithResults     Int      @default(0) @map("searches_with_results")
-  totalInquiries          Int      @default(0) @map("total_inquiries")
-  
+  totalSearches       Int @default(0) @map("total_searches")
+  searchesWithResults Int @default(0) @map("searches_with_results")
+  totalInquiries      Int @default(0) @map("total_inquiries")
+
   // Funnel Metrics
   inquiriesPerHundredSearches Float? @map("inquiries_per_hundred_searches")
-  quotesPerInquiry        Float?   @map("quotes_per_inquiry")
-  quoteAcceptanceRate     Float?   @map("quote_acceptance_rate")
-  
+  quotesPerInquiry            Float? @map("quotes_per_inquiry")
+  quoteAcceptanceRate         Float? @map("quote_acceptance_rate")
+
   // Speed Metrics
   medianTimeToFirstQuoteHours Float? @map("median_time_to_first_quote_hours")
-  
+
   // Quality Metrics
-  averageRating           Float?   @map("average_rating")
-  totalReviews            Int      @default(0) @map("total_reviews")
-  
+  averageRating Float? @map("average_rating")
+  totalReviews  Int    @default(0) @map("total_reviews")
+
   // Payment Metrics (v1.1)
-  depositAdoptionRate     Float?   @map("deposit_adoption_rate")
-  refundRate              Float?   @map("refund_rate")
-  
-  createdAt               DateTime @default(now()) @map("created_at")
+  depositAdoptionRate Float? @map("deposit_adoption_rate")
+  refundRate          Float? @map("refund_rate")
+
+  createdAt DateTime @default(now()) @map("created_at")
 
   @@index([date])
   @@map("analytics_snapshots")
@@ -951,15 +981,15 @@ model AnalyticsSnapshot {
 // ============================================
 
 model PostcodeCache {
-  id          String   @id @default(cuid())
-  postcode    String   @unique
-  latitude    Float
-  longitude   Float
-  city        String?
-  county      String?
-  
-  createdAt   DateTime @default(now()) @map("created_at")
-  updatedAt   DateTime @updatedAt @map("updated_at")
+  id        String  @id @default(cuid())
+  postcode  String  @unique
+  latitude  Float
+  longitude Float
+  city      String?
+  county    String?
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
 
   @@index([postcode])
   @@map("postcode_cache")
@@ -970,36 +1000,36 @@ model PostcodeCache {
 // ============================================
 
 model SearchLog {
-  id                String   @id @default(cuid())
-  
+  id String @id @default(cuid())
+
   // Search Parameters
-  postcode          String
-  latitude          Float?
-  longitude         Float?
-  radiusMiles       Float    @map("radius_miles")
-  searchMode        String   @map("search_mode") // "MODE_A" or "MODE_B"
-  
+  postcode    String
+  latitude    Float?
+  longitude   Float?
+  radiusMiles Float  @map("radius_miles")
+  searchMode  String @map("search_mode") // "MODE_A" or "MODE_B"
+
   // Filters Applied
-  categories        String[]
-  subcategories     String[]
-  priceFrom         Float?   @map("price_from")
-  minRating         Float?   @map("min_rating")
-  verifiedOnly      Boolean  @default(false) @map("verified_only")
-  cultureTags       String[] @map("culture_tags")
-  
+  categories    String[]
+  subcategories String[]
+  priceFrom     Float?   @map("price_from")
+  minRating     Float?   @map("min_rating")
+  verifiedOnly  Boolean  @default(false) @map("verified_only")
+  cultureTags   String[] @map("culture_tags")
+
   // Results
-  resultsCount      Int      @map("results_count")
-  hasEightOrMore    Boolean  @map("has_eight_or_more") // For liquidity metric
-  
+  resultsCount   Int     @map("results_count")
+  hasEightOrMore Boolean @map("has_eight_or_more") // For liquidity metric
+
   // User Context
-  userId            String?  @map("user_id")
-  sessionId         String?  @map("session_id")
-  
+  userId    String? @map("user_id")
+  sessionId String? @map("session_id")
+
   // Tracking
-  city              String?
+  city               String?
   convertedToInquiry Boolean @default(false) @map("converted_to_inquiry")
-  
-  createdAt         DateTime @default(now()) @map("created_at")
+
+  createdAt DateTime @default(now()) @map("created_at")
 
   @@index([postcode])
   @@index([city])
@@ -1027,23 +1057,23 @@ enum NotificationStatus {
 }
 
 model NotificationQueue {
-  id          String              @id @default(cuid())
-  type        NotificationType
-  recipient   String              // Email or phone
-  subject     String?
-  body        String              @db.Text
-  
-  status      NotificationStatus  @default(PENDING)
-  attempts    Int                 @default(0)
-  maxAttempts Int                 @default(3) @map("max_attempts")
-  
-  error       String?             @db.Text
-  sentAt      DateTime?           @map("sent_at")
-  
-  metadata    Json?               // Template variables, etc.
-  
-  createdAt   DateTime            @default(now()) @map("created_at")
-  updatedAt   DateTime            @updatedAt @map("updated_at")
+  id        String           @id @default(cuid())
+  type      NotificationType
+  recipient String // Email or phone
+  subject   String?
+  body      String           @db.Text
+
+  status      NotificationStatus @default(PENDING)
+  attempts    Int                @default(0)
+  maxAttempts Int                @default(3) @map("max_attempts")
+
+  error  String?   @db.Text
+  sentAt DateTime? @map("sent_at")
+
+  metadata Json? // Template variables, etc.
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
 
   @@index([status])
   @@index([type])
