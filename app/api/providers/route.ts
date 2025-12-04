@@ -41,15 +41,60 @@ export async function GET(request: NextRequest) {
       published,
       featured,
       ownerUserId,
+      search,
+      location,
+      ceremony,
     } = Object.fromEntries(searchParams.entries());
 
     const filters: any = {};
+
+    // Basic filters
     if (city) filters.city = { contains: city, mode: "insensitive" };
     if (category) filters.categories = { has: category };
     if (verified !== undefined) filters.isVerified = verified === "true";
     if (published !== undefined) filters.isPublished = published === "true";
     if (featured !== undefined) filters.isFeatured = featured === "true";
     if (ownerUserId) filters.ownerUserId = ownerUserId;
+
+    // Search filter (search by business name or description)
+    if (search) {
+      filters.OR = [
+        { businessName: { contains: search, mode: "insensitive" } },
+        { description: { contains: search, mode: "insensitive" } },
+        { categories: { hasSome: [search] } },
+        { subcategories: { hasSome: [search] } },
+      ];
+    }
+
+    // Location filter (search by city or postcode)
+    if (location) {
+      const locationFilters = [
+        { city: { contains: location, mode: "insensitive" } },
+        { postcode: { contains: location.toUpperCase(), mode: "insensitive" } },
+        { address: { contains: location, mode: "insensitive" } },
+      ];
+
+      if (filters.OR) {
+        // If we already have OR filters from search, we need to AND the location
+        filters.AND = [{ OR: filters.OR }, { OR: locationFilters }];
+        delete filters.OR;
+      } else {
+        filters.OR = locationFilters;
+      }
+    }
+
+    // Ceremony/culture filter
+    if (ceremony) {
+      const ceremonyFilter = { cultureTraditionTags: { hasSome: [ceremony] } };
+      if (filters.AND) {
+        filters.AND.push(ceremonyFilter);
+      } else if (filters.OR) {
+        filters.AND = [{ OR: filters.OR }, ceremonyFilter];
+        delete filters.OR;
+      } else {
+        filters.cultureTraditionTags = { hasSome: [ceremony] };
+      }
+    }
 
     const pageNum = parseInt(page);
     const limitNum = parseInt(limit);

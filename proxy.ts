@@ -1,36 +1,69 @@
-// proxy.ts
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
-const protectedRoutes = ["/dashboard", "/profile", "/settings"];
-const authRoutes = ["/auth/signin", "/auth/signup"];
+// Routes that require authentication
+const protectedRoutes = [
+  "/dashboard",
+  "/admin",
+  "/vendor",
+  "/client",
+  "/bookings",
+  "/messages",
+  "/settings",
+];
+
+// Routes only for non-authenticated users
+const authRoutes = ["/auth"];
 
 export function proxy(request: NextRequest) {
-  const { pathname } = request.nextUrl;
-  const cookies = request.cookies;
+  const nextUrl = request.nextUrl;
+  const pathname = nextUrl.pathname;
+
+  // Check for auth session token (NextAuth uses these cookie names)
   const sessionToken =
-    cookies.get("next-auth.session-token") ||
-    cookies.get("__Secure-next-auth.session-token");
+    request.cookies.get("authjs.session-token") ||
+    request.cookies.get("__Secure-authjs.session-token") ||
+    request.cookies.get("next-auth.session-token") ||
+    request.cookies.get("__Secure-next-auth.session-token");
+
+  const isLoggedIn = !!sessionToken;
+
+  // Check if current path is an auth route
+  const isAuthRoute = authRoutes.some(
+    (route) => pathname === route || pathname.startsWith(`${route}/`)
+  );
+
+  // Check if current path is a protected route
+  const isProtectedRoute = protectedRoutes.some(
+    (route) => pathname === route || pathname.startsWith(`${route}/`)
+  );
 
   // Redirect logged-in users away from auth pages
-  if (authRoutes.some((route) => pathname.startsWith(route))) {
-    if (sessionToken) {
-      return NextResponse.redirect(new URL("/dashboard", request.url));
-    }
+  if (isAuthRoute && isLoggedIn) {
+    return NextResponse.redirect(new URL("/", nextUrl));
   }
 
-  // Protect routes that require authentication
-  if (protectedRoutes.some((route) => pathname.startsWith(route))) {
-    if (!sessionToken) {
-      const signInUrl = new URL("/auth/signin", request.url);
-      signInUrl.searchParams.set("callbackUrl", pathname);
-      return NextResponse.redirect(signInUrl);
-    }
+  // Redirect non-authenticated users to auth page
+  if (isProtectedRoute && !isLoggedIn) {
+    const callbackUrl = encodeURIComponent(pathname);
+    return NextResponse.redirect(
+      new URL(`/auth?callbackUrl=${callbackUrl}`, nextUrl)
+    );
   }
 
   return NextResponse.next();
 }
 
 export const config = {
-  matcher: ["/((?!api|_next/static|_next/image|favicon.ico).*)"],
+  matcher: [
+    /*
+     * Match all request paths except for the ones starting with:
+     * - api (API routes)
+     * - _next/static (static files)
+     * - _next/image (image optimization files)
+     * - favicon.ico (favicon file)
+     * - public files (images, etc.)
+     */
+    "/((?!api|_next/static|_next/image|favicon.ico|.*\\..*|manifest.json).*)",
+  ],
 };

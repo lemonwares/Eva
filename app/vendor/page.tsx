@@ -11,108 +11,48 @@ import {
   TrendingDown,
   ArrowRight,
   Clock,
+  Loader2,
 } from "lucide-react";
 import Link from "next/link";
+import { useState, useEffect } from "react";
 
-const stats = [
-  {
-    label: "New Inquiries",
-    value: "12",
-    change: "+5.2%",
-    positive: true,
-    icon: MessageSquare,
-    href: "/vendor/inquiries",
-  },
-  {
-    label: "Pending Quotes",
-    value: "5",
-    change: "+1.0%",
-    positive: true,
-    icon: FileText,
-    href: "/vendor/quotes",
-  },
-  {
-    label: "Upcoming Bookings",
-    value: "8",
-    change: "-2.5%",
-    positive: false,
-    icon: Calendar,
-    href: "/vendor/bookings",
-  },
-  {
-    label: "Monthly Revenue",
-    value: "$12,450",
-    change: "+15.8%",
-    positive: true,
-    icon: DollarSign,
-    href: "/vendor/payments",
-  },
-];
+interface Inquiry {
+  id: string;
+  fromName: string;
+  message: string;
+  eventDate: string | null;
+  status: string;
+  createdAt: string;
+}
 
-type InquiryStatus = "New" | "Viewed" | "Quoted" | "Declined";
+interface Booking {
+  id: string;
+  eventDate: string;
+  eventType: string | null;
+  totalPrice: number;
+  status: string;
+  quote: {
+    inquiry: {
+      fromName: string;
+    };
+  };
+}
 
-const recentInquiries = [
-  {
-    name: "Olivia Rhye",
-    event: "Wedding Photography",
-    date: "Oct 15, 2024",
-    status: "New" as InquiryStatus,
-  },
-  {
-    name: "Phoenix Baker",
-    event: "Corporate Event DJ",
-    date: "Nov 02, 2024",
-    status: "Viewed" as InquiryStatus,
-  },
-  {
-    name: "Lana Steiner",
-    event: "Birthday Catering",
-    date: "Nov 21, 2024",
-    status: "New" as InquiryStatus,
-  },
-  {
-    name: "Demi Wilkinson",
-    event: "Anniversary Florals",
-    date: "Dec 05, 2024",
-    status: "Quoted" as InquiryStatus,
-  },
-  {
-    name: "Candice Wu",
-    event: "Engagement Photos",
-    date: "Dec 18, 2024",
-    status: "Declined" as InquiryStatus,
-  },
-];
+interface DashboardStats {
+  newInquiries: number;
+  pendingQuotes: number;
+  upcomingBookings: number;
+  monthlyRevenue: number;
+}
 
-const upcomingBookings = [
-  {
-    client: "Sarah Johnson",
-    event: "Wedding Reception",
-    date: "Dec 15, 2024",
-    time: "4:00 PM",
-    amount: "$3,500",
-  },
-  {
-    client: "Michael Chen",
-    event: "Corporate Gala",
-    date: "Dec 20, 2024",
-    time: "6:00 PM",
-    amount: "$2,800",
-  },
-  {
-    client: "Emily Davis",
-    event: "Birthday Party",
-    date: "Dec 28, 2024",
-    time: "2:00 PM",
-    amount: "$1,200",
-  },
-];
+type InquiryStatus = "NEW" | "VIEWED" | "QUOTED" | "DECLINED" | "REPLIED";
 
 const statusStyles: Record<InquiryStatus, string> = {
-  New: "bg-blue-500/20 text-blue-600 border border-blue-500/30",
-  Viewed: "bg-yellow-500/20 text-yellow-600 border border-yellow-500/30",
-  Quoted: "bg-green-500/20 text-green-600 border border-green-500/30",
-  Declined: "bg-red-500/20 text-red-600 border border-red-500/30",
+  NEW: "bg-blue-500/20 text-blue-600 border border-blue-500/30",
+  VIEWED: "bg-yellow-500/20 text-yellow-600 border border-yellow-500/30",
+  REPLIED: "bg-purple-500/20 text-purple-600 border border-purple-500/30",
+  QUOTED: "bg-green-500/20 text-green-600 border border-green-500/30",
+  DECLINED: "bg-red-500/20 text-red-600 border border-red-500/30",
 };
 
 function DashboardContent() {
@@ -127,11 +67,128 @@ function DashboardContent() {
     hoverBg,
   } = useVendorTheme();
 
+  const [isLoading, setIsLoading] = useState(true);
+  const [recentInquiries, setRecentInquiries] = useState<Inquiry[]>([]);
+  const [upcomingBookings, setUpcomingBookings] = useState<Booking[]>([]);
+  const [stats, setStats] = useState<DashboardStats>({
+    newInquiries: 0,
+    pendingQuotes: 0,
+    upcomingBookings: 0,
+    monthlyRevenue: 0,
+  });
+  const [providerName, setProviderName] = useState("Your Business");
+  const [providerType, setProviderType] = useState("Vendor");
+
+  useEffect(() => {
+    fetchDashboardData();
+  }, []);
+
+  async function fetchDashboardData() {
+    setIsLoading(true);
+    try {
+      // Fetch inquiries
+      const inquiriesRes = await fetch("/api/inquiries?limit=5");
+      if (inquiriesRes.ok) {
+        const inquiriesData = await inquiriesRes.json();
+        setRecentInquiries(inquiriesData.inquiries || []);
+        const newCount = (inquiriesData.inquiries || []).filter(
+          (i: Inquiry) => i.status === "NEW"
+        ).length;
+        setStats((prev) => ({
+          ...prev,
+          newInquiries: inquiriesData.pagination?.total || 0,
+        }));
+      }
+
+      // Fetch bookings
+      const bookingsRes = await fetch("/api/bookings?limit=5&upcoming=true");
+      if (bookingsRes.ok) {
+        const bookingsData = await bookingsRes.json();
+        setUpcomingBookings(bookingsData.bookings || []);
+        setStats((prev) => ({
+          ...prev,
+          upcomingBookings: bookingsData.pagination?.total || 0,
+        }));
+      }
+
+      // Fetch provider profile
+      const profileRes = await fetch("/api/vendor/profile");
+      if (profileRes.ok) {
+        const profileData = await profileRes.json();
+        if (profileData.provider) {
+          setProviderName(profileData.provider.businessName);
+          setProviderType(profileData.provider.categories?.[0] || "Vendor");
+        }
+      }
+    } catch (err) {
+      console.error("Error fetching dashboard data:", err);
+    } finally {
+      setIsLoading(false);
+    }
+  }
+
+  const formatTimeAgo = (date: string) => {
+    const now = new Date();
+    const past = new Date(date);
+    const diffMs = now.getTime() - past.getTime();
+    const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+    const diffDays = Math.floor(diffHours / 24);
+
+    if (diffHours < 1) return "Just now";
+    if (diffHours < 24) return `${diffHours}h ago`;
+    if (diffDays < 7) return `${diffDays}d ago`;
+    return past.toLocaleDateString();
+  };
+
+  const getInitials = (name: string) => {
+    return name
+      .split(" ")
+      .map((n) => n[0])
+      .join("")
+      .toUpperCase()
+      .slice(0, 2);
+  };
+
+  const statsConfig = [
+    {
+      label: "New Inquiries",
+      value: stats.newInquiries.toString(),
+      icon: MessageSquare,
+      href: "/vendor/inquiries",
+    },
+    {
+      label: "Pending Quotes",
+      value: stats.pendingQuotes.toString(),
+      icon: FileText,
+      href: "/vendor/quotes",
+    },
+    {
+      label: "Upcoming Bookings",
+      value: stats.upcomingBookings.toString(),
+      icon: Calendar,
+      href: "/vendor/bookings",
+    },
+    {
+      label: "Monthly Revenue",
+      value: `£${stats.monthlyRevenue.toLocaleString()}`,
+      icon: DollarSign,
+      href: "/vendor/payments",
+    },
+  ];
+
+  if (isLoading) {
+    return (
+      <div className="flex justify-center items-center py-20">
+        <Loader2 className="h-8 w-8 animate-spin text-accent" />
+      </div>
+    );
+  }
+
   return (
     <>
       {/* Stats Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-        {stats.map((stat, idx) => (
+        {statsConfig.map((stat, idx) => (
           <Link
             key={idx}
             href={stat.href}
@@ -147,18 +204,6 @@ function DashboardContent() {
                   size={20}
                   className={`${textSecondary} group-hover:text-accent`}
                 />
-              </div>
-              <div
-                className={`flex items-center gap-1 text-xs font-medium ${
-                  stat.positive ? "text-green-500" : "text-red-500"
-                }`}
-              >
-                {stat.positive ? (
-                  <TrendingUp size={14} />
-                ) : (
-                  <TrendingDown size={14} />
-                )}
-                {stat.change}
               </div>
             </div>
             <p className={`text-2xl sm:text-3xl font-bold mb-1 ${textPrimary}`}>
@@ -188,39 +233,46 @@ function DashboardContent() {
             </Link>
           </div>
           <div className={`${divider}`}>
-            {recentInquiries.map((inquiry, idx) => (
-              <div
-                key={idx}
-                className={`p-4 transition-colors flex items-center justify-between border-b last:border-b-0 ${cardBorder} ${hoverBg}`}
-              >
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full bg-linear-to-br from-accent/50 to-pink-500/50 flex items-center justify-center text-white font-medium text-sm">
-                    {inquiry.name
-                      .split(" ")
-                      .map((n) => n[0])
-                      .join("")}
+            {recentInquiries.length > 0 ? (
+              recentInquiries.map((inquiry) => (
+                <div
+                  key={inquiry.id}
+                  className={`p-4 transition-colors flex items-center justify-between border-b last:border-b-0 ${cardBorder} ${hoverBg}`}
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-full bg-linear-to-br from-accent/50 to-pink-500/50 flex items-center justify-center text-white font-medium text-sm">
+                      {getInitials(inquiry.fromName)}
+                    </div>
+                    <div>
+                      <p className={`font-medium text-sm ${textPrimary}`}>
+                        {inquiry.fromName}
+                      </p>
+                      <p className={`text-xs ${textMuted} line-clamp-1`}>
+                        {inquiry.message.slice(0, 40)}...
+                      </p>
+                    </div>
                   </div>
-                  <div>
-                    <p className={`font-medium text-sm ${textPrimary}`}>
-                      {inquiry.name}
-                    </p>
-                    <p className={`text-xs ${textMuted}`}>{inquiry.event}</p>
+                  <div className="flex items-center gap-3">
+                    <span className={`text-xs hidden sm:block ${textMuted}`}>
+                      {formatTimeAgo(inquiry.createdAt)}
+                    </span>
+                    <span
+                      className={`px-2.5 py-1 rounded-full text-xs font-medium ${
+                        statusStyles[inquiry.status as InquiryStatus] ||
+                        statusStyles.NEW
+                      }`}
+                    >
+                      {inquiry.status}
+                    </span>
                   </div>
                 </div>
-                <div className="flex items-center gap-3">
-                  <span className={`text-xs hidden sm:block ${textMuted}`}>
-                    {inquiry.date}
-                  </span>
-                  <span
-                    className={`px-2.5 py-1 rounded-full text-xs font-medium ${
-                      statusStyles[inquiry.status]
-                    }`}
-                  >
-                    {inquiry.status}
-                  </span>
-                </div>
+              ))
+            ) : (
+              <div className={`p-8 text-center ${textMuted}`}>
+                <MessageSquare className="mx-auto mb-2 opacity-50" size={24} />
+                <p className="text-sm">No inquiries yet</p>
               </div>
-            ))}
+            )}
           </div>
         </div>
 
@@ -241,34 +293,45 @@ function DashboardContent() {
             </Link>
           </div>
           <div>
-            {upcomingBookings.map((booking, idx) => (
-              <div
-                key={idx}
-                className={`p-4 transition-colors border-b last:border-b-0 ${cardBorder} ${hoverBg}`}
-              >
-                <div className="flex items-start justify-between mb-2">
-                  <div>
-                    <p className={`font-medium text-sm ${textPrimary}`}>
-                      {booking.client}
-                    </p>
-                    <p className={`text-xs ${textMuted}`}>{booking.event}</p>
-                  </div>
-                  <span className="text-accent font-bold text-sm">
-                    {booking.amount}
-                  </span>
-                </div>
-                <div className={`flex items-center gap-4 text-xs ${textMuted}`}>
-                  <span className="flex items-center gap-1">
-                    <Calendar size={12} />
-                    {booking.date}
-                  </span>
-                  <span className="flex items-center gap-1">
-                    <Clock size={12} />
-                    {booking.time}
-                  </span>
-                </div>
+            {upcomingBookings.length === 0 ? (
+              <div className={`p-8 text-center ${textMuted}`}>
+                <Calendar size={32} className="mx-auto mb-2 opacity-50" />
+                <p>No upcoming bookings</p>
               </div>
-            ))}
+            ) : (
+              upcomingBookings.map((booking) => (
+                <div
+                  key={booking.id}
+                  className={`p-4 transition-colors border-b last:border-b-0 ${cardBorder} ${hoverBg}`}
+                >
+                  <div className="flex items-start justify-between mb-2">
+                    <div>
+                      <p className={`font-medium text-sm ${textPrimary}`}>
+                        {booking.quote?.inquiry?.fromName || "Client"}
+                      </p>
+                      <p className={`text-xs ${textMuted}`}>
+                        {booking.eventType || "Event"}
+                      </p>
+                    </div>
+                    <span className="text-accent font-bold text-sm">
+                      £{booking.totalPrice?.toLocaleString() || "0"}
+                    </span>
+                  </div>
+                  <div
+                    className={`flex items-center gap-4 text-xs ${textMuted}`}
+                  >
+                    <span className="flex items-center gap-1">
+                      <Calendar size={12} />
+                      {new Date(booking.eventDate).toLocaleDateString("en-GB", {
+                        day: "numeric",
+                        month: "short",
+                        year: "numeric",
+                      })}
+                    </span>
+                  </div>
+                </div>
+              ))
+            )}
           </div>
         </div>
       </div>

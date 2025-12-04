@@ -1,19 +1,24 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Menu, X, Search, ArrowUpRight } from "lucide-react";
 
 const navItems = [
-  { label: "Vendors", href: "/#vendors" },
-  { label: "Categories", href: "/#categories" },
-  { label: "Inspiration", href: "/#inspiration" },
-  { label: "About", href: "/#about" },
+  { label: "Vendors", href: "/vendors" },
+  { label: "Categories", href: "/categories" },
+  { label: "How it Works", href: "/#how-it-works" },
   { label: "FAQs", href: "/#faq" },
 ];
 
 export default function Header() {
+  const router = useRouter();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+
+  const handleSearch = () => {
+    router.push("/vendors");
+  };
 
   const navLinks = navItems.map((item) => (
     <Link
@@ -53,7 +58,11 @@ export default function Header() {
 
           {/* CTAs */}
           <div className="hidden md:flex items-center gap-3">
-            <button className="flex h-10 w-10 items-center justify-center rounded-full border border-border text-muted-foreground hover:text-foreground hover:border-foreground transition-colors">
+            <button
+              onClick={handleSearch}
+              className="flex h-10 w-10 items-center justify-center rounded-full border border-border text-muted-foreground hover:text-foreground hover:border-foreground transition-colors"
+              aria-label="Search vendors"
+            >
               <Search size={18} />
             </button>
             <Link
@@ -87,7 +96,11 @@ export default function Header() {
                 >
                   Join EVA
                 </Link>
-                <button className="flex h-11 w-11 items-center justify-center rounded-full border border-border text-muted-foreground">
+                <button
+                  onClick={handleSearch}
+                  className="flex h-11 w-11 items-center justify-center rounded-full border border-border text-muted-foreground"
+                  aria-label="Search vendors"
+                >
                   <Search size={18} />
                 </button>
               </div>

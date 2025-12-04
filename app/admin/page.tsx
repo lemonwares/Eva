@@ -6,133 +6,56 @@ import {
   TrendingUp,
   TrendingDown,
   Calendar,
-  DollarSign,
   Users,
-  Clock,
-  AlertCircle,
   AlertTriangle,
   Info,
   ArrowRight,
   ChevronRight,
+  Loader2,
+  Store,
+  MessageSquare,
 } from "lucide-react";
+import { useState, useEffect } from "react";
+import Link from "next/link";
 
-// Stats data
-const stats = [
-  {
-    label: "Total Bookings",
-    value: "1,234",
-    change: "+5.2%",
-    trend: "up",
-    period: "last 30 days",
-  },
-  {
-    label: "Revenue Generated",
-    value: "$98,765",
-    change: "+12.8%",
-    trend: "up",
-    period: "last 30 days",
-  },
-  {
-    label: "New User Signups",
-    value: "567",
-    change: "+3.1%",
-    trend: "up",
-    period: "last 30 days",
-  },
-  {
-    label: "Pending Vendor Approvals",
-    value: "12",
-    subtext: "Awaiting review",
-    isAction: true,
-  },
-];
+interface AnalyticsData {
+  period: string;
+  overview: {
+    users: { total: number; new: number; growth: number };
+    providers: { total: number; active: number; pending: number };
+    bookings: { total: number; new: number; completed: number; growth: number };
+    inquiries: { total: number; new: number; growth: number };
+    reviews: { total: number; pending: number };
+  };
+  breakdown: {
+    categories: Array<{
+      id: string;
+      name: string;
+      slug: string;
+      _count: { subcategories: number };
+    }>;
+    topProviders: Array<{
+      id: string;
+      businessName: string;
+      averageRating: number | null;
+      reviewCount: number;
+      inquiryCount: number;
+    }>;
+  };
+}
 
-// Action items
-const actionItems = [
-  {
-    type: "error",
-    title: "Failed Payment",
-    description: "Booking #BK7885 for $250.00 failed.",
-    icon: AlertCircle,
-    color: "text-red-400",
-    bgColor: "bg-red-500/10",
-    borderColor: "border-red-500/20",
-  },
-  {
-    type: "warning",
-    title: "High-Priority Ticket",
-    description: "Support ticket #T1023 requires attention.",
-    icon: AlertTriangle,
-    color: "text-amber-400",
-    bgColor: "bg-amber-500/10",
-    borderColor: "border-amber-500/20",
-  },
-  {
-    type: "info",
-    title: "System Update",
-    description: "A new system update is scheduled for tonight.",
-    icon: Info,
-    color: "text-blue-400",
-    bgColor: "bg-blue-500/10",
-    borderColor: "border-blue-500/20",
-  },
-];
-
-// Recent bookings
-const recentBookings = [
-  {
-    id: "#BK7890",
-    user: "Alex Morgan",
-    vendor: "City Catering Co.",
-    date: "2024-07-28",
-    status: "Confirmed",
-    statusColor: "bg-green-500",
-  },
-  {
-    id: "#BK7889",
-    user: "Casey Jordan",
-    vendor: "Downtown Hall",
-    date: "2024-07-27",
-    status: "Confirmed",
-    statusColor: "bg-green-500",
-  },
-  {
-    id: "#BK7888",
-    user: "Sam Rivera",
-    vendor: "The Jazz Trio",
-    date: "2024-07-26",
-    status: "Pending",
-    statusColor: "bg-amber-500",
-  },
-  {
-    id: "#BK7887",
-    user: "Pat Kim",
-    vendor: "Bloom Florals",
-    date: "2024-07-26",
-    status: "Cancelled",
-    statusColor: "bg-red-500",
-  },
-  {
-    id: "#BK7886",
-    user: "Taylor Smith",
-    vendor: "City Catering Co.",
-    date: "2024-07-25",
-    status: "Confirmed",
-    statusColor: "bg-green-500",
-  },
-];
-
-// Top vendor categories
-const vendorCategories = [
-  { name: "Photography", count: 245, color: "#ec4899" },
-  { name: "Catering", count: 198, color: "#f97316" },
-  { name: "Venues", count: 156, color: "#a855f7" },
-  { name: "Entertainment", count: 142, color: "#3b82f6" },
-  { name: "Florists", count: 89, color: "#22c55e" },
-  { name: "Other", count: 60, color: "#6b7280" },
-];
-
-const totalVendors = vendorCategories.reduce((sum, cat) => sum + cat.count, 0);
+interface Booking {
+  id: string;
+  eventDate: string;
+  status: string;
+  totalPrice: number;
+  provider: {
+    id: string;
+    businessName: string;
+    owner: { id: string; name: string; email: string };
+  };
+  quote: { id: string; totalPrice: number } | null;
+}
 
 export default function AdminOverviewPage() {
   const {
@@ -144,6 +67,138 @@ export default function AdminOverviewPage() {
     textMuted,
   } = useAdminTheme();
 
+  const [isLoading, setIsLoading] = useState(true);
+  const [analytics, setAnalytics] = useState<AnalyticsData | null>(null);
+  const [recentBookings, setRecentBookings] = useState<Booking[]>([]);
+
+  useEffect(() => {
+    fetchData();
+  }, []);
+
+  async function fetchData() {
+    setIsLoading(true);
+    try {
+      const [analyticsRes, bookingsRes] = await Promise.all([
+        fetch("/api/admin/analytics?period=30d"),
+        fetch("/api/admin/bookings?limit=5"),
+      ]);
+
+      if (analyticsRes.ok) {
+        const data = await analyticsRes.json();
+        setAnalytics(data);
+      }
+
+      if (bookingsRes.ok) {
+        const data = await bookingsRes.json();
+        setRecentBookings(data.bookings || []);
+      }
+    } catch (err) {
+      console.error("Error fetching admin data:", err);
+    } finally {
+      setIsLoading(false);
+    }
+  }
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case "CONFIRMED":
+      case "COMPLETED":
+        return "bg-green-500";
+      case "PENDING":
+        return "bg-amber-500";
+      case "CANCELLED":
+        return "bg-red-500";
+      default:
+        return "bg-gray-500";
+    }
+  };
+
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString("en-GB", {
+      day: "numeric",
+      month: "short",
+      year: "numeric",
+    });
+  };
+
+  if (isLoading) {
+    return (
+      <AdminLayout title="Overview">
+        <div className="flex justify-center items-center py-20">
+          <Loader2 className="h-8 w-8 animate-spin text-accent" />
+        </div>
+      </AdminLayout>
+    );
+  }
+
+  const stats = [
+    {
+      label: "Total Bookings",
+      value: analytics?.overview.bookings.total.toLocaleString() || "0",
+      change: `${analytics?.overview.bookings.growth || 0 >= 0 ? "+" : ""}${
+        analytics?.overview.bookings.growth || 0
+      }%`,
+      trend: (analytics?.overview.bookings.growth || 0) >= 0 ? "up" : "down",
+      period: "last 30 days",
+      icon: Calendar,
+    },
+    {
+      label: "New Inquiries",
+      value: analytics?.overview.inquiries.new.toLocaleString() || "0",
+      change: `${(analytics?.overview.inquiries.growth || 0) >= 0 ? "+" : ""}${
+        analytics?.overview.inquiries.growth || 0
+      }%`,
+      trend: (analytics?.overview.inquiries.growth || 0) >= 0 ? "up" : "down",
+      period: "last 30 days",
+      icon: MessageSquare,
+    },
+    {
+      label: "New User Signups",
+      value: analytics?.overview.users.new.toLocaleString() || "0",
+      change: `${(analytics?.overview.users.growth || 0) >= 0 ? "+" : ""}${
+        analytics?.overview.users.growth || 0
+      }%`,
+      trend: (analytics?.overview.users.growth || 0) >= 0 ? "up" : "down",
+      period: "last 30 days",
+      icon: Users,
+    },
+    {
+      label: "Pending Vendor Approvals",
+      value: analytics?.overview.providers.pending.toString() || "0",
+      subtext: "Awaiting review",
+      isAction: true,
+      href: "/admin/vendors?status=pending",
+      icon: Store,
+    },
+  ];
+
+  // Action items based on real data
+  const actionItems = [];
+  if ((analytics?.overview.reviews.pending || 0) > 0) {
+    actionItems.push({
+      type: "warning",
+      title: "Pending Reviews",
+      description: `${analytics?.overview.reviews.pending} reviews awaiting moderation`,
+      icon: AlertTriangle,
+      color: "text-amber-400",
+      bgColor: "bg-amber-500/10",
+      borderColor: "border-amber-500/20",
+      href: "/admin/reviews?status=pending",
+    });
+  }
+  if ((analytics?.overview.providers.pending || 0) > 0) {
+    actionItems.push({
+      type: "info",
+      title: "Vendor Approvals",
+      description: `${analytics?.overview.providers.pending} vendors awaiting approval`,
+      icon: Info,
+      color: "text-blue-400",
+      bgColor: "bg-blue-500/10",
+      borderColor: "border-blue-500/20",
+      href: "/admin/vendors?status=pending",
+    });
+  }
+
   return (
     <AdminLayout title="Overview">
       {/* Stats Grid */}
@@ -153,7 +208,10 @@ export default function AdminOverviewPage() {
             key={idx}
             className={`${cardBg} border ${cardBorder} rounded-xl p-5 transition-all hover:shadow-md`}
           >
-            <p className={`text-sm ${textMuted} mb-1`}>{stat.label}</p>
+            <div className="flex items-start justify-between mb-2">
+              <p className={`text-sm ${textMuted}`}>{stat.label}</p>
+              <stat.icon size={18} className="text-accent" />
+            </div>
             <p className={`text-2xl font-bold ${textPrimary} mb-2`}>
               {stat.value}
             </p>
@@ -174,10 +232,13 @@ export default function AdminOverviewPage() {
                 <span className={`text-sm ${textMuted}`}>{stat.period}</span>
               </div>
             ) : stat.isAction ? (
-              <div className="flex items-center gap-1.5">
+              <Link
+                href={stat.href || "#"}
+                className="flex items-center gap-1.5"
+              >
                 <ArrowRight size={14} className="text-accent" />
                 <span className="text-sm text-accent">{stat.subtext}</span>
-              </div>
+              </Link>
             ) : null}
           </div>
         ))}
@@ -185,32 +246,54 @@ export default function AdminOverviewPage() {
 
       {/* Charts & Actions Row */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
-        {/* Booking Volume Chart */}
+        {/* Platform Stats */}
         <div
           className={`lg:col-span-2 ${cardBg} border ${cardBorder} rounded-xl p-5`}
         >
           <h3 className={`font-semibold ${textPrimary} mb-4`}>
-            Booking Volume
+            Platform Overview
           </h3>
-          <div className="h-48 flex items-end justify-between gap-2">
-            {/* Simplified chart bars */}
-            {[40, 65, 45, 80, 55, 90, 70, 85, 60, 95, 75, 88].map(
-              (height, idx) => (
-                <div
-                  key={idx}
-                  className="flex-1 flex flex-col items-center gap-1"
-                >
-                  <div
-                    className="w-full bg-linear-to-t from-accent to-pink-500 rounded-t-sm transition-all hover:opacity-80"
-                    style={{ height: `${height}%` }}
-                  />
-                </div>
-              )
-            )}
-          </div>
-          <div className="flex justify-between mt-2">
-            <span className={`text-xs ${textMuted}`}>Jan</span>
-            <span className={`text-xs ${textMuted}`}>Dec</span>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+            <div
+              className={`p-4 rounded-lg ${
+                darkMode ? "bg-white/5" : "bg-gray-50"
+              }`}
+            >
+              <p className={`text-2xl font-bold ${textPrimary}`}>
+                {analytics?.overview.users.total.toLocaleString() || 0}
+              </p>
+              <p className={`text-sm ${textMuted}`}>Total Users</p>
+            </div>
+            <div
+              className={`p-4 rounded-lg ${
+                darkMode ? "bg-white/5" : "bg-gray-50"
+              }`}
+            >
+              <p className={`text-2xl font-bold ${textPrimary}`}>
+                {analytics?.overview.providers.active || 0}
+              </p>
+              <p className={`text-sm ${textMuted}`}>Active Vendors</p>
+            </div>
+            <div
+              className={`p-4 rounded-lg ${
+                darkMode ? "bg-white/5" : "bg-gray-50"
+              }`}
+            >
+              <p className={`text-2xl font-bold ${textPrimary}`}>
+                {analytics?.overview.bookings.completed || 0}
+              </p>
+              <p className={`text-sm ${textMuted}`}>Completed Bookings</p>
+            </div>
+            <div
+              className={`p-4 rounded-lg ${
+                darkMode ? "bg-white/5" : "bg-gray-50"
+              }`}
+            >
+              <p className={`text-2xl font-bold ${textPrimary}`}>
+                {analytics?.overview.reviews.total || 0}
+              </p>
+              <p className={`text-sm ${textMuted}`}>Total Reviews</p>
+            </div>
           </div>
         </div>
 
@@ -219,89 +302,80 @@ export default function AdminOverviewPage() {
           <h3 className={`font-semibold ${textPrimary} mb-4`}>
             Action Required
           </h3>
-          <div className="space-y-3">
-            {actionItems.map((item, idx) => (
-              <div
-                key={idx}
-                className={`${item.bgColor} border ${item.borderColor} rounded-lg p-3 cursor-pointer hover:opacity-90 transition-opacity`}
-              >
-                <div className="flex items-start gap-3">
-                  <item.icon size={18} className={item.color} />
-                  <div>
-                    <p className={`font-medium text-sm ${item.color}`}>
-                      {item.title}
-                    </p>
-                    <p className={`text-xs ${textMuted} mt-0.5`}>
-                      {item.description}
-                    </p>
+          {actionItems.length === 0 ? (
+            <div className={`text-center py-8 ${textMuted}`}>
+              <Info size={24} className="mx-auto mb-2 opacity-50" />
+              <p>No actions required</p>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {actionItems.map((item, idx) => (
+                <Link
+                  key={idx}
+                  href={item.href || "#"}
+                  className={`block ${item.bgColor} border ${item.borderColor} rounded-lg p-3 cursor-pointer hover:opacity-90 transition-opacity`}
+                >
+                  <div className="flex items-start gap-3">
+                    <item.icon size={18} className={item.color} />
+                    <div>
+                      <p className={`font-medium text-sm ${item.color}`}>
+                        {item.title}
+                      </p>
+                      <p className={`text-xs ${textMuted} mt-0.5`}>
+                        {item.description}
+                      </p>
+                    </div>
                   </div>
-                </div>
-              </div>
-            ))}
-          </div>
+                </Link>
+              ))}
+            </div>
+          )}
         </div>
       </div>
 
       {/* Bottom Row */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Top Vendor Categories - Donut Chart */}
+        {/* Top Providers */}
         <div className={`${cardBg} border ${cardBorder} rounded-xl p-5`}>
-          <h3 className={`font-semibold ${textPrimary} mb-4`}>
-            Top Vendor Categories
-          </h3>
-
-          {/* Donut Chart */}
-          <div className="relative w-48 h-48 mx-auto mb-4">
-            <svg viewBox="0 0 100 100" className="w-full h-full -rotate-90">
-              {
-                vendorCategories.reduce(
-                  (acc, cat, idx) => {
-                    const percentage = (cat.count / totalVendors) * 100;
-                    const strokeDasharray = `${percentage * 2.51} ${
-                      251.2 - percentage * 2.51
-                    }`;
-                    const strokeDashoffset = -acc.offset * 2.51;
-                    acc.elements.push(
-                      <circle
-                        key={idx}
-                        cx="50"
-                        cy="50"
-                        r="40"
-                        fill="none"
-                        stroke={cat.color}
-                        strokeWidth="12"
-                        strokeDasharray={strokeDasharray}
-                        strokeDashoffset={strokeDashoffset}
-                        className="transition-all duration-500"
-                      />
-                    );
-                    acc.offset += percentage;
-                    return acc;
-                  },
-                  { elements: [] as React.ReactNode[], offset: 0 }
-                ).elements
-              }
-            </svg>
-            <div className="absolute inset-0 flex flex-col items-center justify-center">
-              <span className={`text-2xl font-bold ${textPrimary}`}>
-                {totalVendors}
-              </span>
-              <span className={`text-xs ${textMuted}`}>Total</span>
+          <h3 className={`font-semibold ${textPrimary} mb-4`}>Top Vendors</h3>
+          {analytics?.breakdown.topProviders.length === 0 ? (
+            <div className={`text-center py-8 ${textMuted}`}>
+              <Store size={24} className="mx-auto mb-2 opacity-50" />
+              <p>No vendors yet</p>
             </div>
-          </div>
-
-          {/* Legend */}
-          <div className="grid grid-cols-2 gap-2">
-            {vendorCategories.slice(0, 4).map((cat, idx) => (
-              <div key={idx} className="flex items-center gap-2">
-                <div
-                  className="w-2.5 h-2.5 rounded-full"
-                  style={{ backgroundColor: cat.color }}
-                />
-                <span className={`text-xs ${textSecondary}`}>{cat.name}</span>
-              </div>
-            ))}
-          </div>
+          ) : (
+            <div className="space-y-3">
+              {analytics?.breakdown.topProviders
+                .slice(0, 5)
+                .map((provider, idx) => (
+                  <div
+                    key={provider.id}
+                    className={`flex items-center justify-between p-3 rounded-lg ${
+                      darkMode ? "bg-white/5" : "bg-gray-50"
+                    }`}
+                  >
+                    <div className="flex items-center gap-3">
+                      <span className={`text-sm font-medium ${textMuted}`}>
+                        #{idx + 1}
+                      </span>
+                      <div>
+                        <p className={`font-medium text-sm ${textPrimary}`}>
+                          {provider.businessName}
+                        </p>
+                        <p className={`text-xs ${textMuted}`}>
+                          {provider.reviewCount} reviews
+                        </p>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-accent font-medium">
+                        {provider.averageRating?.toFixed(1) || "N/A"}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+            </div>
+          )}
         </div>
 
         {/* Recent Bookings */}
@@ -310,59 +384,73 @@ export default function AdminOverviewPage() {
         >
           <div className="flex items-center justify-between mb-4">
             <h3 className={`font-semibold ${textPrimary}`}>Recent Bookings</h3>
-            <button className="text-accent text-sm font-medium flex items-center gap-1 hover:underline">
+            <Link
+              href="/admin/bookings"
+              className="text-accent text-sm font-medium flex items-center gap-1 hover:underline"
+            >
               View All <ChevronRight size={16} />
-            </button>
+            </Link>
           </div>
 
-          {/* Table */}
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead>
-                <tr className={`text-left text-xs uppercase ${textMuted}`}>
-                  <th className="pb-3 font-medium">Booking ID</th>
-                  <th className="pb-3 font-medium">User</th>
-                  <th className="pb-3 font-medium">Vendor</th>
-                  <th className="pb-3 font-medium">Date</th>
-                  <th className="pb-3 font-medium">Status</th>
-                </tr>
-              </thead>
-              <tbody
-                className={`divide-y ${
-                  darkMode ? "divide-white/5" : "divide-gray-100"
-                }`}
-              >
-                {recentBookings.map((booking) => (
-                  <tr
-                    key={booking.id}
-                    className={`${
-                      darkMode ? "hover:bg-white/5" : "hover:bg-gray-50"
-                    } transition-colors`}
-                  >
-                    <td className={`py-3 text-sm font-medium ${textPrimary}`}>
-                      {booking.id}
-                    </td>
-                    <td className={`py-3 text-sm ${textSecondary}`}>
-                      {booking.user}
-                    </td>
-                    <td className={`py-3 text-sm ${textSecondary}`}>
-                      {booking.vendor}
-                    </td>
-                    <td className={`py-3 text-sm ${textMuted}`}>
-                      {booking.date}
-                    </td>
-                    <td className="py-3">
-                      <span
-                        className={`inline-flex px-2.5 py-1 rounded-full text-xs font-medium text-white ${booking.statusColor}`}
-                      >
-                        {booking.status}
-                      </span>
-                    </td>
+          {recentBookings.length === 0 ? (
+            <div className={`text-center py-8 ${textMuted}`}>
+              <Calendar size={24} className="mx-auto mb-2 opacity-50" />
+              <p>No bookings yet</p>
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr className={`text-left text-xs uppercase ${textMuted}`}>
+                    <th className="pb-3 font-medium">Booking ID</th>
+                    <th className="pb-3 font-medium">Vendor</th>
+                    <th className="pb-3 font-medium">Date</th>
+                    <th className="pb-3 font-medium">Amount</th>
+                    <th className="pb-3 font-medium">Status</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody
+                  className={`divide-y ${
+                    darkMode ? "divide-white/5" : "divide-gray-100"
+                  }`}
+                >
+                  {recentBookings.map((booking) => (
+                    <tr
+                      key={booking.id}
+                      className={`${
+                        darkMode ? "hover:bg-white/5" : "hover:bg-gray-50"
+                      } transition-colors`}
+                    >
+                      <td className={`py-3 text-sm font-medium ${textPrimary}`}>
+                        #{booking.id.slice(-6).toUpperCase()}
+                      </td>
+                      <td className={`py-3 text-sm ${textSecondary}`}>
+                        {booking.provider.businessName}
+                      </td>
+                      <td className={`py-3 text-sm ${textMuted}`}>
+                        {formatDate(booking.eventDate)}
+                      </td>
+                      <td className={`py-3 text-sm ${textPrimary}`}>
+                        £
+                        {booking.totalPrice?.toLocaleString() ||
+                          booking.quote?.totalPrice?.toLocaleString() ||
+                          0}
+                      </td>
+                      <td className="py-3">
+                        <span
+                          className={`inline-flex px-2.5 py-1 rounded-full text-xs font-medium text-white ${getStatusColor(
+                            booking.status
+                          )}`}
+                        >
+                          {booking.status}
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
         </div>
       </div>
     </AdminLayout>
