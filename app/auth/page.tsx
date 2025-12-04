@@ -3,7 +3,7 @@
 import LoginForm from "@/components/auth/login-form";
 import SignUpForm from "@/components/auth/signup-form";
 import { Sparkles } from "lucide-react";
-import { useState } from "react";
+import { useState, Suspense } from "react";
 
 const tabs: { key: "login" | "signup"; label: string; description: string }[] =
   [
@@ -23,7 +23,7 @@ export default function AuthPage() {
       </div>
 
       <div className="relative z-10 flex min-h-screen items-center justify-center px-4 py-16">
-        <div className="grid w-full max-w-6xl overflow-hidden rounded-[32px] border border-border bg-card/90 shadow-[0_30px_120px_rgba(15,23,42,0.12)] backdrop-blur-xl lg:grid-cols-[1.1fr_0.9fr]">
+        <div className="grid w-full max-w-6xl overflow-hidden rounded-4xl border border-border bg-card/90 shadow-[0_30px_120px_rgba(15,23,42,0.12)] backdrop-blur-xl lg:grid-cols-[1.1fr_0.9fr]">
           {/* Brand / Story panel */}
           <div className="relative hidden bg-linear-to-b from-secondary via-card to-card p-12 lg:flex lg:flex-col lg:justify-between">
             <div>
@@ -95,7 +95,13 @@ export default function AuthPage() {
             </div>
 
             <div className="mt-8">
-              {activeTab === "login" ? <LoginForm /> : <SignUpForm />}
+              <Suspense
+                fallback={
+                  <div className="h-40 animate-pulse bg-secondary/50 rounded-xl"></div>
+                }
+              >
+                {activeTab === "login" ? <LoginForm /> : <SignUpForm />}
+              </Suspense>
             </div>
 
             <p className="mt-10 text-center text-xs text-muted-foreground">

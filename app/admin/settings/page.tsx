@@ -154,7 +154,7 @@ export default function AdminSettingsPage() {
 
               {/* Avatar */}
               <div className="flex items-center gap-4 mb-6">
-                <div className="w-20 h-20 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center">
+                <div className="w-20 h-20 rounded-full bg-linear-to-br from-blue-400 to-blue-600 flex items-center justify-center">
                   <span className="text-white font-bold text-2xl">A</span>
                 </div>
                 <div>

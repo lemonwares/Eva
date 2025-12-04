@@ -1,8 +1,24 @@
 "use client";
 
+import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { MapPin, Search, Sparkles, ShieldCheck, Users } from "lucide-react";
 
 export default function HeroSection() {
+  const router = useRouter();
+  const [searchQuery, setSearchQuery] = useState("");
+  const [location, setLocation] = useState("");
+  const [ceremony, setCeremony] = useState("");
+
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    const params = new URLSearchParams();
+    if (searchQuery) params.set("search", searchQuery);
+    if (location) params.set("location", location);
+    if (ceremony) params.set("ceremony", ceremony);
+    router.push(`/vendors?${params.toString()}`);
+  };
+
   return (
     <section
       id="hero"
@@ -38,7 +54,7 @@ export default function HeroSection() {
               Start planning
             </a>
             <a
-              href="/#vendors"
+              href="/vendors"
               className="inline-flex items-center justify-center rounded-full border border-border px-8 py-3 text-sm font-semibold text-foreground transition hover:-translate-y-0.5"
             >
               Explore vendors
@@ -66,8 +82,8 @@ export default function HeroSection() {
           </div>
         </div>
 
-        <div className="relative rounded-[32px] border border-border/80 bg-card/80 p-6 shadow-[0_30px_120px_rgba(15,23,42,0.1)] backdrop-blur">
-          <div className="rounded-3xl border border-border/70 bg-background/70 p-6 shadow-inner">
+        <div className="relative rounded-4xl border border-border/80 bg-card/80 p-6 shadow-[0_30px_120px_rgba(15,23,42,0.1)] backdrop-blur">
+          <form onSubmit={handleSearch} className="rounded-3xl border border-border/70 bg-background/70 p-6 shadow-inner">
             <p className="text-sm font-semibold uppercase tracking-[0.4em] text-muted-foreground">
               Smart search
             </p>
@@ -84,6 +100,8 @@ export default function HeroSection() {
                   <input
                     type="text"
                     placeholder="Photographer, caterer, planner..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
                     className="w-full rounded-2xl border border-border bg-input/60 px-12 py-3 text-sm text-foreground placeholder:text-muted-foreground focus:border-accent focus:ring-2 focus:ring-accent/30"
                   />
                 </div>
@@ -97,6 +115,8 @@ export default function HeroSection() {
                   <input
                     type="text"
                     placeholder="Postcode or city"
+                    value={location}
+                    onChange={(e) => setLocation(e.target.value)}
                     className="w-full rounded-2xl border border-border bg-input/60 px-12 py-3 text-sm text-foreground placeholder:text-muted-foreground focus:border-accent focus:ring-2 focus:ring-accent/30"
                   />
                 </div>
@@ -105,14 +125,24 @@ export default function HeroSection() {
                 <label className="text-sm font-medium text-muted-foreground">
                   Ceremony focus
                 </label>
-                <select className="w-full rounded-2xl border border-border bg-input/60 px-4 py-3 text-sm text-foreground focus:border-accent focus:ring-2 focus:ring-accent/30">
-                  <option>All traditions</option>
-                  <option>Christian wedding</option>
-                  <option>Hindu ceremony</option>
-                  <option>Traditional Nikah</option>
+                <select 
+                  value={ceremony}
+                  onChange={(e) => setCeremony(e.target.value)}
+                  className="w-full rounded-2xl border border-border bg-input/60 px-4 py-3 text-sm text-foreground focus:border-accent focus:ring-2 focus:ring-accent/30"
+                >
+                  <option value="">All traditions</option>
+                  <option value="christian">Christian wedding</option>
+                  <option value="hindu">Hindu ceremony</option>
+                  <option value="nikah">Traditional Nikah</option>
+                  <option value="jewish">Jewish wedding</option>
+                  <option value="sikh">Sikh ceremony</option>
+                  <option value="civil">Civil ceremony</option>
                 </select>
               </div>
-              <button className="mt-4 w-full rounded-2xl bg-foreground py-3 text-sm font-semibold text-background transition hover:-translate-y-0.5">
+              <button 
+                type="submit"
+                className="mt-4 w-full rounded-2xl bg-foreground py-3 text-sm font-semibold text-background transition hover:-translate-y-0.5"
+              >
                 See matches
               </button>
             </div>
@@ -128,7 +158,7 @@ export default function HeroSection() {
                 </p>
               </div>
             </div>
-          </div>
+          </form>
         </div>
       </div>
     </section>

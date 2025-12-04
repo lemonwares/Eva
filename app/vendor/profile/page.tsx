@@ -19,66 +19,124 @@ import {
   Plus,
   X,
   ChevronRight,
+  Loader2,
 } from "lucide-react";
 import Image from "next/image";
+import { useState, useEffect } from "react";
 
-const galleryImages = [
-  "/images/gallery-1.jpg",
-  "/images/gallery-2.jpg",
-  "/images/gallery-3.jpg",
-  "/images/gallery-4.jpg",
-  "/images/gallery-5.jpg",
-  "/images/gallery-6.jpg",
-];
+interface Provider {
+  id: string;
+  businessName: string;
+  description: string | null;
+  categories: string[];
+  subcategories: string[];
+  city: string | null;
+  postcode: string;
+  address: string | null;
+  website: string | null;
+  phonePublic: string | null;
+  instagram: string | null;
+  facebook: string | null;
+  tiktok: string | null;
+  photos: string[];
+  coverImage: string | null;
+  isVerified: boolean;
+  averageRating: number | null;
+  reviewCount: number;
+  priceFrom: number | null;
+  listings: Listing[];
+  _count: {
+    reviews: number;
+    bookings: number;
+    inquiries: number;
+    listings: number;
+  };
+  owner?: {
+    email: string;
+  };
+}
 
-const services = [
-  {
-    name: "Gold Wedding Package",
-    description: "Full-day coverage with 2 photographers",
-    price: "$4,500",
-    popular: true,
-  },
-  {
-    name: "Silver Package",
-    description: "Half-day coverage with 1 photographer",
-    price: "$2,750",
-    popular: false,
-  },
-  {
-    name: "Platinum DJ Set",
-    description: "Premium sound equipment & lighting",
-    price: "$3,200",
-    popular: false,
-  },
-  {
-    name: "Standard Photography",
-    description: "4 hours of event coverage",
-    price: "$1,800",
-    popular: false,
-  },
-];
-
-const reviews = [
-  {
-    author: "Sarah Mitchell",
-    rating: 5,
-    date: "Oct 15, 2024",
-    content:
-      "Absolutely amazing! They captured our wedding perfectly. Every moment was documented beautifully.",
-    avatar: "/images/avatar-1.jpg",
-  },
-  {
-    author: "James Wilson",
-    rating: 5,
-    date: "Sep 28, 2024",
-    content:
-      "Professional, punctual, and incredibly talented. The photos exceeded our expectations.",
-    avatar: "/images/avatar-2.jpg",
-  },
-];
+interface Listing {
+  id: string;
+  headline: string;
+  longDescription: string | null;
+  minPrice: number | null;
+  maxPrice: number | null;
+  coverImageUrl: string | null;
+}
 
 export default function VendorProfilePage() {
   const { darkMode } = useVendorTheme();
+  const [provider, setProvider] = useState<Provider | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    fetchProfile();
+  }, []);
+
+  async function fetchProfile() {
+    try {
+      const res = await fetch("/api/vendor/profile");
+      if (res.ok) {
+        const data = await res.json();
+        setProvider(data);
+      }
+    } catch (err) {
+      console.error("Error fetching profile:", err);
+    } finally {
+      setIsLoading(false);
+    }
+  }
+
+  const getInitials = (name: string) => {
+    return name
+      .split(" ")
+      .map((n) => n[0])
+      .join("")
+      .toUpperCase()
+      .slice(0, 2);
+  };
+
+  if (isLoading) {
+    return (
+      <VendorLayout title="My Profile">
+        <div className="flex justify-center items-center py-20">
+          <Loader2 className="h-8 w-8 animate-spin text-accent" />
+        </div>
+      </VendorLayout>
+    );
+  }
+
+  if (!provider) {
+    return (
+      <VendorLayout title="My Profile">
+        <div
+          className={`rounded-xl border p-12 text-center ${
+            darkMode
+              ? "bg-[#141414] border-white/10"
+              : "bg-white border-gray-200"
+          }`}
+        >
+          <Camera
+            size={48}
+            className={`mx-auto mb-4 ${
+              darkMode ? "text-gray-600" : "text-gray-400"
+            }`}
+          />
+          <h3
+            className={`text-lg font-medium mb-2 ${
+              darkMode ? "text-white" : "text-gray-900"
+            }`}
+          >
+            No profile found
+          </h3>
+          <p className={darkMode ? "text-gray-400" : "text-gray-500"}>
+            Please complete your vendor registration to create your profile.
+          </p>
+        </div>
+      </VendorLayout>
+    );
+  }
 
   return (
     <VendorLayout
@@ -93,6 +151,14 @@ export default function VendorProfilePage() {
       >
         {/* Cover Image */}
         <div className="relative h-32 sm:h-48 bg-linear-to-r from-accent/30 to-green-600/30">
+          {provider.coverImage && (
+            <Image
+              src={provider.coverImage}
+              alt="Cover"
+              fill
+              className="object-cover"
+            />
+          )}
           <button
             className={`absolute top-4 right-4 p-2 rounded-lg ${
               darkMode
@@ -114,7 +180,7 @@ export default function VendorProfilePage() {
                 } overflow-hidden`}
               >
                 <div className="w-full h-full flex items-center justify-center text-white text-3xl font-bold">
-                  EP
+                  {getInitials(provider.businessName)}
                 </div>
               </div>
               <button className="absolute bottom-2 right-2 p-1.5 rounded-full bg-accent text-white">
@@ -130,31 +196,43 @@ export default function VendorProfilePage() {
                       darkMode ? "text-white" : "text-gray-900"
                     }`}
                   >
-                    Elegant Productions
+                    {provider.businessName}
                   </h2>
                   <p className={darkMode ? "text-gray-400" : "text-gray-600"}>
-                    Photography & DJ Services
+                    {provider.categories?.join(", ") || "Vendor"}
                   </p>
                   <div className="flex items-center gap-4 mt-2">
-                    <div className="flex items-center gap-1 text-yellow-400">
-                      <Star size={16} fill="currentColor" />
-                      <span className="font-medium">4.9</span>
-                      <span className="text-gray-500">(156 reviews)</span>
-                    </div>
-                    <div
-                      className={`flex items-center gap-1 ${
-                        darkMode ? "text-gray-400" : "text-gray-600"
-                      }`}
-                    >
-                      <MapPin size={16} />
-                      <span>Los Angeles, CA</span>
-                    </div>
+                    {provider.averageRating !== null && (
+                      <div className="flex items-center gap-1 text-yellow-400">
+                        <Star size={16} fill="currentColor" />
+                        <span className="font-medium">
+                          {provider.averageRating?.toFixed(1) || "0.0"}
+                        </span>
+                        <span className="text-gray-500">
+                          ({provider.reviewCount} reviews)
+                        </span>
+                      </div>
+                    )}
+                    {provider.city && (
+                      <div
+                        className={`flex items-center gap-1 ${
+                          darkMode ? "text-gray-400" : "text-gray-600"
+                        }`}
+                      >
+                        <MapPin size={16} />
+                        <span>
+                          {provider.city}, {provider.postcode}
+                        </span>
+                      </div>
+                    )}
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
-                  <span className="px-3 py-1.5 rounded-full bg-green-500/20 text-green-400 text-sm font-medium border border-green-500/30">
-                    Verified Vendor
-                  </span>
+                  {provider.isVerified && (
+                    <span className="px-3 py-1.5 rounded-full bg-green-500/20 text-green-400 text-sm font-medium border border-green-500/30">
+                      Verified Vendor
+                    </span>
+                  )}
                 </div>
               </div>
             </div>
@@ -195,13 +273,8 @@ export default function VendorProfilePage() {
                 darkMode ? "text-gray-400" : "text-gray-600"
               } leading-relaxed`}
             >
-              Elegant Productions is a premier event services company
-              specializing in photography and DJ services for weddings,
-              corporate events, and private parties. With over 10 years of
-              experience, we bring creativity, passion, and professionalism to
-              every event we serve. Our team of skilled photographers and DJs
-              are dedicated to capturing your special moments and creating
-              unforgettable experiences.
+              {provider.description ||
+                "No description provided. Add a compelling description to attract more clients."}
             </p>
           </div>
 
@@ -226,50 +299,61 @@ export default function VendorProfilePage() {
                 Add Service
               </button>
             </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              {services.map((service, idx) => (
-                <div
-                  key={idx}
-                  className={`p-4 rounded-lg ${
-                    darkMode
-                      ? "bg-white/5 border-white/10 hover:border-accent/50"
-                      : "bg-gray-50 border-gray-200 hover:border-accent/50"
-                  } border transition-colors group`}
-                >
-                  <div className="flex items-start justify-between mb-2">
-                    <div>
-                      <div className="flex items-center gap-2">
+            {provider.listings.length === 0 ? (
+              <div
+                className={`text-center py-8 ${
+                  darkMode ? "text-gray-500" : "text-gray-400"
+                }`}
+              >
+                <p>
+                  No services listed yet. Add your first service or package.
+                </p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {provider.listings.map((listing) => (
+                  <div
+                    key={listing.id}
+                    className={`p-4 rounded-lg ${
+                      darkMode
+                        ? "bg-white/5 border-white/10 hover:border-accent/50"
+                        : "bg-gray-50 border-gray-200 hover:border-accent/50"
+                    } border transition-colors group`}
+                  >
+                    <div className="flex items-start justify-between mb-2">
+                      <div>
                         <h4
                           className={`font-medium ${
                             darkMode ? "text-white" : "text-gray-900"
                           }`}
                         >
-                          {service.name}
+                          {listing.headline}
                         </h4>
-                        {service.popular && (
-                          <span className="px-2 py-0.5 rounded text-xs bg-accent/20 text-accent">
-                            Popular
-                          </span>
-                        )}
+                        <p className="text-gray-500 text-sm mt-1 line-clamp-2">
+                          {listing.longDescription || "No description"}
+                        </p>
                       </div>
-                      <p className="text-gray-500 text-sm mt-1">
-                        {service.description}
-                      </p>
+                      <button
+                        className={`opacity-0 group-hover:opacity-100 p-1.5 rounded ${
+                          darkMode ? "hover:bg-white/10" : "hover:bg-gray-200"
+                        } transition-all`}
+                      >
+                        <Edit3 size={14} className="text-gray-400" />
+                      </button>
                     </div>
-                    <button
-                      className={`opacity-0 group-hover:opacity-100 p-1.5 rounded ${
-                        darkMode ? "hover:bg-white/10" : "hover:bg-gray-200"
-                      } transition-all`}
-                    >
-                      <Edit3 size={14} className="text-gray-400" />
-                    </button>
+                    <p className="text-accent font-bold text-lg">
+                      {listing.minPrice
+                        ? `£${listing.minPrice.toLocaleString()}${
+                            listing.maxPrice
+                              ? ` - £${listing.maxPrice.toLocaleString()}`
+                              : "+"
+                          }`
+                        : "Price on request"}
+                    </p>
                   </div>
-                  <p className="text-accent font-bold text-lg">
-                    {service.price}
-                  </p>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            )}
           </div>
 
           {/* Gallery Section */}
@@ -293,35 +377,43 @@ export default function VendorProfilePage() {
                 Add Photos
               </button>
             </div>
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-              {galleryImages.map((img, idx) => (
-                <div
-                  key={idx}
-                  className={`relative aspect-square rounded-lg ${
-                    darkMode ? "bg-white/5" : "bg-gray-100"
-                  } overflow-hidden group`}
-                >
+            {provider.photos.length === 0 ? (
+              <div
+                className={`text-center py-8 ${
+                  darkMode ? "text-gray-500" : "text-gray-400"
+                }`}
+              >
+                <Camera size={32} className="mx-auto mb-2 opacity-50" />
+                <p>No photos uploaded yet. Add photos to showcase your work.</p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                {provider.photos.map((photo, idx) => (
                   <div
-                    className={`w-full h-full flex items-center justify-center ${
-                      darkMode ? "text-gray-600" : "text-gray-400"
-                    }`}
+                    key={idx}
+                    className={`relative aspect-square rounded-lg overflow-hidden group`}
                   >
-                    <Camera size={24} />
+                    <Image
+                      src={photo}
+                      alt={`Portfolio ${idx + 1}`}
+                      fill
+                      className="object-cover"
+                    />
+                    <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+                      <button className="p-2 rounded-lg bg-white/20 hover:bg-white/30 transition-colors">
+                        <Edit3 size={16} className="text-white" />
+                      </button>
+                      <button className="p-2 rounded-lg bg-red-500/20 hover:bg-red-500/30 transition-colors">
+                        <X size={16} className="text-red-400" />
+                      </button>
+                    </div>
                   </div>
-                  <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
-                    <button className="p-2 rounded-lg bg-white/20 hover:bg-white/30 transition-colors">
-                      <Edit3 size={16} className="text-white" />
-                    </button>
-                    <button className="p-2 rounded-lg bg-red-500/20 hover:bg-red-500/30 transition-colors">
-                      <X size={16} className="text-red-400" />
-                    </button>
-                  </div>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            )}
           </div>
 
-          {/* Reviews Section */}
+          {/* Stats Section */}
           <div
             className={`${
               darkMode
@@ -329,63 +421,78 @@ export default function VendorProfilePage() {
                 : "bg-white border-gray-200"
             } rounded-xl border p-5`}
           >
-            <div className="flex items-center justify-between mb-4">
-              <h3
-                className={`${
-                  darkMode ? "text-white" : "text-gray-900"
-                } font-semibold`}
+            <h3
+              className={`${
+                darkMode ? "text-white" : "text-gray-900"
+              } font-semibold mb-4`}
+            >
+              Performance Stats
+            </h3>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+              <div
+                className={`p-4 rounded-lg ${
+                  darkMode ? "bg-white/5" : "bg-gray-50"
+                }`}
               >
-                Recent Reviews
-              </h3>
-              <button className="flex items-center gap-1 text-accent text-sm hover:underline">
-                View All <ChevronRight size={16} />
-              </button>
-            </div>
-            <div className="space-y-4">
-              {reviews.map((review, idx) => (
-                <div
-                  key={idx}
-                  className={`p-4 rounded-lg ${
-                    darkMode ? "bg-white/5" : "bg-gray-50"
+                <p className="text-2xl font-bold text-accent">
+                  {provider._count.inquiries}
+                </p>
+                <p
+                  className={`text-sm ${
+                    darkMode ? "text-gray-400" : "text-gray-500"
                   }`}
                 >
-                  <div className="flex items-start gap-3 mb-3">
-                    <div className="w-10 h-10 rounded-full bg-linear-to-br from-accent to-green-600 flex items-center justify-center text-white font-medium">
-                      {review.author.charAt(0)}
-                    </div>
-                    <div className="flex-1">
-                      <div className="flex items-center justify-between">
-                        <p
-                          className={`font-medium ${
-                            darkMode ? "text-white" : "text-gray-900"
-                          }`}
-                        >
-                          {review.author}
-                        </p>
-                        <span className="text-gray-500 text-sm">
-                          {review.date}
-                        </span>
-                      </div>
-                      <div className="flex items-center gap-1 mt-1">
-                        {[...Array(5)].map((_, i) => (
-                          <Star
-                            key={i}
-                            size={14}
-                            className={
-                              i < review.rating
-                                ? "text-yellow-400 fill-yellow-400"
-                                : "text-gray-600"
-                            }
-                          />
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-                  <p className={darkMode ? "text-gray-400" : "text-gray-600"}>
-                    {review.content}
-                  </p>
-                </div>
-              ))}
+                  Total Inquiries
+                </p>
+              </div>
+              <div
+                className={`p-4 rounded-lg ${
+                  darkMode ? "bg-white/5" : "bg-gray-50"
+                }`}
+              >
+                <p className="text-2xl font-bold text-accent">
+                  {provider._count.bookings}
+                </p>
+                <p
+                  className={`text-sm ${
+                    darkMode ? "text-gray-400" : "text-gray-500"
+                  }`}
+                >
+                  Bookings
+                </p>
+              </div>
+              <div
+                className={`p-4 rounded-lg ${
+                  darkMode ? "bg-white/5" : "bg-gray-50"
+                }`}
+              >
+                <p className="text-2xl font-bold text-accent">
+                  {provider._count.reviews}
+                </p>
+                <p
+                  className={`text-sm ${
+                    darkMode ? "text-gray-400" : "text-gray-500"
+                  }`}
+                >
+                  Reviews
+                </p>
+              </div>
+              <div
+                className={`p-4 rounded-lg ${
+                  darkMode ? "bg-white/5" : "bg-gray-50"
+                }`}
+              >
+                <p className="text-2xl font-bold text-accent">
+                  {provider._count.listings}
+                </p>
+                <p
+                  className={`text-sm ${
+                    darkMode ? "text-gray-400" : "text-gray-500"
+                  }`}
+                >
+                  Services
+                </p>
+              </div>
             </div>
           </div>
         </div>
@@ -417,49 +524,62 @@ export default function VendorProfilePage() {
               </button>
             </div>
             <div className="space-y-4">
-              <div className="flex items-center gap-3">
-                <div
-                  className={`p-2 rounded-lg ${
-                    darkMode ? "bg-white/5" : "bg-gray-100"
-                  }`}
-                >
-                  <Mail size={18} className="text-gray-400" />
+              {provider.phonePublic && (
+                <div className="flex items-center gap-3">
+                  <div
+                    className={`p-2 rounded-lg ${
+                      darkMode ? "bg-white/5" : "bg-gray-100"
+                    }`}
+                  >
+                    <Phone size={18} className="text-gray-400" />
+                  </div>
+                  <div>
+                    <p className="text-gray-500 text-xs">Phone</p>
+                    <p className={darkMode ? "text-white" : "text-gray-900"}>
+                      {provider.phonePublic}
+                    </p>
+                  </div>
                 </div>
-                <div>
-                  <p className="text-gray-500 text-xs">Email</p>
-                  <p className={darkMode ? "text-white" : "text-gray-900"}>
-                    contact@elegantprod.com
-                  </p>
+              )}
+              {provider.website && (
+                <div className="flex items-center gap-3">
+                  <div
+                    className={`p-2 rounded-lg ${
+                      darkMode ? "bg-white/5" : "bg-gray-100"
+                    }`}
+                  >
+                    <Globe size={18} className="text-gray-400" />
+                  </div>
+                  <div>
+                    <p className="text-gray-500 text-xs">Website</p>
+                    <a
+                      href={provider.website}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-accent hover:underline"
+                    >
+                      {provider.website}
+                    </a>
+                  </div>
                 </div>
-              </div>
-              <div className="flex items-center gap-3">
-                <div
-                  className={`p-2 rounded-lg ${
-                    darkMode ? "bg-white/5" : "bg-gray-100"
-                  }`}
-                >
-                  <Phone size={18} className="text-gray-400" />
+              )}
+              {provider.address && (
+                <div className="flex items-center gap-3">
+                  <div
+                    className={`p-2 rounded-lg ${
+                      darkMode ? "bg-white/5" : "bg-gray-100"
+                    }`}
+                  >
+                    <MapPin size={18} className="text-gray-400" />
+                  </div>
+                  <div>
+                    <p className="text-gray-500 text-xs">Address</p>
+                    <p className={darkMode ? "text-white" : "text-gray-900"}>
+                      {provider.address}
+                    </p>
+                  </div>
                 </div>
-                <div>
-                  <p className="text-gray-500 text-xs">Phone</p>
-                  <p className={darkMode ? "text-white" : "text-gray-900"}>
-                    (555) 123-4567
-                  </p>
-                </div>
-              </div>
-              <div className="flex items-center gap-3">
-                <div
-                  className={`p-2 rounded-lg ${
-                    darkMode ? "bg-white/5" : "bg-gray-100"
-                  }`}
-                >
-                  <Globe size={18} className="text-gray-400" />
-                </div>
-                <div>
-                  <p className="text-gray-500 text-xs">Website</p>
-                  <p className="text-accent">www.elegantprod.com</p>
-                </div>
-              </div>
+              )}
             </div>
           </div>
 
@@ -488,42 +608,67 @@ export default function VendorProfilePage() {
               </button>
             </div>
             <div className="flex flex-wrap gap-3">
-              <button
-                className={`p-3 rounded-lg ${
-                  darkMode
-                    ? "bg-white/5 hover:bg-white/10"
-                    : "bg-gray-100 hover:bg-gray-200"
-                } transition-colors`}
-              >
-                <Instagram size={20} className="text-pink-400" />
-              </button>
-              <button
-                className={`p-3 rounded-lg ${
-                  darkMode
-                    ? "bg-white/5 hover:bg-white/10"
-                    : "bg-gray-100 hover:bg-gray-200"
-                } transition-colors`}
-              >
-                <Facebook size={20} className="text-blue-400" />
-              </button>
-              <button
-                className={`p-3 rounded-lg ${
-                  darkMode
-                    ? "bg-white/5 hover:bg-white/10"
-                    : "bg-gray-100 hover:bg-gray-200"
-                } transition-colors`}
-              >
-                <Twitter size={20} className="text-sky-400" />
-              </button>
-              <button
-                className={`p-3 rounded-lg ${
-                  darkMode
-                    ? "bg-white/5 hover:bg-white/10"
-                    : "bg-gray-100 hover:bg-gray-200"
-                } transition-colors`}
-              >
-                <Linkedin size={20} className="text-blue-500" />
-              </button>
+              {provider.instagram && (
+                <a
+                  href={`https://instagram.com/${provider.instagram}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className={`p-3 rounded-lg ${
+                    darkMode
+                      ? "bg-white/5 hover:bg-white/10"
+                      : "bg-gray-100 hover:bg-gray-200"
+                  } transition-colors`}
+                >
+                  <Instagram size={20} className="text-pink-400" />
+                </a>
+              )}
+              {provider.facebook && (
+                <a
+                  href={provider.facebook}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className={`p-3 rounded-lg ${
+                    darkMode
+                      ? "bg-white/5 hover:bg-white/10"
+                      : "bg-gray-100 hover:bg-gray-200"
+                  } transition-colors`}
+                >
+                  <Facebook size={20} className="text-blue-400" />
+                </a>
+              )}
+              {provider.tiktok && (
+                <a
+                  href={`https://tiktok.com/@${provider.tiktok}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className={`p-3 rounded-lg ${
+                    darkMode
+                      ? "bg-white/5 hover:bg-white/10"
+                      : "bg-gray-100 hover:bg-gray-200"
+                  } transition-colors`}
+                >
+                  <svg
+                    viewBox="0 0 24 24"
+                    width="20"
+                    height="20"
+                    fill="currentColor"
+                    className="text-gray-400"
+                  >
+                    <path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64 2.93 2.93 0 0 1 .88.13V9.4a6.84 6.84 0 0 0-1-.05A6.33 6.33 0 0 0 5 20.1a6.34 6.34 0 0 0 10.86-4.43v-7a8.16 8.16 0 0 0 4.77 1.52v-3.4a4.85 4.85 0 0 1-1-.1z" />
+                  </svg>
+                </a>
+              )}
+              {!provider.instagram &&
+                !provider.facebook &&
+                !provider.tiktok && (
+                  <p
+                    className={`text-sm ${
+                      darkMode ? "text-gray-500" : "text-gray-400"
+                    }`}
+                  >
+                    No social media links added yet.
+                  </p>
+                )}
             </div>
           </div>
 
@@ -543,96 +688,102 @@ export default function VendorProfilePage() {
               Achievements
             </h3>
             <div className="space-y-3">
-              <div
-                className={`flex items-center gap-3 p-3 rounded-lg ${
-                  darkMode ? "bg-white/5" : "bg-gray-50"
-                }`}
-              >
-                <div className="p-2 rounded-lg bg-yellow-500/20">
-                  <Award size={18} className="text-yellow-400" />
+              {provider.isVerified && (
+                <div
+                  className={`flex items-center gap-3 p-3 rounded-lg ${
+                    darkMode ? "bg-white/5" : "bg-gray-50"
+                  }`}
+                >
+                  <div className="p-2 rounded-lg bg-green-500/20">
+                    <Award size={18} className="text-green-400" />
+                  </div>
+                  <div>
+                    <p
+                      className={`${
+                        darkMode ? "text-white" : "text-gray-900"
+                      } font-medium`}
+                    >
+                      Verified Vendor
+                    </p>
+                    <p className="text-gray-500 text-sm">Trusted & Verified</p>
+                  </div>
                 </div>
-                <div>
-                  <p
-                    className={`${
-                      darkMode ? "text-white" : "text-gray-900"
-                    } font-medium`}
-                  >
-                    Top Rated
-                  </p>
-                  <p className="text-gray-500 text-sm">2024 Best Vendor</p>
+              )}
+              {provider._count.bookings >= 10 && (
+                <div
+                  className={`flex items-center gap-3 p-3 rounded-lg ${
+                    darkMode ? "bg-white/5" : "bg-gray-50"
+                  }`}
+                >
+                  <div className="p-2 rounded-lg bg-blue-500/20">
+                    <Calendar size={18} className="text-blue-400" />
+                  </div>
+                  <div>
+                    <p
+                      className={`${
+                        darkMode ? "text-white" : "text-gray-900"
+                      } font-medium`}
+                    >
+                      {provider._count.bookings}+ Events
+                    </p>
+                    <p className="text-gray-500 text-sm">Events Completed</p>
+                  </div>
                 </div>
-              </div>
-              <div
-                className={`flex items-center gap-3 p-3 rounded-lg ${
-                  darkMode ? "bg-white/5" : "bg-gray-50"
-                }`}
-              >
-                <div className="p-2 rounded-lg bg-green-500/20">
-                  <Calendar size={18} className="text-green-400" />
+              )}
+              {(provider.averageRating || 0) >= 4.5 && (
+                <div
+                  className={`flex items-center gap-3 p-3 rounded-lg ${
+                    darkMode ? "bg-white/5" : "bg-gray-50"
+                  }`}
+                >
+                  <div className="p-2 rounded-lg bg-yellow-500/20">
+                    <Star size={18} className="text-yellow-400" />
+                  </div>
+                  <div>
+                    <p
+                      className={`${
+                        darkMode ? "text-white" : "text-gray-900"
+                      } font-medium`}
+                    >
+                      Top Rated
+                    </p>
+                    <p className="text-gray-500 text-sm">
+                      {provider.averageRating?.toFixed(1)} Average Rating
+                    </p>
+                  </div>
                 </div>
-                <div>
-                  <p
-                    className={`${
-                      darkMode ? "text-white" : "text-gray-900"
-                    } font-medium`}
-                  >
-                    100+ Events
-                  </p>
-                  <p className="text-gray-500 text-sm">Milestone reached</p>
-                </div>
-              </div>
+              )}
             </div>
           </div>
 
-          {/* Business Hours */}
-          <div
-            className={`${
-              darkMode
-                ? "bg-[#141414] border-white/10"
-                : "bg-white border-gray-200"
-            } rounded-xl border p-5`}
-          >
-            <div className="flex items-center justify-between mb-4">
+          {/* Pricing */}
+          {provider.priceFrom && (
+            <div
+              className={`${
+                darkMode
+                  ? "bg-[#141414] border-white/10"
+                  : "bg-white border-gray-200"
+              } rounded-xl border p-5`}
+            >
               <h3
                 className={`${
                   darkMode ? "text-white" : "text-gray-900"
-                } font-semibold`}
+                } font-semibold mb-2`}
               >
-                Business Hours
+                Starting Price
               </h3>
-              <button
-                className={`p-2 rounded-lg ${
-                  darkMode ? "hover:bg-white/10" : "hover:bg-gray-100"
-                } transition-colors`}
+              <p className="text-accent text-2xl font-bold">
+                £{provider.priceFrom.toLocaleString()}
+              </p>
+              <p
+                className={`text-sm ${
+                  darkMode ? "text-gray-400" : "text-gray-500"
+                }`}
               >
-                <Edit3 size={16} className="text-gray-400" />
-              </button>
+                From
+              </p>
             </div>
-            <div className="space-y-2 text-sm">
-              <div className="flex justify-between">
-                <span className={darkMode ? "text-gray-400" : "text-gray-600"}>
-                  Mon - Fri
-                </span>
-                <span className={darkMode ? "text-white" : "text-gray-900"}>
-                  9:00 AM - 6:00 PM
-                </span>
-              </div>
-              <div className="flex justify-between">
-                <span className={darkMode ? "text-gray-400" : "text-gray-600"}>
-                  Saturday
-                </span>
-                <span className={darkMode ? "text-white" : "text-gray-900"}>
-                  10:00 AM - 4:00 PM
-                </span>
-              </div>
-              <div className="flex justify-between">
-                <span className={darkMode ? "text-gray-400" : "text-gray-600"}>
-                  Sunday
-                </span>
-                <span className="text-gray-500">Closed</span>
-              </div>
-            </div>
-          </div>
+          )}
         </div>
       </div>
     </VendorLayout>
