@@ -1,0 +1,27 @@
+{
+  "name": "EVA - Event Vendor Atlas",
+  "short_name": "EVA",
+  "description": "Discover and book culturally-aware event vendors, planners, and venues in minutes.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#fdfcf7",
+  "theme_color": "#0f172a",
+  "lang": "en",
+  "categories": ["events", "productivity", "shopping"],
+  "icons": [
+    {
+      "src": "/pwa-icon.svg",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "/pwa-icon.svg",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "maskable"
+    }
+  ]
+}
