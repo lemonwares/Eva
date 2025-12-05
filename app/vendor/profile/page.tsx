@@ -24,6 +24,7 @@ import {
 } from "lucide-react";
 import Image from "next/image";
 import { useState, useEffect, useRef } from "react";
+import { useRouter } from "next/navigation";
 
 interface Provider {
   id: string;
@@ -68,6 +69,7 @@ interface Listing {
 
 export default function VendorProfilePage() {
   const { darkMode } = useVendorTheme();
+  const router = useRouter();
   const [provider, setProvider] = useState<Provider | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isUploading, setIsUploading] = useState<"cover" | "logo" | null>(null);
@@ -83,7 +85,7 @@ export default function VendorProfilePage() {
       const res = await fetch("/api/vendor/profile");
       if (res.ok) {
         const data = await res.json();
-        setProvider(data);
+        setProvider(data.provider || null);
       }
     } catch (err) {
       console.error("Error fetching profile:", err);
@@ -187,7 +189,10 @@ export default function VendorProfilePage() {
   return (
     <VendorLayout
       title="My Profile"
-      actionButton={{ label: "Edit Profile", onClick: () => {} }}
+      actionButton={{
+        label: "Edit Profile",
+        onClick: () => router.push("/vendor/settings"),
+      }}
     >
       {/* Profile Header */}
       <div

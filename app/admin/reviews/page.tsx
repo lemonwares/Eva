@@ -366,10 +366,35 @@ export default function AdminReviewsPage() {
               } flex gap-3`}
             >
               <button
-                className="flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-lg bg-accent text-white font-semibold hover:bg-accent/90 transition-colors"
-                onClick={() => {
-                  // TODO: Implement approve API call
-                  alert("Approve functionality coming soon");
+                className="flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-lg bg-accent text-white font-semibold hover:bg-accent/90 transition-colors disabled:opacity-50"
+                disabled={
+                  selectedReview.isApproved && !selectedReview.isFlagged
+                }
+                onClick={async () => {
+                  try {
+                    const res = await fetch(
+                      `/api/reviews/${selectedReview.id}/moderate`,
+                      {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({
+                          action: "approve",
+                          notes: moderatorNotes,
+                        }),
+                      }
+                    );
+                    if (res.ok) {
+                      setSelectedReview({
+                        ...selectedReview,
+                        isApproved: true,
+                        isFlagged: false,
+                      });
+                      fetchReviews();
+                      setModeratorNotes("");
+                    }
+                  } catch (err) {
+                    console.error("Error approving review:", err);
+                  }
                 }}
               >
                 <CheckCircle size={18} />
@@ -379,9 +404,27 @@ export default function AdminReviewsPage() {
                 className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-lg border ${
                   darkMode ? "border-white/10" : "border-gray-200"
                 } ${textPrimary} font-semibold hover:bg-red-500/10 hover:text-red-400 hover:border-red-500/30 transition-colors`}
-                onClick={() => {
-                  // TODO: Implement reject API call
-                  alert("Reject functionality coming soon");
+                onClick={async () => {
+                  try {
+                    const res = await fetch(
+                      `/api/reviews/${selectedReview.id}/moderate`,
+                      {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({
+                          action: "reject",
+                          notes: moderatorNotes,
+                        }),
+                      }
+                    );
+                    if (res.ok) {
+                      setSelectedReview(null);
+                      fetchReviews();
+                      setModeratorNotes("");
+                    }
+                  } catch (err) {
+                    console.error("Error rejecting review:", err);
+                  }
                 }}
               >
                 <XCircle size={18} />
@@ -391,9 +434,27 @@ export default function AdminReviewsPage() {
                 className={`p-3 rounded-lg border ${
                   darkMode ? "border-white/10" : "border-gray-200"
                 } ${textMuted} hover:bg-amber-500/10 hover:text-amber-400 hover:border-amber-500/30 transition-colors`}
-                onClick={() => {
-                  // TODO: Implement flag API call
-                  alert("Flag functionality coming soon");
+                onClick={async () => {
+                  try {
+                    const res = await fetch(
+                      `/api/reviews/${selectedReview.id}/moderate`,
+                      {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({
+                          action: "flag",
+                          notes: moderatorNotes,
+                        }),
+                      }
+                    );
+                    if (res.ok) {
+                      setSelectedReview({ ...selectedReview, isFlagged: true });
+                      fetchReviews();
+                      setModeratorNotes("");
+                    }
+                  } catch (err) {
+                    console.error("Error flagging review:", err);
+                  }
                 }}
               >
                 <Flag size={18} />

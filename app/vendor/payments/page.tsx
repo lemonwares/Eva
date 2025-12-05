@@ -75,7 +75,7 @@ export default function VendorPaymentsPage() {
         const thisMonthStart = new Date(now.getFullYear(), now.getMonth(), 1);
 
         bookings.forEach((booking: any) => {
-          const amount = booking.totalAmount || booking.quote?.finalAmount || 0;
+          const amount = booking.totalAmount || booking.quote?.totalPrice || 0;
           const eventDate = new Date(booking.eventDate);
           const isCompleted = booking.status === "COMPLETED";
           const isPending = ["PENDING", "CONFIRMED", "DEPOSIT_PAID"].includes(
@@ -85,8 +85,7 @@ export default function VendorPaymentsPage() {
           if (amount > 0) {
             txns.push({
               id: booking.id,
-              description:
-                booking.eventType || booking.service?.name || "Booking",
+              description: booking.eventType || "Booking",
               date: eventDate.toLocaleDateString("en-US", {
                 month: "short",
                 day: "numeric",
@@ -95,7 +94,8 @@ export default function VendorPaymentsPage() {
               type: "income",
               status: isCompleted ? "completed" : "pending",
               amount: amount,
-              clientName: booking.user?.name || booking.user?.email,
+              clientName:
+                booking.quote?.inquiry?.fromName || booking.clientName,
             });
 
             if (isCompleted) {
