@@ -112,6 +112,9 @@ export default function AdminVendorsPage() {
   const [pagination, setPagination] = useState<Pagination | null>(null);
   const [statusCounts, setStatusCounts] = useState<StatusCounts | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const isInitialLoadRef = useRef(true);
+  const addToastRef = useRef(addToast);
+  addToastRef.current = addToast;
 
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("All");
@@ -163,7 +166,10 @@ export default function AdminVendorsPage() {
   }, []);
 
   const fetchProviders = useCallback(async () => {
-    setIsLoading(true);
+    // Only show loading spinner on initial load to prevent flickering
+    if (isInitialLoadRef.current) {
+      setIsLoading(true);
+    }
     try {
       const params = new URLSearchParams();
       params.append("page", currentPage.toString());
@@ -188,11 +194,12 @@ export default function AdminVendorsPage() {
       }
     } catch (err) {
       console.error("Error fetching providers:", err);
-      addToast("Failed to fetch vendors", "error");
+      addToastRef.current("Failed to fetch vendors", "error");
     } finally {
       setIsLoading(false);
+      isInitialLoadRef.current = false;
     }
-  }, [currentPage, searchQuery, statusFilter, categoryFilter, addToast]);
+  }, [currentPage, searchQuery, statusFilter, categoryFilter]);
 
   useEffect(() => {
     const debounce = setTimeout(() => {

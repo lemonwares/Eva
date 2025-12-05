@@ -2,6 +2,7 @@
 
 import VendorLayout from "@/components/vendor/VendorLayout";
 import { useVendorTheme } from "@/components/vendor/VendorThemeContext";
+import ImageUpload from "@/components/ui/ImageUpload";
 import {
   User,
   Building,
@@ -65,6 +66,7 @@ interface ProfileData {
   name: string;
   email: string;
   phone: string;
+  avatar: string;
 }
 
 interface BusinessData {
@@ -91,6 +93,7 @@ export default function VendorSettingsPage() {
     name: "",
     email: "",
     phone: "",
+    avatar: "",
   });
 
   // Business state
@@ -124,6 +127,7 @@ export default function VendorSettingsPage() {
           name: userData.name || "",
           email: userData.email || "",
           phone: userData.phone || "",
+          avatar: userData.avatar || userData.image || "",
         });
       }
 
@@ -353,13 +357,57 @@ export default function VendorSettingsPage() {
 
                     {/* Avatar */}
                     <div className="flex items-center gap-4 mb-6">
-                      <div className="relative">
-                        <div className="w-20 h-20 rounded-xl bg-linear-to-br from-accent to-green-600 flex items-center justify-center text-white text-2xl font-bold">
-                          {getInitials(profile.name || "U")}
-                        </div>
-                        <button className="absolute -bottom-2 -right-2 p-2 rounded-full bg-accent text-white hover:bg-accent/80 transition-colors">
-                          <Camera size={14} />
-                        </button>
+                      <div className="relative w-20 h-20">
+                        {profile.avatar ? (
+                          <ImageUpload
+                            value={profile.avatar}
+                            onChange={(url) =>
+                              setProfile({ ...profile, avatar: url })
+                            }
+                            type="avatar"
+                            aspectRatio="square"
+                            className="w-20 h-20 rounded-xl overflow-hidden"
+                          />
+                        ) : (
+                          <div
+                            className="w-20 h-20 rounded-xl bg-linear-to-br from-accent to-green-600 flex items-center justify-center text-white text-2xl font-bold cursor-pointer relative"
+                            onClick={() => {
+                              const input = document.createElement("input");
+                              input.type = "file";
+                              input.accept = "image/*";
+                              input.onchange = async (e) => {
+                                const file = (e.target as HTMLInputElement)
+                                  .files?.[0];
+                                if (file) {
+                                  const formData = new FormData();
+                                  formData.append("files", file);
+                                  formData.append("type", "avatar");
+                                  try {
+                                    const res = await fetch("/api/upload", {
+                                      method: "POST",
+                                      body: formData,
+                                    });
+                                    const data = await res.json();
+                                    if (data.url) {
+                                      setProfile({
+                                        ...profile,
+                                        avatar: data.url,
+                                      });
+                                    }
+                                  } catch (err) {
+                                    console.error("Upload failed:", err);
+                                  }
+                                }
+                              };
+                              input.click();
+                            }}
+                          >
+                            {getInitials(profile.name || "U")}
+                            <div className="absolute inset-0 bg-black/40 opacity-0 hover:opacity-100 transition-opacity flex items-center justify-center rounded-xl">
+                              <Camera size={20} className="text-white" />
+                            </div>
+                          </div>
+                        )}
                       </div>
                       <div>
                         <p
@@ -370,6 +418,16 @@ export default function VendorSettingsPage() {
                           {profile.name || "Vendor"}
                         </p>
                         <p className="text-gray-500 text-sm">Account Owner</p>
+                        {profile.avatar && (
+                          <button
+                            onClick={() =>
+                              setProfile({ ...profile, avatar: "" })
+                            }
+                            className="text-sm text-red-500 hover:text-red-400 mt-1"
+                          >
+                            Remove photo
+                          </button>
+                        )}
                       </div>
                     </div>
 

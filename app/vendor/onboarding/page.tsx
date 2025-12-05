@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
+import ImageUpload, { MultiImageUpload } from "@/components/ui/ImageUpload";
 
 // Step types
 type OnboardingStep =
@@ -552,30 +553,19 @@ export default function VendorOnboardingPage() {
           <div className="space-y-6">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Cover Image URL
+                Cover Image
               </label>
-              <input
-                type="url"
-                value={formData.coverImage}
-                onChange={(e) => updateFormData({ coverImage: e.target.value })}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-violet-500 focus:border-transparent"
-                placeholder="https://example.com/your-cover-image.jpg"
-              />
-              <p className="text-sm text-gray-500 mt-1">
+              <p className="text-sm text-gray-500 mb-3">
                 This will be the main image on your profile card
               </p>
-              {formData.coverImage && (
-                <div className="mt-4">
-                  <img
-                    src={formData.coverImage}
-                    alt="Cover preview"
-                    className="w-full h-48 object-cover rounded-lg"
-                    onError={(e) => {
-                      (e.target as HTMLImageElement).style.display = "none";
-                    }}
-                  />
-                </div>
-              )}
+              <ImageUpload
+                value={formData.coverImage}
+                onChange={(url) => updateFormData({ coverImage: url })}
+                type="cover"
+                aspectRatio="video"
+                placeholder="Click or drag to upload your cover image"
+                className="w-full"
+              />
             </div>
 
             <div>
@@ -583,51 +573,20 @@ export default function VendorOnboardingPage() {
                 Portfolio Photos
               </label>
               <p className="text-sm text-gray-500 mb-3">
-                Add URLs to your best work photos (up to 10)
+                Upload your best work photos (up to 10)
               </p>
-              <div className="space-y-2">
-                {[0, 1, 2, 3, 4].map((index) => (
-                  <input
-                    key={index}
-                    type="url"
-                    value={formData.photos[index] || ""}
-                    onChange={(e) => {
-                      const newPhotos = [...formData.photos];
-                      if (e.target.value) {
-                        newPhotos[index] = e.target.value;
-                      } else {
-                        newPhotos.splice(index, 1);
-                      }
-                      updateFormData({ photos: newPhotos.filter(Boolean) });
-                    }}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-violet-500 focus:border-transparent"
-                    placeholder={`Photo URL ${index + 1}`}
-                  />
-                ))}
-              </div>
-
-              {formData.photos.length > 0 && (
-                <div className="mt-4 grid grid-cols-3 gap-2">
-                  {formData.photos.map((photo, idx) => (
-                    <img
-                      key={idx}
-                      src={photo}
-                      alt={`Portfolio ${idx + 1}`}
-                      className="w-full h-24 object-cover rounded-lg"
-                      onError={(e) => {
-                        (e.target as HTMLImageElement).style.display = "none";
-                      }}
-                    />
-                  ))}
-                </div>
-              )}
+              <MultiImageUpload
+                values={formData.photos}
+                onChange={(urls) => updateFormData({ photos: urls })}
+                maxImages={10}
+                type="gallery"
+              />
             </div>
 
             <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
               <p className="text-sm text-blue-800">
-                <strong>Tip:</strong> You can upload your images to a service
-                like Imgur, Cloudinary, or your own hosting and paste the URLs
-                here. In the future, we&apos;ll support direct image uploads!
+                <strong>Tip:</strong> High-quality photos help attract more
+                clients. Use images that showcase your best work!
               </p>
             </div>
           </div>
