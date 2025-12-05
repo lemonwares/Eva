@@ -160,12 +160,46 @@ export async function GET(request: NextRequest) {
         prisma.booking.count({ where: { status: "CANCELLED" } }),
       ]);
 
-    // Transform data to match frontend AnalyticsData interface
+    // Return data in format that works for BOTH admin dashboard and analytics page
     return NextResponse.json({
       success: true,
+      // Original format for admin dashboard (app/admin/page.tsx)
+      period,
+      overview: {
+        users: {
+          total: totalUsers,
+          new: newUsers,
+          growth: calculateGrowth(newUsers, previousUsers),
+        },
+        providers: {
+          total: totalProviders,
+          active: activeProviders,
+          pending: pendingProviders,
+        },
+        bookings: {
+          total: totalBookings,
+          new: newBookings,
+          completed: completedBookings,
+          growth: calculateGrowth(newBookings, previousBookings),
+        },
+        inquiries: {
+          total: totalInquiries,
+          new: newInquiries,
+          growth: calculateGrowth(newInquiries, previousInquiries),
+        },
+        reviews: {
+          total: totalReviews,
+          pending: pendingReviews,
+        },
+      },
+      breakdown: {
+        categories: categoryStats,
+        topProviders,
+      },
+      // New format for analytics page (app/admin/analytics/page.tsx)
       data: {
         overview: {
-          totalRevenue: 0, // Would need payment data
+          totalRevenue: 0,
           totalUsers,
           totalBookings,
           totalProviders,
@@ -190,7 +224,7 @@ export async function GET(request: NextRequest) {
           averageRating: p.averageRating || 0,
           totalRevenue: 0,
         })),
-        topCategories: categoryStats.map((c, index) => ({
+        topCategories: categoryStats.map((c) => ({
           id: c.id,
           name: c.name,
           providerCount: c._count.subcategories,
