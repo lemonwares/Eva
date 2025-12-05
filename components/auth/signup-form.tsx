@@ -4,9 +4,9 @@ import { Eye, EyeOff, Mail, User2, Loader2, CheckCircle } from "lucide-react";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { register, loginWithGoogle } from "@/lib/auth-client";
-import Link from "next/link";
+// import Link from "next/link";
 
-type AccountType = "CLIENT" | "VENDOR";
+type AccountType = "CLIENT" | "PROFESSIONAL";
 
 type FormState = {
   name: string;
@@ -147,8 +147,8 @@ export default function SignUpForm() {
           title="Vendor"
           description="Showcase services, respond to leads, and get paid faster."
           badge="Pro"
-          selected={accountType === "VENDOR"}
-          onClick={() => setAccountType("VENDOR")}
+          selected={accountType === "PROFESSIONAL"}
+          onClick={() => setAccountType("PROFESSIONAL")}
           disabled={loading}
         />
       </div>

@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import bcrypt from "bcryptjs";
 import crypto from "crypto";
+import { emailTemplates } from "@/templates/templateLoader";
+import { sendEmail } from "@/lib/mail";
 
 export async function POST(request: NextRequest) {
   try {
@@ -47,10 +49,26 @@ export async function POST(request: NextRequest) {
           expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000), // 24 hours
         },
       });
-      // TODO: Send email with verification link (for now, just return token)
+
+      // Send verification email
+      // const verificationUrl = `${process.env.AUTH_URL}/verify-email?token=${token}&email=${encodeURIComponent(email)}
+
+      const verificationUrl = `${
+        process.env.AUTH_URL
+      }/auth/verify-email?token=${token}&email=${encodeURIComponent(email)}`;
+
+      const htmlCotent = emailTemplates.verification(name, verificationUrl);
+
+      await sendEmail({
+        to: email,
+        subject: `Verify Your Email Address - Eva Marketplace`,
+        html: htmlCotent,
+      });
+
       return NextResponse.json(
         {
-          message: "Account created. Please verify your email.",
+          message:
+            "Registration successful. Please check your email to verify your account.",
           userId: user.id,
           token,
         },

@@ -58,10 +58,10 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     }),
   ],
   pages: {
-    signIn: "/auth",
+    signIn: "/auth/signin",
   },
   callbacks: {
-    async signIn({ user, account, profile }) {
+    async signIn({ user, account, profile }: any) {
       // Handle social login user creation/lookup
       if (account?.provider === "google") {
         try {
@@ -111,7 +111,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       }
       return true;
     },
-    async jwt({ token, user }) {
+    async jwt({ token, user }: any) {
       if (user) {
         token.id = user.id;
         token.role = user.role;

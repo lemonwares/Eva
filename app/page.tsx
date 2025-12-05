@@ -1,5 +1,3 @@
-// app/page.tsx
-
 import Footer from "@/components/common/Footer";
 import Header from "@/components/common/Header";
 import CategorySection from "@/components/sections/category-section";
@@ -11,20 +9,11 @@ import WhyChooseSection from "@/components/sections/why-choose-section";
 import { auth } from "@/lib/auth-rsc";
 
 export default async function HomePage() {
-  // const session = await auth();
-
-  // if (!session) {
-  //   return <p>Not signed in</p>;
-  // }
+  const session = await auth();
 
   return (
     <div>
-      {/* <p>Welcome, {session.user?.name}!</p>
-      <p>ID: {session.user?.id}</p> */}
-      {/* <div className="min-h-screen bg-background pt-24"> */}
       <Header />
-
-      {/* Hero Section */}
       <HeroSection />
       <VendorsSection />
       <CategorySection />
@@ -32,7 +21,6 @@ export default async function HomePage() {
       <TestimonialsSection />
       <FAQSection />
       <Footer />
-      {/* </div> */}
     </div>
   );
 }
