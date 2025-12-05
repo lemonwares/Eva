@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 
 interface Inquiry {
   id: string;
@@ -56,6 +57,7 @@ const statusStyles: Record<InquiryStatus, string> = {
 };
 
 function DashboardContent() {
+  const router = useRouter();
   const {
     darkMode,
     cardBg,
@@ -68,6 +70,7 @@ function DashboardContent() {
   } = useVendorTheme();
 
   const [isLoading, setIsLoading] = useState(true);
+  const [hasProvider, setHasProvider] = useState(true);
   const [recentInquiries, setRecentInquiries] = useState<Inquiry[]>([]);
   const [upcomingBookings, setUpcomingBookings] = useState<Booking[]>([]);
   const [stats, setStats] = useState<DashboardStats>({
@@ -86,6 +89,24 @@ function DashboardContent() {
   async function fetchDashboardData() {
     setIsLoading(true);
     try {
+      // Fetch provider profile first to check if it exists
+      const profileRes = await fetch("/api/vendor/profile");
+      if (profileRes.ok) {
+        const profileData = await profileRes.json();
+        if (!profileData.provider) {
+          // No provider profile - redirect to onboarding
+          setHasProvider(false);
+          router.push("/vendor/onboarding");
+          return;
+        }
+        setProviderName(profileData.provider.businessName);
+        setProviderType(profileData.provider.categories?.[0] || "Vendor");
+      } else {
+        setHasProvider(false);
+        router.push("/vendor/onboarding");
+        return;
+      }
+
       // Fetch inquiries
       const inquiriesRes = await fetch("/api/inquiries?limit=5");
       if (inquiriesRes.ok) {
@@ -109,16 +130,6 @@ function DashboardContent() {
           ...prev,
           upcomingBookings: bookingsData.pagination?.total || 0,
         }));
-      }
-
-      // Fetch provider profile
-      const profileRes = await fetch("/api/vendor/profile");
-      if (profileRes.ok) {
-        const profileData = await profileRes.json();
-        if (profileData.provider) {
-          setProviderName(profileData.provider.businessName);
-          setProviderType(profileData.provider.categories?.[0] || "Vendor");
-        }
       }
     } catch (err) {
       console.error("Error fetching dashboard data:", err);
@@ -176,7 +187,7 @@ function DashboardContent() {
     },
   ];
 
-  if (isLoading) {
+  if (isLoading || !hasProvider) {
     return (
       <div className="flex justify-center items-center py-20">
         <Loader2 className="h-8 w-8 animate-spin text-accent" />
