@@ -13,6 +13,7 @@ import {
   Loader2,
 } from "lucide-react";
 import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 
 const daysOfWeek = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
@@ -62,6 +63,7 @@ const formatTime = (dateStr: string) => {
 
 export default function VendorCalendarPage() {
   const { darkMode } = useVendorTheme();
+  const router = useRouter();
   const [currentDate, setCurrentDate] = useState(new Date());
   const [events, setEvents] = useState<CalendarEvent[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -86,11 +88,14 @@ export default function VendorCalendarPage() {
         const calendarEvents: CalendarEvent[] = bookings.map(
           (booking: any) => ({
             id: booking.id,
-            title: booking.service?.name || booking.eventType || "Event",
-            client: booking.user?.name || booking.user?.email || "Client",
+            title: booking.eventType || "Event",
+            client:
+              booking.quote?.inquiry?.fromName ||
+              booking.clientName ||
+              "Client",
             date: new Date(booking.eventDate).toISOString().split("T")[0],
             time: formatTime(booking.eventDate),
-            location: booking.location || "TBD",
+            location: booking.eventLocation || "TBD",
             type: booking.eventType || "event",
             color: getEventColor(booking.status),
             status: booking.status,
@@ -148,7 +153,10 @@ export default function VendorCalendarPage() {
   return (
     <VendorLayout
       title="Calendar"
-      actionButton={{ label: "Add Event", onClick: () => {} }}
+      actionButton={{
+        label: "View Bookings",
+        onClick: () => router.push("/vendor/bookings"),
+      }}
     >
       {/* Calendar Header */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
@@ -531,15 +539,25 @@ export default function VendorCalendarPage() {
 
             <div className="flex gap-3 mt-6">
               <button
+                onClick={() => {
+                  setSelectedEvent(null);
+                  router.push(`/vendor/bookings`);
+                }}
                 className={`flex-1 px-4 py-2 rounded-lg border ${
                   darkMode
                     ? "border-white/10 text-white hover:bg-white/10"
                     : "border-gray-200 text-gray-900 hover:bg-gray-50"
                 } transition-colors`}
               >
-                Edit Event
+                Manage Booking
               </button>
-              <button className="flex-1 px-4 py-2 rounded-lg bg-accent text-white hover:bg-accent/80 transition-colors">
+              <button
+                onClick={() => {
+                  setSelectedEvent(null);
+                  router.push(`/vendor/bookings`);
+                }}
+                className="flex-1 px-4 py-2 rounded-lg bg-accent text-white hover:bg-accent/80 transition-colors"
+              >
                 View Details
               </button>
             </div>

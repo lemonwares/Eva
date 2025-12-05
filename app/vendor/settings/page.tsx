@@ -6,60 +6,23 @@ import ImageUpload from "@/components/ui/ImageUpload";
 import {
   User,
   Building,
-  Bell,
-  CreditCard,
   Shield,
-  Globe,
   Mail,
   Phone,
   MapPin,
   Lock,
   Eye,
   EyeOff,
-  ChevronRight,
-  Check,
   Camera,
   Loader2,
+  Globe,
 } from "lucide-react";
 import { useState, useEffect } from "react";
 
 const settingsSections = [
   { id: "profile", label: "Profile", icon: User },
   { id: "business", label: "Business", icon: Building },
-  { id: "notifications", label: "Notifications", icon: Bell },
-  { id: "payments", label: "Payment Methods", icon: CreditCard },
   { id: "security", label: "Security", icon: Shield },
-  { id: "preferences", label: "Preferences", icon: Globe },
-];
-
-const notificationSettings = [
-  {
-    category: "Inquiries",
-    options: [
-      { label: "New inquiry received", email: true, push: true, sms: false },
-      { label: "Inquiry reminder (24h)", email: true, push: false, sms: false },
-    ],
-  },
-  {
-    category: "Bookings",
-    options: [
-      { label: "New booking confirmed", email: true, push: true, sms: true },
-      {
-        label: "Booking reminder (1 day before)",
-        email: true,
-        push: true,
-        sms: true,
-      },
-      { label: "Booking cancelled", email: true, push: true, sms: false },
-    ],
-  },
-  {
-    category: "Payments",
-    options: [
-      { label: "Payment received", email: true, push: true, sms: false },
-      { label: "Withdrawal completed", email: true, push: false, sms: false },
-    ],
-  },
 ];
 
 interface ProfileData {
@@ -72,9 +35,13 @@ interface ProfileData {
 interface BusinessData {
   businessName: string;
   description: string;
+  phonePublic: string;
+  website: string;
   address: string;
   city: string;
-  category: string;
+  postcode: string;
+  serviceRadiusMiles: number;
+  categories: string[];
 }
 
 export default function VendorSettingsPage() {
@@ -100,9 +67,13 @@ export default function VendorSettingsPage() {
   const [business, setBusiness] = useState<BusinessData>({
     businessName: "",
     description: "",
+    phonePublic: "",
+    website: "",
     address: "",
     city: "",
-    category: "",
+    postcode: "",
+    serviceRadiusMiles: 25,
+    categories: [],
   });
 
   // Password state
@@ -134,14 +105,21 @@ export default function VendorSettingsPage() {
       // Fetch business profile
       const businessRes = await fetch("/api/vendor/profile");
       if (businessRes.ok) {
-        const businessData = await businessRes.json();
-        setBusiness({
-          businessName: businessData.businessName || "",
-          description: businessData.description || "",
-          address: businessData.address || "",
-          city: businessData.city || "",
-          category: businessData.category?.name || "",
-        });
+        const data = await businessRes.json();
+        const provider = data.provider;
+        if (provider) {
+          setBusiness({
+            businessName: provider.businessName || "",
+            description: provider.description || "",
+            phonePublic: provider.phonePublic || "",
+            website: provider.website || "",
+            address: provider.address || "",
+            city: provider.city || "",
+            postcode: provider.postcode || "",
+            serviceRadiusMiles: provider.serviceRadiusMiles || 25,
+            categories: provider.categories || [],
+          });
+        }
       }
     } catch (err) {
       console.error("Error fetching profile:", err);
@@ -196,7 +174,7 @@ export default function VendorSettingsPage() {
         const data = await res.json();
         setMessage({
           type: "error",
-          text: data.error || "Failed to update business info",
+          text: data.message || "Failed to update business info",
         });
       }
     } catch (err) {
@@ -256,6 +234,7 @@ export default function VendorSettingsPage() {
   }
 
   const getInitials = (name: string) => {
+    if (!name) return "U";
     return name
       .split(" ")
       .map((n) => n[0])
@@ -309,6 +288,31 @@ export default function VendorSettingsPage() {
                 </button>
               ))}
             </nav>
+
+            {/* Dark Mode Toggle */}
+            <div
+              className={`p-4 ${
+                darkMode ? "border-white/10" : "border-gray-200"
+              } border-t`}
+            >
+              <div className="flex items-center justify-between">
+                <span className={darkMode ? "text-gray-400" : "text-gray-600"}>
+                  Dark Mode
+                </span>
+                <button
+                  onClick={toggleDarkMode}
+                  className={`w-11 h-6 rounded-full ${
+                    darkMode ? "bg-accent" : "bg-gray-300"
+                  } transition-colors relative`}
+                >
+                  <div
+                    className={`w-5 h-5 rounded-full bg-white transition-transform absolute top-0.5 ${
+                      darkMode ? "translate-x-5" : "translate-x-0.5"
+                    }`}
+                  />
+                </button>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -402,7 +406,7 @@ export default function VendorSettingsPage() {
                               input.click();
                             }}
                           >
-                            {getInitials(profile.name || "U")}
+                            {getInitials(profile.name)}
                             <div className="absolute inset-0 bg-black/40 opacity-0 hover:opacity-100 transition-opacity flex items-center justify-center rounded-xl">
                               <Camera size={20} className="text-white" />
                             </div>
@@ -470,16 +474,17 @@ export default function VendorSettingsPage() {
                           <input
                             type="email"
                             value={profile.email}
-                            onChange={(e) =>
-                              setProfile({ ...profile, email: e.target.value })
-                            }
+                            disabled
                             className={`w-full pl-11 pr-4 py-3 rounded-lg ${
                               darkMode
-                                ? "bg-white/5 text-white border-white/10"
-                                : "bg-gray-50 text-gray-900 border-gray-200"
-                            } border focus:outline-none focus:ring-2 focus:ring-accent/50`}
+                                ? "bg-white/5 text-gray-400 border-white/10"
+                                : "bg-gray-100 text-gray-500 border-gray-200"
+                            } border cursor-not-allowed`}
                           />
                         </div>
+                        <p className="text-gray-500 text-xs mt-1">
+                          Email cannot be changed
+                        </p>
                       </div>
                       <div>
                         <label
@@ -583,13 +588,102 @@ export default function VendorSettingsPage() {
                           />
                         </div>
                       </div>
+
                       <div className="sm:col-span-2">
                         <label
                           className={`block ${
                             darkMode ? "text-gray-400" : "text-gray-600"
                           } text-sm mb-2`}
                         >
-                          Business Address
+                          Description
+                        </label>
+                        <textarea
+                          value={business.description}
+                          onChange={(e) =>
+                            setBusiness({
+                              ...business,
+                              description: e.target.value,
+                            })
+                          }
+                          rows={4}
+                          className={`w-full px-4 py-3 rounded-lg ${
+                            darkMode
+                              ? "bg-white/5 text-white border-white/10"
+                              : "bg-gray-50 text-gray-900 border-gray-200"
+                          } border focus:outline-none focus:ring-2 focus:ring-accent/50 resize-none`}
+                        />
+                      </div>
+
+                      <div>
+                        <label
+                          className={`block ${
+                            darkMode ? "text-gray-400" : "text-gray-600"
+                          } text-sm mb-2`}
+                        >
+                          Public Phone
+                        </label>
+                        <div className="relative">
+                          <Phone
+                            className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500"
+                            size={18}
+                          />
+                          <input
+                            type="tel"
+                            value={business.phonePublic}
+                            onChange={(e) =>
+                              setBusiness({
+                                ...business,
+                                phonePublic: e.target.value,
+                              })
+                            }
+                            className={`w-full pl-11 pr-4 py-3 rounded-lg ${
+                              darkMode
+                                ? "bg-white/5 text-white border-white/10"
+                                : "bg-gray-50 text-gray-900 border-gray-200"
+                            } border focus:outline-none focus:ring-2 focus:ring-accent/50`}
+                          />
+                        </div>
+                      </div>
+
+                      <div>
+                        <label
+                          className={`block ${
+                            darkMode ? "text-gray-400" : "text-gray-600"
+                          } text-sm mb-2`}
+                        >
+                          Website
+                        </label>
+                        <div className="relative">
+                          <Globe
+                            className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500"
+                            size={18}
+                          />
+                          <input
+                            type="url"
+                            value={business.website}
+                            onChange={(e) =>
+                              setBusiness({
+                                ...business,
+                                website: e.target.value,
+                              })
+                            }
+                            placeholder="https://example.com"
+                            className={`w-full pl-11 pr-4 py-3 rounded-lg ${
+                              darkMode
+                                ? "bg-white/5 text-white border-white/10"
+                                : "bg-gray-50 text-gray-900 border-gray-200"
+                            } border focus:outline-none focus:ring-2 focus:ring-accent/50`}
+                          />
+                        </div>
+                      </div>
+
+                      <div className="sm:col-span-2">
+                        <label
+                          className={`block ${
+                            darkMode ? "text-gray-400" : "text-gray-600"
+                          } text-sm mb-2`}
+                        >
+                          Address
                         </label>
                         <div className="relative">
                           <MapPin
@@ -613,6 +707,7 @@ export default function VendorSettingsPage() {
                           />
                         </div>
                       </div>
+
                       <div>
                         <label
                           className={`block ${
@@ -625,7 +720,10 @@ export default function VendorSettingsPage() {
                           type="text"
                           value={business.city}
                           onChange={(e) =>
-                            setBusiness({ ...business, city: e.target.value })
+                            setBusiness({
+                              ...business,
+                              city: e.target.value,
+                            })
                           }
                           className={`w-full px-4 py-3 rounded-lg ${
                             darkMode
@@ -634,47 +732,56 @@ export default function VendorSettingsPage() {
                           } border focus:outline-none focus:ring-2 focus:ring-accent/50`}
                         />
                       </div>
+
                       <div>
                         <label
                           className={`block ${
                             darkMode ? "text-gray-400" : "text-gray-600"
                           } text-sm mb-2`}
                         >
-                          Category
+                          Postcode
                         </label>
                         <input
                           type="text"
-                          value={business.category}
-                          disabled
-                          className={`w-full px-4 py-3 rounded-lg ${
-                            darkMode
-                              ? "bg-white/5 text-white border-white/10"
-                              : "bg-gray-50 text-gray-900 border-gray-200"
-                          } border opacity-60`}
-                        />
-                      </div>
-                      <div className="sm:col-span-2">
-                        <label
-                          className={`block ${
-                            darkMode ? "text-gray-400" : "text-gray-600"
-                          } text-sm mb-2`}
-                        >
-                          Business Description
-                        </label>
-                        <textarea
-                          rows={4}
-                          value={business.description}
+                          value={business.postcode}
                           onChange={(e) =>
                             setBusiness({
                               ...business,
-                              description: e.target.value,
+                              postcode: e.target.value,
                             })
                           }
                           className={`w-full px-4 py-3 rounded-lg ${
                             darkMode
                               ? "bg-white/5 text-white border-white/10"
                               : "bg-gray-50 text-gray-900 border-gray-200"
-                          } border focus:outline-none focus:ring-2 focus:ring-accent/50 resize-none`}
+                          } border focus:outline-none focus:ring-2 focus:ring-accent/50`}
+                        />
+                      </div>
+
+                      <div>
+                        <label
+                          className={`block ${
+                            darkMode ? "text-gray-400" : "text-gray-600"
+                          } text-sm mb-2`}
+                        >
+                          Service Radius (miles)
+                        </label>
+                        <input
+                          type="number"
+                          value={business.serviceRadiusMiles}
+                          onChange={(e) =>
+                            setBusiness({
+                              ...business,
+                              serviceRadiusMiles: parseInt(e.target.value) || 0,
+                            })
+                          }
+                          min={1}
+                          max={500}
+                          className={`w-full px-4 py-3 rounded-lg ${
+                            darkMode
+                              ? "bg-white/5 text-white border-white/10"
+                              : "bg-gray-50 text-gray-900 border-gray-200"
+                          } border focus:outline-none focus:ring-2 focus:ring-accent/50`}
                         />
                       </div>
                     </div>
@@ -701,122 +808,6 @@ export default function VendorSettingsPage() {
                     </button>
                   </div>
                 </>
-              )}
-
-              {/* Notifications Section */}
-              {activeSection === "notifications" && (
-                <div
-                  className={`${
-                    darkMode
-                      ? "bg-[#141414] border-white/10"
-                      : "bg-white border-gray-200"
-                  } rounded-xl border p-5`}
-                >
-                  <h3
-                    className={`${
-                      darkMode ? "text-white" : "text-gray-900"
-                    } font-semibold mb-6`}
-                  >
-                    Notification Preferences
-                  </h3>
-
-                  {notificationSettings.map((category, idx) => (
-                    <div
-                      key={idx}
-                      className={
-                        idx > 0
-                          ? `mt-6 pt-6 ${
-                              darkMode ? "border-white/10" : "border-gray-200"
-                            } border-t`
-                          : ""
-                      }
-                    >
-                      <h4 className="text-accent font-medium mb-4">
-                        {category.category}
-                      </h4>
-                      <div className="space-y-4">
-                        {/* Header */}
-                        <div className="hidden sm:grid grid-cols-4 gap-4 text-gray-500 text-sm px-4">
-                          <span className="col-span-1"></span>
-                          <span className="text-center">Email</span>
-                          <span className="text-center">Push</span>
-                          <span className="text-center">SMS</span>
-                        </div>
-                        {/* Options */}
-                        {category.options.map((option, optIdx) => (
-                          <div
-                            key={optIdx}
-                            className={`grid grid-cols-1 sm:grid-cols-4 gap-4 p-4 rounded-lg ${
-                              darkMode ? "bg-white/5" : "bg-gray-50"
-                            } items-center`}
-                          >
-                            <span
-                              className={
-                                darkMode ? "text-white" : "text-gray-900"
-                              }
-                            >
-                              {option.label}
-                            </span>
-                            <div className="flex sm:justify-center items-center gap-2 sm:gap-0">
-                              <span className="sm:hidden text-gray-500 text-sm w-12">
-                                Email
-                              </span>
-                              <button
-                                className={`w-10 h-6 rounded-full transition-colors ${
-                                  option.email ? "bg-accent" : "bg-gray-700"
-                                }`}
-                              >
-                                <div
-                                  className={`w-4 h-4 rounded-full bg-white transition-transform ${
-                                    option.email
-                                      ? "translate-x-5"
-                                      : "translate-x-1"
-                                  }`}
-                                />
-                              </button>
-                            </div>
-                            <div className="flex sm:justify-center items-center gap-2 sm:gap-0">
-                              <span className="sm:hidden text-gray-500 text-sm w-12">
-                                Push
-                              </span>
-                              <button
-                                className={`w-10 h-6 rounded-full transition-colors ${
-                                  option.push ? "bg-accent" : "bg-gray-700"
-                                }`}
-                              >
-                                <div
-                                  className={`w-4 h-4 rounded-full bg-white transition-transform ${
-                                    option.push
-                                      ? "translate-x-5"
-                                      : "translate-x-1"
-                                  }`}
-                                />
-                              </button>
-                            </div>
-                            <div className="flex sm:justify-center items-center gap-2 sm:gap-0">
-                              <span className="sm:hidden text-gray-500 text-sm w-12">
-                                SMS
-                              </span>
-                              <button
-                                className={`w-10 h-6 rounded-full transition-colors ${
-                                  option.sms ? "bg-accent" : "bg-gray-700"
-                                }`}
-                              >
-                                <div
-                                  className={`w-4 h-4 rounded-full bg-white transition-transform ${
-                                    option.sms
-                                      ? "translate-x-5"
-                                      : "translate-x-1"
-                                  }`}
-                                />
-                              </button>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  ))}
-                </div>
               )}
 
               {/* Security Section */}
@@ -945,33 +936,6 @@ export default function VendorSettingsPage() {
                     </div>
                   </div>
 
-                  <div
-                    className={`${
-                      darkMode
-                        ? "bg-[#141414] border-white/10"
-                        : "bg-white border-gray-200"
-                    } rounded-xl border p-5`}
-                  >
-                    <h3
-                      className={`${
-                        darkMode ? "text-white" : "text-gray-900"
-                      } font-semibold mb-4`}
-                    >
-                      Two-Factor Authentication
-                    </h3>
-                    <p
-                      className={`${
-                        darkMode ? "text-gray-400" : "text-gray-600"
-                      } text-sm mb-4`}
-                    >
-                      Add an extra layer of security to your account by enabling
-                      2FA.
-                    </p>
-                    <button className="px-4 py-2 rounded-lg bg-accent text-white hover:bg-accent/80 transition-colors">
-                      Enable 2FA
-                    </button>
-                  </div>
-
                   <div className="flex justify-end gap-3">
                     <button
                       onClick={() =>
@@ -999,194 +963,6 @@ export default function VendorSettingsPage() {
                     </button>
                   </div>
                 </>
-              )}
-
-              {/* Payment Methods Section */}
-              {activeSection === "payments" && (
-                <div
-                  className={`${
-                    darkMode
-                      ? "bg-[#141414] border-white/10"
-                      : "bg-white border-gray-200"
-                  } rounded-xl border p-5`}
-                >
-                  <div className="flex items-center justify-between mb-6">
-                    <h3
-                      className={`${
-                        darkMode ? "text-white" : "text-gray-900"
-                      } font-semibold`}
-                    >
-                      Payment Methods
-                    </h3>
-                    <button className="px-4 py-2 rounded-lg bg-accent text-white hover:bg-accent/80 transition-colors text-sm">
-                      Add New
-                    </button>
-                  </div>
-
-                  <div className="space-y-4">
-                    <div
-                      className={`flex items-center justify-between p-4 rounded-lg ${
-                        darkMode
-                          ? "bg-white/5 border-white/10"
-                          : "bg-gray-50 border-gray-200"
-                      } border`}
-                    >
-                      <div className="flex items-center gap-4">
-                        <div className="p-3 rounded-lg bg-blue-500/20">
-                          <CreditCard size={20} className="text-blue-400" />
-                        </div>
-                        <div>
-                          <p
-                            className={`${
-                              darkMode ? "text-white" : "text-gray-900"
-                            } font-medium`}
-                          >
-                            •••• •••• •••• 4521
-                          </p>
-                          <p className="text-gray-500 text-sm">
-                            Chase Bank - Checking
-                          </p>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-3">
-                        <span className="px-2 py-1 rounded text-xs bg-green-500/20 text-green-400">
-                          Default
-                        </span>
-                        <button
-                          className={`${
-                            darkMode
-                              ? "text-gray-400 hover:text-white"
-                              : "text-gray-500 hover:text-gray-900"
-                          } transition-colors`}
-                        >
-                          <ChevronRight size={18} />
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* Preferences Section */}
-              {activeSection === "preferences" && (
-                <div
-                  className={`${
-                    darkMode
-                      ? "bg-[#141414] border-white/10"
-                      : "bg-white border-gray-200"
-                  } rounded-xl border p-5`}
-                >
-                  <h3
-                    className={`${
-                      darkMode ? "text-white" : "text-gray-900"
-                    } font-semibold mb-6`}
-                  >
-                    Preferences
-                  </h3>
-
-                  <div className="space-y-6">
-                    <div>
-                      <label
-                        className={`block ${
-                          darkMode ? "text-gray-400" : "text-gray-600"
-                        } text-sm mb-2`}
-                      >
-                        Language
-                      </label>
-                      <select
-                        className={`w-full max-w-xs px-4 py-3 rounded-lg ${
-                          darkMode
-                            ? "bg-white/5 text-white border-white/10"
-                            : "bg-gray-50 text-gray-900 border-gray-200"
-                        } border focus:outline-none focus:ring-2 focus:ring-accent/50 appearance-none`}
-                      >
-                        <option value="en">English (US)</option>
-                        <option value="es">Español</option>
-                        <option value="fr">Français</option>
-                      </select>
-                    </div>
-
-                    <div>
-                      <label
-                        className={`block ${
-                          darkMode ? "text-gray-400" : "text-gray-600"
-                        } text-sm mb-2`}
-                      >
-                        Timezone
-                      </label>
-                      <select
-                        className={`w-full max-w-xs px-4 py-3 rounded-lg ${
-                          darkMode
-                            ? "bg-white/5 text-white border-white/10"
-                            : "bg-gray-50 text-gray-900 border-gray-200"
-                        } border focus:outline-none focus:ring-2 focus:ring-accent/50 appearance-none`}
-                      >
-                        <option value="pst">Pacific Time (PST)</option>
-                        <option value="mst">Mountain Time (MST)</option>
-                        <option value="cst">Central Time (CST)</option>
-                        <option value="est">Eastern Time (EST)</option>
-                      </select>
-                    </div>
-
-                    <div>
-                      <label
-                        className={`block ${
-                          darkMode ? "text-gray-400" : "text-gray-600"
-                        } text-sm mb-2`}
-                      >
-                        Currency
-                      </label>
-                      <select
-                        className={`w-full max-w-xs px-4 py-3 rounded-lg ${
-                          darkMode
-                            ? "bg-white/5 text-white border-white/10"
-                            : "bg-gray-50 text-gray-900 border-gray-200"
-                        } border focus:outline-none focus:ring-2 focus:ring-accent/50 appearance-none`}
-                      >
-                        <option value="usd">USD ($)</option>
-                        <option value="eur">EUR (€)</option>
-                        <option value="gbp">GBP (£)</option>
-                      </select>
-                    </div>
-
-                    <div
-                      className={`pt-4 ${
-                        darkMode ? "border-white/10" : "border-gray-200"
-                      } border-t`}
-                    >
-                      <div
-                        className={`flex items-center justify-between p-4 rounded-lg ${
-                          darkMode ? "bg-white/5" : "bg-gray-50"
-                        }`}
-                      >
-                        <div>
-                          <p
-                            className={`${
-                              darkMode ? "text-white" : "text-gray-900"
-                            } font-medium`}
-                          >
-                            Dark Mode
-                          </p>
-                          <p className="text-gray-500 text-sm">
-                            Use dark theme for the dashboard
-                          </p>
-                        </div>
-                        <button
-                          onClick={toggleDarkMode}
-                          className={`w-12 h-7 rounded-full ${
-                            darkMode ? "bg-accent" : "bg-gray-300"
-                          } transition-colors`}
-                        >
-                          <div
-                            className={`w-5 h-5 rounded-full bg-white transition-transform ${
-                              darkMode ? "translate-x-6" : "translate-x-1"
-                            }`}
-                          />
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                </div>
               )}
             </>
           )}

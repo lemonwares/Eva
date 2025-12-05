@@ -1,397 +1,1510 @@
 "use client";
 
+import { useState, useEffect, useCallback } from "react";
+import { useRouter } from "next/navigation";
 import VendorLayout from "@/components/vendor/VendorLayout";
-import { useVendorTheme } from "@/components/vendor/VendorThemeContext";
+// import { useVendorTheme } from "@/hooks/useVendorTheme";
+// import Modal from "@/components/ui/Modal";
 import {
-  Search,
-  SlidersHorizontal,
-  ArrowUpDown,
-  MoreHorizontal,
   FileText,
-  Loader2,
-  ChevronLeft,
-  ChevronRight,
+  Search,
+  Filter,
+  MoreHorizontal,
+  Eye,
+  Edit,
+  Send,
+  Trash2,
+  CheckCircle,
+  XCircle,
+  Clock,
+  AlertCircle,
+  RefreshCw,
+  Plus,
+  Minus,
+  CalendarDays,
 } from "lucide-react";
-import { useState, useEffect } from "react";
+import { Modal } from "@/components/ui";
+import { useVendorTheme } from "@/components/vendor/VendorThemeContext";
 
 interface QuoteItem {
-  name: string;
-  qty: number;
+  id?: string;
+  description: string;
+  quantity: number;
   unitPrice: number;
-  totalPrice: number;
+  total: number;
 }
 
 interface Quote {
   id: string;
-  status: string;
-  totalPrice: number;
-  createdAt: string;
-  validUntil: string;
-  items: QuoteItem[];
+  inquiryId: string;
   inquiry: {
     id: string;
-    fromName: string;
-    fromEmail: string;
-    eventDate: string | null;
-  } | null;
-}
-
-interface Pagination {
-  page: number;
-  limit: number;
+    fullName: string;
+    email: string;
+    phone: string;
+    eventType: string;
+    eventDate: string;
+    guestCount: number;
+    createdAt: string;
+  };
+  items: QuoteItem[];
   total: number;
-  pages: number;
+  validUntil: string;
+  status:
+    | "DRAFT"
+    | "SENT"
+    | "VIEWED"
+    | "ACCEPTED"
+    | "DECLINED"
+    | "EXPIRED"
+    | "REVISED";
+  paymentMode: "FULL_PAYMENT" | "DEPOSIT_BALANCE" | "CASH_ON_DELIVERY";
+  depositPercent: number | null;
+  terms: string | null;
+  notes: string | null;
+  sentAt: string | null;
+  viewedAt: string | null;
+  createdAt: string;
+  updatedAt: string;
 }
 
-function QuotesContent() {
-  const {
-    darkMode,
-    cardBg,
-    cardBorder,
-    textPrimary,
-    textSecondary,
-    textMuted,
-    inputBg,
-    inputBorder,
-    hoverBg,
-  } = useVendorTheme();
+const getStatusColor = (
+  status: string,
+  isDark: boolean
+): { bg: string; text: string } => {
+  const colors: Record<string, { bg: string; text: string }> = {
+    DRAFT: {
+      bg: isDark ? "bg-gray-700/50" : "bg-gray-100",
+      text: isDark ? "text-gray-300" : "text-gray-700",
+    },
+    SENT: {
+      bg: isDark ? "bg-blue-900/30" : "bg-blue-100",
+      text: isDark ? "text-blue-300" : "text-blue-700",
+    },
+    VIEWED: {
+      bg: isDark ? "bg-purple-900/30" : "bg-purple-100",
+      text: isDark ? "text-purple-300" : "text-purple-700",
+    },
+    ACCEPTED: {
+      bg: isDark ? "bg-green-900/30" : "bg-green-100",
+      text: isDark ? "text-green-300" : "text-green-700",
+    },
+    DECLINED: {
+      bg: isDark ? "bg-red-900/30" : "bg-red-100",
+      text: isDark ? "text-red-300" : "text-red-700",
+    },
+    EXPIRED: {
+      bg: isDark ? "bg-orange-900/30" : "bg-orange-100",
+      text: isDark ? "text-orange-300" : "text-orange-700",
+    },
+    REVISED: {
+      bg: isDark ? "bg-yellow-900/30" : "bg-yellow-100",
+      text: isDark ? "text-yellow-300" : "text-yellow-700",
+    },
+  };
+  return colors[status] || colors.DRAFT;
+};
 
+const getStatusIcon = (status: string) => {
+  switch (status) {
+    case "DRAFT":
+      return <FileText className="h-3 w-3" />;
+    case "SENT":
+      return <Send className="h-3 w-3" />;
+    case "VIEWED":
+      return <Eye className="h-3 w-3" />;
+    case "ACCEPTED":
+      return <CheckCircle className="h-3 w-3" />;
+    case "DECLINED":
+      return <XCircle className="h-3 w-3" />;
+    case "EXPIRED":
+      return <AlertCircle className="h-3 w-3" />;
+    case "REVISED":
+      return <RefreshCw className="h-3 w-3" />;
+    default:
+      return <Clock className="h-3 w-3" />;
+  }
+};
+
+const formatPaymentMode = (mode: string) => {
+  switch (mode) {
+    case "FULL_PAYMENT":
+      return "Full Payment";
+    case "DEPOSIT_BALANCE":
+      return "Deposit + Balance";
+    case "CASH_ON_DELIVERY":
+      return "Cash on Delivery";
+    default:
+      return mode;
+  }
+};
+
+export default function VendorQuotesPage() {
+  const router = useRouter();
+  const { darkMode: isDark } = useVendorTheme();
   const [quotes, setQuotes] = useState<Quote[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
-  const [statusFilter, setStatusFilter] = useState<string>("");
-  const [pagination, setPagination] = useState<Pagination>({
-    page: 1,
-    limit: 10,
-    total: 0,
-    pages: 0,
-  });
+  const [statusFilter, setStatusFilter] = useState<string>("ALL");
+  const [openMenuId, setOpenMenuId] = useState<string | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [toast, setToast] = useState<{
+    show: boolean;
+    message: string;
+    type: "success" | "error";
+  }>({ show: false, message: "", type: "success" });
+
+  // Modal states
+  const [isViewModalOpen, setIsViewModalOpen] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isSendModalOpen, setIsSendModalOpen] = useState(false);
+  const [selectedQuote, setSelectedQuote] = useState<Quote | null>(null);
+
+  // Edit form state
+  const [editItems, setEditItems] = useState<QuoteItem[]>([]);
+  const [editValidUntil, setEditValidUntil] = useState("");
+  const [editPaymentMode, setEditPaymentMode] = useState("FULL_PAYMENT");
+  const [editDepositPercent, setEditDepositPercent] = useState(0);
+  const [editTerms, setEditTerms] = useState("");
+  const [editNotes, setEditNotes] = useState("");
+  const [saving, setSaving] = useState(false);
+
+  const showToast = (message: string, type: "success" | "error") => {
+    setToast({ show: true, message, type });
+    setTimeout(
+      () => setToast({ show: false, message: "", type: "success" }),
+      3000
+    );
+  };
+
+  const fetchQuotes = useCallback(async () => {
+    try {
+      setLoading(true);
+      const params = new URLSearchParams({
+        page: currentPage.toString(),
+        limit: "10",
+      });
+      if (searchQuery) params.append("search", searchQuery);
+      if (statusFilter !== "ALL") params.append("status", statusFilter);
+
+      const response = await fetch(`/api/quotes?${params}`);
+      if (!response.ok) throw new Error("Failed to fetch quotes");
+
+      const data = await response.json();
+      setQuotes(data.quotes || data);
+      if (data.pagination) {
+        setTotalPages(data.pagination.totalPages);
+      }
+    } catch (error) {
+      console.error("Error fetching quotes:", error);
+      showToast("Failed to load quotes", "error");
+    } finally {
+      setLoading(false);
+    }
+  }, [currentPage, searchQuery, statusFilter]);
 
   useEffect(() => {
     fetchQuotes();
-  }, [pagination.page, statusFilter]);
+  }, [fetchQuotes]);
 
-  async function fetchQuotes() {
-    setIsLoading(true);
+  const handleViewQuote = async (quote: Quote) => {
     try {
-      const params = new URLSearchParams({
-        page: pagination.page.toString(),
-        limit: pagination.limit.toString(),
+      // Fetch full quote details
+      const response = await fetch(`/api/quotes/${quote.id}`);
+      if (!response.ok) throw new Error("Failed to fetch quote details");
+      const fullQuote = await response.json();
+      setSelectedQuote(fullQuote);
+      setIsViewModalOpen(true);
+    } catch (error) {
+      console.error("Error fetching quote:", error);
+      showToast("Failed to load quote details", "error");
+    }
+    setOpenMenuId(null);
+  };
+
+  const handleEditQuote = async (quote: Quote) => {
+    try {
+      const response = await fetch(`/api/quotes/${quote.id}`);
+      if (!response.ok) throw new Error("Failed to fetch quote details");
+      const fullQuote = await response.json();
+      setSelectedQuote(fullQuote);
+      setEditItems(
+        fullQuote.items.map((item: QuoteItem) => ({
+          id: item.id,
+          description: item.description,
+          quantity: item.quantity,
+          unitPrice: item.unitPrice,
+          total: item.total,
+        }))
+      );
+      setEditValidUntil(fullQuote.validUntil.split("T")[0]);
+      setEditPaymentMode(fullQuote.paymentMode);
+      setEditDepositPercent(fullQuote.depositPercent || 0);
+      setEditTerms(fullQuote.terms || "");
+      setEditNotes(fullQuote.notes || "");
+      setIsEditModalOpen(true);
+    } catch (error) {
+      console.error("Error fetching quote:", error);
+      showToast("Failed to load quote for editing", "error");
+    }
+    setOpenMenuId(null);
+  };
+
+  const handleSendQuote = async (quote: Quote) => {
+    setSelectedQuote(quote);
+    setIsSendModalOpen(true);
+    setOpenMenuId(null);
+  };
+
+  const confirmSendQuote = async () => {
+    if (!selectedQuote) return;
+
+    try {
+      setSaving(true);
+      const response = await fetch(`/api/quotes/${selectedQuote.id}/send`, {
+        method: "POST",
       });
-      if (statusFilter) params.append("status", statusFilter);
 
-      const res = await fetch(`/api/quotes?${params}`);
-      if (res.ok) {
-        const data = await res.json();
-        setQuotes(data.quotes || []);
-        setPagination((prev) => ({
-          ...prev,
-          total: data.pagination?.total || 0,
-          pages: data.pagination?.pages || 0,
-        }));
-      }
-    } catch (err) {
-      console.error("Error fetching quotes:", err);
+      if (!response.ok) throw new Error("Failed to send quote");
+
+      showToast("Quote sent successfully!", "success");
+      setIsSendModalOpen(false);
+      setSelectedQuote(null);
+      fetchQuotes();
+    } catch (error) {
+      console.error("Error sending quote:", error);
+      showToast("Failed to send quote", "error");
     } finally {
-      setIsLoading(false);
+      setSaving(false);
     }
-  }
+  };
 
-  const filteredQuotes = quotes.filter((quote) => {
-    if (!searchQuery) return true;
-    const query = searchQuery.toLowerCase();
-    return (
-      quote.inquiry?.fromName?.toLowerCase().includes(query) ||
-      quote.items?.some((item) => item.name.toLowerCase().includes(query))
-    );
-  });
+  const handleUpdateQuote = async () => {
+    if (!selectedQuote) return;
 
-  const getStatusStyle = (status: string) => {
-    switch (status) {
-      case "ACCEPTED":
-        return "bg-green-500/20 text-green-600 border border-green-500/30";
-      case "SENT":
-        return "bg-blue-500/20 text-blue-600 border border-blue-500/30";
-      case "DECLINED":
-        return "bg-red-500/20 text-red-600 border border-red-500/30";
-      case "VIEWED":
-        return "bg-purple-500/20 text-purple-600 border border-purple-500/30";
-      case "DRAFT":
-        return "bg-gray-500/20 text-gray-600 border border-gray-500/30";
-      case "EXPIRED":
-        return "bg-yellow-500/20 text-yellow-600 border border-yellow-500/30";
-      default:
-        return "bg-gray-500/20 text-gray-600 border border-gray-500/30";
+    try {
+      setSaving(true);
+      const response = await fetch(`/api/quotes/${selectedQuote.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          items: editItems,
+          validUntil: new Date(editValidUntil).toISOString(),
+          paymentMode: editPaymentMode,
+          depositPercent:
+            editPaymentMode === "DEPOSIT_BALANCE" ? editDepositPercent : null,
+          terms: editTerms || null,
+          notes: editNotes || null,
+        }),
+      });
+
+      if (!response.ok) throw new Error("Failed to update quote");
+
+      showToast("Quote updated successfully!", "success");
+      setIsEditModalOpen(false);
+      setSelectedQuote(null);
+      fetchQuotes();
+    } catch (error) {
+      console.error("Error updating quote:", error);
+      showToast("Failed to update quote", "error");
+    } finally {
+      setSaving(false);
     }
+  };
+
+  const addQuoteItem = () => {
+    setEditItems([
+      ...editItems,
+      { description: "", quantity: 1, unitPrice: 0, total: 0 },
+    ]);
+  };
+
+  const removeQuoteItem = (index: number) => {
+    if (editItems.length > 1) {
+      setEditItems(editItems.filter((_, i) => i !== index));
+    }
+  };
+
+  const updateQuoteItem = (
+    index: number,
+    field: keyof QuoteItem,
+    value: string | number
+  ) => {
+    const updated = [...editItems];
+    updated[index] = { ...updated[index], [field]: value };
+    if (field === "quantity" || field === "unitPrice") {
+      updated[index].total = updated[index].quantity * updated[index].unitPrice;
+    }
+    setEditItems(updated);
+  };
+
+  const calculateTotal = () => {
+    return editItems.reduce((sum, item) => sum + item.total, 0);
+  };
+
+  const formatCurrency = (amount: number) => {
+    return new Intl.NumberFormat("en-NG", {
+      style: "currency",
+      currency: "NGN",
+      minimumFractionDigits: 0,
+    }).format(amount);
   };
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString("en-GB", {
-      day: "numeric",
-      month: "short",
+    return new Date(dateString).toLocaleDateString("en-NG", {
       year: "numeric",
+      month: "short",
+      day: "numeric",
     });
   };
 
-  const getServiceDescription = (items: QuoteItem[]) => {
-    if (!items || items.length === 0) return "No items";
-    if (items.length === 1) return items[0].name;
-    return `${items[0].name} +${items.length - 1} more`;
-  };
-
-  if (isLoading) {
-    return (
-      <div className="flex justify-center items-center py-20">
-        <Loader2 className="h-8 w-8 animate-spin text-accent" />
-      </div>
-    );
-  }
+  const statuses = [
+    "ALL",
+    "DRAFT",
+    "SENT",
+    "VIEWED",
+    "ACCEPTED",
+    "DECLINED",
+    "EXPIRED",
+    "REVISED",
+  ];
 
   return (
-    <>
-      {/* Filters */}
-      <div
-        className={`rounded-xl border p-4 sm:p-6 mb-6 ${cardBg} ${cardBorder}`}
-      >
-        <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
+    <VendorLayout title="Quotes">
+      <div className="space-y-6">
+        {/* Toast */}
+        {toast.show && (
+          <div
+            className={`fixed top-4 right-4 z-50 px-4 py-3 rounded-lg shadow-lg ${
+              toast.type === "success"
+                ? isDark
+                  ? "bg-green-800 text-green-100"
+                  : "bg-green-100 text-green-800"
+                : isDark
+                ? "bg-red-800 text-red-100"
+                : "bg-red-100 text-red-800"
+            }`}
+          >
+            {toast.message}
+          </div>
+        )}
+
+        {/* Header */}
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div>
+            <h1
+              className={`text-2xl font-bold ${
+                isDark ? "text-white" : "text-gray-900"
+              }`}
+            >
+              Quotes
+            </h1>
+            <p className={isDark ? "text-gray-400" : "text-gray-600"}>
+              Manage and track your client quotes
+            </p>
+          </div>
+        </div>
+
+        {/* Filters */}
+        <div className="flex flex-col sm:flex-row gap-4">
           <div className="relative flex-1">
             <Search
-              className={`absolute left-4 top-1/2 -translate-y-1/2 ${textMuted}`}
-              size={18}
+              className={`absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 ${
+                isDark ? "text-gray-400" : "text-gray-500"
+              }`}
             />
             <input
               type="text"
-              placeholder="Search by client or service..."
+              placeholder="Search by client name or email..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className={`w-full pl-11 pr-4 py-3 rounded-lg border focus:outline-none focus:ring-2 focus:ring-accent/50 text-sm ${inputBg} ${inputBorder} ${textPrimary}`}
+              className={`w-full pl-10 pr-4 py-2 rounded-lg border ${
+                isDark
+                  ? "bg-gray-800 border-gray-700 text-white placeholder-gray-400"
+                  : "bg-white border-gray-300 text-gray-900 placeholder-gray-500"
+              } focus:ring-2 focus:ring-rose-500 focus:border-transparent`}
             />
           </div>
-          <div className="flex gap-3">
+
+          <div className="relative">
+            <Filter
+              className={`absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 ${
+                isDark ? "text-gray-400" : "text-gray-500"
+              }`}
+            />
             <select
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
-              className={`flex items-center gap-2 px-4 py-3 rounded-lg border text-sm ${inputBg} ${inputBorder} ${textPrimary}`}
+              className={`pl-10 pr-8 py-2 rounded-lg border appearance-none ${
+                isDark
+                  ? "bg-gray-800 border-gray-700 text-white"
+                  : "bg-white border-gray-300 text-gray-900"
+              } focus:ring-2 focus:ring-rose-500 focus:border-transparent`}
             >
-              <option value="">All Status</option>
-              <option value="DRAFT">Draft</option>
-              <option value="SENT">Sent</option>
-              <option value="VIEWED">Viewed</option>
-              <option value="ACCEPTED">Accepted</option>
-              <option value="DECLINED">Declined</option>
-              <option value="EXPIRED">Expired</option>
+              {statuses.map((status) => (
+                <option key={status} value={status}>
+                  {status === "ALL" ? "All Statuses" : status}
+                </option>
+              ))}
             </select>
           </div>
         </div>
-      </div>
 
-      {filteredQuotes.length === 0 ? (
+        {/* Quotes Table */}
         <div
-          className={`rounded-xl border p-12 text-center ${cardBg} ${cardBorder}`}
+          className={`rounded-xl border ${
+            isDark ? "bg-gray-800 border-gray-700" : "bg-white border-gray-200"
+          } overflow-hidden`}
         >
-          <FileText size={48} className={`mx-auto mb-4 ${textMuted}`} />
-          <h3 className={`text-lg font-medium mb-2 ${textPrimary}`}>
-            No quotes found
-          </h3>
-          <p className={textMuted}>
-            {searchQuery || statusFilter
-              ? "Try adjusting your filters"
-              : "You haven't created any quotes yet"}
-          </p>
-        </div>
-      ) : (
-        <>
-          {/* Table - Desktop */}
-          <div
-            className={`hidden md:block rounded-xl border overflow-hidden ${cardBg} ${cardBorder}`}
-          >
+          {loading ? (
+            <div className="p-8 flex justify-center">
+              <div className="animate-spin h-8 w-8 border-4 border-rose-500 border-t-transparent rounded-full" />
+            </div>
+          ) : quotes.length === 0 ? (
+            <div className="p-8 text-center">
+              <FileText
+                className={`mx-auto h-12 w-12 ${
+                  isDark ? "text-gray-600" : "text-gray-400"
+                }`}
+              />
+              <h3
+                className={`mt-4 text-lg font-medium ${
+                  isDark ? "text-white" : "text-gray-900"
+                }`}
+              >
+                No quotes found
+              </h3>
+              <p className={isDark ? "text-gray-400" : "text-gray-600"}>
+                Quotes you create from inquiries will appear here.
+              </p>
+            </div>
+          ) : (
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead>
                   <tr
-                    className={`text-xs uppercase tracking-wider border-b ${textMuted} ${cardBorder}`}
+                    className={
+                      isDark
+                        ? "bg-gray-700/50 border-b border-gray-700"
+                        : "bg-gray-50 border-b border-gray-200"
+                    }
                   >
-                    <th className="text-left px-6 py-4 font-medium">Client</th>
-                    <th className="text-left px-6 py-4 font-medium">Service</th>
-                    <th className="text-left px-6 py-4 font-medium">Status</th>
-                    <th className="text-left px-6 py-4 font-medium">
-                      Date Sent
+                    <th
+                      className={`px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider ${
+                        isDark ? "text-gray-300" : "text-gray-600"
+                      }`}
+                    >
+                      Client
                     </th>
-                    <th className="text-right px-6 py-4 font-medium">Amount</th>
-                    <th className="text-right px-6 py-4 font-medium">
+                    <th
+                      className={`px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider ${
+                        isDark ? "text-gray-300" : "text-gray-600"
+                      }`}
+                    >
+                      Event
+                    </th>
+                    <th
+                      className={`px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider ${
+                        isDark ? "text-gray-300" : "text-gray-600"
+                      }`}
+                    >
+                      Total
+                    </th>
+                    <th
+                      className={`px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider ${
+                        isDark ? "text-gray-300" : "text-gray-600"
+                      }`}
+                    >
+                      Valid Until
+                    </th>
+                    <th
+                      className={`px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider ${
+                        isDark ? "text-gray-300" : "text-gray-600"
+                      }`}
+                    >
+                      Status
+                    </th>
+                    <th
+                      className={`px-6 py-4 text-right text-xs font-semibold uppercase tracking-wider ${
+                        isDark ? "text-gray-300" : "text-gray-600"
+                      }`}
+                    >
                       Actions
                     </th>
                   </tr>
                 </thead>
-                <tbody>
-                  {filteredQuotes.map((quote) => (
-                    <tr
-                      key={quote.id}
-                      className={`border-b transition-colors ${cardBorder} ${hoverBg}`}
-                    >
-                      <td className={`px-6 py-5 font-medium ${textPrimary}`}>
-                        {quote.inquiry?.fromName || "Direct Quote"}
-                      </td>
-                      <td className={`px-6 py-5 ${textSecondary}`}>
-                        {getServiceDescription(quote.items)}
-                      </td>
-                      <td className="px-6 py-5">
-                        <span
-                          className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusStyle(
-                            quote.status
-                          )}`}
-                        >
-                          {quote.status}
-                        </span>
-                      </td>
-                      <td className={`px-6 py-5 ${textSecondary}`}>
-                        {formatDate(quote.createdAt)}
-                      </td>
-                      <td
-                        className={`px-6 py-5 text-right font-medium ${textPrimary}`}
+                <tbody className="divide-y divide-gray-700/50">
+                  {quotes.map((quote) => {
+                    const statusStyle = getStatusColor(quote.status, isDark);
+                    return (
+                      <tr
+                        key={quote.id}
+                        className={`${
+                          isDark ? "hover:bg-gray-700/30" : "hover:bg-gray-50"
+                        } transition-colors`}
                       >
-                        £{quote.totalPrice?.toLocaleString() || "0"}
-                      </td>
-                      <td className="px-6 py-5 text-right">
-                        <button className={`p-2 rounded-lg ${hoverBg}`}>
-                          <MoreHorizontal size={18} className={textSecondary} />
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
+                        <td className="px-6 py-4">
+                          <div>
+                            <p
+                              className={`font-medium ${
+                                isDark ? "text-white" : "text-gray-900"
+                              }`}
+                            >
+                              {quote.inquiry?.fullName || "N/A"}
+                            </p>
+                            <p
+                              className={`text-sm ${
+                                isDark ? "text-gray-400" : "text-gray-500"
+                              }`}
+                            >
+                              {quote.inquiry?.email || "N/A"}
+                            </p>
+                          </div>
+                        </td>
+                        <td className="px-6 py-4">
+                          <div>
+                            <p
+                              className={`font-medium ${
+                                isDark ? "text-white" : "text-gray-900"
+                              }`}
+                            >
+                              {quote.inquiry?.eventType || "N/A"}
+                            </p>
+                            <p
+                              className={`text-sm ${
+                                isDark ? "text-gray-400" : "text-gray-500"
+                              }`}
+                            >
+                              {quote.inquiry?.eventDate
+                                ? formatDate(quote.inquiry.eventDate)
+                                : "N/A"}
+                            </p>
+                          </div>
+                        </td>
+                        <td className="px-6 py-4">
+                          <p
+                            className={`font-semibold ${
+                              isDark ? "text-white" : "text-gray-900"
+                            }`}
+                          >
+                            {formatCurrency(quote.total)}
+                          </p>
+                        </td>
+                        <td className="px-6 py-4">
+                          <p
+                            className={`text-sm ${
+                              isDark ? "text-gray-300" : "text-gray-700"
+                            }`}
+                          >
+                            {formatDate(quote.validUntil)}
+                          </p>
+                        </td>
+                        <td className="px-6 py-4">
+                          <span
+                            className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium ${statusStyle.bg} ${statusStyle.text}`}
+                          >
+                            {getStatusIcon(quote.status)}
+                            {quote.status}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 text-right">
+                          <div className="relative inline-block">
+                            <button
+                              onClick={() =>
+                                setOpenMenuId(
+                                  openMenuId === quote.id ? null : quote.id
+                                )
+                              }
+                              className={`p-2 rounded-lg ${
+                                isDark
+                                  ? "hover:bg-gray-700 text-gray-400"
+                                  : "hover:bg-gray-100 text-gray-600"
+                              }`}
+                            >
+                              <MoreHorizontal className="h-5 w-5" />
+                            </button>
+
+                            {openMenuId === quote.id && (
+                              <div
+                                className={`absolute right-0 mt-1 w-48 rounded-lg shadow-lg border z-10 ${
+                                  isDark
+                                    ? "bg-gray-800 border-gray-700"
+                                    : "bg-white border-gray-200"
+                                }`}
+                              >
+                                <button
+                                  onClick={() => handleViewQuote(quote)}
+                                  className={`w-full px-4 py-2 text-left text-sm flex items-center gap-2 ${
+                                    isDark
+                                      ? "hover:bg-gray-700 text-gray-300"
+                                      : "hover:bg-gray-50 text-gray-700"
+                                  }`}
+                                >
+                                  <Eye className="h-4 w-4" />
+                                  View Details
+                                </button>
+                                {(quote.status === "DRAFT" ||
+                                  quote.status === "REVISED") && (
+                                  <>
+                                    <button
+                                      onClick={() => handleEditQuote(quote)}
+                                      className={`w-full px-4 py-2 text-left text-sm flex items-center gap-2 ${
+                                        isDark
+                                          ? "hover:bg-gray-700 text-gray-300"
+                                          : "hover:bg-gray-50 text-gray-700"
+                                      }`}
+                                    >
+                                      <Edit className="h-4 w-4" />
+                                      Edit Quote
+                                    </button>
+                                    <button
+                                      onClick={() => handleSendQuote(quote)}
+                                      className={`w-full px-4 py-2 text-left text-sm flex items-center gap-2 ${
+                                        isDark
+                                          ? "hover:bg-gray-700 text-blue-400"
+                                          : "hover:bg-gray-50 text-blue-600"
+                                      }`}
+                                    >
+                                      <Send className="h-4 w-4" />
+                                      Send to Client
+                                    </button>
+                                  </>
+                                )}
+                              </div>
+                            )}
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>
-          </div>
+          )}
+        </div>
 
-          {/* Cards - Mobile */}
-          <div className="md:hidden space-y-4">
-            {filteredQuotes.map((quote) => (
-              <div
-                key={quote.id}
-                className={`rounded-xl border p-4 ${cardBg} ${cardBorder}`}
-              >
-                <div className="flex items-start justify-between mb-3">
-                  <div>
-                    <p className={`font-medium ${textPrimary}`}>
-                      {quote.inquiry?.fromName || "Direct Quote"}
-                    </p>
-                    <p className={`text-sm ${textMuted}`}>
-                      {getServiceDescription(quote.items)}
-                    </p>
-                  </div>
-                  <span
-                    className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusStyle(
-                      quote.status
-                    )}`}
-                  >
-                    {quote.status}
-                  </span>
-                </div>
-                <div
-                  className={`flex justify-between items-center pt-3 border-t ${cardBorder}`}
-                >
-                  <span className={`text-sm ${textMuted}`}>
-                    {formatDate(quote.createdAt)}
-                  </span>
-                  <span className={`font-bold ${textPrimary}`}>
-                    £{quote.totalPrice?.toLocaleString() || "0"}
-                  </span>
-                </div>
-              </div>
-            ))}
-          </div>
-
-          {/* Pagination */}
-          {pagination.pages > 1 && (
-            <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mt-6">
+        {/* Pagination */}
+        {totalPages > 1 && (
+          <div className="flex items-center justify-between">
+            <p className={isDark ? "text-gray-400" : "text-gray-600"}>
+              Page {currentPage} of {totalPages}
+            </p>
+            <div className="flex gap-2">
               <button
-                onClick={() =>
-                  setPagination((p) => ({
-                    ...p,
-                    page: Math.max(1, p.page - 1),
-                  }))
-                }
-                disabled={pagination.page === 1}
-                className={`flex items-center gap-2 ${
-                  pagination.page === 1
-                    ? "opacity-50 cursor-not-allowed"
-                    : `${textMuted} hover:${textPrimary}`
-                } transition-colors text-sm`}
+                onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                disabled={currentPage === 1}
+                className={`px-4 py-2 rounded-lg border ${
+                  isDark
+                    ? "bg-gray-800 border-gray-700 text-white hover:bg-gray-700 disabled:opacity-50"
+                    : "bg-white border-gray-300 text-gray-700 hover:bg-gray-50 disabled:opacity-50"
+                }`}
               >
-                <ChevronLeft size={18} />
-                <span>Previous</span>
+                Previous
               </button>
-
-              <div className="flex items-center gap-2">
-                {Array.from(
-                  { length: Math.min(5, pagination.pages) },
-                  (_, i) => {
-                    const pageNum = i + 1;
-                    return (
-                      <button
-                        key={pageNum}
-                        onClick={() =>
-                          setPagination((p) => ({ ...p, page: pageNum }))
-                        }
-                        className={`w-9 h-9 rounded-lg font-medium text-sm ${
-                          pagination.page === pageNum
-                            ? "bg-accent text-white"
-                            : `${textMuted} ${hoverBg}`
-                        }`}
-                      >
-                        {pageNum}
-                      </button>
-                    );
-                  }
-                )}
-                {pagination.pages > 5 && (
-                  <>
-                    <span className={`px-2 ${textMuted}`}>...</span>
-                    <button
-                      onClick={() =>
-                        setPagination((p) => ({ ...p, page: pagination.pages }))
-                      }
-                      className={`w-9 h-9 rounded-lg ${textMuted} ${hoverBg} font-medium text-sm`}
-                    >
-                      {pagination.pages}
-                    </button>
-                  </>
-                )}
-              </div>
-
               <button
                 onClick={() =>
-                  setPagination((p) => ({
-                    ...p,
-                    page: Math.min(pagination.pages, p.page + 1),
-                  }))
+                  setCurrentPage((p) => Math.min(totalPages, p + 1))
                 }
-                disabled={pagination.page === pagination.pages}
-                className={`flex items-center gap-2 ${
-                  pagination.page === pagination.pages
-                    ? "opacity-50 cursor-not-allowed"
-                    : `${textMuted} hover:${textPrimary}`
-                } transition-colors text-sm`}
+                disabled={currentPage === totalPages}
+                className={`px-4 py-2 rounded-lg border ${
+                  isDark
+                    ? "bg-gray-800 border-gray-700 text-white hover:bg-gray-700 disabled:opacity-50"
+                    : "bg-white border-gray-300 text-gray-700 hover:bg-gray-50 disabled:opacity-50"
+                }`}
               >
-                <span>Next</span>
-                <ChevronRight size={18} />
+                Next
               </button>
             </div>
-          )}
-        </>
-      )}
-    </>
-  );
-}
+          </div>
+        )}
+      </div>
 
-export default function VendorQuotesPage() {
-  return (
-    <VendorLayout
-      title="Quotes"
-      actionButton={{ label: "Create New Quote", onClick: () => {} }}
-    >
-      <QuotesContent />
+      {/* View Quote Modal */}
+      <Modal
+        isOpen={isViewModalOpen}
+        onClose={() => {
+          setIsViewModalOpen(false);
+          setSelectedQuote(null);
+        }}
+        title="Quote Details"
+        size="xl"
+      >
+        {selectedQuote && (
+          <div className="space-y-6">
+            {/* Client Info */}
+            <div
+              className={`p-4 rounded-lg ${
+                isDark ? "bg-gray-700/50" : "bg-gray-50"
+              }`}
+            >
+              <h4
+                className={`font-semibold mb-3 ${
+                  isDark ? "text-white" : "text-gray-900"
+                }`}
+              >
+                Client Information
+              </h4>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <p
+                    className={`text-sm ${
+                      isDark ? "text-gray-400" : "text-gray-500"
+                    }`}
+                  >
+                    Name
+                  </p>
+                  <p className={isDark ? "text-white" : "text-gray-900"}>
+                    {selectedQuote.inquiry?.fullName || "N/A"}
+                  </p>
+                </div>
+                <div>
+                  <p
+                    className={`text-sm ${
+                      isDark ? "text-gray-400" : "text-gray-500"
+                    }`}
+                  >
+                    Email
+                  </p>
+                  <p className={isDark ? "text-white" : "text-gray-900"}>
+                    {selectedQuote.inquiry?.email || "N/A"}
+                  </p>
+                </div>
+                <div>
+                  <p
+                    className={`text-sm ${
+                      isDark ? "text-gray-400" : "text-gray-500"
+                    }`}
+                  >
+                    Phone
+                  </p>
+                  <p className={isDark ? "text-white" : "text-gray-900"}>
+                    {selectedQuote.inquiry?.phone || "N/A"}
+                  </p>
+                </div>
+                <div>
+                  <p
+                    className={`text-sm ${
+                      isDark ? "text-gray-400" : "text-gray-500"
+                    }`}
+                  >
+                    Event Type
+                  </p>
+                  <p className={isDark ? "text-white" : "text-gray-900"}>
+                    {selectedQuote.inquiry?.eventType || "N/A"}
+                  </p>
+                </div>
+                <div>
+                  <p
+                    className={`text-sm ${
+                      isDark ? "text-gray-400" : "text-gray-500"
+                    }`}
+                  >
+                    Event Date
+                  </p>
+                  <p className={isDark ? "text-white" : "text-gray-900"}>
+                    {selectedQuote.inquiry?.eventDate
+                      ? formatDate(selectedQuote.inquiry.eventDate)
+                      : "N/A"}
+                  </p>
+                </div>
+                <div>
+                  <p
+                    className={`text-sm ${
+                      isDark ? "text-gray-400" : "text-gray-500"
+                    }`}
+                  >
+                    Guest Count
+                  </p>
+                  <p className={isDark ? "text-white" : "text-gray-900"}>
+                    {selectedQuote.inquiry?.guestCount || "N/A"}
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Quote Status & Dates */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+              <div>
+                <p
+                  className={`text-sm ${
+                    isDark ? "text-gray-400" : "text-gray-500"
+                  }`}
+                >
+                  Status
+                </p>
+                <span
+                  className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium ${
+                    getStatusColor(selectedQuote.status, isDark).bg
+                  } ${getStatusColor(selectedQuote.status, isDark).text}`}
+                >
+                  {getStatusIcon(selectedQuote.status)}
+                  {selectedQuote.status}
+                </span>
+              </div>
+              <div>
+                <p
+                  className={`text-sm ${
+                    isDark ? "text-gray-400" : "text-gray-500"
+                  }`}
+                >
+                  Valid Until
+                </p>
+                <p className={isDark ? "text-white" : "text-gray-900"}>
+                  {formatDate(selectedQuote.validUntil)}
+                </p>
+              </div>
+              <div>
+                <p
+                  className={`text-sm ${
+                    isDark ? "text-gray-400" : "text-gray-500"
+                  }`}
+                >
+                  Sent At
+                </p>
+                <p className={isDark ? "text-white" : "text-gray-900"}>
+                  {selectedQuote.sentAt
+                    ? formatDate(selectedQuote.sentAt)
+                    : "Not sent"}
+                </p>
+              </div>
+              <div>
+                <p
+                  className={`text-sm ${
+                    isDark ? "text-gray-400" : "text-gray-500"
+                  }`}
+                >
+                  Viewed At
+                </p>
+                <p className={isDark ? "text-white" : "text-gray-900"}>
+                  {selectedQuote.viewedAt
+                    ? formatDate(selectedQuote.viewedAt)
+                    : "Not viewed"}
+                </p>
+              </div>
+            </div>
+
+            {/* Quote Items */}
+            <div>
+              <h4
+                className={`font-semibold mb-3 ${
+                  isDark ? "text-white" : "text-gray-900"
+                }`}
+              >
+                Quote Items
+              </h4>
+              <div
+                className={`rounded-lg border overflow-hidden ${
+                  isDark ? "border-gray-700" : "border-gray-200"
+                }`}
+              >
+                <table className="w-full">
+                  <thead>
+                    <tr className={isDark ? "bg-gray-700/50" : "bg-gray-50"}>
+                      <th
+                        className={`px-4 py-2 text-left text-sm font-medium ${
+                          isDark ? "text-gray-300" : "text-gray-600"
+                        }`}
+                      >
+                        Description
+                      </th>
+                      <th
+                        className={`px-4 py-2 text-right text-sm font-medium ${
+                          isDark ? "text-gray-300" : "text-gray-600"
+                        }`}
+                      >
+                        Qty
+                      </th>
+                      <th
+                        className={`px-4 py-2 text-right text-sm font-medium ${
+                          isDark ? "text-gray-300" : "text-gray-600"
+                        }`}
+                      >
+                        Unit Price
+                      </th>
+                      <th
+                        className={`px-4 py-2 text-right text-sm font-medium ${
+                          isDark ? "text-gray-300" : "text-gray-600"
+                        }`}
+                      >
+                        Total
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-700/50">
+                    {selectedQuote.items?.map((item, index) => (
+                      <tr key={index}>
+                        <td
+                          className={`px-4 py-3 ${
+                            isDark ? "text-white" : "text-gray-900"
+                          }`}
+                        >
+                          {item.description}
+                        </td>
+                        <td
+                          className={`px-4 py-3 text-right ${
+                            isDark ? "text-gray-300" : "text-gray-700"
+                          }`}
+                        >
+                          {item.quantity}
+                        </td>
+                        <td
+                          className={`px-4 py-3 text-right ${
+                            isDark ? "text-gray-300" : "text-gray-700"
+                          }`}
+                        >
+                          {formatCurrency(item.unitPrice)}
+                        </td>
+                        <td
+                          className={`px-4 py-3 text-right font-medium ${
+                            isDark ? "text-white" : "text-gray-900"
+                          }`}
+                        >
+                          {formatCurrency(item.total)}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                  <tfoot>
+                    <tr
+                      className={
+                        isDark
+                          ? "bg-gray-700/50 border-t border-gray-600"
+                          : "bg-gray-50 border-t border-gray-200"
+                      }
+                    >
+                      <td
+                        colSpan={3}
+                        className={`px-4 py-3 text-right font-semibold ${
+                          isDark ? "text-white" : "text-gray-900"
+                        }`}
+                      >
+                        Grand Total
+                      </td>
+                      <td
+                        className={`px-4 py-3 text-right font-bold text-lg ${
+                          isDark ? "text-rose-400" : "text-rose-600"
+                        }`}
+                      >
+                        {formatCurrency(selectedQuote.total)}
+                      </td>
+                    </tr>
+                  </tfoot>
+                </table>
+              </div>
+            </div>
+
+            {/* Payment Terms */}
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <p
+                  className={`text-sm ${
+                    isDark ? "text-gray-400" : "text-gray-500"
+                  }`}
+                >
+                  Payment Mode
+                </p>
+                <p className={isDark ? "text-white" : "text-gray-900"}>
+                  {formatPaymentMode(selectedQuote.paymentMode)}
+                </p>
+              </div>
+              {selectedQuote.paymentMode === "DEPOSIT_BALANCE" &&
+                selectedQuote.depositPercent && (
+                  <div>
+                    <p
+                      className={`text-sm ${
+                        isDark ? "text-gray-400" : "text-gray-500"
+                      }`}
+                    >
+                      Deposit Amount
+                    </p>
+                    <p className={isDark ? "text-white" : "text-gray-900"}>
+                      {selectedQuote.depositPercent}% (
+                      {formatCurrency(
+                        (selectedQuote.total * selectedQuote.depositPercent) /
+                          100
+                      )}
+                      )
+                    </p>
+                  </div>
+                )}
+            </div>
+
+            {/* Terms & Notes */}
+            {(selectedQuote.terms || selectedQuote.notes) && (
+              <div className="space-y-4">
+                {selectedQuote.terms && (
+                  <div>
+                    <p
+                      className={`text-sm font-medium mb-1 ${
+                        isDark ? "text-gray-400" : "text-gray-500"
+                      }`}
+                    >
+                      Terms & Conditions
+                    </p>
+                    <p
+                      className={`text-sm ${
+                        isDark ? "text-gray-300" : "text-gray-700"
+                      }`}
+                    >
+                      {selectedQuote.terms}
+                    </p>
+                  </div>
+                )}
+                {selectedQuote.notes && (
+                  <div>
+                    <p
+                      className={`text-sm font-medium mb-1 ${
+                        isDark ? "text-gray-400" : "text-gray-500"
+                      }`}
+                    >
+                      Notes
+                    </p>
+                    <p
+                      className={`text-sm ${
+                        isDark ? "text-gray-300" : "text-gray-700"
+                      }`}
+                    >
+                      {selectedQuote.notes}
+                    </p>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Actions */}
+            <div className="flex justify-end gap-3">
+              <button
+                onClick={() => {
+                  setIsViewModalOpen(false);
+                  setSelectedQuote(null);
+                }}
+                className={`px-4 py-2 rounded-lg border ${
+                  isDark
+                    ? "border-gray-600 text-gray-300 hover:bg-gray-700"
+                    : "border-gray-300 text-gray-700 hover:bg-gray-50"
+                }`}
+              >
+                Close
+              </button>
+              {(selectedQuote.status === "DRAFT" ||
+                selectedQuote.status === "REVISED") && (
+                <>
+                  <button
+                    onClick={() => {
+                      setIsViewModalOpen(false);
+                      handleEditQuote(selectedQuote);
+                    }}
+                    className={`px-4 py-2 rounded-lg ${
+                      isDark
+                        ? "bg-gray-700 text-white hover:bg-gray-600"
+                        : "bg-gray-200 text-gray-900 hover:bg-gray-300"
+                    }`}
+                  >
+                    Edit Quote
+                  </button>
+                  <button
+                    onClick={() => {
+                      setIsViewModalOpen(false);
+                      handleSendQuote(selectedQuote);
+                    }}
+                    className="px-4 py-2 bg-rose-600 text-white rounded-lg hover:bg-rose-700"
+                  >
+                    Send to Client
+                  </button>
+                </>
+              )}
+            </div>
+          </div>
+        )}
+      </Modal>
+
+      {/* Edit Quote Modal */}
+      <Modal
+        isOpen={isEditModalOpen}
+        onClose={() => {
+          setIsEditModalOpen(false);
+          setSelectedQuote(null);
+        }}
+        title="Edit Quote"
+        size="xl"
+      >
+        {selectedQuote && (
+          <div className="space-y-6">
+            {/* Quote Items */}
+            <div>
+              <div className="flex items-center justify-between mb-3">
+                <h4
+                  className={`font-semibold ${
+                    isDark ? "text-white" : "text-gray-900"
+                  }`}
+                >
+                  Quote Items
+                </h4>
+                <button
+                  onClick={addQuoteItem}
+                  className="flex items-center gap-1 text-sm text-rose-500 hover:text-rose-600"
+                >
+                  <Plus className="h-4 w-4" />
+                  Add Item
+                </button>
+              </div>
+              <div className="space-y-3">
+                {editItems.map((item, index) => (
+                  <div key={index} className="flex gap-3 items-start">
+                    <div className="flex-1">
+                      <input
+                        type="text"
+                        placeholder="Description"
+                        value={item.description}
+                        onChange={(e) =>
+                          updateQuoteItem(index, "description", e.target.value)
+                        }
+                        className={`w-full px-3 py-2 rounded-lg border ${
+                          isDark
+                            ? "bg-gray-700 border-gray-600 text-white"
+                            : "bg-white border-gray-300 text-gray-900"
+                        }`}
+                      />
+                    </div>
+                    <div className="w-20">
+                      <input
+                        type="number"
+                        placeholder="Qty"
+                        min="1"
+                        value={item.quantity}
+                        onChange={(e) =>
+                          updateQuoteItem(
+                            index,
+                            "quantity",
+                            parseInt(e.target.value) || 0
+                          )
+                        }
+                        className={`w-full px-3 py-2 rounded-lg border ${
+                          isDark
+                            ? "bg-gray-700 border-gray-600 text-white"
+                            : "bg-white border-gray-300 text-gray-900"
+                        }`}
+                      />
+                    </div>
+                    <div className="w-32">
+                      <input
+                        type="number"
+                        placeholder="Unit Price"
+                        min="0"
+                        value={item.unitPrice}
+                        onChange={(e) =>
+                          updateQuoteItem(
+                            index,
+                            "unitPrice",
+                            parseFloat(e.target.value) || 0
+                          )
+                        }
+                        className={`w-full px-3 py-2 rounded-lg border ${
+                          isDark
+                            ? "bg-gray-700 border-gray-600 text-white"
+                            : "bg-white border-gray-300 text-gray-900"
+                        }`}
+                      />
+                    </div>
+                    <div className="w-32 flex items-center justify-end">
+                      <span
+                        className={`font-medium ${
+                          isDark ? "text-white" : "text-gray-900"
+                        }`}
+                      >
+                        {formatCurrency(item.total)}
+                      </span>
+                    </div>
+                    <button
+                      onClick={() => removeQuoteItem(index)}
+                      disabled={editItems.length === 1}
+                      className={`p-2 rounded-lg ${
+                        editItems.length === 1
+                          ? "text-gray-400 cursor-not-allowed"
+                          : "text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20"
+                      }`}
+                    >
+                      <Minus className="h-4 w-4" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+              <div className="mt-4 text-right">
+                <p
+                  className={`text-lg font-semibold ${
+                    isDark ? "text-white" : "text-gray-900"
+                  }`}
+                >
+                  Total: {formatCurrency(calculateTotal())}
+                </p>
+              </div>
+            </div>
+
+            {/* Validity */}
+            <div>
+              <label
+                className={`block text-sm font-medium mb-2 ${
+                  isDark ? "text-gray-300" : "text-gray-700"
+                }`}
+              >
+                Valid Until
+              </label>
+              <input
+                type="date"
+                value={editValidUntil}
+                onChange={(e) => setEditValidUntil(e.target.value)}
+                className={`w-full px-4 py-2 rounded-lg border ${
+                  isDark
+                    ? "bg-gray-700 border-gray-600 text-white"
+                    : "bg-white border-gray-300 text-gray-900"
+                }`}
+              />
+            </div>
+
+            {/* Payment Mode */}
+            <div>
+              <label
+                className={`block text-sm font-medium mb-2 ${
+                  isDark ? "text-gray-300" : "text-gray-700"
+                }`}
+              >
+                Payment Mode
+              </label>
+              <select
+                value={editPaymentMode}
+                onChange={(e) => setEditPaymentMode(e.target.value)}
+                className={`w-full px-4 py-2 rounded-lg border ${
+                  isDark
+                    ? "bg-gray-700 border-gray-600 text-white"
+                    : "bg-white border-gray-300 text-gray-900"
+                }`}
+              >
+                <option value="FULL_PAYMENT">Full Payment</option>
+                <option value="DEPOSIT_BALANCE">Deposit + Balance</option>
+                <option value="CASH_ON_DELIVERY">Cash on Delivery</option>
+              </select>
+            </div>
+
+            {/* Deposit Percent */}
+            {editPaymentMode === "DEPOSIT_BALANCE" && (
+              <div>
+                <label
+                  className={`block text-sm font-medium mb-2 ${
+                    isDark ? "text-gray-300" : "text-gray-700"
+                  }`}
+                >
+                  Deposit Percentage
+                </label>
+                <div className="flex items-center gap-3">
+                  <input
+                    type="number"
+                    min="0"
+                    max="100"
+                    value={editDepositPercent}
+                    onChange={(e) =>
+                      setEditDepositPercent(parseInt(e.target.value) || 0)
+                    }
+                    className={`w-24 px-4 py-2 rounded-lg border ${
+                      isDark
+                        ? "bg-gray-700 border-gray-600 text-white"
+                        : "bg-white border-gray-300 text-gray-900"
+                    }`}
+                  />
+                  <span className={isDark ? "text-gray-400" : "text-gray-600"}>
+                    % ={" "}
+                    {formatCurrency(
+                      (calculateTotal() * editDepositPercent) / 100
+                    )}
+                  </span>
+                </div>
+              </div>
+            )}
+
+            {/* Terms */}
+            <div>
+              <label
+                className={`block text-sm font-medium mb-2 ${
+                  isDark ? "text-gray-300" : "text-gray-700"
+                }`}
+              >
+                Terms & Conditions
+              </label>
+              <textarea
+                value={editTerms}
+                onChange={(e) => setEditTerms(e.target.value)}
+                rows={3}
+                placeholder="Enter terms and conditions..."
+                className={`w-full px-4 py-2 rounded-lg border ${
+                  isDark
+                    ? "bg-gray-700 border-gray-600 text-white placeholder-gray-400"
+                    : "bg-white border-gray-300 text-gray-900 placeholder-gray-500"
+                }`}
+              />
+            </div>
+
+            {/* Notes */}
+            <div>
+              <label
+                className={`block text-sm font-medium mb-2 ${
+                  isDark ? "text-gray-300" : "text-gray-700"
+                }`}
+              >
+                Additional Notes
+              </label>
+              <textarea
+                value={editNotes}
+                onChange={(e) => setEditNotes(e.target.value)}
+                rows={2}
+                placeholder="Enter any additional notes..."
+                className={`w-full px-4 py-2 rounded-lg border ${
+                  isDark
+                    ? "bg-gray-700 border-gray-600 text-white placeholder-gray-400"
+                    : "bg-white border-gray-300 text-gray-900 placeholder-gray-500"
+                }`}
+              />
+            </div>
+
+            {/* Actions */}
+            <div className="flex justify-end gap-3">
+              <button
+                onClick={() => {
+                  setIsEditModalOpen(false);
+                  setSelectedQuote(null);
+                }}
+                className={`px-4 py-2 rounded-lg border ${
+                  isDark
+                    ? "border-gray-600 text-gray-300 hover:bg-gray-700"
+                    : "border-gray-300 text-gray-700 hover:bg-gray-50"
+                }`}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleUpdateQuote}
+                disabled={saving}
+                className="px-4 py-2 bg-rose-600 text-white rounded-lg hover:bg-rose-700 disabled:opacity-50"
+              >
+                {saving ? "Saving..." : "Save Changes"}
+              </button>
+            </div>
+          </div>
+        )}
+      </Modal>
+
+      {/* Send Quote Confirmation Modal */}
+      <Modal
+        isOpen={isSendModalOpen}
+        onClose={() => {
+          setIsSendModalOpen(false);
+          setSelectedQuote(null);
+        }}
+        title="Send Quote"
+        size="md"
+      >
+        {selectedQuote && (
+          <div className="space-y-6">
+            <div
+              className={`p-4 rounded-lg ${
+                isDark ? "bg-blue-900/20" : "bg-blue-50"
+              }`}
+            >
+              <div className="flex items-start gap-3">
+                <Send
+                  className={`h-6 w-6 ${
+                    isDark ? "text-blue-400" : "text-blue-600"
+                  }`}
+                />
+                <div>
+                  <p
+                    className={`font-medium ${
+                      isDark ? "text-white" : "text-gray-900"
+                    }`}
+                  >
+                    Send this quote to the client?
+                  </p>
+                  <p
+                    className={`text-sm mt-1 ${
+                      isDark ? "text-gray-400" : "text-gray-600"
+                    }`}
+                  >
+                    The quote will be sent to{" "}
+                    <strong>{selectedQuote.inquiry?.email}</strong>. Once sent,
+                    the quote status will change to "Sent".
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div
+              className={`p-4 rounded-lg border ${
+                isDark ? "border-gray-700" : "border-gray-200"
+              }`}
+            >
+              <div className="flex justify-between items-center">
+                <div>
+                  <p
+                    className={`text-sm ${
+                      isDark ? "text-gray-400" : "text-gray-500"
+                    }`}
+                  >
+                    Quote Total
+                  </p>
+                  <p
+                    className={`text-xl font-bold ${
+                      isDark ? "text-white" : "text-gray-900"
+                    }`}
+                  >
+                    {formatCurrency(selectedQuote.total)}
+                  </p>
+                </div>
+                <div className="text-right">
+                  <p
+                    className={`text-sm ${
+                      isDark ? "text-gray-400" : "text-gray-500"
+                    }`}
+                  >
+                    Valid Until
+                  </p>
+                  <p className={isDark ? "text-white" : "text-gray-900"}>
+                    {formatDate(selectedQuote.validUntil)}
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex justify-end gap-3">
+              <button
+                onClick={() => {
+                  setIsSendModalOpen(false);
+                  setSelectedQuote(null);
+                }}
+                className={`px-4 py-2 rounded-lg border ${
+                  isDark
+                    ? "border-gray-600 text-gray-300 hover:bg-gray-700"
+                    : "border-gray-300 text-gray-700 hover:bg-gray-50"
+                }`}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={confirmSendQuote}
+                disabled={saving}
+                className="px-4 py-2 bg-rose-600 text-white rounded-lg hover:bg-rose-700 disabled:opacity-50 flex items-center gap-2"
+              >
+                {saving ? (
+                  "Sending..."
+                ) : (
+                  <>
+                    <Send className="h-4 w-4" />
+                    Send Quote
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        )}
+      </Modal>
     </VendorLayout>
   );
 }
