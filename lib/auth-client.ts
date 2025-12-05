@@ -189,16 +189,17 @@ export async function resetPassword(
 
 /**
  * Verify email with token
+ * Uses GET request with query params to match email link format
  */
 export async function verifyEmail(token: string): Promise<AuthResponse> {
   try {
-    const response = await fetch("/api/auth/verify-email", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ token }),
-    });
+    // Use GET with query params since email links pass token in URL
+    const response = await fetch(
+      `/api/auth/verify-email?token=${encodeURIComponent(token)}`,
+      {
+        method: "GET",
+      }
+    );
 
     const result = await response.json();
 

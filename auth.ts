@@ -6,6 +6,8 @@ import bcrypt from "bcryptjs";
 import { z } from "zod";
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
+  // Explicit secret so JWT validation works across API routes
+  secret: process.env.AUTH_SECRET || process.env.NEXTAUTH_SECRET,
   session: { strategy: "jwt", maxAge: 30 * 24 * 60 * 60 },
   providers: [
     Google({

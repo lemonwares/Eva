@@ -3,12 +3,12 @@ import { prisma } from "@/lib/prisma";
 import { sendEmail } from "@/lib/mail";
 import { emailTemplates } from "@/templates/templateLoader";
 
-// POST /api/auth/verify-email
-// Verifies a user's email using a token
-export async function POST(request: NextRequest) {
+// GET /api/auth/verify-email?token=xxx
+// Alternative endpoint for email link verification via query params
+export async function GET(request: NextRequest) {
   try {
-    const body = await request.json();
-    const { token } = body;
+    const searchParams = request.nextUrl.searchParams;
+    const token = searchParams.get("token");
 
     if (!token) {
       return NextResponse.json(
@@ -17,13 +17,60 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Reuse the verification logic by calling the shared function below
+    return await handleVerification(token);
+  } catch (error: any) {
+    console.error(`Email verification error (GET): ${error?.message}`);
+    return NextResponse.json(
+      { message: "Internal server error" },
+      { status: 500 }
+    );
+  }
+}
+
+// POST /api/auth/verify-email
+// Verifies a user's email using a token
+export async function POST(request: NextRequest) {
+  try {
+    const body = await request.json();
+    const { token } = body;
+
+    // Log for debugging - helps identify if body parsing is the issue
+    console.log("Verify email request body:", { token, fullBody: body });
+
+    if (!token) {
+      return NextResponse.json(
+        { message: "Verification token is required" },
+        { status: 400 }
+      );
+    }
+
+    // Delegate to shared verification handler
+    return await handleVerification(token);
+  } catch (error: any) {
+    console.error(`Email verification error (POST): ${error?.message}`);
+    return NextResponse.json(
+      { message: "Internal server error" },
+      { status: 500 }
+    );
+  }
+}
+
+// Shared verification logic for both GET and POST handlers
+async function handleVerification(token: string) {
+  try {
+    console.log("Looking up verification token:", token);
+
     // Find verification record by token
     const verification = await prisma.emailVerification.findUnique({
       where: { token },
       include: { user: true }, // Include user data
     });
 
+    console.log("Verification record found:", verification ? "Yes" : "No");
+
     if (!verification) {
+      console.log("Error: Verification token not found in database");
       return NextResponse.json(
         { message: "Invalid verification token" },
         { status: 400 }
@@ -32,11 +79,14 @@ export async function POST(request: NextRequest) {
 
     // Check if token has expired
     if (verification.expiresAt && new Date() > verification.expiresAt) {
+      console.log("Error: Token expired at", verification.expiresAt);
       return NextResponse.json(
         { message: "Verification token has expired" },
         { status: 400 }
       );
     }
+
+    console.log("Token is valid, proceeding with verification");
 
     // Mark user as verified
     const user = await prisma.user.update({
@@ -76,7 +126,7 @@ export async function POST(request: NextRequest) {
       { status: 200 }
     );
   } catch (error: any) {
-    console.error(`Email verification error: ${error?.message}`);
+    console.error(`Email verification handler error: ${error?.message}`);
     return NextResponse.json(
       { message: "Internal server error" },
       { status: 500 }

@@ -17,7 +17,11 @@ const updateProfileSchema = z.object({
 export async function GET(request: NextRequest) {
   try {
     // Get JWT from request (NextAuth)
-    const token = await getToken({ req: request });
+    // Pass the same secret used by NextAuth so JWT decoding succeeds
+    const token = await getToken({
+      req: request,
+      secret: process.env.AUTH_SECRET || process.env.NEXTAUTH_SECRET,
+    });
     if (!token || !token.email) {
       return NextResponse.json(
         { message: "Not authenticated" },
