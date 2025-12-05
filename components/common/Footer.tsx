@@ -80,23 +80,21 @@ export default function Footer() {
 
           {/* Legal Section */}
           <div>
-            <div id="privacy" className="sr-only" aria-hidden />
             <h3 className="text-sm font-semibold uppercase tracking-[0.3em] text-background/70">
               Legal
             </h3>
             <ul className="mt-4 space-y-3 text-sm">
               <li>
                 <Link
-                  href="/#privacy"
+                  href="/privacy"
                   className="text-background/80 transition hover:text-background"
                 >
                   Privacy policy
                 </Link>
               </li>
               <li>
-                <div id="terms" className="sr-only" aria-hidden />
                 <Link
-                  href="/#terms"
+                  href="/terms"
                   className="text-background/80 transition hover:text-background"
                 >
                   Terms of service
@@ -111,12 +109,12 @@ export default function Footer() {
             <p>© {new Date().getFullYear()} EVA. All rights reserved.</p>
             <div className="flex items-center gap-6">
               <Link
-                href="/#privacy"
+                href="/privacy"
                 className="hover:text-background transition"
               >
                 Privacy
               </Link>
-              <Link href="/#terms" className="hover:text-background transition">
+              <Link href="/terms" className="hover:text-background transition">
                 Terms
               </Link>
             </div>

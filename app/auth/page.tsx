@@ -4,6 +4,7 @@ import LoginForm from "@/components/auth/login-form";
 import SignUpForm from "@/components/auth/signup-form";
 import { Sparkles } from "lucide-react";
 import { useState, Suspense } from "react";
+import Link from "next/link";
 
 const tabs: { key: "login" | "signup"; label: string; description: string }[] =
   [
@@ -106,13 +107,13 @@ export default function AuthPage() {
 
             <p className="mt-10 text-center text-xs text-muted-foreground">
               By continuing, you agree to our{" "}
-              <a href="#" className="text-accent hover:underline">
+              <Link href="/terms" className="text-accent hover:underline">
                 Terms of Service
-              </a>{" "}
+              </Link>{" "}
               and{" "}
-              <a href="#" className="text-accent hover:underline">
+              <Link href="/privacy" className="text-accent hover:underline">
                 Privacy Policy.
-              </a>
+              </Link>
             </p>
           </div>
         </div>
