@@ -178,9 +178,19 @@ export async function POST(request: NextRequest) {
       { status: 201 }
     );
   } catch (error: unknown) {
-    console.error("Error creating vendor profile:", error);
+    const message = error instanceof Error ? error.message : "Unknown error";
+    console.error("Error creating vendor profile:", message);
+
+    // Check for specific Prisma errors
+    if (message.includes("Unique constraint")) {
+      return NextResponse.json(
+        { message: "A vendor profile with this information already exists" },
+        { status: 400 }
+      );
+    }
+
     return NextResponse.json(
-      { message: "Internal server error" },
+      { message: "Failed to create vendor profile. Please try again." },
       { status: 500 }
     );
   }
