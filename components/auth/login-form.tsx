@@ -31,7 +31,7 @@ export default function LoginForm() {
         return;
       }
 
-      // After login, redirect users based on their role: admins to /admin, vendors to /vendor, clients to callbackUrl
+      // After login, redirect users based on their role: admins to /admin, vendors to /vendor, clients to /dashboard
       let nextUrl = callbackUrl;
       try {
         // Force fresh session read (no cache) and include cookies so role is accurate right after login.
@@ -46,8 +46,10 @@ export default function LoginForm() {
             nextUrl = "/admin";
           } else if (user?.role === "PROFESSIONAL") {
             nextUrl = "/vendor";
+          } else if (user?.role === "CLIENT" || user?.role === "VISITOR") {
+            // Route clients to their dashboard
+            nextUrl = "/dashboard";
           }
-          // CLIENT role stays on callbackUrl (default dashboard or home)
         }
       } catch (lookupError) {
         console.error(
