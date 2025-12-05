@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useMemo } from "react";
 import {
   Menu,
   X,
@@ -29,6 +29,19 @@ export default function Header() {
   const dropdownRef = useRef<HTMLDivElement>(null);
   const { data: session, status } = useSession();
   const isLoading = status === "loading";
+
+  // Get the correct dashboard URL based on user role
+  const dashboardUrl = useMemo(() => {
+    if (!session?.user?.role) return "/dashboard";
+    switch (session.user.role) {
+      case "ADMINISTRATOR":
+        return "/admin";
+      case "PROFESSIONAL":
+        return "/vendor";
+      default:
+        return "/dashboard";
+    }
+  }, [session?.user?.role]);
 
   // console.log("Session data in Header:", session);
   // Close dropdown when clicking outside
@@ -148,7 +161,7 @@ export default function Header() {
                     {/* Menu Items */}
                     <div className="py-2">
                       <Link
-                        href="/dashboard"
+                        href={dashboardUrl}
                         className="flex items-center gap-3 px-4 py-2 text-sm text-foreground hover:bg-accent transition-colors"
                         onClick={() => setIsProfileDropdownOpen(false)}
                       >
@@ -244,7 +257,7 @@ export default function Header() {
 
                   {/* Mobile Menu Links */}
                   <Link
-                    href="/dashboard"
+                    href={dashboardUrl}
                     className="flex items-center gap-3 px-4 py-2 text-sm text-foreground hover:bg-accent rounded-lg transition-colors"
                     onClick={() => setIsMenuOpen(false)}
                   >
