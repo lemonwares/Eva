@@ -14,7 +14,6 @@ import {
   XCircle,
 } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
-import Image from "next/image";
 
 interface UserProfile {
   id: string;
@@ -150,7 +149,8 @@ export default function AdminSettingsPage() {
       setAvatar(uploadData.url);
       addToast("Avatar updated successfully", "success");
     } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : "Failed to upload avatar";
+      const message =
+        err instanceof Error ? err.message : "Failed to upload avatar";
       addToast(message, "error");
     } finally {
       setUploadingAvatar(false);
@@ -181,7 +181,8 @@ export default function AdminSettingsPage() {
 
       addToast("Profile saved successfully", "success");
     } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : "Failed to save profile";
+      const message =
+        err instanceof Error ? err.message : "Failed to save profile";
       addToast(message, "error");
     } finally {
       setSavingProfile(false);
@@ -225,7 +226,8 @@ export default function AdminSettingsPage() {
       setNewPassword("");
       setConfirmPassword("");
     } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : "Failed to update password";
+      const message =
+        err instanceof Error ? err.message : "Failed to update password";
       addToast(message, "error");
     } finally {
       setUpdatingPassword(false);
@@ -306,8 +308,8 @@ export default function AdminSettingsPage() {
                     activeTab === tab.id
                       ? "bg-accent text-white"
                       : darkMode
-                        ? "text-gray-400 hover:bg-white/5 hover:text-white"
-                        : "text-gray-600 hover:bg-gray-100 hover:text-gray-900"
+                      ? "text-gray-400 hover:bg-white/5 hover:text-white"
+                      : "text-gray-600 hover:bg-gray-100 hover:text-gray-900"
                   }`}
                 >
                   <tab.icon size={18} />
@@ -337,12 +339,12 @@ export default function AdminSettingsPage() {
                   <div className="flex items-center gap-4 mb-6">
                     <div className="relative">
                       {avatar ? (
-                        <div className="w-20 h-20 rounded-full overflow-hidden relative">
-                          <Image
+                        <div className="w-20 h-20 rounded-full overflow-hidden">
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img
                             src={avatar}
                             alt="Profile"
-                            fill
-                            className="object-cover"
+                            className="w-full h-full object-cover"
                           />
                         </div>
                       ) : (
@@ -540,12 +542,11 @@ export default function AdminSettingsPage() {
                         onChange={(e) => setConfirmPassword(e.target.value)}
                         className={`w-full px-4 py-2.5 rounded-lg border ${inputBg} ${inputBorder} ${textPrimary} text-sm focus:outline-none focus:ring-2 focus:ring-accent/50`}
                       />
-                      {confirmPassword &&
-                        newPassword !== confirmPassword && (
-                          <p className="text-xs text-red-500 mt-1">
-                            Passwords do not match
-                          </p>
-                        )}
+                      {confirmPassword && newPassword !== confirmPassword && (
+                        <p className="text-xs text-red-500 mt-1">
+                          Passwords do not match
+                        </p>
+                      )}
                     </div>
                     <button
                       onClick={handleUpdatePassword}
@@ -595,9 +596,7 @@ export default function AdminSettingsPage() {
                         <span className={`text-sm ${textSecondary}`}>
                           Account ID
                         </span>
-                        <span
-                          className={`text-sm font-mono ${textPrimary}`}
-                        >
+                        <span className={`text-sm font-mono ${textPrimary}`}>
                           {profile?.id?.slice(0, 12) || "—"}...
                         </span>
                       </div>
