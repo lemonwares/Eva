@@ -77,7 +77,10 @@ export async function GET(request: NextRequest) {
 // Update the current user's profile
 export async function PATCH(request: NextRequest) {
   try {
-    const token = await getToken({ req: request });
+    const token = await getToken({
+      req: request,
+      secret: process.env.AUTH_SECRET || process.env.NEXTAUTH_SECRET,
+    });
     if (!token || !token.email) {
       return NextResponse.json(
         { message: "Not authenticated" },
