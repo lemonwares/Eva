@@ -1,10 +1,21 @@
 import Stripe from "stripe";
 
-// Server-side Stripe instance
-export const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: "2025-11-17.clover",
-  typescript: true,
-});
+// Lazy-loaded Stripe instance to avoid build-time errors
+let stripeInstance: Stripe | null = null;
+
+export function getStripe(): Stripe {
+  if (!stripeInstance) {
+    const secretKey = process.env.STRIPE_SECRET_KEY;
+    if (!secretKey) {
+      throw new Error("STRIPE_SECRET_KEY environment variable is not set");
+    }
+    stripeInstance = new Stripe(secretKey, {
+      apiVersion: "2025-11-17.clover",
+      typescript: true,
+    });
+  }
+  return stripeInstance;
+}
 
 // Helper to format amount for Stripe (cents)
 export function formatAmountForStripe(
