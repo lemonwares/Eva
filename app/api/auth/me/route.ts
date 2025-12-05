@@ -1,12 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { getToken } from "next-auth/jwt";
+import { auth } from "@/auth";
 import { z } from "zod";
 import bcrypt from "bcryptjs";
 
 const updateProfileSchema = z.object({
   name: z.string().min(1).max(100).optional(),
-  phone: z.string().max(20).optional(),
+  phone: z.string().max(20).optional().nullable(),
   avatar: z.string().url().optional().nullable(),
   currentPassword: z.string().optional(),
   newPassword: z.string().min(8).optional(),
@@ -14,15 +14,10 @@ const updateProfileSchema = z.object({
 
 // GET /api/auth/me
 // Returns details of the currently authenticated user
-export async function GET(request: NextRequest) {
+export async function GET() {
   try {
-    // Get JWT from request (NextAuth)
-    // Pass the same secret used by NextAuth so JWT decoding succeeds
-    const token = await getToken({
-      req: request,
-      secret: process.env.AUTH_SECRET || process.env.NEXTAUTH_SECRET,
-    });
-    if (!token || !token.email) {
+    const session = await auth();
+    if (!session?.user?.email) {
       return NextResponse.json(
         { message: "Not authenticated" },
         { status: 401 }
@@ -31,7 +26,7 @@ export async function GET(request: NextRequest) {
 
     // Find user by email
     const user = await prisma.user.findUnique({
-      where: { email: token.email },
+      where: { email: session.user.email },
       include: {
         ownedProviders: {
           select: {
@@ -64,8 +59,9 @@ export async function GET(request: NextRequest) {
       },
       { status: 200 }
     );
-  } catch (error: any) {
-    console.error(`Get user error: ${error?.message}`);
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : "Unknown error";
+    console.error(`Get user error: ${message}`);
     return NextResponse.json(
       { message: "Internal server error" },
       { status: 500 }
@@ -77,11 +73,8 @@ export async function GET(request: NextRequest) {
 // Update the current user's profile
 export async function PATCH(request: NextRequest) {
   try {
-    const token = await getToken({
-      req: request,
-      secret: process.env.AUTH_SECRET || process.env.NEXTAUTH_SECRET,
-    });
-    if (!token || !token.email) {
+    const session = await auth();
+    if (!session?.user?.email) {
       return NextResponse.json(
         { message: "Not authenticated" },
         { status: 401 }
@@ -99,7 +92,7 @@ export async function PATCH(request: NextRequest) {
     }
 
     const user = await prisma.user.findUnique({
-      where: { email: token.email },
+      where: { email: session.user.email },
     });
 
     if (!user) {
@@ -153,8 +146,9 @@ export async function PATCH(request: NextRequest) {
       message: "Profile updated successfully",
       user: updatedUser,
     });
-  } catch (error: any) {
-    console.error(`Update profile error: ${error?.message}`);
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : "Unknown error";
+    console.error(`Update profile error: ${message}`);
     return NextResponse.json(
       { message: "Internal server error" },
       { status: 500 }
