@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-// import { useAdminTheme } from "@/contexts/AdminThemeContext";
+import AdminLayout from "@/components/admin/AdminLayout";
 import Modal from "@/components/admin/Modal";
 import ConfirmDialog from "@/components/admin/ConfirmDialog";
 import { Toast, ToastType } from "@/components/admin/Toast";
@@ -654,153 +654,21 @@ export default function CategoriesPage() {
   const inputClass = `px-3 py-2 rounded-lg ${inputBg} ${inputBorder} ${textPrimary} focus:outline-none focus:ring-2 focus:ring-rose-500`;
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h1 className={`text-2xl font-bold ${textPrimary}`}>Categories</h1>
-          <p className={textSecondary}>
-            Manage vendor categories and subcategories
-          </p>
-        </div>
-        <button
-          onClick={handleAdd}
-          className="px-4 py-2 bg-rose-600 text-white rounded-lg hover:bg-rose-700 flex items-center gap-2"
-        >
-          <svg
-            className="w-5 h-5"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
+    <AdminLayout title="Categories">
+      <div className="space-y-6">
+        {/* Header */}
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div>
+            <p className={textSecondary}>
+              Manage vendor categories and subcategories
+            </p>
+          </div>
+          <button
+            onClick={handleAdd}
+            className="px-4 py-2 bg-rose-600 text-white rounded-lg hover:bg-rose-700 flex items-center gap-2"
           >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M12 4v16m8-8H4"
-            />
-          </svg>
-          <span>Add Category</span>
-        </button>
-      </div>
-
-      {/* Filters */}
-      <div className={`${cardBg} ${cardBorder} rounded-xl p-4`}>
-        <div className="flex flex-col md:flex-row gap-4">
-          <div className="flex-1">
-            <div className="relative">
-              <svg
-                className={`absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 ${textMuted}`}
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-                />
-              </svg>
-              <input
-                type="text"
-                placeholder="Search categories..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className={`w-full pl-10 ${inputClass}`}
-              />
-            </div>
-          </div>
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => setFilterFeatured(null)}
-              className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                filterFeatured === null
-                  ? "bg-rose-600 text-white"
-                  : `${
-                      darkMode
-                        ? "bg-gray-700 hover:bg-gray-600"
-                        : "bg-gray-100 hover:bg-gray-200"
-                    } ${textPrimary}`
-              }`}
-            >
-              All
-            </button>
-            <button
-              onClick={() => setFilterFeatured(true)}
-              className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                filterFeatured === true
-                  ? "bg-rose-600 text-white"
-                  : `${
-                      darkMode
-                        ? "bg-gray-700 hover:bg-gray-600"
-                        : "bg-gray-100 hover:bg-gray-200"
-                    } ${textPrimary}`
-              }`}
-            >
-              Featured
-            </button>
-            <button
-              onClick={() => setFilterFeatured(false)}
-              className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                filterFeatured === false
-                  ? "bg-rose-600 text-white"
-                  : `${
-                      darkMode
-                        ? "bg-gray-700 hover:bg-gray-600"
-                        : "bg-gray-100 hover:bg-gray-200"
-                    } ${textPrimary}`
-              }`}
-            >
-              Regular
-            </button>
-          </div>
-        </div>
-      </div>
-
-      {/* Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <div className={`${cardBg} ${cardBorder} rounded-xl p-4`}>
-          <p className={`text-2xl font-bold ${textPrimary}`}>
-            {categories.length}
-          </p>
-          <p className={textMuted}>Total Categories</p>
-        </div>
-        <div className={`${cardBg} ${cardBorder} rounded-xl p-4`}>
-          <p className={`text-2xl font-bold text-amber-500`}>
-            {categories.filter((c) => c.isFeatured).length}
-          </p>
-          <p className={textMuted}>Featured</p>
-        </div>
-        <div className={`${cardBg} ${cardBorder} rounded-xl p-4`}>
-          <p className={`text-2xl font-bold text-blue-500`}>
-            {categories.reduce(
-              (acc, c) =>
-                acc + (c._count?.subcategories || c.subcategories?.length || 0),
-              0
-            )}
-          </p>
-          <p className={textMuted}>Subcategories</p>
-        </div>
-        <div className={`${cardBg} ${cardBorder} rounded-xl p-4`}>
-          <p className={`text-2xl font-bold text-green-500`}>
-            {categories.reduce((acc, c) => acc + (c._count?.providers || 0), 0)}
-          </p>
-          <p className={textMuted}>Total Providers</p>
-        </div>
-      </div>
-
-      {/* Categories Grid */}
-      <div className={`${cardBg} ${cardBorder} rounded-xl overflow-hidden`}>
-        {loading ? (
-          <div className="p-8 text-center">
-            <div className="animate-spin w-8 h-8 border-2 border-rose-500 border-t-transparent rounded-full mx-auto"></div>
-            <p className={`mt-4 ${textMuted}`}>Loading categories...</p>
-          </div>
-        ) : filteredCategories.length === 0 ? (
-          <div className="p-8 text-center">
             <svg
-              className={`w-16 h-16 mx-auto ${textMuted}`}
+              className="w-5 h-5"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -809,237 +677,376 @@ export default function CategoriesPage() {
                 strokeLinecap="round"
                 strokeLinejoin="round"
                 strokeWidth={2}
-                d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"
+                d="M12 4v16m8-8H4"
               />
             </svg>
-            <p className={`mt-4 ${textMuted}`}>No categories found</p>
-            <button
-              onClick={handleAdd}
-              className="mt-4 px-4 py-2 bg-rose-600 text-white rounded-lg hover:bg-rose-700"
-            >
-              Add First Category
-            </button>
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 p-4">
-            {filteredCategories.map((category) => (
-              <div
-                key={category.id}
-                className={`p-4 rounded-xl border ${cardBorder} ${
-                  darkMode
-                    ? "bg-gray-800/50 hover:bg-gray-800"
-                    : "bg-gray-50 hover:bg-gray-100"
-                } transition-colors`}
+            <span>Add Category</span>
+          </button>
+        </div>
+
+        {/* Filters */}
+        <div className={`${cardBg} ${cardBorder} rounded-xl p-4`}>
+          <div className="flex flex-col md:flex-row gap-4">
+            <div className="flex-1">
+              <div className="relative">
+                <svg
+                  className={`absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 ${textMuted}`}
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                  />
+                </svg>
+                <input
+                  type="text"
+                  placeholder="Search categories..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className={`w-full pl-10 ${inputClass}`}
+                />
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setFilterFeatured(null)}
+                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                  filterFeatured === null
+                    ? "bg-rose-600 text-white"
+                    : `${
+                        darkMode
+                          ? "bg-gray-700 hover:bg-gray-600"
+                          : "bg-gray-100 hover:bg-gray-200"
+                      } ${textPrimary}`
+                }`}
               >
-                <div className="flex items-start justify-between mb-3">
-                  <div className="flex items-center gap-3">
-                    <div
-                      className={`w-12 h-12 rounded-lg ${
-                        darkMode ? "bg-gray-700" : "bg-gray-200"
-                      } flex items-center justify-center`}
-                    >
-                      <span className="text-xl">{category.icon || "📁"}</span>
-                    </div>
-                    <div>
-                      <h3 className={`font-semibold ${textPrimary}`}>
-                        {category.name}
-                      </h3>
-                      <p className={`text-sm font-mono ${textMuted}`}>
-                        /{category.slug}
-                      </p>
-                    </div>
-                  </div>
-                  <button
-                    onClick={() => handleToggleFeatured(category)}
-                    className={`p-1.5 rounded-lg transition-colors ${
-                      category.isFeatured
-                        ? "text-amber-500 bg-amber-100 dark:bg-amber-900/30"
-                        : `${textMuted} ${
-                            darkMode ? "hover:bg-gray-700" : "hover:bg-gray-200"
-                          }`
-                    }`}
-                    title={
-                      category.isFeatured
-                        ? "Remove from featured"
-                        : "Add to featured"
-                    }
-                  >
-                    <svg
-                      className="w-5 h-5"
-                      fill={category.isFeatured ? "currentColor" : "none"}
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"
-                      />
-                    </svg>
-                  </button>
-                </div>
+                All
+              </button>
+              <button
+                onClick={() => setFilterFeatured(true)}
+                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                  filterFeatured === true
+                    ? "bg-rose-600 text-white"
+                    : `${
+                        darkMode
+                          ? "bg-gray-700 hover:bg-gray-600"
+                          : "bg-gray-100 hover:bg-gray-200"
+                      } ${textPrimary}`
+                }`}
+              >
+                Featured
+              </button>
+              <button
+                onClick={() => setFilterFeatured(false)}
+                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                  filterFeatured === false
+                    ? "bg-rose-600 text-white"
+                    : `${
+                        darkMode
+                          ? "bg-gray-700 hover:bg-gray-600"
+                          : "bg-gray-100 hover:bg-gray-200"
+                      } ${textPrimary}`
+                }`}
+              >
+                Regular
+              </button>
+            </div>
+          </div>
+        </div>
 
-                {category.description && (
-                  <p className={`text-sm ${textMuted} mb-3 line-clamp-2`}>
-                    {category.description}
-                  </p>
-                )}
+        {/* Stats */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div className={`${cardBg} ${cardBorder} rounded-xl p-4`}>
+            <p className={`text-2xl font-bold ${textPrimary}`}>
+              {categories.length}
+            </p>
+            <p className={textMuted}>Total Categories</p>
+          </div>
+          <div className={`${cardBg} ${cardBorder} rounded-xl p-4`}>
+            <p className={`text-2xl font-bold text-amber-500`}>
+              {categories.filter((c) => c.isFeatured).length}
+            </p>
+            <p className={textMuted}>Featured</p>
+          </div>
+          <div className={`${cardBg} ${cardBorder} rounded-xl p-4`}>
+            <p className={`text-2xl font-bold text-blue-500`}>
+              {categories.reduce(
+                (acc, c) =>
+                  acc +
+                  (c._count?.subcategories || c.subcategories?.length || 0),
+                0
+              )}
+            </p>
+            <p className={textMuted}>Subcategories</p>
+          </div>
+          <div className={`${cardBg} ${cardBorder} rounded-xl p-4`}>
+            <p className={`text-2xl font-bold text-green-500`}>
+              {categories.reduce(
+                (acc, c) => acc + (c._count?.providers || 0),
+                0
+              )}
+            </p>
+            <p className={textMuted}>Total Providers</p>
+          </div>
+        </div>
 
-                <div className="flex items-center gap-4 mb-4">
-                  <div className="flex items-center gap-1">
-                    <svg
-                      className={`w-4 h-4 ${textMuted}`}
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"
-                      />
-                    </svg>
-                    <span className={`text-sm ${textSecondary}`}>
-                      {category._count?.subcategories ||
-                        category.subcategories?.length ||
-                        0}{" "}
-                      subcategories
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <svg
-                      className={`w-4 h-4 ${textMuted}`}
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"
-                      />
-                    </svg>
-                    <span className={`text-sm ${textSecondary}`}>
-                      {category._count?.providers || 0} providers
-                    </span>
-                  </div>
-                </div>
-
-                {/* Subcategory Tags */}
-                {category.subcategories &&
-                  category.subcategories.length > 0 && (
-                    <div className="mb-4">
-                      <div className="flex flex-wrap gap-1">
-                        {category.subcategories.slice(0, 3).map((sub) => (
-                          <span
-                            key={sub.id}
-                            className={`px-2 py-0.5 text-xs rounded-full ${
-                              darkMode ? "bg-gray-700" : "bg-gray-200"
-                            } ${textMuted}`}
-                          >
-                            {sub.name}
-                          </span>
-                        ))}
-                        {category.subcategories.length > 3 && (
-                          <span
-                            className={`px-2 py-0.5 text-xs rounded-full ${
-                              darkMode ? "bg-gray-700" : "bg-gray-200"
-                            } ${textMuted}`}
-                          >
-                            +{category.subcategories.length - 3} more
-                          </span>
-                        )}
+        {/* Categories Grid */}
+        <div className={`${cardBg} ${cardBorder} rounded-xl overflow-hidden`}>
+          {loading ? (
+            <div className="p-8 text-center">
+              <div className="animate-spin w-8 h-8 border-2 border-rose-500 border-t-transparent rounded-full mx-auto"></div>
+              <p className={`mt-4 ${textMuted}`}>Loading categories...</p>
+            </div>
+          ) : filteredCategories.length === 0 ? (
+            <div className="p-8 text-center">
+              <svg
+                className={`w-16 h-16 mx-auto ${textMuted}`}
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"
+                />
+              </svg>
+              <p className={`mt-4 ${textMuted}`}>No categories found</p>
+              <button
+                onClick={handleAdd}
+                className="mt-4 px-4 py-2 bg-rose-600 text-white rounded-lg hover:bg-rose-700"
+              >
+                Add First Category
+              </button>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 p-4">
+              {filteredCategories.map((category) => (
+                <div
+                  key={category.id}
+                  className={`p-4 rounded-xl border ${cardBorder} ${
+                    darkMode
+                      ? "bg-gray-800/50 hover:bg-gray-800"
+                      : "bg-gray-50 hover:bg-gray-100"
+                  } transition-colors`}
+                >
+                  <div className="flex items-start justify-between mb-3">
+                    <div className="flex items-center gap-3">
+                      <div
+                        className={`w-12 h-12 rounded-lg ${
+                          darkMode ? "bg-gray-700" : "bg-gray-200"
+                        } flex items-center justify-center`}
+                      >
+                        <span className="text-xl">{category.icon || "📁"}</span>
+                      </div>
+                      <div>
+                        <h3 className={`font-semibold ${textPrimary}`}>
+                          {category.name}
+                        </h3>
+                        <p className={`text-sm font-mono ${textMuted}`}>
+                          /{category.slug}
+                        </p>
                       </div>
                     </div>
+                    <button
+                      onClick={() => handleToggleFeatured(category)}
+                      className={`p-1.5 rounded-lg transition-colors ${
+                        category.isFeatured
+                          ? "text-amber-500 bg-amber-100 dark:bg-amber-900/30"
+                          : `${textMuted} ${
+                              darkMode
+                                ? "hover:bg-gray-700"
+                                : "hover:bg-gray-200"
+                            }`
+                      }`}
+                      title={
+                        category.isFeatured
+                          ? "Remove from featured"
+                          : "Add to featured"
+                      }
+                    >
+                      <svg
+                        className="w-5 h-5"
+                        fill={category.isFeatured ? "currentColor" : "none"}
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"
+                        />
+                      </svg>
+                    </button>
+                  </div>
+
+                  {category.description && (
+                    <p className={`text-sm ${textMuted} mb-3 line-clamp-2`}>
+                      {category.description}
+                    </p>
                   )}
 
-                {/* Actions */}
-                <div className="flex items-center gap-2 pt-3 border-t border-gray-200 dark:border-gray-700">
-                  <button
-                    onClick={() => handleView(category)}
-                    className={`flex-1 px-3 py-2 text-sm rounded-lg ${
-                      darkMode
-                        ? "bg-gray-700 hover:bg-gray-600"
-                        : "bg-gray-100 hover:bg-gray-200"
-                    } ${textPrimary}`}
-                  >
-                    View
-                  </button>
-                  <button
-                    onClick={() => handleEdit(category)}
-                    className="flex-1 px-3 py-2 text-sm bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200"
-                  >
-                    Edit
-                  </button>
-                  <button
-                    onClick={() => setDeleteCategory(category)}
-                    className="p-2 text-red-500 rounded-lg hover:bg-red-100 dark:hover:bg-red-900/30"
-                    title="Delete"
-                  >
-                    <svg
-                      className="w-5 h-5"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
+                  <div className="flex items-center gap-4 mb-4">
+                    <div className="flex items-center gap-1">
+                      <svg
+                        className={`w-4 h-4 ${textMuted}`}
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"
+                        />
+                      </svg>
+                      <span className={`text-sm ${textSecondary}`}>
+                        {category._count?.subcategories ||
+                          category.subcategories?.length ||
+                          0}{" "}
+                        subcategories
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <svg
+                        className={`w-4 h-4 ${textMuted}`}
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"
+                        />
+                      </svg>
+                      <span className={`text-sm ${textSecondary}`}>
+                        {category._count?.providers || 0} providers
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Subcategory Tags */}
+                  {category.subcategories &&
+                    category.subcategories.length > 0 && (
+                      <div className="mb-4">
+                        <div className="flex flex-wrap gap-1">
+                          {category.subcategories.slice(0, 3).map((sub) => (
+                            <span
+                              key={sub.id}
+                              className={`px-2 py-0.5 text-xs rounded-full ${
+                                darkMode ? "bg-gray-700" : "bg-gray-200"
+                              } ${textMuted}`}
+                            >
+                              {sub.name}
+                            </span>
+                          ))}
+                          {category.subcategories.length > 3 && (
+                            <span
+                              className={`px-2 py-0.5 text-xs rounded-full ${
+                                darkMode ? "bg-gray-700" : "bg-gray-200"
+                              } ${textMuted}`}
+                            >
+                              +{category.subcategories.length - 3} more
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    )}
+
+                  {/* Actions */}
+                  <div className="flex items-center gap-2 pt-3 border-t border-gray-200 dark:border-gray-700">
+                    <button
+                      onClick={() => handleView(category)}
+                      className={`flex-1 px-3 py-2 text-sm rounded-lg ${
+                        darkMode
+                          ? "bg-gray-700 hover:bg-gray-600"
+                          : "bg-gray-100 hover:bg-gray-200"
+                      } ${textPrimary}`}
                     >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-                      />
-                    </svg>
-                  </button>
+                      View
+                    </button>
+                    <button
+                      onClick={() => handleEdit(category)}
+                      className="flex-1 px-3 py-2 text-sm bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200"
+                    >
+                      Edit
+                    </button>
+                    <button
+                      onClick={() => setDeleteCategory(category)}
+                      className="p-2 text-red-500 rounded-lg hover:bg-red-100 dark:hover:bg-red-900/30"
+                      title="Delete"
+                    >
+                      <svg
+                        className="w-5 h-5"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                        />
+                      </svg>
+                    </button>
+                  </div>
                 </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Modals */}
+        <ViewCategoryModal
+          category={selectedCategory}
+          isOpen={viewModalOpen}
+          onClose={() => {
+            setViewModalOpen(false);
+            setSelectedCategory(null);
+          }}
+        />
+
+        <CategoryFormModal
+          category={selectedCategory}
+          isOpen={formModalOpen}
+          onClose={() => {
+            setFormModalOpen(false);
+            setSelectedCategory(null);
+          }}
+          onSave={handleSave}
+          mode={formMode}
+        />
+
+        {/* Confirm Delete Dialog */}
+        <ConfirmDialog
+          isOpen={deleteCategory !== null}
+          onClose={() => setDeleteCategory(null)}
+          onConfirm={handleDelete}
+          title="Delete Category"
+          message={`Are you sure you want to delete "${deleteCategory?.name}"? This will also remove all subcategories and may affect vendors using this category.`}
+          type="danger"
+          confirmText="Delete"
+        />
+
+        {/* Toast */}
+        {toast && (
+          <Toast
+            message={toast.message}
+            type={toast.type}
+            onClose={() => setToast(null)}
+          />
         )}
       </div>
-
-      {/* Modals */}
-      <ViewCategoryModal
-        category={selectedCategory}
-        isOpen={viewModalOpen}
-        onClose={() => {
-          setViewModalOpen(false);
-          setSelectedCategory(null);
-        }}
-      />
-
-      <CategoryFormModal
-        category={selectedCategory}
-        isOpen={formModalOpen}
-        onClose={() => {
-          setFormModalOpen(false);
-          setSelectedCategory(null);
-        }}
-        onSave={handleSave}
-        mode={formMode}
-      />
-
-      {/* Confirm Delete Dialog */}
-      <ConfirmDialog
-        isOpen={deleteCategory !== null}
-        onClose={() => setDeleteCategory(null)}
-        onConfirm={handleDelete}
-        title="Delete Category"
-        message={`Are you sure you want to delete "${deleteCategory?.name}"? This will also remove all subcategories and may affect vendors using this category.`}
-        type="danger"
-        confirmText="Delete"
-      />
-
-      {/* Toast */}
-      {toast && (
-        <Toast
-          message={toast.message}
-          type={toast.type}
-          onClose={() => setToast(null)}
-        />
-      )}
-    </div>
+    </AdminLayout>
   );
 }
