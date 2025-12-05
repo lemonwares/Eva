@@ -20,9 +20,10 @@ import {
   X,
   ChevronRight,
   Loader2,
+  Upload,
 } from "lucide-react";
 import Image from "next/image";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 
 interface Provider {
   id: string;
@@ -69,6 +70,9 @@ export default function VendorProfilePage() {
   const { darkMode } = useVendorTheme();
   const [provider, setProvider] = useState<Provider | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isUploading, setIsUploading] = useState<"cover" | "logo" | null>(null);
+  const coverInputRef = useRef<HTMLInputElement>(null);
+  const logoInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     fetchProfile();
@@ -85,6 +89,46 @@ export default function VendorProfilePage() {
       console.error("Error fetching profile:", err);
     } finally {
       setIsLoading(false);
+    }
+  }
+
+  async function handleImageUpload(file: File, type: "cover" | "logo") {
+    setIsUploading(type);
+    try {
+      const formData = new FormData();
+      formData.append("files", file);
+      formData.append("type", type === "cover" ? "cover" : "avatar");
+
+      const res = await fetch("/api/upload", {
+        method: "POST",
+        body: formData,
+      });
+
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message);
+
+      if (data.url && provider) {
+        // Update the profile with the new image
+        const updateRes = await fetch("/api/vendor/profile", {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            [type === "cover" ? "coverImage" : "logo"]: data.url,
+          }),
+        });
+
+        if (updateRes.ok) {
+          // Update local state
+          setProvider({
+            ...provider,
+            coverImage: type === "cover" ? data.url : provider.coverImage,
+          });
+        }
+      }
+    } catch (err) {
+      console.error("Upload failed:", err);
+    } finally {
+      setIsUploading(null);
     }
   }
 
@@ -161,14 +205,30 @@ export default function VendorProfilePage() {
               className="object-cover"
             />
           )}
+          <input
+            ref={coverInputRef}
+            type="file"
+            accept="image/*"
+            className="hidden"
+            onChange={(e) => {
+              const file = e.target.files?.[0];
+              if (file) handleImageUpload(file, "cover");
+            }}
+          />
           <button
+            onClick={() => coverInputRef.current?.click()}
+            disabled={isUploading === "cover"}
             className={`absolute top-4 right-4 p-2 rounded-lg ${
               darkMode
                 ? "bg-black/50 text-white hover:bg-black/70"
                 : "bg-white/80 text-gray-700 hover:bg-white"
-            } transition-colors`}
+            } transition-colors disabled:opacity-50`}
           >
-            <Camera size={18} />
+            {isUploading === "cover" ? (
+              <Loader2 size={18} className="animate-spin" />
+            ) : (
+              <Camera size={18} />
+            )}
           </button>
         </div>
 
@@ -185,8 +245,26 @@ export default function VendorProfilePage() {
                   {getInitials(provider.businessName)}
                 </div>
               </div>
-              <button className="absolute bottom-2 right-2 p-1.5 rounded-full bg-accent text-white">
-                <Edit3 size={12} />
+              <input
+                ref={logoInputRef}
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (file) handleImageUpload(file, "logo");
+                }}
+              />
+              <button
+                onClick={() => logoInputRef.current?.click()}
+                disabled={isUploading === "logo"}
+                className="absolute bottom-2 right-2 p-1.5 rounded-full bg-accent text-white disabled:opacity-50"
+              >
+                {isUploading === "logo" ? (
+                  <Loader2 size={12} className="animate-spin" />
+                ) : (
+                  <Edit3 size={12} />
+                )}
               </button>
             </div>
 
