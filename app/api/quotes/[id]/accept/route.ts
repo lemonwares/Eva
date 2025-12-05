@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { Prisma } from "@prisma/client";
 import { auth } from "@/auth";
 import { z } from "zod";
 import { sendTemplatedEmail, sendEmail, emailTemplates } from "@/lib/email";
@@ -113,65 +112,63 @@ export async function POST(
     }
 
     // Create booking in a transaction
-    const result = await prisma.$transaction(
-      async (tx: Prisma.TransactionClient) => {
-        // Update quote status
-        await tx.quote.update({
-          where: { id },
-          data: {
-            status: "ACCEPTED",
-            respondedAt: new Date(),
-          },
+    const result = await prisma.$transaction(async (tx: any) => {
+      // Update quote status
+      await tx.quote.update({
+        where: { id },
+        data: {
+          status: "ACCEPTED",
+          respondedAt: new Date(),
+        },
+      });
+
+      // Update inquiry status if exists
+      if (quote.inquiry) {
+        await tx.inquiry.update({
+          where: { id: quote.inquiry.id },
+          data: { status: "ACCEPTED" },
         });
-
-        // Update inquiry status if exists
-        if (quote.inquiry) {
-          await tx.inquiry.update({
-            where: { id: quote.inquiry.id },
-            data: { status: "ACCEPTED" },
-          });
-        }
-
-        // Create booking
-        const booking = await tx.booking.create({
-          data: {
-            quoteId: id,
-            providerId: quote.provider.id,
-            clientName: validatedData.clientName,
-            clientEmail: validatedData.clientEmail,
-            clientPhone: validatedData.clientPhone,
-            eventDate: quote.inquiry?.eventDate || new Date(),
-            eventLocation: validatedData.eventLocation,
-            guestsCount: quote.inquiry?.guestsCount,
-            specialRequests: validatedData.specialRequests,
-            paymentMode: validatedData.paymentMode,
-            pricingTotal: quote.totalPrice,
-            depositAmount,
-            balanceAmount,
-            balanceDueDate,
-            status:
-              validatedData.paymentMode === "CASH_ON_DELIVERY"
-                ? "CONFIRMED"
-                : "PENDING_PAYMENT",
-            statusTimeline: [
-              {
-                status: "BOOKING_CREATED",
-                timestamp: new Date().toISOString(),
-                note: "Quote accepted, booking created",
-              },
-            ],
-          },
-        });
-
-        // Update provider stats
-        await tx.provider.update({
-          where: { id: quote.provider.id },
-          data: { quotesAcceptedCount: { increment: 1 } },
-        });
-
-        return booking;
       }
-    );
+
+      // Create booking
+      const booking = await tx.booking.create({
+        data: {
+          quoteId: id,
+          providerId: quote.provider.id,
+          clientName: validatedData.clientName,
+          clientEmail: validatedData.clientEmail,
+          clientPhone: validatedData.clientPhone,
+          eventDate: quote.inquiry?.eventDate || new Date(),
+          eventLocation: validatedData.eventLocation,
+          guestsCount: quote.inquiry?.guestsCount,
+          specialRequests: validatedData.specialRequests,
+          paymentMode: validatedData.paymentMode,
+          pricingTotal: quote.totalPrice,
+          depositAmount,
+          balanceAmount,
+          balanceDueDate,
+          status:
+            validatedData.paymentMode === "CASH_ON_DELIVERY"
+              ? "CONFIRMED"
+              : "PENDING_PAYMENT",
+          statusTimeline: [
+            {
+              status: "BOOKING_CREATED",
+              timestamp: new Date().toISOString(),
+              note: "Quote accepted, booking created",
+            },
+          ],
+        },
+      });
+
+      // Update provider stats
+      await tx.provider.update({
+        where: { id: quote.provider.id },
+        data: { quotesAcceptedCount: { increment: 1 } },
+      });
+
+      return booking;
+    });
 
     // Send confirmation emails to client and vendor
     const eventDate = quote.inquiry?.eventDate || new Date();
