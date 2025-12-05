@@ -186,7 +186,7 @@ export async function DELETE(
     }
 
     // Use transaction for cascading deletes
-    await prisma.$transaction(async (tx) => {
+    await prisma.$transaction(async (tx: any) => {
       // Delete providers if exist
       for (const provider of user.ownedProviders) {
         // Delete related records first
