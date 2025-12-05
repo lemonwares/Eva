@@ -20,7 +20,10 @@ export async function GET(request: NextRequest) {
   try {
     const session = await auth();
     if (!session?.user?.id || session.user.role !== "ADMINISTRATOR") {
-      return NextResponse.json({ message: "Forbidden" }, { status: 403 });
+      return NextResponse.json(
+        { success: false, error: "Forbidden" },
+        { status: 403 }
+      );
     }
 
     const { searchParams } = request.nextUrl;
@@ -64,7 +67,7 @@ export async function GET(request: NextRequest) {
       filters.isFeatured = featured === "true";
     }
 
-    const [providers, total, statusCounts] = await Promise.all([
+    const [rawProviders, total, statusCounts] = await Promise.all([
       prisma.provider.findMany({
         where: filters,
         skip,
@@ -93,15 +96,27 @@ export async function GET(request: NextRequest) {
       ]),
     ]);
 
+    // Transform providers to add status field for frontend
+    const providers = rawProviders.map((provider) => ({
+      ...provider,
+      status:
+        provider.isPublished && provider.isVerified
+          ? "ACTIVE"
+          : !provider.isPublished
+          ? "PENDING"
+          : "SUSPENDED",
+    }));
+
     const [activeCount, pendingCount, suspendedCount] = statusCounts;
 
     return NextResponse.json({
+      success: true,
       providers,
       pagination: {
         page,
         limit,
         total,
-        pages: Math.ceil(total / limit),
+        totalPages: Math.ceil(total / limit),
       },
       statusCounts: {
         active: activeCount,
@@ -112,7 +127,7 @@ export async function GET(request: NextRequest) {
   } catch (error: any) {
     console.error("Error fetching providers:", error);
     return NextResponse.json(
-      { message: "Internal server error" },
+      { success: false, error: "Internal server error" },
       { status: 500 }
     );
   }

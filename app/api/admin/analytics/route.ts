@@ -7,7 +7,10 @@ export async function GET(request: NextRequest) {
   try {
     const session = await auth();
     if (!session?.user?.id || session.user.role !== "ADMINISTRATOR") {
-      return NextResponse.json({ message: "Forbidden" }, { status: 403 });
+      return NextResponse.json(
+        { success: false, error: "Forbidden" },
+        { status: 403 }
+      );
     }
 
     const { searchParams } = request.nextUrl;
@@ -143,44 +146,71 @@ export async function GET(request: NextRequest) {
       return Math.round(((current - previous) / previous) * 100);
     };
 
+    // Calculate average rating from all reviews
+    const avgRatingResult = await prisma.review.aggregate({
+      where: { isApproved: true },
+      _avg: { rating: true },
+    });
+
+    // Get booking status counts
+    const [pendingBookings, confirmedBookings, cancelledBookings] =
+      await Promise.all([
+        prisma.booking.count({ where: { status: "PENDING_PAYMENT" } }),
+        prisma.booking.count({ where: { status: "CONFIRMED" } }),
+        prisma.booking.count({ where: { status: "CANCELLED" } }),
+      ]);
+
+    // Transform data to match frontend AnalyticsData interface
     return NextResponse.json({
-      period,
-      overview: {
-        users: {
-          total: totalUsers,
-          new: newUsers,
-          growth: calculateGrowth(newUsers, previousUsers),
+      success: true,
+      data: {
+        overview: {
+          totalRevenue: 0, // Would need payment data
+          totalUsers,
+          totalBookings,
+          totalProviders,
+          totalReviews,
+          averageRating: avgRatingResult._avg.rating || 0,
+          revenueChange: 0,
+          usersChange: calculateGrowth(newUsers, previousUsers),
+          bookingsChange: calculateGrowth(newBookings, previousBookings),
+          providersChange: 0,
         },
-        providers: {
-          total: totalProviders,
-          active: activeProviders,
-          pending: pendingProviders,
+        recentActivity: {
+          recentBookings: newBookings,
+          recentReviews: pendingReviews,
+          recentUsers: newUsers,
+          recentProviders: pendingProviders,
         },
-        bookings: {
-          total: totalBookings,
-          new: newBookings,
+        topProviders: topProviders.map((p) => ({
+          id: p.id,
+          businessName: p.businessName,
+          bookingCount: 0,
+          reviewCount: p.reviewCount,
+          averageRating: p.averageRating || 0,
+          totalRevenue: 0,
+        })),
+        topCategories: categoryStats.map((c, index) => ({
+          id: c.id,
+          name: c.name,
+          providerCount: c._count.subcategories,
+          percentage:
+            totalProviders > 0
+              ? Math.round((c._count.subcategories / totalProviders) * 100)
+              : 0,
+        })),
+        bookingsByStatus: {
+          pending: pendingBookings,
+          confirmed: confirmedBookings,
           completed: completedBookings,
-          growth: calculateGrowth(newBookings, previousBookings),
+          cancelled: cancelledBookings,
         },
-        inquiries: {
-          total: totalInquiries,
-          new: newInquiries,
-          growth: calculateGrowth(newInquiries, previousInquiries),
-        },
-        reviews: {
-          total: totalReviews,
-          pending: pendingReviews,
-        },
-      },
-      breakdown: {
-        categories: categoryStats,
-        topProviders,
       },
     });
   } catch (error: any) {
     console.error("Error fetching analytics:", error);
     return NextResponse.json(
-      { message: "Internal server error" },
+      { success: false, error: "Internal server error" },
       { status: 500 }
     );
   }
