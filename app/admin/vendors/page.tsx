@@ -25,7 +25,7 @@ import {
   CheckCircle,
   Award,
 } from "lucide-react";
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 
 interface Provider {
   id: string;
@@ -108,6 +108,7 @@ export default function AdminVendorsPage() {
 
   const [providers, setProviders] = useState<Provider[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
+  const categoriesRef = useRef<Category[]>([]);
   const [pagination, setPagination] = useState<Pagination | null>(null);
   const [statusCounts, setStatusCounts] = useState<StatusCounts | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -152,6 +153,7 @@ export default function AdminVendorsPage() {
         if (res.ok) {
           const data = await res.json();
           setCategories(data || []);
+          categoriesRef.current = data || [];
         }
       } catch (err) {
         console.error("Error fetching categories:", err);
@@ -171,7 +173,9 @@ export default function AdminVendorsPage() {
       if (statusFilter !== "All")
         params.append("status", statusFilter.toLowerCase());
       if (categoryFilter !== "All") {
-        const cat = categories.find((c) => c.name === categoryFilter);
+        const cat = categoriesRef.current.find(
+          (c) => c.name === categoryFilter
+        );
         if (cat) params.append("categoryId", cat.id);
       }
 
@@ -188,14 +192,7 @@ export default function AdminVendorsPage() {
     } finally {
       setIsLoading(false);
     }
-  }, [
-    currentPage,
-    searchQuery,
-    statusFilter,
-    categoryFilter,
-    categories,
-    addToast,
-  ]);
+  }, [currentPage, searchQuery, statusFilter, categoryFilter, addToast]);
 
   useEffect(() => {
     const debounce = setTimeout(() => {
