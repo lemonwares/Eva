@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { Prisma } from "@prisma/client";
 import { auth } from "@/auth";
 import { z } from "zod";
 
@@ -76,41 +75,39 @@ export async function POST(
     const willBeApproved = action === "APPROVE";
 
     // Use transaction to update review and provider stats
-    const updated = await prisma.$transaction(
-      async (tx: Prisma.TransactionClient) => {
-        const updatedReview = await tx.review.update({
-          where: { id },
-          data: updateData,
-          include: {
-            provider: {
-              select: { id: true, businessName: true },
-            },
+    const updated = await prisma.$transaction(async (tx: any) => {
+      const updatedReview = await tx.review.update({
+        where: { id },
+        data: updateData,
+        include: {
+          provider: {
+            select: { id: true, businessName: true },
           },
+        },
+      });
+
+      // Update provider rating if approval status changed
+      if (wasApproved !== willBeApproved) {
+        const stats = await tx.review.aggregate({
+          where: {
+            providerId: review.providerId,
+            isApproved: true,
+          },
+          _avg: { rating: true },
+          _count: true,
         });
 
-        // Update provider rating if approval status changed
-        if (wasApproved !== willBeApproved) {
-          const stats = await tx.review.aggregate({
-            where: {
-              providerId: review.providerId,
-              isApproved: true,
-            },
-            _avg: { rating: true },
-            _count: true,
-          });
-
-          await tx.provider.update({
-            where: { id: review.providerId },
-            data: {
-              averageRating: stats._avg?.rating || 0,
-              reviewCount: stats._count || 0,
-            },
-          });
-        }
-
-        return updatedReview;
+        await tx.provider.update({
+          where: { id: review.providerId },
+          data: {
+            averageRating: stats._avg?.rating || 0,
+            reviewCount: stats._count || 0,
+          },
+        });
       }
-    );
+
+      return updatedReview;
+    });
 
     return NextResponse.json({
       message: `Review ${action.toLowerCase()}d successfully`,

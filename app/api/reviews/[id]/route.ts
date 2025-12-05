@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { Prisma } from "@prisma/client";
 import { auth } from "@/auth";
 import { z } from "zod";
 
@@ -45,12 +44,7 @@ export async function GET(
     const isAuthor = session?.user?.email === review.authorEmail;
     const isProviderOwner = session?.user?.id === review.provider.ownerUserId;
 
-    if (
-      !review.isApproved &&
-      !isAdmin &&
-      !isAuthor &&
-      !isProviderOwner
-    ) {
+    if (!review.isApproved && !isAdmin && !isAuthor && !isProviderOwner) {
       return NextResponse.json(
         { message: "Review not found" },
         { status: 404 }
@@ -181,7 +175,7 @@ export async function DELETE(
     }
 
     // Use transaction to delete review and update provider stats
-    await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
+    await prisma.$transaction(async (tx: any) => {
       // Delete the review
       await tx.review.delete({
         where: { id },
