@@ -8,6 +8,7 @@ const updateUserSchema = z.object({
   email: z.string().email().optional(),
   role: z.enum(["CLIENT", "PROFESSIONAL", "ADMINISTRATOR"]).optional(),
   phone: z.string().max(20).optional(),
+  status: z.enum(["ACTIVE", "INACTIVE", "SUSPENDED"]).optional(),
 });
 
 // GET /api/admin/users/:id - Get single user
@@ -18,7 +19,10 @@ export async function GET(
   try {
     const session = await auth();
     if (!session?.user?.id || session.user.role !== "ADMINISTRATOR") {
-      return NextResponse.json({ message: "Forbidden" }, { status: 403 });
+      return NextResponse.json(
+        { success: false, error: "Forbidden" },
+        { status: 403 }
+      );
     }
 
     const { id } = await params;
@@ -64,17 +68,36 @@ export async function GET(
     });
 
     if (!user) {
-      return NextResponse.json({ message: "User not found" }, { status: 404 });
+      return NextResponse.json(
+        { success: false, error: "User not found" },
+        { status: 404 }
+      );
     }
 
-    return NextResponse.json(user);
+    // Transform to match frontend expectations
+    const transformedUser = {
+      ...user,
+      status: user.emailVerifiedAt ? "ACTIVE" : "INACTIVE",
+      emailVerified: user.emailVerifiedAt?.toISOString() || null,
+      image: user.avatar,
+    };
+
+    return NextResponse.json({ success: true, user: transformedUser });
   } catch (error: any) {
     console.error("Error fetching user:", error);
     return NextResponse.json(
-      { message: "Internal server error" },
+      { success: false, error: "Internal server error" },
       { status: 500 }
     );
   }
+}
+
+// PUT /api/admin/users/:id - Update user (alias for PATCH)
+export async function PUT(
+  request: NextRequest,
+  context: { params: Promise<{ id: string }> }
+) {
+  return PATCH(request, context);
 }
 
 // PATCH /api/admin/users/:id - Update user
@@ -85,7 +108,10 @@ export async function PATCH(
   try {
     const session = await auth();
     if (!session?.user?.id || session.user.role !== "ADMINISTRATOR") {
-      return NextResponse.json({ message: "Forbidden" }, { status: 403 });
+      return NextResponse.json(
+        { success: false, error: "Forbidden" },
+        { status: 403 }
+      );
     }
 
     const { id } = await params;
@@ -94,7 +120,11 @@ export async function PATCH(
 
     if (!validation.success) {
       return NextResponse.json(
-        { message: "Invalid request", errors: validation.error.issues },
+        {
+          success: false,
+          error: "Invalid request",
+          errors: validation.error.issues,
+        },
         { status: 400 }
       );
     }
@@ -104,14 +134,17 @@ export async function PATCH(
     });
 
     if (!user) {
-      return NextResponse.json({ message: "User not found" }, { status: 404 });
+      return NextResponse.json(
+        { success: false, error: "User not found" },
+        { status: 404 }
+      );
     }
 
     // Prevent changing own role
     if (id === session.user.id) {
       if (validation.data.role && validation.data.role !== user.role) {
         return NextResponse.json(
-          { message: "Cannot change your own role" },
+          { success: false, error: "Cannot change your own role" },
           { status: 400 }
         );
       }
@@ -124,30 +157,48 @@ export async function PATCH(
       });
       if (existing) {
         return NextResponse.json(
-          { message: "Email already in use" },
+          { success: false, error: "Email already in use" },
           { status: 400 }
         );
       }
     }
 
+    // Handle status change by updating emailVerifiedAt
+    const updateData: any = { ...validation.data };
+    if (validation.data.status) {
+      delete updateData.status;
+      if (validation.data.status === "ACTIVE" && !user.emailVerifiedAt) {
+        updateData.emailVerifiedAt = new Date();
+      } else if (validation.data.status !== "ACTIVE" && user.emailVerifiedAt) {
+        updateData.emailVerifiedAt = null;
+      }
+    }
+
     const updated = await prisma.user.update({
       where: { id },
-      data: validation.data,
+      data: updateData,
       select: {
         id: true,
         name: true,
         email: true,
         role: true,
         phone: true,
+        emailVerifiedAt: true,
         updatedAt: true,
       },
     });
 
-    return NextResponse.json(updated);
+    // Transform for frontend
+    const transformedUser = {
+      ...updated,
+      status: updated.emailVerifiedAt ? "ACTIVE" : "INACTIVE",
+    };
+
+    return NextResponse.json({ success: true, user: transformedUser });
   } catch (error: any) {
     console.error("Error updating user:", error);
     return NextResponse.json(
-      { message: "Internal server error" },
+      { success: false, error: "Internal server error" },
       { status: 500 }
     );
   }
@@ -161,7 +212,10 @@ export async function DELETE(
   try {
     const session = await auth();
     if (!session?.user?.id || session.user.role !== "ADMINISTRATOR") {
-      return NextResponse.json({ message: "Forbidden" }, { status: 403 });
+      return NextResponse.json(
+        { success: false, error: "Forbidden" },
+        { status: 403 }
+      );
     }
 
     const { id } = await params;
@@ -169,7 +223,7 @@ export async function DELETE(
     // Prevent self-deletion
     if (id === session.user.id) {
       return NextResponse.json(
-        { message: "Cannot delete your own account" },
+        { success: false, error: "Cannot delete your own account" },
         { status: 400 }
       );
     }
@@ -182,7 +236,10 @@ export async function DELETE(
     });
 
     if (!user) {
-      return NextResponse.json({ message: "User not found" }, { status: 404 });
+      return NextResponse.json(
+        { success: false, error: "User not found" },
+        { status: 404 }
+      );
     }
 
     // Use transaction for cascading deletes
@@ -206,11 +263,14 @@ export async function DELETE(
       await tx.user.delete({ where: { id } });
     });
 
-    return NextResponse.json({ message: "User deleted successfully" });
+    return NextResponse.json({
+      success: true,
+      message: "User deleted successfully",
+    });
   } catch (error: any) {
     console.error("Error deleting user:", error);
     return NextResponse.json(
-      { message: "Internal server error" },
+      { success: false, error: "Internal server error" },
       { status: 500 }
     );
   }
