@@ -46,10 +46,11 @@ export async function GET(request: NextRequest) {
       });
 
       if (!provider) {
-        return NextResponse.json(
-          { message: "No provider profile found" },
-          { status: 404 }
-        );
+        // Return empty array if vendor hasn't created provider profile yet
+        return NextResponse.json({
+          inquiries: [],
+          pagination: { page, limit, total: 0, pages: 0 },
+        });
       }
       filters.providerId = provider.id;
     } else if (session.user.role === "ADMINISTRATOR") {

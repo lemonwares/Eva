@@ -22,6 +22,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useAdminTheme } from "./AdminThemeContext";
 import { useState } from "react";
+import { signOut } from "next-auth/react";
 
 const mainNavItems = [
   { icon: LayoutDashboard, label: "Overview", href: "/admin" },
@@ -291,6 +292,7 @@ export default function AdminSidebar({
 
           {/* Logout */}
           <button
+            onClick={() => signOut({ callbackUrl: "/", redirect: true })}
             className={`flex items-center gap-3 px-3 py-2.5 rounded-lg ${
               darkMode ? "text-gray-400" : "text-gray-600"
             } hover:bg-red-500/10 hover:text-red-400 transition-colors w-full ${

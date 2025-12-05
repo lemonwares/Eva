@@ -42,6 +42,13 @@ export async function POST(request: NextRequest) {
     // If not admin, create email verification token
     if (role !== "ADMINISTRATOR") {
       const token = crypto.randomBytes(32).toString("hex");
+      console.log(
+        "Created verification token for user:",
+        email,
+        "token:",
+        token
+      );
+
       await prisma.emailVerification.create({
         data: {
           userId: user.id,
@@ -50,12 +57,16 @@ export async function POST(request: NextRequest) {
         },
       });
 
+      console.log("Token saved to database successfully");
+
       // Send verification email
       // const verificationUrl = `${process.env.AUTH_URL}/verify-email?token=${token}&email=${encodeURIComponent(email)}
 
       const verificationUrl = `${
         process.env.AUTH_URL
       }/auth/verify-email?token=${token}&email=${encodeURIComponent(email)}`;
+
+      console.log("Verification URL:", verificationUrl);
 
       const htmlCotent = emailTemplates.verification(name, verificationUrl);
 

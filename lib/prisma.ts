@@ -16,10 +16,7 @@ const prismaClientSingleton = () => {
 
   return new PrismaClient({
     adapter: new PrismaPg(pool),
-    log:
-      process.env.NODE_ENV === "development"
-        ? ["query", "error", "warn"]
-        : ["error"],
+    // log: process.env.NODE_ENV === "development" ? ["error", "warn"] : ["error"],
   });
 };
 

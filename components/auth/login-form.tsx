@@ -31,8 +31,33 @@ export default function LoginForm() {
         return;
       }
 
-      // Redirect based on user role (handled by callback or default)
-      router.push(callbackUrl);
+      // After login, redirect users based on their role: admins to /admin, vendors to /vendor, clients to callbackUrl
+      let nextUrl = callbackUrl;
+      try {
+        // Force fresh session read (no cache) and include cookies so role is accurate right after login.
+        const meResponse = await fetch("/api/auth/me", {
+          cache: "no-store",
+          credentials: "include",
+        });
+        if (meResponse.ok) {
+          const { user } = await meResponse.json();
+          // Route based on user role for optimal landing page
+          if (user?.role === "ADMINISTRATOR") {
+            nextUrl = "/admin";
+          } else if (user?.role === "PROFESSIONAL") {
+            nextUrl = "/vendor";
+          }
+          // CLIENT role stays on callbackUrl (default dashboard or home)
+        }
+      } catch (lookupError) {
+        console.error(
+          "Role lookup failed, falling back to callbackUrl",
+          lookupError
+        );
+      }
+
+      // Always push so router state matches the chosen destination.
+      router.push(nextUrl);
       router.refresh();
     } catch (err) {
       setError("An unexpected error occurred. Please try again.");

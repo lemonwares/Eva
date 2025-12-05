@@ -52,7 +52,10 @@ export default function Header() {
   };
 
   const handleSignOut = async () => {
-    await signOut({ callbackUrl: "/" });
+    // Close menus then force a redirecting sign-out to ensure navigation completes.
+    setIsProfileDropdownOpen(false);
+    setIsMenuOpen(false);
+    await signOut({ callbackUrl: "/", redirect: true });
   };
 
   const handleSearch = () => {
@@ -174,7 +177,7 @@ export default function Header() {
                     <div className="border-t border-border py-2">
                       <button
                         onClick={handleSignOut}
-                        className="flex items-center gap-3 w-full px-4 py-2 text-sm text-destructive hover:bg-accent transition-colors"
+                        className="flex items-center gap-3 w-full px-4 py-2 text-sm text-destructive hover:bg-accent hover:text-white transition-colors"
                       >
                         <LogOut size={16} />
                         Sign Out

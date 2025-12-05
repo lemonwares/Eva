@@ -89,6 +89,8 @@ export default function VendorProfilePage() {
   }
 
   const getInitials = (name: string) => {
+    // Guard against undefined/null name to prevent split error
+    if (!name) return "U";
     return name
       .split(" ")
       .map((n) => n[0])
@@ -299,7 +301,7 @@ export default function VendorProfilePage() {
                 Add Service
               </button>
             </div>
-            {provider.listings.length === 0 ? (
+            {!provider.listings || provider.listings.length === 0 ? (
               <div
                 className={`text-center py-8 ${
                   darkMode ? "text-gray-500" : "text-gray-400"
@@ -377,7 +379,7 @@ export default function VendorProfilePage() {
                 Add Photos
               </button>
             </div>
-            {provider.photos.length === 0 ? (
+            {!provider.photos || provider.photos.length === 0 ? (
               <div
                 className={`text-center py-8 ${
                   darkMode ? "text-gray-500" : "text-gray-400"
@@ -435,7 +437,7 @@ export default function VendorProfilePage() {
                 }`}
               >
                 <p className="text-2xl font-bold text-accent">
-                  {provider._count.inquiries}
+                  {provider._count?.inquiries || 0}
                 </p>
                 <p
                   className={`text-sm ${
@@ -451,7 +453,7 @@ export default function VendorProfilePage() {
                 }`}
               >
                 <p className="text-2xl font-bold text-accent">
-                  {provider._count.bookings}
+                  {provider._count?.bookings || 0}
                 </p>
                 <p
                   className={`text-sm ${
@@ -467,7 +469,7 @@ export default function VendorProfilePage() {
                 }`}
               >
                 <p className="text-2xl font-bold text-accent">
-                  {provider._count.reviews}
+                  {provider._count?.reviews || 0}
                 </p>
                 <p
                   className={`text-sm ${
@@ -483,7 +485,7 @@ export default function VendorProfilePage() {
                 }`}
               >
                 <p className="text-2xl font-bold text-accent">
-                  {provider._count.listings}
+                  {provider._count?.listings || 0}
                 </p>
                 <p
                   className={`text-sm ${
@@ -709,7 +711,7 @@ export default function VendorProfilePage() {
                   </div>
                 </div>
               )}
-              {provider._count.bookings >= 10 && (
+              {(provider._count?.bookings || 0) >= 10 && (
                 <div
                   className={`flex items-center gap-3 p-3 rounded-lg ${
                     darkMode ? "bg-white/5" : "bg-gray-50"
@@ -724,7 +726,7 @@ export default function VendorProfilePage() {
                         darkMode ? "text-white" : "text-gray-900"
                       } font-medium`}
                     >
-                      {provider._count.bookings}+ Events
+                      {provider._count?.bookings || 0}+ Events
                     </p>
                     <p className="text-gray-500 text-sm">Events Completed</p>
                   </div>
