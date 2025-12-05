@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
-import { stripe, formatAmountForStripe } from "@/lib/stripe";
+import { getStripe, formatAmountForStripe } from "@/lib/stripe";
 import { z } from "zod";
 
 const checkoutSchema = z.object({
@@ -158,7 +158,7 @@ export async function POST(request: NextRequest) {
       "http://localhost:3000";
 
     // Create Stripe checkout session
-    const checkoutSession = await stripe.checkout.sessions.create({
+    const checkoutSession = await getStripe().checkout.sessions.create({
       mode: "payment",
       payment_method_types: ["card"],
       customer_email: booking.clientEmail,
