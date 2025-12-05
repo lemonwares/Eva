@@ -14,6 +14,7 @@ interface Booking {
   balanceAmount?: number;
   depositPaidAt?: string;
   balancePaidAt?: string;
+  paymentMode?: string;
   guestsCount?: number;
   specialRequests?: string;
   createdAt: string;
@@ -49,6 +50,7 @@ export default function BookingsPage() {
   const [timeFilter, setTimeFilter] = useState("upcoming");
   const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null);
   const [detailsOpen, setDetailsOpen] = useState(false);
+  const [paymentLoading, setPaymentLoading] = useState<string | null>(null);
 
   const fetchBookings = useCallback(async () => {
     try {
@@ -106,6 +108,72 @@ export default function BookingsPage() {
   const openDetails = (booking: Booking) => {
     setSelectedBooking(booking);
     setDetailsOpen(true);
+  };
+
+  // Handle Stripe checkout for payments
+  const handlePayment = async (
+    bookingId: string,
+    paymentType: "DEPOSIT" | "BALANCE" | "FULL"
+  ) => {
+    setPaymentLoading(bookingId);
+    try {
+      const response = await fetch("/api/stripe/checkout", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ bookingId, paymentType }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        alert(data.error || "Failed to create checkout session");
+        return;
+      }
+
+      // Redirect to Stripe checkout
+      if (data.url) {
+        window.location.href = data.url;
+      }
+    } catch (error) {
+      console.error("Payment error:", error);
+      alert("Failed to initiate payment. Please try again.");
+    } finally {
+      setPaymentLoading(null);
+    }
+  };
+
+  // Determine what payment action is needed for a booking
+  const getPaymentAction = (booking: Booking) => {
+    if (booking.status === "PENDING_PAYMENT") {
+      if (booking.paymentMode === "DEPOSIT_BALANCE" && booking.depositAmount) {
+        if (!booking.depositPaidAt) {
+          return {
+            type: "DEPOSIT" as const,
+            amount: booking.depositAmount,
+            label: "Pay Deposit",
+          };
+        }
+      }
+      if (booking.paymentMode === "FULL_PAYMENT") {
+        return {
+          type: "FULL" as const,
+          amount: booking.pricingTotal,
+          label: "Pay Full Amount",
+        };
+      }
+    }
+    if (
+      booking.status === "DEPOSIT_PAID" &&
+      booking.balanceAmount &&
+      !booking.balancePaidAt
+    ) {
+      return {
+        type: "BALANCE" as const,
+        amount: booking.balanceAmount,
+        label: "Pay Balance",
+      };
+    }
+    return null;
   };
 
   const inputClass = `px-3 py-2 rounded-lg ${inputBg} border ${inputBorder} ${textPrimary} focus:outline-none focus:ring-2 focus:ring-rose-500`;
@@ -342,6 +410,44 @@ export default function BookingsPage() {
                     >
                       View Details
                     </button>
+                    {/* Pay Now Button */}
+                    {(() => {
+                      const paymentAction = getPaymentAction(booking);
+                      if (
+                        paymentAction &&
+                        booking.paymentMode !== "CASH_ON_DELIVERY"
+                      ) {
+                        return (
+                          <button
+                            onClick={() =>
+                              handlePayment(booking.id, paymentAction.type)
+                            }
+                            disabled={paymentLoading === booking.id}
+                            className="px-4 py-2 text-sm bg-[#635BFF] text-white rounded-lg hover:bg-[#5851ea] disabled:opacity-50 flex items-center gap-2"
+                          >
+                            {paymentLoading === booking.id ? (
+                              <>
+                                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                                Processing...
+                              </>
+                            ) : (
+                              <>
+                                <svg
+                                  className="w-4 h-4"
+                                  viewBox="0 0 24 24"
+                                  fill="currentColor"
+                                >
+                                  <path d="M13.976 9.15c-2.172-.806-3.356-1.426-3.356-2.409 0-.831.683-1.305 1.901-1.305 2.227 0 4.515.858 6.09 1.631l.89-5.494C18.252.975 15.697 0 12.165 0 9.667 0 7.589.654 6.104 1.872 4.56 3.147 3.757 4.992 3.757 7.218c0 4.039 2.467 5.76 6.476 7.219 2.585.92 3.445 1.574 3.445 2.583 0 .98-.84 1.545-2.354 1.545-1.875 0-4.965-.921-6.99-2.109l-.9 5.555C5.175 22.99 8.385 24 11.714 24c2.641 0 4.843-.624 6.328-1.813 1.664-1.305 2.525-3.236 2.525-5.732 0-4.128-2.524-5.851-6.591-7.305z" />
+                                </svg>
+                                {paymentAction.label} (
+                                {formatCurrency(paymentAction.amount)})
+                              </>
+                            )}
+                          </button>
+                        );
+                      }
+                      return null;
+                    })()}
                     {booking.provider.phonePublic && (
                       <a
                         href={`tel:${booking.provider.phonePublic}`}
@@ -513,7 +619,7 @@ export default function BookingsPage() {
                         {formatCurrency(selectedBooking.depositAmount)}
                         {selectedBooking.depositPaidAt && (
                           <span className="ml-2 text-xs text-green-600">
-                            Paid
+                            ✓ Paid
                           </span>
                         )}
                       </span>
@@ -526,13 +632,59 @@ export default function BookingsPage() {
                         {formatCurrency(selectedBooking.balanceAmount)}
                         {selectedBooking.balancePaidAt && (
                           <span className="ml-2 text-xs text-green-600">
-                            Paid
+                            ✓ Paid
                           </span>
                         )}
                       </span>
                     </div>
                   )}
                 </div>
+
+                {/* Pay Now Button in Modal */}
+                {(() => {
+                  const paymentAction = getPaymentAction(selectedBooking);
+                  if (
+                    paymentAction &&
+                    selectedBooking.paymentMode !== "CASH_ON_DELIVERY"
+                  ) {
+                    return (
+                      <button
+                        onClick={() =>
+                          handlePayment(selectedBooking.id, paymentAction.type)
+                        }
+                        disabled={paymentLoading === selectedBooking.id}
+                        className="mt-4 w-full py-3 bg-[#635BFF] text-white rounded-lg hover:bg-[#5851ea] disabled:opacity-50 flex items-center justify-center gap-2 font-medium"
+                      >
+                        {paymentLoading === selectedBooking.id ? (
+                          <>
+                            <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                            Processing...
+                          </>
+                        ) : (
+                          <>
+                            <svg
+                              className="w-5 h-5"
+                              viewBox="0 0 24 24"
+                              fill="currentColor"
+                            >
+                              <path d="M13.976 9.15c-2.172-.806-3.356-1.426-3.356-2.409 0-.831.683-1.305 1.901-1.305 2.227 0 4.515.858 6.09 1.631l.89-5.494C18.252.975 15.697 0 12.165 0 9.667 0 7.589.654 6.104 1.872 4.56 3.147 3.757 4.992 3.757 7.218c0 4.039 2.467 5.76 6.476 7.219 2.585.92 3.445 1.574 3.445 2.583 0 .98-.84 1.545-2.354 1.545-1.875 0-4.965-.921-6.99-2.109l-.9 5.555C5.175 22.99 8.385 24 11.714 24c2.641 0 4.843-.624 6.328-1.813 1.664-1.305 2.525-3.236 2.525-5.732 0-4.128-2.524-5.851-6.591-7.305z" />
+                            </svg>
+                            {paymentAction.label} -{" "}
+                            {formatCurrency(paymentAction.amount)}
+                          </>
+                        )}
+                      </button>
+                    );
+                  }
+                  if (selectedBooking.paymentMode === "CASH_ON_DELIVERY") {
+                    return (
+                      <div className="mt-4 p-3 bg-amber-50 text-amber-700 rounded-lg text-sm">
+                        💵 This booking is set for Cash on Delivery payment
+                      </div>
+                    );
+                  }
+                  return null;
+                })()}
               </div>
 
               {/* Quote Items */}
