@@ -10,63 +10,23 @@ import {
   MapPin,
   User,
   X,
+  Loader2,
 } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 const daysOfWeek = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
-const events = [
-  {
-    id: 1,
-    title: "Wedding - Chen",
-    client: "Olivia Chen",
-    date: "2024-10-26",
-    time: "2:00 PM - 10:00 PM",
-    location: "Sunset Gardens, LA",
-    type: "wedding",
-    color: "bg-pink-500",
-  },
-  {
-    id: 2,
-    title: "Corporate Gala",
-    client: "Benjamin Carter",
-    date: "2024-11-05",
-    time: "7:00 PM - 11:00 PM",
-    location: "Grand Hotel Ballroom",
-    type: "corporate",
-    color: "bg-blue-500",
-  },
-  {
-    id: 3,
-    title: "Birthday Party",
-    client: "Sophia Rodriguez",
-    date: "2024-11-12",
-    time: "5:00 PM - 9:00 PM",
-    location: "Private Residence",
-    type: "party",
-    color: "bg-purple-500",
-  },
-  {
-    id: 4,
-    title: "Charity Fundraiser",
-    client: "Liam Goldberg",
-    date: "2024-11-18",
-    time: "6:30 PM - 10:30 PM",
-    location: "City Convention Center",
-    type: "corporate",
-    color: "bg-green-500",
-  },
-  {
-    id: 5,
-    title: "Wedding - Nguyen",
-    client: "Ava Nguyen",
-    date: "2024-12-02",
-    time: "3:00 PM - 11:00 PM",
-    location: "Beachside Resort",
-    type: "wedding",
-    color: "bg-pink-500",
-  },
-];
+interface CalendarEvent {
+  id: string;
+  title: string;
+  client: string;
+  date: string;
+  time: string;
+  location: string;
+  type: string;
+  color: string;
+  status: string;
+}
 
 const getDaysInMonth = (year: number, month: number) => {
   return new Date(year, month + 1, 0).getDate();
@@ -76,13 +36,75 @@ const getFirstDayOfMonth = (year: number, month: number) => {
   return new Date(year, month, 1).getDay();
 };
 
+const getEventColor = (status: string) => {
+  switch (status) {
+    case "CONFIRMED":
+      return "bg-green-500";
+    case "PENDING":
+      return "bg-yellow-500";
+    case "COMPLETED":
+      return "bg-blue-500";
+    case "CANCELLED":
+      return "bg-red-500";
+    default:
+      return "bg-accent";
+  }
+};
+
+const formatTime = (dateStr: string) => {
+  const date = new Date(dateStr);
+  return date.toLocaleTimeString("en-US", {
+    hour: "numeric",
+    minute: "2-digit",
+    hour12: true,
+  });
+};
+
 export default function VendorCalendarPage() {
   const { darkMode } = useVendorTheme();
-  const [currentDate, setCurrentDate] = useState(new Date(2024, 9, 1)); // October 2024
-  const [selectedEvent, setSelectedEvent] = useState<(typeof events)[0] | null>(
+  const [currentDate, setCurrentDate] = useState(new Date());
+  const [events, setEvents] = useState<CalendarEvent[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(
     null
   );
   const [view, setView] = useState<"month" | "week" | "day">("month");
+
+  useEffect(() => {
+    fetchBookings();
+  }, []);
+
+  async function fetchBookings() {
+    setIsLoading(true);
+    try {
+      const res = await fetch("/api/bookings?limit=100");
+      if (res.ok) {
+        const data = await res.json();
+        const bookings = data.bookings || [];
+
+        // Transform bookings into calendar events
+        const calendarEvents: CalendarEvent[] = bookings.map(
+          (booking: any) => ({
+            id: booking.id,
+            title: booking.service?.name || booking.eventType || "Event",
+            client: booking.user?.name || booking.user?.email || "Client",
+            date: new Date(booking.eventDate).toISOString().split("T")[0],
+            time: formatTime(booking.eventDate),
+            location: booking.location || "TBD",
+            type: booking.eventType || "event",
+            color: getEventColor(booking.status),
+            status: booking.status,
+          })
+        );
+
+        setEvents(calendarEvents);
+      }
+    } catch (err) {
+      console.error("Error fetching bookings:", err);
+    } finally {
+      setIsLoading(false);
+    }
+  }
 
   const year = currentDate.getFullYear();
   const month = currentDate.getMonth();
@@ -194,81 +216,99 @@ export default function VendorCalendarPage() {
       </div>
 
       {/* Calendar Grid */}
-      <div
-        className={`${
-          darkMode ? "bg-[#141414] border-white/10" : "bg-white border-gray-200"
-        } rounded-xl border overflow-hidden`}
-      >
-        {/* Days of Week Header */}
+      {isLoading ? (
         <div
-          className={`grid grid-cols-7 ${
-            darkMode ? "border-white/10" : "border-gray-200"
-          } border-b`}
+          className={`${
+            darkMode
+              ? "bg-[#141414] border-white/10"
+              : "bg-white border-gray-200"
+          } rounded-xl border p-20 flex items-center justify-center`}
         >
-          {daysOfWeek.map((day) => (
-            <div
-              key={day}
-              className="py-3 text-center text-gray-500 text-sm font-medium"
-            >
-              {day}
-            </div>
-          ))}
+          <Loader2
+            className={`w-8 h-8 animate-spin ${
+              darkMode ? "text-white" : "text-gray-900"
+            }`}
+          />
         </div>
-
-        {/* Calendar Days */}
-        <div className="grid grid-cols-7">
-          {calendarDays.map((day, idx) => {
-            const dayEvents = day ? getEventsForDate(day) : [];
-            const isToday =
-              day === new Date().getDate() &&
-              month === new Date().getMonth() &&
-              year === new Date().getFullYear();
-
-            return (
+      ) : (
+        <div
+          className={`${
+            darkMode
+              ? "bg-[#141414] border-white/10"
+              : "bg-white border-gray-200"
+          } rounded-xl border overflow-hidden`}
+        >
+          {/* Days of Week Header */}
+          <div
+            className={`grid grid-cols-7 ${
+              darkMode ? "border-white/10" : "border-gray-200"
+            } border-b`}
+          >
+            {daysOfWeek.map((day) => (
               <div
-                key={idx}
-                className={`min-h-[100px] sm:min-h-[120px] p-2 ${
-                  darkMode ? "border-white/10" : "border-gray-200"
-                } border-b border-r ${
-                  day
-                    ? `${darkMode ? "hover:bg-white/5" : "hover:bg-gray-50"}`
-                    : `${darkMode ? "bg-white/2" : "bg-gray-50/50"}`
-                } transition-colors`}
+                key={day}
+                className="py-3 text-center text-gray-500 text-sm font-medium"
               >
-                {day && (
-                  <>
-                    <div
-                      className={`w-7 h-7 rounded-full flex items-center justify-center text-sm mb-1 ${
-                        isToday
-                          ? "bg-accent text-white"
-                          : `${darkMode ? "text-gray-400" : "text-gray-600"}`
-                      }`}
-                    >
-                      {day}
-                    </div>
-                    <div className="space-y-1">
-                      {dayEvents.slice(0, 2).map((event) => (
-                        <button
-                          key={event.id}
-                          onClick={() => setSelectedEvent(event)}
-                          className={`w-full text-left px-2 py-1 rounded text-xs ${event.color} text-white truncate hover:opacity-80 transition-opacity`}
-                        >
-                          {event.title}
-                        </button>
-                      ))}
-                      {dayEvents.length > 2 && (
-                        <p className="text-gray-500 text-xs px-2">
-                          +{dayEvents.length - 2} more
-                        </p>
-                      )}
-                    </div>
-                  </>
-                )}
+                {day}
               </div>
-            );
-          })}
+            ))}
+          </div>
+
+          {/* Calendar Days */}
+          <div className="grid grid-cols-7">
+            {calendarDays.map((day, idx) => {
+              const dayEvents = day ? getEventsForDate(day) : [];
+              const isToday =
+                day === new Date().getDate() &&
+                month === new Date().getMonth() &&
+                year === new Date().getFullYear();
+
+              return (
+                <div
+                  key={idx}
+                  className={`min-h-[100px] sm:min-h-[120px] p-2 ${
+                    darkMode ? "border-white/10" : "border-gray-200"
+                  } border-b border-r ${
+                    day
+                      ? `${darkMode ? "hover:bg-white/5" : "hover:bg-gray-50"}`
+                      : `${darkMode ? "bg-white/2" : "bg-gray-50/50"}`
+                  } transition-colors`}
+                >
+                  {day && (
+                    <>
+                      <div
+                        className={`w-7 h-7 rounded-full flex items-center justify-center text-sm mb-1 ${
+                          isToday
+                            ? "bg-accent text-white"
+                            : `${darkMode ? "text-gray-400" : "text-gray-600"}`
+                        }`}
+                      >
+                        {day}
+                      </div>
+                      <div className="space-y-1">
+                        {dayEvents.slice(0, 2).map((event) => (
+                          <button
+                            key={event.id}
+                            onClick={() => setSelectedEvent(event)}
+                            className={`w-full text-left px-2 py-1 rounded text-xs ${event.color} text-white truncate hover:opacity-80 transition-opacity`}
+                          >
+                            {event.title}
+                          </button>
+                        ))}
+                        {dayEvents.length > 2 && (
+                          <p className="text-gray-500 text-xs px-2">
+                            +{dayEvents.length - 2} more
+                          </p>
+                        )}
+                      </div>
+                    </>
+                  )}
+                </div>
+              );
+            })}
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Upcoming Events Sidebar */}
       <div className="mt-6 grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -351,7 +391,7 @@ export default function VendorCalendarPage() {
                 darkMode ? "text-white" : "text-gray-900"
               } font-semibold mb-4`}
             >
-              Event Types
+              Booking Status
             </h3>
             <div className="space-y-3">
               <div
@@ -360,11 +400,11 @@ export default function VendorCalendarPage() {
                 }`}
               >
                 <div className="flex items-center gap-3">
-                  <div className="w-3 h-3 rounded-full bg-pink-500" />
+                  <div className="w-3 h-3 rounded-full bg-green-500" />
                   <span
                     className={darkMode ? "text-gray-300" : "text-gray-700"}
                   >
-                    Weddings
+                    Confirmed
                   </span>
                 </div>
                 <span
@@ -372,7 +412,28 @@ export default function VendorCalendarPage() {
                     darkMode ? "text-white" : "text-gray-900"
                   } font-medium`}
                 >
-                  2
+                  {events.filter((e) => e.status === "CONFIRMED").length}
+                </span>
+              </div>
+              <div
+                className={`flex items-center justify-between p-3 rounded-lg ${
+                  darkMode ? "bg-white/5" : "bg-gray-50"
+                }`}
+              >
+                <div className="flex items-center gap-3">
+                  <div className="w-3 h-3 rounded-full bg-yellow-500" />
+                  <span
+                    className={darkMode ? "text-gray-300" : "text-gray-700"}
+                  >
+                    Pending
+                  </span>
+                </div>
+                <span
+                  className={`${
+                    darkMode ? "text-white" : "text-gray-900"
+                  } font-medium`}
+                >
+                  {events.filter((e) => e.status === "PENDING").length}
                 </span>
               </div>
               <div
@@ -385,7 +446,7 @@ export default function VendorCalendarPage() {
                   <span
                     className={darkMode ? "text-gray-300" : "text-gray-700"}
                   >
-                    Corporate
+                    Completed
                   </span>
                 </div>
                 <span
@@ -393,28 +454,7 @@ export default function VendorCalendarPage() {
                     darkMode ? "text-white" : "text-gray-900"
                   } font-medium`}
                 >
-                  2
-                </span>
-              </div>
-              <div
-                className={`flex items-center justify-between p-3 rounded-lg ${
-                  darkMode ? "bg-white/5" : "bg-gray-50"
-                }`}
-              >
-                <div className="flex items-center gap-3">
-                  <div className="w-3 h-3 rounded-full bg-purple-500" />
-                  <span
-                    className={darkMode ? "text-gray-300" : "text-gray-700"}
-                  >
-                    Parties
-                  </span>
-                </div>
-                <span
-                  className={`${
-                    darkMode ? "text-white" : "text-gray-900"
-                  } font-medium`}
-                >
-                  1
+                  {events.filter((e) => e.status === "COMPLETED").length}
                 </span>
               </div>
             </div>

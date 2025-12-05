@@ -14,8 +14,26 @@ import {
   Eye,
   EyeOff,
   ChevronDown,
+  Loader2,
+  CheckCircle,
+  XCircle,
 } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+
+interface UserProfile {
+  id: string;
+  name: string;
+  email: string;
+  phone: string | null;
+  avatar: string | null;
+  role: string;
+}
+
+interface Toast {
+  id: string;
+  message: string;
+  type: "success" | "error";
+}
 
 const tabs = [
   { id: "profile", label: "Profile", icon: User },
@@ -99,6 +117,118 @@ export default function AdminSettingsPage() {
   const [selectedLanguage, setSelectedLanguage] = useState("English");
   const [selectedCurrency, setSelectedCurrency] = useState("NGN (₦)");
 
+  // Profile state
+  const [profile, setProfile] = useState<UserProfile | null>(null);
+  const [loadingProfile, setLoadingProfile] = useState(true);
+  const [savingProfile, setSavingProfile] = useState(false);
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
+  const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
+  const [bio, setBio] = useState("Platform administrator for EVA Events.");
+
+  // Password state
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [updatingPassword, setUpdatingPassword] = useState(false);
+
+  // Toast state
+  const [toasts, setToasts] = useState<Toast[]>([]);
+
+  const addToast = (message: string, type: "success" | "error") => {
+    const id = Date.now().toString();
+    setToasts((prev) => [...prev, { id, message, type }]);
+    setTimeout(() => {
+      setToasts((prev) => prev.filter((t) => t.id !== id));
+    }, 5000);
+  };
+
+  useEffect(() => {
+    const fetchProfile = async () => {
+      try {
+        const res = await fetch("/api/auth/me");
+        if (res.ok) {
+          const data = await res.json();
+          setProfile(data.user);
+          const nameParts = (data.user.name || "").split(" ");
+          setFirstName(nameParts[0] || "");
+          setLastName(nameParts.slice(1).join(" ") || "");
+          setEmail(data.user.email || "");
+          setPhone(data.user.phone || "");
+        }
+      } catch (err) {
+        console.error("Error fetching profile:", err);
+      } finally {
+        setLoadingProfile(false);
+      }
+    };
+    fetchProfile();
+  }, []);
+
+  const handleSaveProfile = async () => {
+    setSavingProfile(true);
+    try {
+      const res = await fetch("/api/auth/me", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: `${firstName} ${lastName}`.trim(),
+          phone: phone || null,
+        }),
+      });
+
+      if (!res.ok) {
+        const error = await res.json();
+        throw new Error(error.message || "Failed to save profile");
+      }
+
+      addToast("Profile saved successfully", "success");
+    } catch (err: any) {
+      addToast(err.message || "Failed to save profile", "error");
+    } finally {
+      setSavingProfile(false);
+    }
+  };
+
+  const handleUpdatePassword = async () => {
+    if (newPassword !== confirmPassword) {
+      addToast("New passwords do not match", "error");
+      return;
+    }
+
+    if (newPassword.length < 8) {
+      addToast("Password must be at least 8 characters", "error");
+      return;
+    }
+
+    setUpdatingPassword(true);
+    try {
+      const res = await fetch("/api/auth/me", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          currentPassword,
+          newPassword,
+        }),
+      });
+
+      if (!res.ok) {
+        const error = await res.json();
+        throw new Error(error.message || "Failed to update password");
+      }
+
+      addToast("Password updated successfully", "success");
+      setCurrentPassword("");
+      setNewPassword("");
+      setConfirmPassword("");
+    } catch (err: any) {
+      addToast(err.message || "Failed to update password", "error");
+    } finally {
+      setUpdatingPassword(false);
+    }
+  };
+
   const toggleNotification = (id: string) => {
     setNotifications(
       notifications.map((n) =>
@@ -111,11 +241,34 @@ export default function AdminSettingsPage() {
     <AdminLayout
       title="Settings"
       actionButton={{
-        label: "Save Changes",
-        onClick: () => {},
-        icon: <Save size={18} />,
+        label: savingProfile ? "Saving..." : "Save Changes",
+        onClick: handleSaveProfile,
+        icon: savingProfile ? (
+          <Loader2 size={18} className="animate-spin" />
+        ) : (
+          <Save size={18} />
+        ),
       }}
     >
+      {/* Toast notifications */}
+      <div className="fixed top-4 right-4 z-50 space-y-2">
+        {toasts.map((toast) => (
+          <div
+            key={toast.id}
+            className={`px-4 py-3 rounded-lg shadow-lg text-white text-sm flex items-center gap-2 ${
+              toast.type === "success" ? "bg-green-600" : "bg-red-600"
+            }`}
+          >
+            {toast.type === "success" ? (
+              <CheckCircle size={16} />
+            ) : (
+              <XCircle size={16} />
+            )}
+            {toast.message}
+          </div>
+        ))}
+      </div>
+
       <div className="flex flex-col lg:flex-row gap-6">
         {/* Tabs Sidebar */}
         <div className={`lg:w-56 shrink-0`}>
@@ -152,84 +305,102 @@ export default function AdminSettingsPage() {
                 Profile Settings
               </h3>
 
-              {/* Avatar */}
-              <div className="flex items-center gap-4 mb-6">
-                <div className="w-20 h-20 rounded-full bg-linear-to-br from-blue-400 to-blue-600 flex items-center justify-center">
-                  <span className="text-white font-bold text-2xl">A</span>
+              {loadingProfile ? (
+                <div className="flex items-center justify-center py-12">
+                  <Loader2 className={`w-8 h-8 animate-spin ${textMuted}`} />
                 </div>
-                <div>
-                  <button className="flex items-center gap-2 px-4 py-2 rounded-lg bg-accent text-white text-sm font-medium hover:bg-accent/90">
-                    <Upload size={16} />
-                    Upload Photo
-                  </button>
-                  <p className={`text-xs ${textMuted} mt-1`}>
-                    JPG, PNG or GIF. Max size 2MB
-                  </p>
-                </div>
-              </div>
+              ) : (
+                <>
+                  {/* Avatar */}
+                  <div className="flex items-center gap-4 mb-6">
+                    <div className="w-20 h-20 rounded-full bg-linear-to-br from-blue-400 to-blue-600 flex items-center justify-center">
+                      <span className="text-white font-bold text-2xl">
+                        {firstName.charAt(0) || "A"}
+                      </span>
+                    </div>
+                    <div>
+                      <button className="flex items-center gap-2 px-4 py-2 rounded-lg bg-accent text-white text-sm font-medium hover:bg-accent/90">
+                        <Upload size={16} />
+                        Upload Photo
+                      </button>
+                      <p className={`text-xs ${textMuted} mt-1`}>
+                        JPG, PNG or GIF. Max size 2MB
+                      </p>
+                    </div>
+                  </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label
-                    className={`text-sm font-medium ${textPrimary} mb-1.5 block`}
-                  >
-                    First Name
-                  </label>
-                  <input
-                    type="text"
-                    defaultValue="Admin"
-                    className={`w-full px-4 py-2.5 rounded-lg border ${inputBg} ${inputBorder} ${textPrimary} text-sm focus:outline-none focus:ring-2 focus:ring-accent/50`}
-                  />
-                </div>
-                <div>
-                  <label
-                    className={`text-sm font-medium ${textPrimary} mb-1.5 block`}
-                  >
-                    Last Name
-                  </label>
-                  <input
-                    type="text"
-                    defaultValue="User"
-                    className={`w-full px-4 py-2.5 rounded-lg border ${inputBg} ${inputBorder} ${textPrimary} text-sm focus:outline-none focus:ring-2 focus:ring-accent/50`}
-                  />
-                </div>
-                <div>
-                  <label
-                    className={`text-sm font-medium ${textPrimary} mb-1.5 block`}
-                  >
-                    Email Address
-                  </label>
-                  <input
-                    type="email"
-                    defaultValue="admin@eva.com"
-                    className={`w-full px-4 py-2.5 rounded-lg border ${inputBg} ${inputBorder} ${textPrimary} text-sm focus:outline-none focus:ring-2 focus:ring-accent/50`}
-                  />
-                </div>
-                <div>
-                  <label
-                    className={`text-sm font-medium ${textPrimary} mb-1.5 block`}
-                  >
-                    Phone Number
-                  </label>
-                  <input
-                    type="tel"
-                    defaultValue="+234 800 123 4567"
-                    className={`w-full px-4 py-2.5 rounded-lg border ${inputBg} ${inputBorder} ${textPrimary} text-sm focus:outline-none focus:ring-2 focus:ring-accent/50`}
-                  />
-                </div>
-                <div className="md:col-span-2">
-                  <label
-                    className={`text-sm font-medium ${textPrimary} mb-1.5 block`}
-                  >
-                    Bio
-                  </label>
-                  <textarea
-                    rows={3}
-                    defaultValue="Platform administrator for EVA Events."
-                    className={`w-full px-4 py-2.5 rounded-lg border ${inputBg} ${inputBorder} ${textPrimary} text-sm focus:outline-none focus:ring-2 focus:ring-accent/50 resize-none`}
-                  />
-                </div>
-              </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label
+                        className={`text-sm font-medium ${textPrimary} mb-1.5 block`}
+                      >
+                        First Name
+                      </label>
+                      <input
+                        type="text"
+                        value={firstName}
+                        onChange={(e) => setFirstName(e.target.value)}
+                        className={`w-full px-4 py-2.5 rounded-lg border ${inputBg} ${inputBorder} ${textPrimary} text-sm focus:outline-none focus:ring-2 focus:ring-accent/50`}
+                      />
+                    </div>
+                    <div>
+                      <label
+                        className={`text-sm font-medium ${textPrimary} mb-1.5 block`}
+                      >
+                        Last Name
+                      </label>
+                      <input
+                        type="text"
+                        value={lastName}
+                        onChange={(e) => setLastName(e.target.value)}
+                        className={`w-full px-4 py-2.5 rounded-lg border ${inputBg} ${inputBorder} ${textPrimary} text-sm focus:outline-none focus:ring-2 focus:ring-accent/50`}
+                      />
+                    </div>
+                    <div>
+                      <label
+                        className={`text-sm font-medium ${textPrimary} mb-1.5 block`}
+                      >
+                        Email Address
+                      </label>
+                      <input
+                        type="email"
+                        value={email}
+                        disabled
+                        className={`w-full px-4 py-2.5 rounded-lg border ${inputBg} ${inputBorder} ${textPrimary} text-sm opacity-60 cursor-not-allowed`}
+                      />
+                      <p className={`text-xs ${textMuted} mt-1`}>
+                        Email cannot be changed
+                      </p>
+                    </div>
+                    <div>
+                      <label
+                        className={`text-sm font-medium ${textPrimary} mb-1.5 block`}
+                      >
+                        Phone Number
+                      </label>
+                      <input
+                        type="tel"
+                        value={phone}
+                        onChange={(e) => setPhone(e.target.value)}
+                        className={`w-full px-4 py-2.5 rounded-lg border ${inputBg} ${inputBorder} ${textPrimary} text-sm focus:outline-none focus:ring-2 focus:ring-accent/50`}
+                      />
+                    </div>
+                    <div className="md:col-span-2">
+                      <label
+                        className={`text-sm font-medium ${textPrimary} mb-1.5 block`}
+                      >
+                        Bio
+                      </label>
+                      <textarea
+                        rows={3}
+                        value={bio}
+                        onChange={(e) => setBio(e.target.value)}
+                        className={`w-full px-4 py-2.5 rounded-lg border ${inputBg} ${inputBorder} ${textPrimary} text-sm focus:outline-none focus:ring-2 focus:ring-accent/50 resize-none`}
+                      />
+                    </div>
+                  </div>
+                </>
+              )}
             </div>
           )}
 
@@ -305,9 +476,12 @@ export default function AdminSettingsPage() {
                         <input
                           type={showCurrentPassword ? "text" : "password"}
                           placeholder="Enter current password"
+                          value={currentPassword}
+                          onChange={(e) => setCurrentPassword(e.target.value)}
                           className={`w-full px-4 py-2.5 pr-10 rounded-lg border ${inputBg} ${inputBorder} ${textPrimary} text-sm focus:outline-none focus:ring-2 focus:ring-accent/50`}
                         />
                         <button
+                          type="button"
                           onClick={() =>
                             setShowCurrentPassword(!showCurrentPassword)
                           }
@@ -331,9 +505,12 @@ export default function AdminSettingsPage() {
                         <input
                           type={showNewPassword ? "text" : "password"}
                           placeholder="Enter new password"
+                          value={newPassword}
+                          onChange={(e) => setNewPassword(e.target.value)}
                           className={`w-full px-4 py-2.5 pr-10 rounded-lg border ${inputBg} ${inputBorder} ${textPrimary} text-sm focus:outline-none focus:ring-2 focus:ring-accent/50`}
                         />
                         <button
+                          type="button"
                           onClick={() => setShowNewPassword(!showNewPassword)}
                           className={`absolute right-3 top-1/2 -translate-y-1/2 ${textMuted}`}
                         >
@@ -354,11 +531,32 @@ export default function AdminSettingsPage() {
                       <input
                         type="password"
                         placeholder="Confirm new password"
+                        value={confirmPassword}
+                        onChange={(e) => setConfirmPassword(e.target.value)}
                         className={`w-full px-4 py-2.5 rounded-lg border ${inputBg} ${inputBorder} ${textPrimary} text-sm focus:outline-none focus:ring-2 focus:ring-accent/50`}
                       />
                     </div>
-                    <button className="px-6 py-2.5 rounded-lg bg-accent text-white font-semibold text-sm hover:bg-accent/90">
-                      Update Password
+                    <button
+                      onClick={handleUpdatePassword}
+                      disabled={
+                        updatingPassword ||
+                        !currentPassword ||
+                        !newPassword ||
+                        !confirmPassword
+                      }
+                      className={`px-6 py-2.5 rounded-lg font-semibold text-sm flex items-center gap-2 ${
+                        updatingPassword ||
+                        !currentPassword ||
+                        !newPassword ||
+                        !confirmPassword
+                          ? "bg-accent/50 cursor-not-allowed"
+                          : "bg-accent hover:bg-accent/90"
+                      } text-white`}
+                    >
+                      {updatingPassword && (
+                        <Loader2 size={16} className="animate-spin" />
+                      )}
+                      {updatingPassword ? "Updating..." : "Update Password"}
                     </button>
                   </div>
                 </div>

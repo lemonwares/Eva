@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
+import { prisma } from "@/lib/prisma";
 
-// GET /api/notifications - Get user's notifications
-// Note: Notification model not implemented yet. Returns empty array.
+// GET /api/notifications - Get notifications (admin gets system notifications)
 export async function GET(request: NextRequest) {
   try {
     const session = await auth();
@@ -10,7 +10,47 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
     }
 
-    // TODO: Implement user notifications when model is added
+    const { searchParams } = request.nextUrl;
+    const page = parseInt(searchParams.get("page") || "1");
+    const limit = parseInt(searchParams.get("limit") || "20");
+    const status = searchParams.get("status");
+    const type = searchParams.get("type");
+
+    const skip = (page - 1) * limit;
+
+    const filters: any = {};
+    if (status) filters.status = status;
+    if (type) filters.type = type;
+
+    // Admin can see all notifications
+    if (session.user.role === "ADMINISTRATOR") {
+      const [notifications, total] = await Promise.all([
+        prisma.notificationQueue.findMany({
+          where: filters,
+          orderBy: { createdAt: "desc" },
+          skip,
+          take: limit,
+        }),
+        prisma.notificationQueue.count({ where: filters }),
+      ]);
+
+      const unreadCount = await prisma.notificationQueue.count({
+        where: { status: "PENDING" },
+      });
+
+      return NextResponse.json({
+        notifications,
+        unreadCount,
+        pagination: {
+          page,
+          limit,
+          total,
+          pages: Math.ceil(total / limit),
+        },
+      });
+    }
+
+    // Regular users get empty for now (no user-specific notifications model yet)
     return NextResponse.json({
       notifications: [],
       unreadCount: 0,

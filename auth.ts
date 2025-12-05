@@ -127,5 +127,18 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       }
       return session;
     },
+    async redirect({ url, baseUrl }: { url: string; baseUrl: string }) {
+      // Handle role-based redirects after OAuth sign in
+      // If the callback URL is the base URL or root, redirect to appropriate dashboard
+      if (url === baseUrl || url === baseUrl + "/" || url === "/") {
+        // We can't access session here directly, so return a special URL
+        // that the client will handle
+        return `${baseUrl}/api/auth/redirect`;
+      }
+      // Default: allow relative URLs and same-origin URLs
+      if (url.startsWith("/")) return `${baseUrl}${url}`;
+      if (new URL(url).origin === baseUrl) return url;
+      return baseUrl;
+    },
   },
 });

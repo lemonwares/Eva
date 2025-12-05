@@ -3,6 +3,7 @@
 import { Menu, Search, Bell, User } from "lucide-react";
 import { useAdminTheme } from "./AdminThemeContext";
 import Link from "next/link";
+import { useState, useEffect } from "react";
 
 interface AdminHeaderProps {
   title: string;
@@ -34,6 +35,27 @@ export default function AdminHeader({
     inputBg,
     inputBorder,
   } = useAdminTheme();
+
+  const [unreadCount, setUnreadCount] = useState(0);
+
+  useEffect(() => {
+    const fetchUnreadCount = async () => {
+      try {
+        const res = await fetch("/api/notifications?limit=1");
+        if (res.ok) {
+          const data = await res.json();
+          setUnreadCount(data.unreadCount || 0);
+        }
+      } catch (err) {
+        console.error("Error fetching notification count:", err);
+      }
+    };
+
+    fetchUnreadCount();
+    // Refresh every 60 seconds
+    const interval = setInterval(fetchUnreadCount, 60000);
+    return () => clearInterval(interval);
+  }, []);
 
   return (
     <header
@@ -79,7 +101,8 @@ export default function AdminHeader({
         {/* Right: Actions */}
         <div className="flex items-center gap-3">
           {/* Notifications */}
-          <button
+          <Link
+            href="/admin/notifications"
             className={`relative p-2.5 rounded-lg ${
               darkMode ? "hover:bg-white/10" : "hover:bg-gray-100"
             } transition-colors`}
@@ -88,8 +111,12 @@ export default function AdminHeader({
               size={20}
               className={darkMode ? "text-gray-400" : "text-gray-600"}
             />
-            <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full" />
-          </button>
+            {unreadCount > 0 && (
+              <span className="absolute top-1 right-1 min-w-[18px] h-[18px] px-1 flex items-center justify-center bg-red-500 text-white text-[10px] font-bold rounded-full">
+                {unreadCount > 99 ? "99+" : unreadCount}
+              </span>
+            )}
+          </Link>
 
           {/* Profile (Desktop) */}
           <div className="hidden sm:flex items-center gap-3">
