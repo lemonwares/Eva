@@ -13,10 +13,10 @@ export default function HeroSection() {
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     const params = new URLSearchParams();
-    if (searchQuery) params.set("search", searchQuery);
-    if (location) params.set("location", location);
-    if (ceremony) params.set("ceremony", ceremony);
-    router.push(`/vendors?${params.toString()}`);
+    if (searchQuery) params.set("q", searchQuery);
+    if (location) params.set("city", location);
+    if (ceremony) params.set("category", ceremony);
+    router.push(`/search?${params.toString()}`);
   };
 
   return (
@@ -83,7 +83,10 @@ export default function HeroSection() {
         </div>
 
         <div className="relative rounded-4xl border border-border/80 bg-card/80 p-6 shadow-[0_30px_120px_rgba(15,23,42,0.1)] backdrop-blur">
-          <form onSubmit={handleSearch} className="rounded-3xl border border-border/70 bg-background/70 p-6 shadow-inner">
+          <form
+            onSubmit={handleSearch}
+            className="rounded-3xl border border-border/70 bg-background/70 p-6 shadow-inner"
+          >
             <p className="text-sm font-semibold uppercase tracking-[0.4em] text-muted-foreground">
               Smart search
             </p>
@@ -125,7 +128,7 @@ export default function HeroSection() {
                 <label className="text-sm font-medium text-muted-foreground">
                   Ceremony focus
                 </label>
-                <select 
+                <select
                   value={ceremony}
                   onChange={(e) => setCeremony(e.target.value)}
                   className="w-full rounded-2xl border border-border bg-input/60 px-4 py-3 text-sm text-foreground focus:border-accent focus:ring-2 focus:ring-accent/30"
@@ -139,7 +142,7 @@ export default function HeroSection() {
                   <option value="civil">Civil ceremony</option>
                 </select>
               </div>
-              <button 
+              <button
                 type="submit"
                 className="mt-4 w-full rounded-2xl bg-foreground py-3 text-sm font-semibold text-background transition hover:-translate-y-0.5"
               >
