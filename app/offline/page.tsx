@@ -1,98 +1,157 @@
 "use client";
 
-import { useRouter } from "next/navigation";
+import { useState, useEffect } from "react";
+import { WifiOff, RefreshCw, Home } from "lucide-react";
+import Link from "next/link";
 
 export default function OfflinePage() {
-  const router = useRouter();
+  const [isRetrying, setIsRetrying] = useState(false);
+  const [isOnline, setIsOnline] = useState(false);
+
+  useEffect(() => {
+    // Check initial online status
+    setIsOnline(navigator.onLine);
+
+    // Listen for online/offline events
+    const handleOnline = () => {
+      setIsOnline(true);
+      // Auto-redirect when back online
+      setTimeout(() => {
+        window.location.href = "/";
+      }, 1000);
+    };
+    const handleOffline = () => setIsOnline(false);
+
+    window.addEventListener("online", handleOnline);
+    window.addEventListener("offline", handleOffline);
+
+    return () => {
+      window.removeEventListener("online", handleOnline);
+      window.removeEventListener("offline", handleOffline);
+    };
+  }, []);
+
+  const handleRetry = async () => {
+    setIsRetrying(true);
+    try {
+      // Try to fetch a simple resource to check connectivity
+      const response = await fetch("/api/health", {
+        method: "HEAD",
+        cache: "no-store",
+      });
+      if (response.ok) {
+        window.location.reload();
+      }
+    } catch {
+      // Still offline
+    } finally {
+      setIsRetrying(false);
+    }
+  };
+
+  if (isOnline) {
+    return (
+      <div className="min-h-screen bg-linear-to-b from-background to-muted flex items-center justify-center px-4">
+        <div className="text-center">
+          <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-green-100 flex items-center justify-center">
+            <svg
+              className="w-8 h-8 text-green-600"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M5 13l4 4L19 7"
+              />
+            </svg>
+          </div>
+          <h2 className="text-xl font-semibold text-foreground mb-2">
+            You're back online!
+          </h2>
+          <p className="text-muted-foreground">Redirecting you now...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4">
+    <div className="min-h-screen bg-linear-to-b from-background to-muted flex items-center justify-center px-4">
       <div className="max-w-md w-full text-center">
         {/* Offline Icon */}
-        <div className="w-24 h-24 bg-gray-200 rounded-full flex items-center justify-center mx-auto mb-6">
-          <svg
-            className="w-12 h-12 text-gray-400"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M18.364 5.636a9 9 0 010 12.728m0 0l-2.829-2.829m2.829 2.829L21 21M15.536 8.464a5 5 0 010 7.072m0 0l-2.829-2.829m-4.243 2.829a4.978 4.978 0 01-1.414-2.83m-1.414 5.658a9 9 0 01-2.167-9.238m7.824 2.167a1 1 0 111.414 1.414m-1.414-1.414L3 3m8.293 8.293l1.414 1.414"
+        <div className="mb-8">
+          <div className="relative mx-auto w-32 h-32">
+            {/* Animated rings */}
+            <div
+              className="absolute inset-0 rounded-full border-4 border-muted-foreground/20 animate-ping"
+              style={{ animationDuration: "2s" }}
             />
-          </svg>
+            <div className="absolute inset-2 rounded-full border-2 border-muted-foreground/30" />
+            {/* Icon container */}
+            <div className="absolute inset-0 flex items-center justify-center">
+              <div className="w-20 h-20 rounded-full bg-muted flex items-center justify-center">
+                <WifiOff size={40} className="text-muted-foreground" />
+              </div>
+            </div>
+          </div>
         </div>
 
-        {/* Title */}
-        <h1 className="text-2xl font-bold text-gray-900 mb-2">
-          You&apos;re Offline
+        {/* Content */}
+        <h1 className="text-3xl sm:text-4xl font-bold text-foreground mb-4">
+          You're Offline
         </h1>
-
-        {/* Description */}
-        <p className="text-gray-600 mb-8">
-          It looks like you&apos;ve lost your internet connection. Please check
-          your network settings and try again.
+        <p className="text-muted-foreground mb-2 text-lg">
+          It looks like you've lost your internet connection.
+        </p>
+        <p className="text-muted-foreground mb-8">
+          Please check your network settings and try again.
         </p>
 
-        {/* Retry Button */}
-        <button
-          onClick={() => window.location.reload()}
-          className="inline-flex items-center gap-2 px-6 py-3 bg-violet-600 text-white font-medium rounded-lg hover:bg-violet-700 transition-colors"
-        >
-          <svg
-            className="w-5 h-5"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
+        {/* Action Buttons */}
+        <div className="flex flex-col sm:flex-row gap-4 justify-center">
+          <button
+            onClick={handleRetry}
+            disabled={isRetrying}
+            className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-full bg-accent text-accent-foreground font-semibold hover:bg-accent/90 transition-colors disabled:opacity-50"
           >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
-            />
-          </svg>
-          Try Again
-        </button>
+            <RefreshCw size={18} className={isRetrying ? "animate-spin" : ""} />
+            {isRetrying ? "Checking..." : "Try Again"}
+          </button>
+          <Link
+            href="/"
+            className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-full border border-border text-foreground font-semibold hover:bg-muted transition-colors"
+          >
+            <Home size={18} />
+            Go Home
+          </Link>
+        </div>
 
         {/* Tips */}
-        <div className="mt-12 text-left bg-white rounded-xl border border-gray-200 p-6">
-          <h2 className="font-semibold text-gray-900 mb-4">
-            Things you can try:
-          </h2>
-          <ul className="space-y-3 text-gray-600">
-            <li className="flex items-start gap-3">
-              <span className="w-6 h-6 bg-violet-100 text-violet-600 rounded-full flex items-center justify-center shrink-0 text-sm font-medium">
-                1
-              </span>
-              <span>Check if your Wi-Fi or mobile data is turned on</span>
+        <div className="mt-12 pt-8 border-t border-border">
+          <h3 className="text-sm font-semibold text-foreground mb-4">
+            Troubleshooting Tips
+          </h3>
+          <ul className="text-sm text-muted-foreground space-y-2 text-left max-w-xs mx-auto">
+            <li className="flex items-start gap-2">
+              <span className="text-accent mt-0.5">•</span>
+              Check if your Wi-Fi is turned on
             </li>
-            <li className="flex items-start gap-3">
-              <span className="w-6 h-6 bg-violet-100 text-violet-600 rounded-full flex items-center justify-center shrink-0 text-sm font-medium">
-                2
-              </span>
-              <span>Try moving closer to your router</span>
+            <li className="flex items-start gap-2">
+              <span className="text-accent mt-0.5">•</span>
+              Try switching to mobile data
             </li>
-            <li className="flex items-start gap-3">
-              <span className="w-6 h-6 bg-violet-100 text-violet-600 rounded-full flex items-center justify-center shrink-0 text-sm font-medium">
-                3
-              </span>
-              <span>Restart your device and try again</span>
+            <li className="flex items-start gap-2">
+              <span className="text-accent mt-0.5">•</span>
+              Move closer to your router
             </li>
-            <li className="flex items-start gap-3">
-              <span className="w-6 h-6 bg-violet-100 text-violet-600 rounded-full flex items-center justify-center shrink-0 text-sm font-medium">
-                4
-              </span>
-              <span>
-                Contact your internet service provider if the problem persists
-              </span>
+            <li className="flex items-start gap-2">
+              <span className="text-accent mt-0.5">•</span>
+              Restart your device
             </li>
           </ul>
         </div>
-
-        {/* Footer */}
-        <p className="mt-8 text-sm text-gray-500">EVA - Event Vendor App</p>
       </div>
     </div>
   );
