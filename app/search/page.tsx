@@ -42,6 +42,12 @@ interface Category {
   count?: number;
 }
 
+interface City {
+  id: string;
+  name: string;
+  slug: string;
+}
+
 interface SearchFilters {
   query: string;
   category: string;
@@ -58,7 +64,7 @@ function SearchPageContent() {
 
   const [providers, setProviders] = useState<Provider[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
-  const [cities, setCities] = useState<string[]>([]);
+  const [cities, setCities] = useState<City[]>([]);
   const [loading, setLoading] = useState(true);
   const [totalResults, setTotalResults] = useState(0);
   const [page, setPage] = useState(1);
@@ -92,7 +98,8 @@ function SearchPageContent() {
 
         if (cityRes.ok) {
           const cityData = await cityRes.json();
-          setCities(cityData.cities || cityData || []);
+          // API returns array of city objects directly
+          setCities(Array.isArray(cityData) ? cityData : cityData.cities || []);
         }
       } catch (error) {
         console.error("Error fetching filter options:", error);
@@ -356,8 +363,8 @@ function SearchPageContent() {
                   >
                     <option value="">All Locations</option>
                     {cities.map((city) => (
-                      <option key={city} value={city}>
-                        {city}
+                      <option key={city.id} value={city.name}>
+                        {city.name}
                       </option>
                     ))}
                   </select>
@@ -725,8 +732,8 @@ function SearchPageContent() {
                 >
                   <option value="">All Locations</option>
                   {cities.map((city) => (
-                    <option key={city} value={city}>
-                      {city}
+                    <option key={city.id} value={city.name}>
+                      {city.name}
                     </option>
                   ))}
                 </select>

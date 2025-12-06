@@ -17,6 +17,7 @@ import {
 import { useSession, signOut } from "next-auth/react";
 
 const navItems = [
+  { label: "Search", href: "/search" },
   { label: "Vendors", href: "/vendors" },
   { label: "Categories", href: "/categories" },
   { label: "How it Works", href: "/#how-it-works" },
@@ -73,7 +74,7 @@ export default function Header() {
   };
 
   const handleSearch = () => {
-    router.push("/vendors");
+    router.push("/search");
   };
 
   const navLinks = navItems.map((item) => (
