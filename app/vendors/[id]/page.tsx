@@ -14,8 +14,6 @@ import {
   Facebook,
   Calendar,
   MessageSquare,
-  Heart,
-  Share2,
   Loader2,
   ChevronLeft,
   ChevronRight,
@@ -24,6 +22,8 @@ import {
 } from "lucide-react";
 import Header from "@/components/common/Header";
 import Footer from "@/components/common/Footer";
+import FavoriteButton from "@/components/common/FavoriteButton";
+import ShareButton from "@/components/common/ShareButton";
 
 interface InquiryFormData {
   fromName: string;
@@ -334,12 +334,14 @@ export default function VendorDetailPage() {
 
               {/* Action Buttons */}
               <div className="flex items-center gap-2">
-                <button className="p-3 rounded-full border border-border hover:bg-muted transition">
-                  <Heart size={20} />
-                </button>
-                <button className="p-3 rounded-full border border-border hover:bg-muted transition">
-                  <Share2 size={20} />
-                </button>
+                <FavoriteButton providerId={vendor.id} />
+                <ShareButton
+                  title={vendor.businessName}
+                  description={
+                    vendor.description ||
+                    `Check out ${vendor.businessName} on EVA`
+                  }
+                />
               </div>
             </div>
 

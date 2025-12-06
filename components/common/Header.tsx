@@ -12,6 +12,7 @@ import {
   Settings,
   LogOut,
   LayoutDashboard,
+  Heart,
 } from "lucide-react";
 import { useSession, signOut } from "next-auth/react";
 
@@ -177,6 +178,14 @@ export default function Header() {
                         Profile
                       </Link>
                       <Link
+                        href="/favorites"
+                        className="flex items-center gap-3 px-4 py-2 text-sm text-foreground hover:bg-accent transition-colors"
+                        onClick={() => setIsProfileDropdownOpen(false)}
+                      >
+                        <Heart size={16} />
+                        Favorites
+                      </Link>
+                      <Link
                         href="/settings"
                         className="flex items-center gap-3 px-4 py-2 text-sm text-foreground hover:bg-accent transition-colors"
                         onClick={() => setIsProfileDropdownOpen(false)}
@@ -271,6 +280,14 @@ export default function Header() {
                   >
                     <User size={16} />
                     Profile
+                  </Link>
+                  <Link
+                    href="/favorites"
+                    className="flex items-center gap-3 px-4 py-2 text-sm text-foreground hover:bg-accent rounded-lg transition-colors"
+                    onClick={() => setIsMenuOpen(false)}
+                  >
+                    <Heart size={16} />
+                    Favorites
                   </Link>
                   <Link
                     href="/settings"
