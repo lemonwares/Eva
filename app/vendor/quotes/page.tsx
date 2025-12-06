@@ -25,6 +25,7 @@ import {
 } from "lucide-react";
 import { Modal } from "@/components/ui";
 import { useVendorTheme } from "@/components/vendor/VendorThemeContext";
+import { formatCurrency, formatDate } from "@/lib/formatters";
 
 interface QuoteItem {
   id?: string;
@@ -39,14 +40,14 @@ interface Quote {
   inquiryId: string;
   inquiry: {
     id: string;
-    fullName: string;
-    email: string;
-    phone: string;
-    eventType: string;
-    eventDate: string;
-    guestCount: number;
+    fromName: string;
+    fromEmail: string;
+    fromPhone: string | null;
+    eventDate: string | null;
+    guestsCount: number | null;
+    message: string;
     createdAt: string;
-  };
+  } | null;
   items: QuoteItem[];
   total: number;
   validUntil: string;
@@ -343,22 +344,6 @@ export default function VendorQuotesPage() {
     return editItems.reduce((sum, item) => sum + item.total, 0);
   };
 
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat("en-NG", {
-      style: "currency",
-      currency: "NGN",
-      minimumFractionDigits: 0,
-    }).format(amount);
-  };
-
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString("en-NG", {
-      year: "numeric",
-      month: "short",
-      day: "numeric",
-    });
-  };
-
   const statuses = [
     "ALL",
     "DRAFT",
@@ -551,14 +536,14 @@ export default function VendorQuotesPage() {
                                 isDark ? "text-white" : "text-gray-900"
                               }`}
                             >
-                              {quote.inquiry?.fullName || "N/A"}
+                              {quote.inquiry?.fromName || "No client info"}
                             </p>
                             <p
                               className={`text-sm ${
                                 isDark ? "text-gray-400" : "text-gray-500"
                               }`}
                             >
-                              {quote.inquiry?.email || "N/A"}
+                              {quote.inquiry?.fromEmail || ""}
                             </p>
                           </div>
                         </td>
@@ -569,7 +554,7 @@ export default function VendorQuotesPage() {
                                 isDark ? "text-white" : "text-gray-900"
                               }`}
                             >
-                              {quote.inquiry?.eventType || "N/A"}
+                              Event
                             </p>
                             <p
                               className={`text-sm ${
@@ -578,7 +563,7 @@ export default function VendorQuotesPage() {
                             >
                               {quote.inquiry?.eventDate
                                 ? formatDate(quote.inquiry.eventDate)
-                                : "N/A"}
+                                : "Date not set"}
                             </p>
                           </div>
                         </td>
@@ -755,7 +740,7 @@ export default function VendorQuotesPage() {
                     Name
                   </p>
                   <p className={isDark ? "text-white" : "text-gray-900"}>
-                    {selectedQuote.inquiry?.fullName || "N/A"}
+                    {selectedQuote.inquiry?.fromName || "No client info"}
                   </p>
                 </div>
                 <div>
@@ -767,7 +752,7 @@ export default function VendorQuotesPage() {
                     Email
                   </p>
                   <p className={isDark ? "text-white" : "text-gray-900"}>
-                    {selectedQuote.inquiry?.email || "N/A"}
+                    {selectedQuote.inquiry?.fromEmail || "-"}
                   </p>
                 </div>
                 <div>
@@ -779,7 +764,7 @@ export default function VendorQuotesPage() {
                     Phone
                   </p>
                   <p className={isDark ? "text-white" : "text-gray-900"}>
-                    {selectedQuote.inquiry?.phone || "N/A"}
+                    {selectedQuote.inquiry?.fromPhone || "-"}
                   </p>
                 </div>
                 <div>
@@ -788,10 +773,10 @@ export default function VendorQuotesPage() {
                       isDark ? "text-gray-400" : "text-gray-500"
                     }`}
                   >
-                    Event Type
+                    Inquiry
                   </p>
                   <p className={isDark ? "text-white" : "text-gray-900"}>
-                    {selectedQuote.inquiry?.eventType || "N/A"}
+                    View inquiry details
                   </p>
                 </div>
                 <div>
@@ -805,7 +790,7 @@ export default function VendorQuotesPage() {
                   <p className={isDark ? "text-white" : "text-gray-900"}>
                     {selectedQuote.inquiry?.eventDate
                       ? formatDate(selectedQuote.inquiry.eventDate)
-                      : "N/A"}
+                      : "Not specified"}
                   </p>
                 </div>
                 <div>
@@ -817,7 +802,7 @@ export default function VendorQuotesPage() {
                     Guest Count
                   </p>
                   <p className={isDark ? "text-white" : "text-gray-900"}>
-                    {selectedQuote.inquiry?.guestCount || "N/A"}
+                    {selectedQuote.inquiry?.guestsCount || "-"}
                   </p>
                 </div>
               </div>
@@ -1429,8 +1414,10 @@ export default function VendorQuotesPage() {
                     }`}
                   >
                     The quote will be sent to{" "}
-                    <strong>{selectedQuote.inquiry?.email}</strong>. Once sent,
-                    the quote status will change to "Sent".
+                    <strong>
+                      {selectedQuote.inquiry?.fromEmail || "the client"}
+                    </strong>
+                    . Once sent, the quote status will change to "Sent".
                   </p>
                 </div>
               </div>

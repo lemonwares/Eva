@@ -428,9 +428,9 @@ export default function VendorProfilePage() {
                     </div>
                     <p className="text-accent font-bold text-lg">
                       {listing.minPrice
-                        ? `£${listing.minPrice.toLocaleString()}${
+                        ? `₦${listing.minPrice.toLocaleString()}${
                             listing.maxPrice
-                              ? ` - £${listing.maxPrice.toLocaleString()}`
+                              ? ` - ₦${listing.maxPrice.toLocaleString()}`
                               : "+"
                           }`
                         : "Price on request"}
@@ -858,7 +858,7 @@ export default function VendorProfilePage() {
                 Starting Price
               </h3>
               <p className="text-accent text-2xl font-bold">
-                £{provider.priceFrom.toLocaleString()}
+                ₦{provider.priceFrom.toLocaleString()}
               </p>
               <p
                 className={`text-sm ${

@@ -553,7 +553,7 @@ model Payout {
   providerId String @map("provider_id")
 
   amount   Float
-  currency String @default("GBP")
+  currency String @default("NGN")
 
   // Stripe Connect
   stripePayoutId  String? @unique @map("stripe_payout_id")

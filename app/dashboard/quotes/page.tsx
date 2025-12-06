@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { useDashboardTheme } from "../layout";
 import { useSession } from "next-auth/react";
+import { formatCurrency, formatDate } from "@/lib/formatters";
 
 interface QuoteItem {
   description: string;
@@ -208,21 +209,6 @@ export default function QuotesPage() {
       REVISED: "bg-indigo-100 text-indigo-700",
     };
     return colors[status] || "bg-gray-100 text-gray-700";
-  };
-
-  const formatDate = (dateStr: string) => {
-    return new Date(dateStr).toLocaleDateString("en-US", {
-      month: "short",
-      day: "numeric",
-      year: "numeric",
-    });
-  };
-
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat("en-US", {
-      style: "currency",
-      currency: "USD",
-    }).format(amount);
   };
 
   const isExpired = (validUntil: string) => {

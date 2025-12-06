@@ -193,7 +193,7 @@ export async function POST(request: NextRequest) {
       const baseUrl = process.env.NEXTAUTH_URL || "http://localhost:3000";
       const inquiryUrl = `${baseUrl}/vendor/inquiries`;
       const eventDate = validatedData.eventDate
-        ? new Date(validatedData.eventDate).toLocaleDateString("en-GB", {
+        ? new Date(validatedData.eventDate).toLocaleDateString("en-NG", {
             day: "numeric",
             month: "long",
             year: "numeric",

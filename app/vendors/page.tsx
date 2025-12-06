@@ -395,7 +395,7 @@ function VendorsPageContent() {
                       </div>
                       {vendor.priceFrom && (
                         <span className="text-sm font-medium text-foreground">
-                          From £{vendor.priceFrom.toLocaleString()}
+                          From ₦{vendor.priceFrom.toLocaleString()}
                         </span>
                       )}
                     </div>

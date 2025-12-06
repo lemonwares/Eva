@@ -214,15 +214,25 @@ export default function CategorySection() {
     useState<CategoryItem[]>(fallbackCategories);
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isUsingFallback, setIsUsingFallback] = useState(true);
 
   useEffect(() => {
     async function fetchCategories() {
       try {
-        const response = await fetch("/api/categories?featured=true");
+        // First try featured categories
+        let response = await fetch("/api/categories?featured=true");
         if (!response.ok) {
           throw new Error("Failed to fetch categories");
         }
-        const data = await response.json();
+        let data = await response.json();
+
+        // If no featured categories, try getting any categories
+        if (!data || data.length === 0) {
+          response = await fetch("/api/categories");
+          if (response.ok) {
+            data = await response.json();
+          }
+        }
 
         if (data && data.length > 0) {
           const mappedCategories: CategoryItem[] = data.map(
@@ -245,6 +255,7 @@ export default function CategorySection() {
             })
           );
           setCategories(mappedCategories);
+          setIsUsingFallback(false);
         }
         // If no categories from API, keep fallback data
       } catch (err) {

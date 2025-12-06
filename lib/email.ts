@@ -291,7 +291,7 @@ export const emailTemplates = {
     totalPrice: string,
     quoteUrl: string
   ): EmailTemplate => ({
-    subject: `Quote from ${vendorName} - £${totalPrice}`,
+    subject: `Quote from ${vendorName} - ₦${totalPrice}`,
     html: `
       <!DOCTYPE html>
       <html>
@@ -314,7 +314,7 @@ export const emailTemplates = {
             <div class="content">
               <p>Hi ${clientName},</p>
               <p>${vendorName} has sent you a quote for your event.</p>
-              <div class="price">£${totalPrice}</div>
+              <div class="price">₦${totalPrice}</div>
               <a href="${quoteUrl}" class="button">View Full Quote</a>
               <p>Review the details and respond to secure your booking!</p>
             </div>
@@ -325,7 +325,7 @@ export const emailTemplates = {
         </body>
       </html>
     `,
-    text: `Hi ${clientName},\n\n${vendorName} has sent you a quote for £${totalPrice}.\n\nView it at: ${quoteUrl}`,
+    text: `Hi ${clientName},\n\n${vendorName} has sent you a quote for ₦${totalPrice}.\n\nView it at: ${quoteUrl}`,
   }),
 
   // Booking confirmed notification

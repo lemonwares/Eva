@@ -26,8 +26,19 @@ export default function AuthPage() {
       <div className="relative z-10 flex min-h-screen items-center justify-center px-4 py-16">
         <div className="grid w-full max-w-6xl overflow-hidden rounded-4xl border border-border bg-card/90 shadow-[0_30px_120px_rgba(15,23,42,0.12)] backdrop-blur-xl lg:grid-cols-[1.1fr_0.9fr]">
           {/* Brand / Story panel */}
-          <div className="relative hidden bg-linear-to-b from-secondary via-card to-card p-12 lg:flex lg:flex-col lg:justify-between">
-            <div>
+          <div className="relative hidden bg-linear-to-b from-secondary via-card to-card p-12 lg:flex lg:flex-col lg:justify-between overflow-hidden">
+            {/* Background Image */}
+            <div
+              className="absolute inset-0 opacity-10"
+              style={{
+                backgroundImage:
+                  "url('https://images.unsplash.com/photo-1519741497674-611481863552?w=800&h=1200&fit=crop')",
+                backgroundSize: "cover",
+                backgroundPosition: "center",
+              }}
+            />
+
+            <div className="relative z-10">
               <div className="inline-flex items-center gap-2 rounded-full border border-border bg-card/70 px-4 py-2 text-xs font-semibold uppercase tracking-[0.25em] text-muted-foreground">
                 <Sparkles size={16} className="text-accent" />
                 Trusted Vendors
@@ -42,7 +53,16 @@ export default function AuthPage() {
               </p>
             </div>
 
-            <div className="mt-12 grid gap-6 text-sm text-muted-foreground sm:grid-cols-2">
+            {/* Featured Image */}
+            <div className="relative z-10 my-8 rounded-2xl overflow-hidden border border-border shadow-lg">
+              <img
+                src="https://images.unsplash.com/photo-1511795409834-ef04bbd61622?w=600&h=300&fit=crop"
+                alt="Wedding celebration"
+                className="w-full h-48 object-cover"
+              />
+            </div>
+
+            <div className="relative z-10 grid gap-4 text-sm text-muted-foreground sm:grid-cols-2">
               {[
                 { stat: "1,200+", label: "Verified vendors" },
                 { stat: "4.9/5", label: "Average review rating" },

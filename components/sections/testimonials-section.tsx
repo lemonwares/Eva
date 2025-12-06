@@ -69,18 +69,27 @@ export default function TestimonialsSection() {
   const [testimonials, setTestimonials] =
     useState<Testimonial[]>(fallbackTestimonials);
   const [isLoading, setIsLoading] = useState(true);
+  const [isUsingFallback, setIsUsingFallback] = useState(true);
 
   useEffect(() => {
     async function fetchTestimonials() {
       try {
-        // Fetch approved reviews with minimum 4 star rating
-        const response = await fetch(
+        // First try approved reviews with minimum 4 star rating
+        let response = await fetch(
           "/api/reviews?approved=true&minRating=4&limit=3"
         );
         if (!response.ok) {
           throw new Error("Failed to fetch reviews");
         }
-        const data = await response.json();
+        let data = await response.json();
+
+        // If no high-rated reviews, try getting any approved reviews
+        if (!data.reviews || data.reviews.length === 0) {
+          response = await fetch("/api/reviews?approved=true&limit=3");
+          if (response.ok) {
+            data = await response.json();
+          }
+        }
 
         if (data.reviews && data.reviews.length > 0) {
           const mappedTestimonials: Testimonial[] = data.reviews.map(
@@ -97,6 +106,7 @@ export default function TestimonialsSection() {
             })
           );
           setTestimonials(mappedTestimonials);
+          setIsUsingFallback(false);
         }
         // If no reviews from API, keep fallback data
       } catch (err) {

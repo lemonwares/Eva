@@ -114,7 +114,7 @@ export default function AdminOverviewPage() {
   };
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString("en-GB", {
+    return new Date(dateString).toLocaleDateString("en-NG", {
       day: "numeric",
       month: "short",
       year: "numeric",
@@ -431,7 +431,7 @@ export default function AdminOverviewPage() {
                         {formatDate(booking.eventDate)}
                       </td>
                       <td className={`py-3 text-sm ${textPrimary}`}>
-                        £
+                        ₦
                         {booking.totalPrice?.toLocaleString() ||
                           booking.quote?.totalPrice?.toLocaleString() ||
                           0}

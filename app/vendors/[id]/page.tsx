@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useParams } from "next/navigation";
+import { useSession } from "next-auth/react";
 import Link from "next/link";
 import {
   ArrowLeft,
@@ -79,6 +80,7 @@ interface Review {
 
 export default function VendorDetailPage() {
   const params = useParams();
+  const { data: session } = useSession();
   const [vendor, setVendor] = useState<Provider | null>(null);
   const [reviews, setReviews] = useState<Review[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -96,6 +98,17 @@ export default function VendorDetailPage() {
     budgetRange: "",
     message: "",
   });
+
+  // Auto-fill form when user is logged in
+  useEffect(() => {
+    if (session?.user) {
+      setInquiryForm((prev) => ({
+        ...prev,
+        fromName: session.user.name || prev.fromName,
+        fromEmail: session.user.email || prev.fromEmail,
+      }));
+    }
+  }, [session]);
 
   useEffect(() => {
     if (params.id) {
@@ -458,7 +471,7 @@ export default function VendorDetailPage() {
                 <div className="mb-6">
                   <p className="text-sm text-muted-foreground">Starting from</p>
                   <p className="text-3xl font-bold">
-                    £{vendor.priceFrom.toLocaleString()}
+                    ₦{vendor.priceFrom.toLocaleString()}
                   </p>
                 </div>
               )}
@@ -684,13 +697,13 @@ export default function VendorDetailPage() {
                         className="w-full px-4 py-3 rounded-xl border border-border bg-input focus:border-accent focus:ring-2 focus:ring-accent/30"
                       >
                         <option value="">Select budget</option>
-                        <option value="Under £1,000">Under £1,000</option>
-                        <option value="£1,000 - £2,500">£1,000 - £2,500</option>
-                        <option value="£2,500 - £5,000">£2,500 - £5,000</option>
-                        <option value="£5,000 - £10,000">
-                          £5,000 - £10,000
+                        <option value="Under ₦1,000">Under ₦1,000</option>
+                        <option value="₦1,000 - ₦2,500">₦1,000 - ₦2,500</option>
+                        <option value="₦2,500 - ₦5,000">₦2,500 - ₦5,000</option>
+                        <option value="₦5,000 - ₦10,000">
+                          ₦5,000 - ₦10,000
                         </option>
-                        <option value="Over £10,000">Over £10,000</option>
+                        <option value="Over ₦10,000">Over ₦10,000</option>
                       </select>
                     </div>
                   </div>

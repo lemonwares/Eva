@@ -88,7 +88,7 @@ function ViewBookingModal({
   if (!booking) return null;
 
   const formatDate = (dateStr: string) => {
-    return new Date(dateStr).toLocaleDateString("en-GB", {
+    return new Date(dateStr).toLocaleDateString("en-NG", {
       weekday: "long",
       day: "numeric",
       month: "long",
@@ -303,7 +303,7 @@ function ViewBookingModal({
                     {item.name} x{item.qty}
                   </span>
                   <span className={darkMode ? "text-white" : "text-gray-900"}>
-                    £{item.totalPrice?.toLocaleString()}
+                    ₦{item.totalPrice?.toLocaleString()}
                   </span>
                 </div>
               ))}
@@ -316,7 +316,7 @@ function ViewBookingModal({
                   Total
                 </span>
                 <span className="text-accent">
-                  £
+                  ₦
                   {(
                     booking.totalPrice ||
                     booking.quote?.totalPrice ||
@@ -545,7 +545,7 @@ export default function AdminBookingsPage() {
   };
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString("en-GB", {
+    return new Date(dateString).toLocaleDateString("en-NG", {
       day: "numeric",
       month: "short",
       year: "numeric",
@@ -892,7 +892,7 @@ export default function AdminBookingsPage() {
                       <td
                         className={`px-6 py-4 text-sm font-medium ${textPrimary}`}
                       >
-                        £
+                        ₦
                         {booking.totalPrice?.toLocaleString() ||
                           booking.quote?.totalPrice?.toLocaleString() ||
                           "0"}

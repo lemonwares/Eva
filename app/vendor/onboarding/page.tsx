@@ -136,6 +136,44 @@ export default function VendorOnboardingPage() {
     priceFrom: null,
   });
 
+  const STORAGE_KEY = "vendor_onboarding_data";
+  const STEP_STORAGE_KEY = "vendor_onboarding_step";
+
+  // Load saved data from localStorage on mount
+  useEffect(() => {
+    const savedData = localStorage.getItem(STORAGE_KEY);
+    const savedStep = localStorage.getItem(STEP_STORAGE_KEY);
+
+    if (savedData) {
+      try {
+        const parsed = JSON.parse(savedData);
+        setFormData(parsed);
+      } catch (e) {
+        console.error("Error loading saved onboarding data:", e);
+      }
+    }
+
+    if (savedStep && STEPS.some((s) => s.id === savedStep)) {
+      setCurrentStep(savedStep as OnboardingStep);
+    }
+  }, []);
+
+  // Save data to localStorage whenever it changes
+  useEffect(() => {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(formData));
+  }, [formData]);
+
+  // Save current step to localStorage
+  useEffect(() => {
+    localStorage.setItem(STEP_STORAGE_KEY, currentStep);
+  }, [currentStep]);
+
+  // Clear localStorage on successful submit
+  const clearSavedData = () => {
+    localStorage.removeItem(STORAGE_KEY);
+    localStorage.removeItem(STEP_STORAGE_KEY);
+  };
+
   // Check if user already has a provider profile
   useEffect(() => {
     async function checkExistingProfile() {
@@ -161,7 +199,7 @@ export default function VendorOnboardingPage() {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="text-center">
-          <div className="w-12 h-12 border-4 border-violet-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <div className="w-12 h-12 border-4 border-accent border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
           <p className="text-gray-600">Loading...</p>
         </div>
       </div>
@@ -228,6 +266,9 @@ export default function VendorOnboardingPage() {
         throw new Error(data.message || "Failed to create profile");
       }
 
+      // Clear saved data on success
+      clearSavedData();
+
       // Success - redirect to vendor dashboard
       router.push("/vendor?welcome=true");
     } catch (err) {
@@ -256,6 +297,9 @@ export default function VendorOnboardingPage() {
         throw new Error(data.message || "Failed to save draft");
       }
 
+      // Clear saved data on success
+      clearSavedData();
+
       // Success - redirect to vendor dashboard
       router.push("/vendor");
     } catch (err) {
@@ -280,7 +324,7 @@ export default function VendorOnboardingPage() {
                 onChange={(e) =>
                   updateFormData({ businessName: e.target.value })
                 }
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-violet-500 focus:border-transparent"
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-accent focus:border-transparent"
                 placeholder="e.g., Elite Photography Studios"
               />
             </div>
@@ -295,7 +339,7 @@ export default function VendorOnboardingPage() {
                   updateFormData({ description: e.target.value })
                 }
                 rows={4}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-violet-500 focus:border-transparent"
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-accent focus:border-transparent"
                 placeholder="Tell potential clients about your business, experience, and what makes you special..."
               />
               <p className="text-sm text-gray-500 mt-1">
@@ -313,7 +357,7 @@ export default function VendorOnboardingPage() {
                 onChange={(e) =>
                   updateFormData({ phonePublic: e.target.value })
                 }
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-violet-500 focus:border-transparent"
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-accent focus:border-transparent"
                 placeholder="+44 7XXX XXXXXX"
               />
             </div>
@@ -325,15 +369,38 @@ export default function VendorOnboardingPage() {
               <input
                 type="url"
                 value={formData.website}
-                onChange={(e) => updateFormData({ website: e.target.value })}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-violet-500 focus:border-transparent"
+                onChange={(e) => {
+                  let value = e.target.value;
+                  // Auto-add https:// if user types a domain without protocol
+                  if (
+                    value &&
+                    !value.startsWith("http://") &&
+                    !value.startsWith("https://") &&
+                    value.includes(".")
+                  ) {
+                    value = "https://" + value;
+                  }
+                  updateFormData({ website: value });
+                }}
+                onBlur={(e) => {
+                  let value = e.target.value.trim();
+                  // Ensure https:// prefix on blur if URL is entered
+                  if (
+                    value &&
+                    !value.startsWith("http://") &&
+                    !value.startsWith("https://")
+                  ) {
+                    updateFormData({ website: "https://" + value });
+                  }
+                }}
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-accent focus:border-transparent"
                 placeholder="https://www.yourwebsite.com"
               />
             </div>
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Starting Price (£)
+                Starting Price (₦)
               </label>
               <input
                 type="number"
@@ -343,8 +410,8 @@ export default function VendorOnboardingPage() {
                     priceFrom: e.target.value ? Number(e.target.value) : null,
                   })
                 }
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-violet-500 focus:border-transparent"
-                placeholder="e.g., 500"
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-accent focus:border-transparent"
+                placeholder="e.g., 50000"
                 min="0"
               />
               <p className="text-sm text-gray-500 mt-1">
@@ -365,7 +432,7 @@ export default function VendorOnboardingPage() {
                 type="text"
                 value={formData.address}
                 onChange={(e) => updateFormData({ address: e.target.value })}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-violet-500 focus:border-transparent"
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-accent focus:border-transparent"
                 placeholder="123 High Street"
               />
             </div>
@@ -379,7 +446,7 @@ export default function VendorOnboardingPage() {
                   type="text"
                   value={formData.city}
                   onChange={(e) => updateFormData({ city: e.target.value })}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-violet-500 focus:border-transparent"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-accent focus:border-transparent"
                   placeholder="London"
                 />
               </div>
@@ -391,7 +458,7 @@ export default function VendorOnboardingPage() {
                   type="text"
                   value={formData.postcode}
                   onChange={(e) => updateFormData({ postcode: e.target.value })}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-violet-500 focus:border-transparent"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-accent focus:border-transparent"
                   placeholder="SW1A 1AA"
                 />
               </div>
@@ -414,7 +481,7 @@ export default function VendorOnboardingPage() {
                     }
                     className={`py-3 px-4 rounded-lg border-2 font-medium transition-colors ${
                       formData.serviceRadiusMiles === miles
-                        ? "border-violet-600 bg-violet-50 text-violet-700"
+                        ? "border-accent bg-accent/10 text-accent"
                         : "border-gray-200 hover:border-gray-300"
                     }`}
                   >
@@ -448,7 +515,7 @@ export default function VendorOnboardingPage() {
                     onClick={() => toggleArrayItem("categories", cat.id)}
                     className={`py-3 px-4 rounded-lg border-2 font-medium transition-colors text-left ${
                       formData.categories.includes(cat.id)
-                        ? "border-violet-600 bg-violet-50 text-violet-700"
+                        ? "border-accent bg-accent/10 text-accent"
                         : "border-gray-200 hover:border-gray-300"
                     }`}
                   >
@@ -475,7 +542,7 @@ export default function VendorOnboardingPage() {
                     }
                     className={`py-2 px-4 rounded-full border-2 font-medium transition-colors ${
                       formData.cultureTraditionTags.includes(tag.id)
-                        ? "border-violet-600 bg-violet-50 text-violet-700"
+                        ? "border-accent bg-accent/10 text-accent"
                         : "border-gray-200 hover:border-gray-300"
                     }`}
                   >
@@ -509,7 +576,7 @@ export default function VendorOnboardingPage() {
                   onChange={(e) =>
                     updateFormData({ instagram: e.target.value })
                   }
-                  className="flex-1 px-4 py-3 border border-gray-300 rounded-r-lg focus:ring-2 focus:ring-violet-500 focus:border-transparent"
+                  className="flex-1 px-4 py-3 border border-gray-300 rounded-r-lg focus:ring-2 focus:ring-accent focus:border-transparent"
                   placeholder="yourhandle"
                 />
               </div>
@@ -527,7 +594,7 @@ export default function VendorOnboardingPage() {
                   type="text"
                   value={formData.tiktok}
                   onChange={(e) => updateFormData({ tiktok: e.target.value })}
-                  className="flex-1 px-4 py-3 border border-gray-300 rounded-r-lg focus:ring-2 focus:ring-violet-500 focus:border-transparent"
+                  className="flex-1 px-4 py-3 border border-gray-300 rounded-r-lg focus:ring-2 focus:ring-accent focus:border-transparent"
                   placeholder="yourhandle"
                 />
               </div>
@@ -541,7 +608,7 @@ export default function VendorOnboardingPage() {
                 type="text"
                 value={formData.facebook}
                 onChange={(e) => updateFormData({ facebook: e.target.value })}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-violet-500 focus:border-transparent"
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-accent focus:border-transparent"
                 placeholder="facebook.com/yourpage"
               />
             </div>
@@ -637,7 +704,7 @@ export default function VendorOnboardingPage() {
                     formData.categories.map((cat) => (
                       <span
                         key={cat}
-                        className="px-2 py-1 bg-violet-100 text-violet-700 text-sm rounded"
+                        className="px-2 py-1 bg-accent/10 text-accent text-sm rounded"
                       >
                         {CATEGORY_OPTIONS.find((c) => c.id === cat)?.name ||
                           cat}
@@ -675,7 +742,7 @@ export default function VendorOnboardingPage() {
                 </h4>
                 <p className="text-gray-900">
                   {formData.priceFrom
-                    ? `£${formData.priceFrom}`
+                    ? `₦${formData.priceFrom}`
                     : "Not specified"}
                 </p>
               </div>
@@ -743,9 +810,9 @@ export default function VendorOnboardingPage() {
                 <div
                   className={`w-8 h-8 rounded-full flex items-center justify-center font-medium text-sm ${
                     index < currentStepIndex
-                      ? "bg-violet-600 text-white"
+                      ? "bg-accent text-white"
                       : index === currentStepIndex
-                      ? "bg-violet-600 text-white"
+                      ? "bg-accent text-white"
                       : "bg-gray-200 text-gray-600"
                   }`}
                 >
@@ -754,7 +821,7 @@ export default function VendorOnboardingPage() {
                 {index < STEPS.length - 1 && (
                   <div
                     className={`w-12 sm:w-20 h-1 ${
-                      index < currentStepIndex ? "bg-violet-600" : "bg-gray-200"
+                      index < currentStepIndex ? "bg-accent" : "bg-gray-200"
                     }`}
                   />
                 )}
@@ -762,7 +829,7 @@ export default function VendorOnboardingPage() {
             ))}
           </div>
           <div className="mt-2 text-center">
-            <span className="text-sm font-medium text-violet-600">
+            <span className="text-sm font-medium text-accent">
               {STEPS[currentStepIndex].title}
             </span>
             <span className="text-sm text-gray-500 ml-2">
@@ -810,7 +877,7 @@ export default function VendorOnboardingPage() {
                 type="button"
                 onClick={handleSubmit}
                 disabled={isSubmitting}
-                className="px-8 py-3 bg-violet-600 text-white rounded-lg font-medium hover:bg-violet-700 disabled:opacity-50 flex items-center gap-2"
+                className="px-8 py-3 bg-accent text-white rounded-lg font-medium hover:bg-accent disabled:opacity-50 flex items-center gap-2"
               >
                 {isSubmitting ? (
                   <>
@@ -828,7 +895,7 @@ export default function VendorOnboardingPage() {
                 disabled={!isStepValid()}
                 className={`px-8 py-3 rounded-lg font-medium ${
                   isStepValid()
-                    ? "bg-violet-600 text-white hover:bg-violet-700"
+                    ? "bg-accent text-white hover:bg-accent"
                     : "bg-gray-200 text-gray-400 cursor-not-allowed"
                 }`}
               >

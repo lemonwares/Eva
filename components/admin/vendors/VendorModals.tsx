@@ -89,7 +89,7 @@ const getInitials = (name: string) => {
 };
 
 const formatDate = (dateString: string) => {
-  return new Date(dateString).toLocaleDateString("en-GB", {
+  return new Date(dateString).toLocaleDateString("en-NG", {
     day: "numeric",
     month: "short",
     year: "numeric",
@@ -237,7 +237,7 @@ export function ViewVendorModal({
               </p>
               {provider.priceFrom && (
                 <p className={`text-sm ${textSecondary}`}>
-                  <span className={textMuted}>Starting Price:</span> £
+                  <span className={textMuted}>Starting Price:</span> ₦
                   {provider.priceFrom}
                 </p>
               )}
@@ -463,7 +463,7 @@ export function EditVendorModal({
           </div>
           <div>
             <label className={`block text-sm font-medium ${textPrimary} mb-1`}>
-              Starting Price (£)
+              Starting Price (₦)
             </label>
             <input
               type="number"
@@ -739,7 +739,7 @@ export function AddVendorModal({
           </div>
           <div>
             <label className={`block text-sm font-medium ${textPrimary} mb-1`}>
-              Starting Price (£)
+              Starting Price (₦)
             </label>
             <input
               type="number"

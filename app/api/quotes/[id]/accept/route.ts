@@ -171,7 +171,7 @@ export async function POST(
 
     // Send confirmation emails to client and vendor
     const eventDate = quote.inquiry?.eventDate || new Date();
-    const eventDateStr = eventDate.toLocaleDateString("en-GB", {
+    const eventDateStr = eventDate.toLocaleDateString("en-NG", {
       weekday: "long",
       year: "numeric",
       month: "long",
@@ -218,7 +218,7 @@ export async function POST(
                     : ""
                 }
                 <p><strong>Event Date:</strong> ${eventDateStr}</p>
-                <p><strong>Total:</strong> £${quote.totalPrice.toFixed(2)}</p>
+                <p><strong>Total:</strong> ₦${quote.totalPrice.toFixed(2)}</p>
                 <p><strong>Payment Mode:</strong> ${validatedData.paymentMode.replace(
                   /_/g,
                   " "
