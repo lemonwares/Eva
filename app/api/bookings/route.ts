@@ -89,8 +89,29 @@ export async function GET(request: NextRequest) {
       prisma.booking.count({ where: filters }),
     ]);
 
+    // For clients, check if they have reviewed each booking's provider
+    let bookingsWithReviewStatus = bookings;
+    if (session.user.role === "CLIENT" && session.user.id) {
+      // Get all reviews by this user for the providers in this booking list
+      const providerIds = bookings.map((b) => b.providerId);
+      const userReviews = await prisma.review.findMany({
+        where: {
+          authorUserId: session.user.id,
+          providerId: { in: providerIds },
+        },
+        select: { providerId: true },
+      });
+
+      const reviewedProviderIds = new Set(userReviews.map((r) => r.providerId));
+
+      bookingsWithReviewStatus = bookings.map((booking) => ({
+        ...booking,
+        hasReview: reviewedProviderIds.has(booking.providerId),
+      }));
+    }
+
     return NextResponse.json({
-      bookings,
+      bookings: bookingsWithReviewStatus,
       pagination: {
         page,
         limit,

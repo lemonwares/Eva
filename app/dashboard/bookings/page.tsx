@@ -3,6 +3,8 @@
 import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { useDashboardTheme } from "../layout";
+import { useSession } from "next-auth/react";
+import { formatCurrency, formatDate } from "@/lib/formatters";
 
 interface Booking {
   id: string;
@@ -18,6 +20,7 @@ interface Booking {
   guestsCount?: number;
   specialRequests?: string;
   createdAt: string;
+  hasReview?: boolean;
   provider: {
     id: string;
     businessName: string;
@@ -33,6 +36,7 @@ interface Booking {
 }
 
 export default function BookingsPage() {
+  const { data: session } = useSession();
   const {
     darkMode,
     cardBg,
@@ -51,6 +55,18 @@ export default function BookingsPage() {
   const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null);
   const [detailsOpen, setDetailsOpen] = useState(false);
   const [paymentLoading, setPaymentLoading] = useState<string | null>(null);
+
+  // Review modal state
+  const [reviewModalOpen, setReviewModalOpen] = useState(false);
+  const [reviewBooking, setReviewBooking] = useState<Booking | null>(null);
+  const [reviewForm, setReviewForm] = useState({
+    rating: 5,
+    title: "",
+    body: "",
+  });
+  const [submittingReview, setSubmittingReview] = useState(false);
+  const [reviewError, setReviewError] = useState("");
+  const [reviewSuccess, setReviewSuccess] = useState(false);
 
   const fetchBookings = useCallback(async () => {
     try {
@@ -87,22 +103,6 @@ export default function BookingsPage() {
       REFUNDED: "bg-orange-100 text-orange-700",
     };
     return colors[status] || "bg-gray-100 text-gray-700";
-  };
-
-  const formatDate = (dateStr: string) => {
-    return new Date(dateStr).toLocaleDateString("en-US", {
-      weekday: "short",
-      month: "short",
-      day: "numeric",
-      year: "numeric",
-    });
-  };
-
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat("en-US", {
-      style: "currency",
-      currency: "USD",
-    }).format(amount);
   };
 
   const openDetails = (booking: Booking) => {
@@ -174,6 +174,101 @@ export default function BookingsPage() {
       };
     }
     return null;
+  };
+
+  // Open review modal
+  const openReviewModal = (booking: Booking) => {
+    setReviewBooking(booking);
+    setReviewForm({ rating: 5, title: "", body: "" });
+    setReviewError("");
+    setReviewSuccess(false);
+    setReviewModalOpen(true);
+  };
+
+  // Submit review
+  const submitReview = async () => {
+    if (!reviewBooking || !session?.user) return;
+
+    if (reviewForm.body.length < 10) {
+      setReviewError("Review must be at least 10 characters long");
+      return;
+    }
+
+    try {
+      setSubmittingReview(true);
+      setReviewError("");
+
+      const response = await fetch("/api/reviews", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          providerId: reviewBooking.provider.id,
+          rating: reviewForm.rating,
+          title: reviewForm.title || undefined,
+          body: reviewForm.body,
+          authorName: session.user.name || "Anonymous",
+          authorEmail: session.user.email || "",
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || "Failed to submit review");
+      }
+
+      setReviewSuccess(true);
+      // Mark booking as having a review
+      setBookings((prev) =>
+        prev.map((b) =>
+          b.id === reviewBooking.id ? { ...b, hasReview: true } : b
+        )
+      );
+
+      // Close modal after 2 seconds
+      setTimeout(() => {
+        setReviewModalOpen(false);
+        setReviewBooking(null);
+      }, 2000);
+    } catch (err: any) {
+      setReviewError(err.message);
+    } finally {
+      setSubmittingReview(false);
+    }
+  };
+
+  // Render star rating input
+  const renderStarInput = () => {
+    return (
+      <div className="flex gap-1">
+        {[1, 2, 3, 4, 5].map((star) => (
+          <button
+            key={star}
+            type="button"
+            onClick={() => setReviewForm({ ...reviewForm, rating: star })}
+            className="p-1 transition-transform hover:scale-110"
+          >
+            <svg
+              className={`w-8 h-8 ${
+                star <= reviewForm.rating
+                  ? "text-amber-400 fill-amber-400"
+                  : textMuted
+              }`}
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              fill={star <= reviewForm.rating ? "currentColor" : "none"}
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"
+              />
+            </svg>
+          </button>
+        ))}
+      </div>
+    );
   };
 
   const inputClass = `px-3 py-2 rounded-lg ${inputBg} border ${inputBorder} ${textPrimary} focus:outline-none focus:ring-2 focus:ring-rose-500`;
@@ -455,6 +550,48 @@ export default function BookingsPage() {
                       >
                         Contact Vendor
                       </a>
+                    )}
+                    {/* Write Review button for completed bookings */}
+                    {booking.status === "COMPLETED" && !booking.hasReview && (
+                      <button
+                        onClick={() => openReviewModal(booking)}
+                        className={`px-4 py-2 text-sm rounded-lg flex items-center gap-2 ${
+                          darkMode
+                            ? "bg-amber-600 hover:bg-amber-500"
+                            : "bg-amber-500 hover:bg-amber-600"
+                        } text-white`}
+                      >
+                        <svg
+                          className="w-4 h-4"
+                          fill="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
+                        </svg>
+                        Write Review
+                      </button>
+                    )}
+                    {booking.status === "COMPLETED" && booking.hasReview && (
+                      <span
+                        className={`px-4 py-2 text-sm rounded-lg flex items-center gap-2 ${
+                          darkMode ? "bg-gray-700" : "bg-gray-100"
+                        } ${textMuted}`}
+                      >
+                        <svg
+                          className="w-4 h-4 text-green-500"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M5 13l4 4L19 7"
+                          />
+                        </svg>
+                        Review Submitted
+                      </span>
                     )}
                   </div>
                 </div>

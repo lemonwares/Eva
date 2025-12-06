@@ -2,6 +2,7 @@
 
 import VendorLayout from "@/components/vendor/VendorLayout";
 import { useVendorTheme } from "@/components/vendor/VendorThemeContext";
+import { formatCurrency } from "@/lib/formatters";
 import {
   TrendingUp,
   TrendingDown,
@@ -87,14 +88,6 @@ export default function VendorAnalyticsPage() {
       setIsLoading(false);
     }
   }
-
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat("en-US", {
-      style: "currency",
-      currency: "USD",
-      minimumFractionDigits: 0,
-    }).format(amount);
-  };
 
   const performanceMetrics = analytics
     ? [

@@ -158,17 +158,27 @@ export default function VendorsSection() {
   const [hoveredId, setHoveredId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isUsingFallback, setIsUsingFallback] = useState(true);
 
   useEffect(() => {
     async function fetchVendors() {
       try {
-        const response = await fetch(
+        // First try featured providers
+        let response = await fetch(
           "/api/providers?featured=true&published=true&limit=8"
         );
         if (!response.ok) {
           throw new Error("Failed to fetch vendors");
         }
-        const data = await response.json();
+        let data = await response.json();
+
+        // If no featured providers, try getting any published providers
+        if (!data.providers || data.providers.length === 0) {
+          response = await fetch("/api/providers?published=true&limit=8");
+          if (response.ok) {
+            data = await response.json();
+          }
+        }
 
         if (data.providers && data.providers.length > 0) {
           const mappedVendors: VendorGalleryItem[] = data.providers.map(
@@ -188,6 +198,7 @@ export default function VendorsSection() {
             })
           );
           setVendors(mappedVendors);
+          setIsUsingFallback(false);
         }
         // If no providers from API, keep fallback data
       } catch (err) {
@@ -242,7 +253,7 @@ export default function VendorsSection() {
             {vendors.map((vendor) => (
               <Link
                 key={vendor.id}
-                href={`/vendors/${vendor.id}`}
+                href={isUsingFallback ? "/vendors" : `/vendors/${vendor.id}`}
                 className="group cursor-pointer"
                 onMouseEnter={() => setHoveredId(vendor.id)}
                 onMouseLeave={() => setHoveredId(null)}

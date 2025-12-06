@@ -158,9 +158,9 @@ export async function GET(
 }
 
 function formatCurrency(amount: number): string {
-  return new Intl.NumberFormat("en-GB", {
+  return new Intl.NumberFormat("en-NG", {
     style: "currency",
-    currency: "GBP",
+    currency: "NGN",
   }).format(amount);
 }
 

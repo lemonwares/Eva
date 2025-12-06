@@ -32,6 +32,7 @@ export default function ImageUpload({
   const [isUploading, setIsUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [dragActive, setDragActive] = useState(false);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
   const aspectClasses = {
@@ -64,6 +65,10 @@ export default function ImageUpload({
         return;
       }
 
+      // Create local preview immediately
+      const localPreview = URL.createObjectURL(file);
+      setPreviewUrl(localPreview);
+
       setIsUploading(true);
 
       try {
@@ -90,9 +95,16 @@ export default function ImageUpload({
         } else if (data.files && data.files.length > 0) {
           onChange(data.files[0].url);
         }
+
+        // Clear preview once we have the real URL
+        setPreviewUrl(null);
+        URL.revokeObjectURL(localPreview);
       } catch (err: any) {
         console.error("Upload error:", err);
         setError(err.message || "Failed to upload image");
+        // Clear preview on error
+        setPreviewUrl(null);
+        URL.revokeObjectURL(localPreview);
       } finally {
         setIsUploading(false);
       }
@@ -169,7 +181,7 @@ export default function ImageUpload({
           ${
             dragActive
               ? "border-accent bg-accent/10"
-              : value
+              : value || previewUrl
               ? "border-transparent"
               : "border-gray-300 dark:border-gray-600 hover:border-accent"
           }
@@ -194,6 +206,21 @@ export default function ImageUpload({
               >
                 <X size={18} />
               </button>
+            </div>
+          </>
+        ) : previewUrl ? (
+          <>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={previewUrl}
+              alt="Preview"
+              className="absolute inset-0 w-full h-full object-cover"
+            />
+            <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
+              <div className="flex flex-col items-center gap-2 text-white">
+                <Loader2 className="w-8 h-8 animate-spin" />
+                <span className="text-sm">Uploading...</span>
+              </div>
             </div>
           </>
         ) : isUploading ? (

@@ -119,7 +119,10 @@ export default function AdminHeader({
           </Link>
 
           {/* Profile (Desktop) */}
-          <div className="hidden sm:flex items-center gap-3">
+          <Link
+            href="/admin/settings"
+            className="hidden sm:flex items-center gap-3 hover:opacity-80 transition-opacity"
+          >
             <div className="w-9 h-9 rounded-full bg-linear-to-br from-blue-400 to-blue-600 flex items-center justify-center">
               <span className="text-white font-semibold text-sm">A</span>
             </div>
@@ -127,7 +130,7 @@ export default function AdminHeader({
               <p className={`font-medium text-sm ${textPrimary}`}>Admin User</p>
               <p className="text-gray-500 text-xs">Administrator</p>
             </div>
-          </div>
+          </Link>
 
           {/* Action Button */}
           {actionButton &&

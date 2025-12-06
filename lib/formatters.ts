@@ -119,6 +119,10 @@ export function formatCurrency(
   currency: string = "NGN",
   locale: string = "en-NG"
 ): string {
+  // Handle NaN, undefined, or null values
+  if (amount === null || amount === undefined || isNaN(amount)) {
+    return "₦0";
+  }
   return new Intl.NumberFormat(locale, {
     style: "currency",
     currency,
@@ -131,6 +135,10 @@ export function formatNumber(
   num: number,
   options?: Intl.NumberFormatOptions
 ): string {
+  // Handle NaN, undefined, or null values
+  if (num === null || num === undefined || isNaN(num)) {
+    return "0";
+  }
   return new Intl.NumberFormat("en-NG", options).format(num);
 }
 

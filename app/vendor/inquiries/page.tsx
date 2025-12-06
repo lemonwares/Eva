@@ -93,7 +93,7 @@ function ViewInquiryModal({
   };
 
   const formatDate = (dateStr: string) => {
-    return new Date(dateStr).toLocaleDateString("en-GB", {
+    return new Date(dateStr).toLocaleDateString("en-NG", {
       weekday: "long",
       day: "numeric",
       month: "long",
@@ -389,7 +389,7 @@ function CreateQuoteModal({
                 <div className="w-28">
                   <div className="relative">
                     <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
-                      £
+                      ₦
                     </span>
                     <input
                       type="number"
@@ -406,7 +406,7 @@ function CreateQuoteModal({
                 </div>
                 <div className="w-24 text-right">
                   <p className="py-2 font-medium">
-                    £{item.totalPrice.toFixed(2)}
+                    ₦{item.totalPrice.toFixed(2)}
                   </p>
                 </div>
                 <button
@@ -431,7 +431,7 @@ function CreateQuoteModal({
         <div className="bg-accent/10 rounded-lg p-4 flex justify-between items-center">
           <span className="font-semibold">Total Price</span>
           <span className="text-2xl font-bold text-accent">
-            £{totalPrice.toFixed(2)}
+            ₦{totalPrice.toFixed(2)}
           </span>
         </div>
 

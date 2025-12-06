@@ -2,6 +2,7 @@
 
 import VendorLayout from "@/components/vendor/VendorLayout";
 import { useVendorTheme } from "@/components/vendor/VendorThemeContext";
+import { formatCurrency } from "@/lib/formatters";
 import {
   Search,
   DollarSign,
@@ -166,13 +167,6 @@ export default function VendorPaymentsPage() {
       setIsWithdrawing(false);
     }
   }
-
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat("en-US", {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
-    }).format(Math.abs(amount));
-  };
 
   const filteredTransactions = transactions.filter(
     (tx) =>

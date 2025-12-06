@@ -294,7 +294,7 @@ export const DEFAULT_CURRENCY = "NGN";
 export const SUPPORTED_CURRENCIES = [
   { code: "NGN", symbol: "₦", name: "Nigerian Naira" },
   { code: "USD", symbol: "$", name: "US Dollar" },
-  { code: "GBP", symbol: "£", name: "British Pound" },
+  { code: "NGN", symbol: "₦", name: "British Pound" },
   { code: "EUR", symbol: "€", name: "Euro" },
   { code: "GHS", symbol: "₵", name: "Ghanaian Cedi" },
   { code: "KES", symbol: "KSh", name: "Kenyan Shilling" },

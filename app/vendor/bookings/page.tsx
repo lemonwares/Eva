@@ -102,7 +102,7 @@ function ViewBookingModal({
   };
 
   const formatDate = (dateStr: string) => {
-    return new Date(dateStr).toLocaleDateString("en-GB", {
+    return new Date(dateStr).toLocaleDateString("en-NG", {
       weekday: "long",
       day: "numeric",
       month: "long",
@@ -202,14 +202,14 @@ function ViewBookingModal({
                     {item.name} x{item.qty}
                   </span>
                   <span className="font-medium">
-                    £{item.totalPrice?.toLocaleString()}
+                    ₦{item.totalPrice?.toLocaleString()}
                   </span>
                 </div>
               ))}
               <div className="pt-2 mt-2 border-t-2 border-gray-300 flex justify-between font-bold">
                 <span>Total</span>
                 <span className="text-accent">
-                  £{booking.pricingTotal?.toLocaleString()}
+                  ₦{booking.pricingTotal?.toLocaleString()}
                 </span>
               </div>
             </div>
@@ -229,14 +229,14 @@ function ViewBookingModal({
             <div>
               <p className="text-gray-500">Total</p>
               <p className="font-medium">
-                £{booking.pricingTotal?.toLocaleString()}
+                ₦{booking.pricingTotal?.toLocaleString()}
               </p>
             </div>
             {booking.depositAmount && (
               <div>
                 <p className="text-gray-500">Deposit</p>
                 <p className="font-medium">
-                  £{booking.depositAmount?.toLocaleString()}
+                  ₦{booking.depositAmount?.toLocaleString()}
                 </p>
               </div>
             )}
@@ -244,7 +244,7 @@ function ViewBookingModal({
               <div>
                 <p className="text-gray-500">Balance</p>
                 <p className="font-medium">
-                  £{booking.balanceAmount?.toLocaleString()}
+                  ₦{booking.balanceAmount?.toLocaleString()}
                 </p>
               </div>
             )}
@@ -542,7 +542,7 @@ export default function VendorBookingsPage() {
   };
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString("en-GB", {
+    return new Date(dateString).toLocaleDateString("en-NG", {
       day: "numeric",
       month: "short",
       year: "numeric",
@@ -710,7 +710,7 @@ export default function VendorBookingsPage() {
                           darkMode ? "text-white" : "text-gray-900"
                         }`}
                       >
-                        £{booking.pricingTotal?.toLocaleString() || "0"}
+                        ₦{booking.pricingTotal?.toLocaleString() || "0"}
                       </td>
                       <td className="px-6 py-5">
                         <div className="relative">
@@ -860,7 +860,7 @@ export default function VendorBookingsPage() {
                         darkMode ? "text-white" : "text-gray-900"
                       }`}
                     >
-                      £{booking.pricingTotal?.toLocaleString() || "0"}
+                      ₦{booking.pricingTotal?.toLocaleString() || "0"}
                     </span>
                   </div>
                 </div>

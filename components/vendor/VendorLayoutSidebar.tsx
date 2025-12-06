@@ -14,6 +14,7 @@ import {
   Moon,
   Sun,
   X,
+  Star,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -25,6 +26,7 @@ const navItems = [
   { icon: FileText, label: "Quotes", href: "/vendor/quotes" },
   { icon: Calendar, label: "Bookings", href: "/vendor/bookings" },
   { icon: CalendarDays, label: "Calendar", href: "/vendor/calendar" },
+  { icon: Star, label: "Reviews", href: "/vendor/reviews" },
   { icon: CreditCard, label: "Payments", href: "/vendor/payments" },
   { icon: BarChart3, label: "Analytics", href: "/vendor/analytics" },
   { icon: User, label: "Profile", href: "/vendor/profile" },

@@ -113,7 +113,7 @@ export default function AdminReviewsPage() {
     if (diffDays === 1) return "Yesterday";
     if (diffDays < 7) return `${diffDays} days ago`;
     if (diffDays < 30) return `${Math.floor(diffDays / 7)} weeks ago`;
-    return date.toLocaleDateString("en-GB", {
+    return date.toLocaleDateString("en-NG", {
       day: "numeric",
       month: "short",
       year: "numeric",

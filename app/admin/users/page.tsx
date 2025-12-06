@@ -83,13 +83,20 @@ function ViewUserModal({
                   : user.role}
               </span>
               <span
-                className={`px-2 py-1 text-xs rounded-full ${
+                className={`px-2 py-1 text-xs rounded-full cursor-help ${
                   user.status === "ACTIVE"
                     ? "bg-green-100 text-green-700"
                     : user.status === "SUSPENDED"
                     ? "bg-red-100 text-red-700"
                     : "bg-yellow-100 text-yellow-700"
                 }`}
+                title={
+                  user.status === "ACTIVE"
+                    ? "Email verified - user has full access"
+                    : user.status === "SUSPENDED"
+                    ? "Account suspended by administrator"
+                    : "Email not verified - user needs to verify their email"
+                }
               >
                 {user.status}
               </span>
@@ -724,6 +731,20 @@ export default function UsersPage() {
     }
   };
 
+  // Get status explanation for tooltip
+  const getStatusExplanation = (status: string) => {
+    switch (status) {
+      case "ACTIVE":
+        return "Email verified - user has full access";
+      case "SUSPENDED":
+        return "Account suspended by administrator";
+      case "INACTIVE":
+        return "Email not verified - user needs to verify their email";
+      default:
+        return "";
+    }
+  };
+
   const inputClass = `px-3 py-2 rounded-lg ${inputBg} ${inputBorder} ${textPrimary} focus:outline-none focus:ring-2 focus:ring-rose-500`;
 
   return (
@@ -961,9 +982,10 @@ export default function UsersPage() {
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <span
-                            className={`px-2 py-1 text-xs rounded-full ${getStatusBadgeClass(
+                            className={`px-2 py-1 text-xs rounded-full cursor-help ${getStatusBadgeClass(
                               user.status
                             )}`}
+                            title={getStatusExplanation(user.status)}
                           >
                             {user.status}
                           </span>
@@ -1153,9 +1175,10 @@ export default function UsersPage() {
                               {formatRole(user.role)}
                             </span>
                             <span
-                              className={`px-2 py-0.5 text-xs rounded-full ${getStatusBadgeClass(
+                              className={`px-2 py-0.5 text-xs rounded-full cursor-help ${getStatusBadgeClass(
                                 user.status
                               )}`}
+                              title={getStatusExplanation(user.status)}
                             >
                               {user.status}
                             </span>

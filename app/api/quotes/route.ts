@@ -94,8 +94,11 @@ export async function GET(request: NextRequest) {
               id: true,
               fromName: true,
               fromEmail: true,
+              fromPhone: true,
               eventDate: true,
               guestsCount: true,
+              message: true,
+              createdAt: true,
             },
           },
           booking: {

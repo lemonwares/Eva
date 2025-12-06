@@ -181,7 +181,7 @@ function DashboardContent() {
     },
     {
       label: "Monthly Revenue",
-      value: `£${stats.monthlyRevenue.toLocaleString()}`,
+      value: `₦${stats.monthlyRevenue.toLocaleString()}`,
       icon: DollarSign,
       href: "/vendor/payments",
     },
@@ -325,7 +325,7 @@ function DashboardContent() {
                       </p>
                     </div>
                     <span className="text-accent font-bold text-sm">
-                      £{booking.totalPrice?.toLocaleString() || "0"}
+                      ₦{booking.totalPrice?.toLocaleString() || "0"}
                     </span>
                   </div>
                   <div
@@ -333,7 +333,7 @@ function DashboardContent() {
                   >
                     <span className="flex items-center gap-1">
                       <Calendar size={12} />
-                      {new Date(booking.eventDate).toLocaleDateString("en-GB", {
+                      {new Date(booking.eventDate).toLocaleDateString("en-NG", {
                         day: "numeric",
                         month: "short",
                         year: "numeric",
