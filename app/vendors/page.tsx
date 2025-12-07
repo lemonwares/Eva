@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import Header from "@/components/common/Header";
 import Footer from "@/components/common/Footer";
+import { formatCurrency } from "@/lib/formatters";
 
 interface Provider {
   id: string;
@@ -395,7 +396,7 @@ function VendorsPageContent() {
                       </div>
                       {vendor.priceFrom && (
                         <span className="text-sm font-medium text-foreground">
-                          From ₦{vendor.priceFrom.toLocaleString()}
+                          From {formatCurrency(vendor.priceFrom || 0)}
                         </span>
                       )}
                     </div>

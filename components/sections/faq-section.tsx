@@ -1,7 +1,22 @@
 "use client";
 
-import { useState } from "react";
-import { ChevronDown, MessageCircle, HelpCircle, Sparkles } from "lucide-react";
+import { useState, type ComponentType } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import {
+  ChevronDown,
+  MessageCircle,
+  HelpCircle,
+  Sparkles,
+  Compass,
+  ShieldCheck,
+  Wallet,
+  CalendarClock,
+  Briefcase,
+  LifeBuoy,
+  X,
+  Mail,
+  Loader2,
+} from "lucide-react";
 
 interface FAQItem {
   id: number;
@@ -55,8 +70,67 @@ const faqs: FAQItem[] = [
   },
 ];
 
+const categoryIcons: Record<string, ComponentType<{ className?: string }>> = {
+  "Getting Started": Compass,
+  "Trust & Safety": ShieldCheck,
+  Pricing: Wallet,
+  Booking: CalendarClock,
+  "For Vendors": Briefcase,
+  Support: LifeBuoy,
+};
+
 export default function FAQSection() {
   const [activeId, setActiveId] = useState<number | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [email, setEmail] = useState("");
+  const [message, setMessage] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const [submitStatus, setSubmitStatus] = useState<
+    "idle" | "success" | "error"
+  >("idle");
+
+  const handleOpenModal = () => {
+    setIsModalOpen(true);
+  };
+
+  const handleCloseModal = () => {
+    setIsModalOpen(false);
+    setEmail("");
+    setMessage("");
+    setSubmitStatus("idle");
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsLoading(true);
+    setSubmitStatus("idle");
+
+    try {
+      const res = await fetch("/api/contact", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email,
+          message,
+          type: "support",
+        }),
+      });
+
+      if (res.ok) {
+        setSubmitStatus("success");
+        setEmail("");
+        setMessage("");
+        setTimeout(handleCloseModal, 2000);
+      } else {
+        setSubmitStatus("error");
+      }
+    } catch (error) {
+      console.error("Failed to send message:", error);
+      setSubmitStatus("error");
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   return (
     <section
@@ -131,10 +205,13 @@ export default function FAQSection() {
                           : "bg-secondary text-muted-foreground group-hover:bg-secondary/80"
                       }`}
                     >
-                      <MessageCircle
-                        className="w-6 h-6 transition-colors duration-300"
-                        strokeWidth={2.5}
-                      />
+                      {(() => {
+                        const Icon =
+                          categoryIcons[faq.category] || MessageCircle;
+                        return (
+                          <Icon className="w-6 h-6 transition-colors duration-300" />
+                        );
+                      })()}
                     </div>
 
                     {/* Text Content */}
@@ -202,11 +279,143 @@ export default function FAQSection() {
           <p className="text-lg font-medium text-muted-foreground mb-6">
             Still have questions?
           </p>
-          <button className="inline-flex items-center gap-3 rounded-full bg-foreground px-8 py-3 text-sm font-semibold text-background transition hover:-translate-y-0.5">
+          <button
+            onClick={handleOpenModal}
+            className="inline-flex items-center gap-3 rounded-full bg-foreground px-8 py-3 text-sm font-semibold text-background transition hover:-translate-y-0.5"
+          >
             <MessageCircle className="h-5 w-5" />
             Contact support
           </button>
         </div>
+
+        {/* Modal with 3D pop-out animation */}
+        <AnimatePresence>
+          {isModalOpen && (
+            <>
+              {/* Backdrop */}
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                onClick={handleCloseModal}
+                className="fixed inset-0 z-40 bg-black/50 backdrop-blur-sm"
+              />
+
+              {/* Modal */}
+              <motion.div
+                initial={{ scale: 0.3, opacity: 0, y: 20 }}
+                animate={{ scale: 1, opacity: 1, y: 0 }}
+                exit={{ scale: 0.3, opacity: 0, y: 20 }}
+                transition={{
+                  type: "spring",
+                  damping: 25,
+                  stiffness: 300,
+                }}
+                className="fixed top-1/2 left-1/2 z-50 -translate-x-1/2 -translate-y-1/2 w-full max-w-md rounded-[28px] border border-border/70 bg-card/95 p-8 shadow-2xl backdrop-blur"
+              >
+                {/* Close button */}
+                <button
+                  onClick={handleCloseModal}
+                  className="absolute top-6 right-6 p-2 rounded-full hover:bg-secondary transition"
+                >
+                  <X className="h-5 w-5 text-muted-foreground" />
+                </button>
+
+                {/* Header */}
+                <div className="mb-6">
+                  <div className="mb-3 inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-accent/10 text-accent">
+                    <Mail className="h-6 w-6" />
+                  </div>
+                  <h3 className="text-2xl font-semibold text-foreground">
+                    Get in touch
+                  </h3>
+                  <p className="mt-2 text-sm text-muted-foreground">
+                    We're here to help. Send us a message and we'll respond
+                    within 24 hours.
+                  </p>
+                </div>
+
+                {/* Form */}
+                <form onSubmit={handleSubmit} className="space-y-4">
+                  <div className="space-y-2">
+                    <label className="block text-sm font-medium text-foreground">
+                      Your email
+                    </label>
+                    <input
+                      type="email"
+                      placeholder="you@example.com"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      required
+                      disabled={isLoading}
+                      className="w-full rounded-2xl border border-border bg-input/60 px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground focus:border-accent focus:ring-2 focus:ring-accent/30 outline-none transition disabled:opacity-50"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="block text-sm font-medium text-foreground">
+                      Your message
+                    </label>
+                    <textarea
+                      placeholder="Tell us how we can help..."
+                      value={message}
+                      onChange={(e) => setMessage(e.target.value)}
+                      required
+                      disabled={isLoading}
+                      rows={4}
+                      className="w-full rounded-2xl border border-border bg-input/60 px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground focus:border-accent focus:ring-2 focus:ring-accent/30 outline-none transition resize-none disabled:opacity-50"
+                    />
+                  </div>
+
+                  {/* Status messages */}
+                  {submitStatus === "success" && (
+                    <motion.div
+                      initial={{ opacity: 0, y: -10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className="rounded-2xl border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-800"
+                    >
+                      Message sent successfully! We'll be in touch soon.
+                    </motion.div>
+                  )}
+                  {submitStatus === "error" && (
+                    <motion.div
+                      initial={{ opacity: 0, y: -10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800"
+                    >
+                      Failed to send message. Please try again.
+                    </motion.div>
+                  )}
+
+                  <div className="flex gap-3 pt-4">
+                    <button
+                      type="button"
+                      onClick={handleCloseModal}
+                      disabled={isLoading}
+                      className="flex-1 rounded-full border border-border px-6 py-2 text-sm font-semibold text-foreground transition hover:bg-secondary disabled:opacity-50"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="submit"
+                      disabled={isLoading || !email || !message}
+                      className="relative flex-1 rounded-full bg-foreground px-6 py-2 text-sm font-semibold text-background transition hover:-translate-y-0.5 disabled:opacity-50 disabled:hover:translate-y-0"
+                    >
+                      {isLoading ? (
+                        <span className="flex items-center justify-center gap-2">
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                          Sending...
+                        </span>
+                      ) : (
+                        "Send message"
+                      )}
+                    </button>
+                  </div>
+                </form>
+              </motion.div>
+            </>
+          )}
+        </AnimatePresence>
       </div>
     </section>
   );

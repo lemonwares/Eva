@@ -1,34 +1,91 @@
 "use client";
 
 import { Bell, AlertTriangle, Menu, X } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect, Suspense } from "react";
+import { useRouter } from "next/navigation";
+import { formatCurrency } from "@/lib/formatters";
+import { useSearchParams as useSearchParamsHook } from "next/navigation";
 
-const quoteItems = [
-  {
-    service: "Full Day Coordination",
-    description: "Coordination services for the entire wedding day.",
-    quantity: 1,
-    rate: "$3,500.00",
-    amount: "$3,500.00",
-  },
-  {
-    service: "Floral Arrangements",
-    description: "Bridal bouquet, centerpieces, and ceremony decor.",
-    quantity: 1,
-    rate: "$1,200.00",
-    amount: "$1,200.00",
-  },
-  {
-    service: "Venue Lighting Package",
-    description: "Uplighting and custom gobo projection.",
-    quantity: 1,
-    rate: "$500.00",
-    amount: "$500.00",
-  },
-];
+interface QuoteItem {
+  name: string;
+  qty: number;
+  unitPrice: number;
+  totalPrice: number;
+}
 
-export default function QuoteReview() {
+interface Quote {
+  id: string;
+  status: string;
+  items: QuoteItem[];
+  subtotal: number;
+  tax: number;
+  discount: number;
+  totalPrice: number;
+  validUntil: string;
+  depositPercentage: number;
+  provider: {
+    businessName: string;
+  };
+  inquiry: {
+    fromName?: string;
+    eventDate?: string;
+    guestsCount?: number;
+  };
+}
+
+function QuoteContent({ quoteId }: { quoteId: string }) {
+  const router = useRouter();
+  const [quote, setQuote] = useState<Quote | null>(null);
+  const [loading, setLoading] = useState(true);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  useEffect(() => {
+    if (!quoteId) {
+      console.log("No quote ID provided");
+      router.push("/dashboard/quotes");
+      return;
+    }
+
+    const fetchQuote = async () => {
+      try {
+        console.log("Fetching quote with ID:", quoteId);
+        const response = await fetch(`/api/quotes/${quoteId}`);
+        console.log("Response status:", response.status);
+        if (!response.ok) {
+          const errorData = await response.json();
+          console.error("API error:", errorData);
+          throw new Error(errorData.message || "Failed to fetch quote");
+        }
+        const data = await response.json();
+        console.log("Quote data received:", data);
+        setQuote(data.quote || data);
+      } catch (error) {
+        console.error("Error fetching quote:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchQuote();
+  }, [quoteId, router]);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-[#0a0a0a] text-white flex items-center justify-center">
+        <div className="w-8 h-8 border-4 border-gray-800 border-t-green-500 rounded-full animate-spin" />
+      </div>
+    );
+  }
+
+  if (!quote) {
+    return (
+      <div className="min-h-screen bg-[#0a0a0a] text-white flex items-center justify-center">
+        <p className="text-gray-400">Quote not found</p>
+      </div>
+    );
+  }
+
+  const depositAmount = (quote.totalPrice * quote.depositPercentage) / 100;
 
   return (
     <div className="min-h-screen bg-[#0a0a0a] text-white font-sans">
@@ -133,10 +190,15 @@ export default function QuoteReview() {
               <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-linear-to-br from-purple-400 to-pink-400 shrink-0" />
               <div>
                 <p className="font-bold text-base sm:text-lg">
-                  Celebrations by Design
+                  {quote.provider.businessName}
                 </p>
                 <p className="text-gray-500 text-xs sm:text-sm">
-                  Wedding Planning Services
+                  {quote.inquiry?.eventDate && (
+                    <>
+                      {new Date(quote.inquiry.eventDate).toLocaleDateString()} •{" "}
+                      {quote.inquiry.guestsCount} guests
+                    </>
+                  )}
                 </p>
               </div>
             </div>
@@ -145,7 +207,14 @@ export default function QuoteReview() {
             <div className="flex items-center gap-2 sm:gap-3 bg-yellow-500/10 border border-yellow-500/30 rounded-lg px-3 sm:px-4 py-2.5 sm:py-3 mb-6 sm:mb-8">
               <AlertTriangle size={18} className="text-yellow-500 shrink-0" />
               <span className="text-yellow-500 font-medium text-xs sm:text-sm">
-                Awaiting Your Response. Expires in 3 days.
+                {quote.status === "SENT" ? (
+                  <>
+                    Awaiting Your Response. Expires{" "}
+                    {new Date(quote.validUntil).toLocaleDateString()}.
+                  </>
+                ) : (
+                  <>Quote {quote.status}</>
+                )}
               </span>
             </div>
 
@@ -155,7 +224,7 @@ export default function QuoteReview() {
                 Total Quote Amount
               </p>
               <p className="text-3xl sm:text-4xl lg:text-5xl font-bold">
-                $5,500.00
+                {formatCurrency(quote.totalPrice)}
               </p>
             </div>
 
@@ -187,23 +256,23 @@ export default function QuoteReview() {
                       Quote ID
                     </p>
                     <p className="font-semibold text-sm sm:text-base">
-                      Q-2024-8817
+                      {quote.id.substring(0, 8).toUpperCase()}
                     </p>
                   </div>
                   <div>
                     <p className="text-gray-500 text-xs sm:text-sm mb-1">
-                      Issue Date
+                      Status
                     </p>
                     <p className="font-semibold text-sm sm:text-base">
-                      October 26, 2024
+                      {quote.status}
                     </p>
                   </div>
                   <div>
                     <p className="text-gray-500 text-xs sm:text-sm mb-1">
-                      Expiry Date
+                      Valid Until
                     </p>
                     <p className="font-semibold text-sm sm:text-base">
-                      November 2, 2024
+                      {new Date(quote.validUntil).toLocaleDateString()}
                     </p>
                   </div>
                 </div>
@@ -233,22 +302,22 @@ export default function QuoteReview() {
                       </tr>
                     </thead>
                     <tbody>
-                      {quoteItems.map((item, idx) => (
+                      {quote.items.map((item, idx) => (
                         <tr key={idx} className="border-b border-gray-800">
                           <td className="py-3 sm:py-5 font-medium text-sm">
-                            {item.service}
+                            {item.name}
                           </td>
                           <td className="py-3 sm:py-5 text-gray-400 text-xs sm:text-sm hidden md:table-cell">
-                            {item.description}
+                            {item.name}
                           </td>
                           <td className="py-3 sm:py-5 text-center text-sm">
-                            {item.quantity}
+                            {item.qty}
                           </td>
                           <td className="py-3 sm:py-5 text-right text-gray-400 text-sm">
-                            {item.rate}
+                            {formatCurrency(item.unitPrice)}
                           </td>
                           <td className="py-3 sm:py-5 text-right font-medium text-sm">
-                            {item.amount}
+                            {formatCurrency(item.totalPrice)}
                           </td>
                         </tr>
                       ))}
@@ -262,19 +331,33 @@ export default function QuoteReview() {
                     <div className="w-full sm:w-64 space-y-2 sm:space-y-3">
                       <div className="flex justify-between text-gray-400 text-sm">
                         <span>Subtotal</span>
-                        <span className="text-white">$5,200.00</span>
+                        <span className="text-white">
+                          {formatCurrency(quote.subtotal)}
+                        </span>
                       </div>
-                      <div className="flex justify-between text-gray-400 text-sm">
-                        <span>Taxes & Fees (5.75%)</span>
-                        <span className="text-white">$300.00</span>
-                      </div>
+                      {quote.tax > 0 && (
+                        <div className="flex justify-between text-gray-400 text-sm">
+                          <span>Tax</span>
+                          <span className="text-white">
+                            {formatCurrency(quote.tax)}
+                          </span>
+                        </div>
+                      )}
+                      {quote.discount > 0 && (
+                        <div className="flex justify-between text-gray-400 text-sm">
+                          <span>Discount</span>
+                          <span className="text-white">
+                            -{formatCurrency(quote.discount)}
+                          </span>
+                        </div>
+                      )}
                       <div className="flex justify-between font-bold text-base sm:text-lg pt-2 border-t border-gray-800">
                         <span>Total</span>
-                        <span>$5,500.00</span>
+                        <span>{formatCurrency(quote.totalPrice)}</span>
                       </div>
                       <div className="flex justify-between text-green-400 font-semibold pt-2 text-sm sm:text-base">
-                        <span>Deposit Due (50%)</span>
-                        <span>$2,750.00</span>
+                        <span>Deposit Due ({quote.depositPercentage}%)</span>
+                        <span>{formatCurrency(depositAmount)}</span>
                       </div>
                     </div>
                   </div>
@@ -284,24 +367,20 @@ export default function QuoteReview() {
               {/* Quote Items - Mobile Cards */}
               <div className="sm:hidden px-4 py-4">
                 <div className="space-y-4">
-                  {quoteItems.map((item, idx) => (
+                  {quote.items.map((item, idx) => (
                     <div
                       key={idx}
                       className="bg-[#252525] rounded-lg p-4 border border-gray-700"
                     >
                       <div className="flex justify-between items-start mb-2">
-                        <h4 className="font-medium text-sm">{item.service}</h4>
+                        <h4 className="font-medium text-sm">{item.name}</h4>
                         <span className="font-bold text-green-400">
-                          {item.amount}
+                          {formatCurrency(item.totalPrice)}
                         </span>
                       </div>
                       <p className="text-gray-400 text-xs mb-3">
-                        {item.description}
+                        {item.qty} × {formatCurrency(item.unitPrice)}
                       </p>
-                      <div className="flex justify-between text-xs text-gray-500">
-                        <span>Qty: {item.quantity}</span>
-                        <span>Rate: {item.rate}</span>
-                      </div>
                     </div>
                   ))}
                 </div>
@@ -310,19 +389,33 @@ export default function QuoteReview() {
                 <div className="mt-4 pt-4 border-t border-gray-800 space-y-2">
                   <div className="flex justify-between text-gray-400 text-sm">
                     <span>Subtotal</span>
-                    <span className="text-white">$5,200.00</span>
+                    <span className="text-white">
+                      {formatCurrency(quote.subtotal)}
+                    </span>
                   </div>
-                  <div className="flex justify-between text-gray-400 text-sm">
-                    <span>Taxes & Fees (5.75%)</span>
-                    <span className="text-white">$300.00</span>
-                  </div>
+                  {quote.tax > 0 && (
+                    <div className="flex justify-between text-gray-400 text-sm">
+                      <span>Tax</span>
+                      <span className="text-white">
+                        {formatCurrency(quote.tax)}
+                      </span>
+                    </div>
+                  )}
+                  {quote.discount > 0 && (
+                    <div className="flex justify-between text-gray-400 text-sm">
+                      <span>Discount</span>
+                      <span className="text-white">
+                        -{formatCurrency(quote.discount)}
+                      </span>
+                    </div>
+                  )}
                   <div className="flex justify-between font-bold text-base pt-2 border-t border-gray-800">
                     <span>Total</span>
-                    <span>$5,500.00</span>
+                    <span>{formatCurrency(quote.totalPrice)}</span>
                   </div>
                   <div className="flex justify-between text-green-400 font-semibold pt-2 text-sm">
-                    <span>Deposit Due (50%)</span>
-                    <span>$2,750.00</span>
+                    <span>Deposit Due ({quote.depositPercentage}%)</span>
+                    <span>{formatCurrency(depositAmount)}</span>
                   </div>
                 </div>
               </div>
@@ -365,4 +458,32 @@ export default function QuoteReview() {
       </footer>
     </div>
   );
+}
+
+export default function QuoteReviewPage() {
+  const [mounted, setMounted] = useState(false);
+  const searchParams = useSearchParamsHook();
+  const quoteId = searchParams?.get("id");
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  if (!mounted) {
+    return (
+      <div className="min-h-screen bg-[#0a0a0a] text-white flex items-center justify-center">
+        <div className="w-8 h-8 border-4 border-gray-800 border-t-green-500 rounded-full animate-spin" />
+      </div>
+    );
+  }
+
+  if (!quoteId) {
+    return (
+      <div className="min-h-screen bg-[#0a0a0a] text-white flex items-center justify-center">
+        <p className="text-gray-400">No quote ID provided</p>
+      </div>
+    );
+  }
+
+  return <QuoteContent quoteId={quoteId} />;
 }

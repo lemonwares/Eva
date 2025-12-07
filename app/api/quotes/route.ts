@@ -2,6 +2,11 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/auth";
 import { z } from "zod";
+import { sendEmail } from "@/lib/email";
+import {
+  generateQuoteEmailHTML,
+  generateQuoteEmailText,
+} from "@/lib/templates/quote-email";
 
 // Validation schema for quote creation
 const quoteItemSchema = z.object({
@@ -190,15 +195,27 @@ export async function POST(request: NextRequest) {
     }
 
     // Create quote
+    // Calculate totalPrice if not provided or is zero
+    let calculatedSubtotal = validatedData.items.reduce(
+      (sum, item) => sum + (item.totalPrice || 0),
+      0
+    );
+    let calculatedTotal =
+      calculatedSubtotal +
+      (validatedData.tax || 0) -
+      (validatedData.discount || 0);
+    let finalTotalPrice =
+      calculatedTotal > 0 ? calculatedTotal : validatedData.totalPrice;
+
     const quote = await prisma.quote.create({
       data: {
         providerId,
         inquiryId: validatedData.inquiryId || null,
         items: validatedData.items,
-        subtotal: validatedData.subtotal,
+        subtotal: calculatedSubtotal,
         tax: validatedData.tax,
         discount: validatedData.discount,
-        totalPrice: validatedData.totalPrice,
+        totalPrice: finalTotalPrice,
         allowedPaymentModes: validatedData.allowedPaymentModes,
         depositPercentage: validatedData.depositPercentage,
         validUntil: validatedData.validUntil,
@@ -230,7 +247,31 @@ export async function POST(request: NextRequest) {
         data: { quotesSentCount: { increment: 1 } },
       });
 
-      // TODO: Send email to client with quote details
+      // Send branded quote email to client
+      if (quote.inquiry && quote.inquiry.fromEmail) {
+        const baseUrl = process.env.NEXTAUTH_URL || "http://localhost:3000";
+        const quoteUrl = `${baseUrl}/quotes/${quote.id}`;
+        const html = generateQuoteEmailHTML({
+          vendorName: quote.provider.businessName,
+          clientName: quote.inquiry.fromName,
+          clientEmail: quote.inquiry.fromEmail,
+          quoteAmount: quote.totalPrice,
+          quoteUrl,
+        });
+        const text = generateQuoteEmailText({
+          vendorName: quote.provider.businessName,
+          clientName: quote.inquiry.fromName,
+          clientEmail: quote.inquiry.fromEmail,
+          quoteAmount: quote.totalPrice,
+          quoteUrl,
+        });
+        await sendEmail({
+          to: quote.inquiry.fromEmail,
+          subject: `Quote from ${quote.provider.businessName} - €${quote.totalPrice}`,
+          html,
+          text,
+        });
+      }
     }
 
     return NextResponse.json(

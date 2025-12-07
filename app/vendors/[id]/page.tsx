@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { useParams } from "next/navigation";
 import { useSession } from "next-auth/react";
 import Link from "next/link";
+import { formatCurrency } from "@/lib/formatters";
 import {
   ArrowLeft,
   MapPin,
@@ -471,7 +472,7 @@ export default function VendorDetailPage() {
                 <div className="mb-6">
                   <p className="text-sm text-muted-foreground">Starting from</p>
                   <p className="text-3xl font-bold">
-                    ₦{vendor.priceFrom.toLocaleString()}
+                    {formatCurrency(vendor.priceFrom)}
                   </p>
                 </div>
               )}
@@ -697,13 +698,33 @@ export default function VendorDetailPage() {
                         className="w-full px-4 py-3 rounded-xl border border-border bg-input focus:border-accent focus:ring-2 focus:ring-accent/30"
                       >
                         <option value="">Select budget</option>
-                        <option value="Under ₦1,000">Under ₦1,000</option>
-                        <option value="₦1,000 - ₦2,500">₦1,000 - ₦2,500</option>
-                        <option value="₦2,500 - ₦5,000">₦2,500 - ₦5,000</option>
-                        <option value="₦5,000 - ₦10,000">
-                          ₦5,000 - ₦10,000
+                        <option value={`Under ${formatCurrency(1000)}`}>
+                          Under {formatCurrency(1000)}
                         </option>
-                        <option value="Over ₦10,000">Over ₦10,000</option>
+                        <option
+                          value={`${formatCurrency(1000)} - ${formatCurrency(
+                            2500
+                          )}`}
+                        >
+                          {`${formatCurrency(1000)} - ${formatCurrency(2500)}`}
+                        </option>
+                        <option
+                          value={`${formatCurrency(2500)} - ${formatCurrency(
+                            5000
+                          )}`}
+                        >
+                          {`${formatCurrency(2500)} - ${formatCurrency(5000)}`}
+                        </option>
+                        <option
+                          value={`${formatCurrency(5000)} - ${formatCurrency(
+                            10000
+                          )}`}
+                        >
+                          {`${formatCurrency(5000)} - ${formatCurrency(10000)}`}
+                        </option>
+                        <option value={`Over ${formatCurrency(10000)}`}>
+                          Over {formatCurrency(10000)}
+                        </option>
                       </select>
                     </div>
                   </div>

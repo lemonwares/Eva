@@ -248,7 +248,8 @@ export default function FavoritesPage() {
         </div>
 
         {/* Favorites List/Grid */}
-        {filteredFavorites.length === 0 ? (
+        {(Array.isArray(filteredFavorites) ? filteredFavorites.length : 0) ===
+        0 ? (
           <div
             className={`text-center py-16 rounded-xl ${
               darkMode ? "bg-gray-800" : "bg-white"
@@ -283,98 +284,100 @@ export default function FavoritesPage() {
           </div>
         ) : viewMode === "grid" ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {filteredFavorites.map((fav) => (
-              <div
-                key={fav.id}
-                className={`group rounded-xl overflow-hidden shadow-sm hover:shadow-lg transition-all ${
-                  darkMode ? "bg-gray-800" : "bg-white"
-                }`}
-              >
-                {/* Image */}
-                <div className="relative aspect-4/3 overflow-hidden">
-                  {fav.provider.coverImage ? (
-                    <Image
-                      src={fav.provider.coverImage}
-                      alt={fav.provider.businessName}
-                      fill
-                      className="object-cover group-hover:scale-105 transition-transform duration-300"
-                    />
-                  ) : (
-                    <div className="w-full h-full bg-linear-to-br from-pink-400 to-purple-500 flex items-center justify-center">
-                      <span className="text-4xl font-bold text-white">
-                        {fav.provider.businessName.charAt(0)}
-                      </span>
-                    </div>
-                  )}
-
-                  {/* Remove Button */}
-                  <button
-                    onClick={() => handleRemoveFavorite(fav.provider.id)}
-                    disabled={removingId === fav.provider.id}
-                    className="absolute top-3 right-3 p-2 bg-white/90 backdrop-blur-sm rounded-full text-red-500 hover:bg-red-500 hover:text-white transition-colors disabled:opacity-50"
-                    aria-label="Remove from favorites"
-                  >
-                    {removingId === fav.provider.id ? (
-                      <FiLoader className="w-4 h-4 animate-spin" />
+            {(Array.isArray(filteredFavorites) ? filteredFavorites : []).map(
+              (fav) => (
+                <div
+                  key={fav.id}
+                  className={`group rounded-xl overflow-hidden shadow-sm hover:shadow-lg transition-all ${
+                    darkMode ? "bg-gray-800" : "bg-white"
+                  }`}
+                >
+                  {/* Image */}
+                  <div className="relative aspect-4/3 overflow-hidden">
+                    {fav.provider.coverImage ? (
+                      <Image
+                        src={fav.provider.coverImage}
+                        alt={fav.provider.businessName}
+                        fill
+                        className="object-cover group-hover:scale-105 transition-transform duration-300"
+                      />
                     ) : (
-                      <FiTrash2 className="w-4 h-4" />
+                      <div className="w-full h-full bg-linear-to-br from-pink-400 to-purple-500 flex items-center justify-center">
+                        <span className="text-4xl font-bold text-white">
+                          {fav.provider.businessName.charAt(0)}
+                        </span>
+                      </div>
                     )}
-                  </button>
-                </div>
 
-                {/* Content */}
-                <div className="p-4">
-                  <Link href={`/vendors/${fav.provider.id}`}>
-                    <h3
-                      className={`font-semibold mb-1 hover:text-pink-500 transition-colors ${
-                        darkMode ? "text-white" : "text-gray-900"
-                      }`}
+                    {/* Remove Button */}
+                    <button
+                      onClick={() => handleRemoveFavorite(fav.provider.id)}
+                      disabled={removingId === fav.provider.id}
+                      className="absolute top-3 right-3 p-2 bg-white/90 backdrop-blur-sm rounded-full text-red-500 hover:bg-red-500 hover:text-white transition-colors disabled:opacity-50"
+                      aria-label="Remove from favorites"
                     >
-                      {fav.provider.businessName}
-                    </h3>
-                  </Link>
+                      {removingId === fav.provider.id ? (
+                        <FiLoader className="w-4 h-4 animate-spin" />
+                      ) : (
+                        <FiTrash2 className="w-4 h-4" />
+                      )}
+                    </button>
+                  </div>
 
-                  {fav.provider.city && (
-                    <div
-                      className={`flex items-center gap-1 text-sm mb-2 ${
-                        darkMode ? "text-gray-400" : "text-gray-600"
-                      }`}
-                    >
-                      <FiMapPin className="w-3.5 h-3.5" />
-                      <span>{fav.provider.city}</span>
-                    </div>
-                  )}
-
-                  {/* Rating */}
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-1">
-                      <FiStar className="w-4 h-4 text-yellow-500 fill-yellow-500" />
-                      <span
-                        className={`text-sm font-medium ${
+                  {/* Content */}
+                  <div className="p-4">
+                    <Link href={`/vendors/${fav.provider.id}`}>
+                      <h3
+                        className={`font-semibold mb-1 hover:text-pink-500 transition-colors ${
                           darkMode ? "text-white" : "text-gray-900"
                         }`}
                       >
-                        {fav.provider.averageRating?.toFixed(1) || "New"}
-                      </span>
-                      <span
-                        className={`text-sm ${
-                          darkMode ? "text-gray-400" : "text-gray-500"
+                        {fav.provider.businessName}
+                      </h3>
+                    </Link>
+
+                    {fav.provider.city && (
+                      <div
+                        className={`flex items-center gap-1 text-sm mb-2 ${
+                          darkMode ? "text-gray-400" : "text-gray-600"
                         }`}
                       >
-                        ({fav.provider.reviewCount})
-                      </span>
-                    </div>
+                        <FiMapPin className="w-3.5 h-3.5" />
+                        <span>{fav.provider.city}</span>
+                      </div>
+                    )}
 
-                    <Link
-                      href={`/vendors/${fav.provider.id}`}
-                      className="text-pink-500 hover:text-pink-600 transition-colors"
-                    >
-                      <FiExternalLink className="w-4 h-4" />
-                    </Link>
+                    {/* Rating */}
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-1">
+                        <FiStar className="w-4 h-4 text-yellow-500 fill-yellow-500" />
+                        <span
+                          className={`text-sm font-medium ${
+                            darkMode ? "text-white" : "text-gray-900"
+                          }`}
+                        >
+                          {fav.provider.averageRating?.toFixed(1) || "New"}
+                        </span>
+                        <span
+                          className={`text-sm ${
+                            darkMode ? "text-gray-400" : "text-gray-500"
+                          }`}
+                        >
+                          ({fav.provider.reviewCount})
+                        </span>
+                      </div>
+
+                      <Link
+                        href={`/vendors/${fav.provider.id}`}
+                        className="text-pink-500 hover:text-pink-600 transition-colors"
+                      >
+                        <FiExternalLink className="w-4 h-4" />
+                      </Link>
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
+              )
+            )}
           </div>
         ) : (
           <div className="space-y-4">

@@ -116,12 +116,12 @@ export function formatDateRange(
 // Currency formatting
 export function formatCurrency(
   amount: number,
-  currency: string = "NGN",
-  locale: string = "en-NG"
+  currency: string = "EUR",
+  locale: string = "en-IE"
 ): string {
   // Handle NaN, undefined, or null values
   if (amount === null || amount === undefined || isNaN(amount)) {
-    return "₦0";
+    return "€0";
   }
   return new Intl.NumberFormat(locale, {
     style: "currency",

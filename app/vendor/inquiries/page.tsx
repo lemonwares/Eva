@@ -3,6 +3,7 @@
 import VendorLayout from "@/components/vendor/VendorLayout";
 import { useVendorTheme } from "@/components/vendor/VendorThemeContext";
 import { Modal } from "@/components/ui/Modal";
+import { formatCurrency } from "@/lib/formatters";
 import {
   Search,
   ChevronDown,
@@ -389,7 +390,7 @@ function CreateQuoteModal({
                 <div className="w-28">
                   <div className="relative">
                     <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
-                      ₦
+                      €
                     </span>
                     <input
                       type="number"
@@ -406,7 +407,7 @@ function CreateQuoteModal({
                 </div>
                 <div className="w-24 text-right">
                   <p className="py-2 font-medium">
-                    ₦{item.totalPrice.toFixed(2)}
+                    {formatCurrency(item.totalPrice)}
                   </p>
                 </div>
                 <button
@@ -431,7 +432,7 @@ function CreateQuoteModal({
         <div className="bg-accent/10 rounded-lg p-4 flex justify-between items-center">
           <span className="font-semibold">Total Price</span>
           <span className="text-2xl font-bold text-accent">
-            ₦{totalPrice.toFixed(2)}
+            {formatCurrency(totalPrice)}
           </span>
         </div>
 

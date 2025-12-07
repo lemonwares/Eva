@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { headers } from "next/headers";
 import { getStripe, formatAmountFromStripe } from "@/lib/stripe";
 import { prisma } from "@/lib/prisma";
+import { sendEmail, emailTemplates } from "@/lib/email";
 import Stripe from "stripe";
 
 // Disable body parsing, need raw body for signature verification
@@ -149,6 +150,143 @@ async function handleSuccessfulPayment(session: Stripe.Checkout.Session) {
   console.log(
     `Payment successful for booking ${bookingId}, type: ${paymentType}`
   );
+
+  // Send booking confirmation emails to client and vendor
+  try {
+    const booking = await prisma.booking.findUnique({
+      where: { id: bookingId },
+      include: {
+        quote: {
+          include: {
+            inquiry: {
+              select: {
+                fromName: true,
+              },
+            },
+          },
+        },
+        provider: {
+          select: {
+            id: true,
+            businessName: true,
+            ownerUserId: true,
+            phonePublic: true,
+            website: true,
+          },
+        },
+      },
+    });
+
+    if (booking) {
+      // Format event date
+      const eventDate = new Date(booking.eventDate).toLocaleDateString(
+        "en-US",
+        {
+          weekday: "long",
+          year: "numeric",
+          month: "long",
+          day: "numeric",
+        }
+      );
+
+      const bookingUrl = `${
+        process.env.NEXTAUTH_URL || "http://localhost:3000"
+      }/bookings/${booking.id}`;
+
+      // Prepare booking confirmation data
+      const bookingConfirmationData = {
+        clientName: booking.clientName,
+        vendorName: booking.provider.businessName,
+        bookingId: booking.id,
+        eventDate,
+        eventType: booking.quote?.inquiry?.fromName || "Your Event",
+        eventLocation: booking.eventLocation || "",
+        guestsCount: booking.guestsCount || 0,
+        totalAmount: booking.pricingTotal,
+        paymentMode: booking.paymentMode,
+        depositAmount: booking.depositAmount || 0,
+        balanceAmount: booking.balanceAmount || 0,
+        balanceDueDate: booking.balanceDueDate
+          ? new Date(booking.balanceDueDate).toLocaleDateString()
+          : undefined,
+        bookingUrl,
+        vendorEmail: "",
+        vendorPhone: booking.provider.phonePublic || "",
+        vendorWebsite: booking.provider.website || "",
+      };
+
+      // Get vendor owner email
+      if (booking.provider.ownerUserId) {
+        const vendorUser = await prisma.user.findUnique({
+          where: { id: booking.provider.ownerUserId },
+          select: { email: true },
+        });
+        if (vendorUser?.email) {
+          bookingConfirmationData.vendorEmail = vendorUser.email;
+        }
+      }
+
+      // Send email to client
+      try {
+        const clientTemplate = emailTemplates.bookingConfirmationClient(
+          bookingConfirmationData
+        );
+        await sendEmail({
+          to: booking.clientEmail,
+          subject: clientTemplate.subject,
+          html: clientTemplate.html,
+          text: clientTemplate.text,
+        });
+        console.log(
+          `✅ Booking confirmation email sent to client: ${booking.clientEmail}`
+        );
+      } catch (error) {
+        console.error(
+          "Failed to send client booking confirmation email:",
+          error
+        );
+      }
+
+      // Send email to vendor
+      try {
+        if (booking.provider.ownerUserId) {
+          const vendorUser = await prisma.user.findUnique({
+            where: { id: booking.provider.ownerUserId },
+            select: { email: true },
+          });
+
+          if (vendorUser?.email) {
+            const vendorTemplate = emailTemplates.bookingConfirmationVendor({
+              ...bookingConfirmationData,
+              vendorBusinessName: booking.provider.businessName,
+              bookingUrl: `${
+                process.env.NEXTAUTH_URL || "http://localhost:3000"
+              }/vendor/bookings/${booking.id}`,
+              vendorEmail: booking.clientEmail,
+              vendorPhone: booking.clientPhone || "",
+            });
+
+            await sendEmail({
+              to: vendorUser.email,
+              subject: vendorTemplate.subject,
+              html: vendorTemplate.html,
+              text: vendorTemplate.text,
+            });
+            console.log(
+              `✅ Booking confirmation email sent to vendor: ${vendorUser.email}`
+            );
+          }
+        }
+      } catch (error) {
+        console.error(
+          "Failed to send vendor booking confirmation email:",
+          error
+        );
+      }
+    }
+  } catch (error) {
+    console.error("Error sending booking confirmation emails:", error);
+  }
 }
 
 async function handleFailedPayment(session: Stripe.Checkout.Session) {

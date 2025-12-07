@@ -2,6 +2,7 @@
 
 import VendorLayout from "@/components/vendor/VendorLayout";
 import { useVendorTheme } from "@/components/vendor/VendorThemeContext";
+import { formatCurrency } from "@/lib/formatters";
 import {
   MessageSquare,
   FileText,
@@ -181,7 +182,7 @@ function DashboardContent() {
     },
     {
       label: "Monthly Revenue",
-      value: `₦${stats.monthlyRevenue.toLocaleString()}`,
+      value: formatCurrency(stats.monthlyRevenue),
       icon: DollarSign,
       href: "/vendor/payments",
     },
@@ -325,7 +326,7 @@ function DashboardContent() {
                       </p>
                     </div>
                     <span className="text-accent font-bold text-sm">
-                      ₦{booking.totalPrice?.toLocaleString() || "0"}
+                      {formatCurrency(booking.totalPrice ?? 0)}
                     </span>
                   </div>
                   <div
@@ -393,11 +394,7 @@ function DashboardContent() {
 
 export default function VendorDashboardPage() {
   return (
-    <VendorLayout
-      title="Dashboard"
-      vendorName="Urban Bloom"
-      vendorType="Florist"
-    >
+    <VendorLayout title="Dashboard">
       <DashboardContent />
     </VendorLayout>
   );

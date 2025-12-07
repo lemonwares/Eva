@@ -304,11 +304,8 @@ function SearchPageContent() {
 
           <div className="flex gap-8">
             {/* Filters Sidebar - Desktop */}
-            <aside
-              className={`w-64 shrink-0 ${
-                showFilters ? "block" : "hidden"
-              } md:block`}
-            >
+            {/* Sidebar stays hidden on mobile; we use the modal for mobile filters. */}
+            <aside className="hidden md:block w-72 shrink-0">
               <div className="sticky top-28 p-4 border border-border rounded-xl bg-card">
                 <div className="flex items-center justify-between mb-4">
                   <h2 className="font-semibold text-foreground flex items-center gap-2">

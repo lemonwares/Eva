@@ -1,3 +1,12 @@
+import { formatCurrency } from "./formatters";
+import {
+  generateBookingConfirmationHTMLClient,
+  generateBookingConfirmationTextClient,
+  generateBookingConfirmationHTMLVendor,
+  generateBookingConfirmationTextVendor,
+  type BookingConfirmationEmailData,
+} from "./templates/booking-confirmation-email";
+
 // Email service for transactional emails
 // Supports: Resend, SendGrid, or development mode (logging)
 
@@ -15,99 +24,67 @@ interface EmailTemplate {
   text: string;
 }
 
-const DEFAULT_FROM = process.env.EMAIL_FROM || "EVA <noreply@eva.events>";
+const DEFAULT_FROM = process.env.ZEPTOMAIL_FROM_EMAIL || "noreply@eva.events";
+const DEFAULT_FROM_NAME = process.env.ZEPTOMAIL_FROM_NAME || "EVA";
 
-// Detect which email provider is configured
-function getEmailProvider(): "resend" | "sendgrid" | "development" {
-  if (process.env.RESEND_API_KEY) return "resend";
-  if (process.env.SENDGRID_API_KEY) return "sendgrid";
-  return "development";
-}
-
-// Send email using Resend
-async function sendWithResend(options: EmailOptions): Promise<boolean> {
-  const response = await fetch("https://api.resend.com/emails", {
+// Send email using ZeptoMail
+async function sendWithZeptoMail(options: EmailOptions): Promise<boolean> {
+  const response = await fetch("https://api.zeptomail.com/v1.1/email", {
     method: "POST",
     headers: {
-      Authorization: `Bearer ${process.env.RESEND_API_KEY}`,
+      Authorization: process.env.ZEPTOMAIL_TOKEN || "",
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
-      from: options.from || DEFAULT_FROM,
-      to: options.to,
+      from: {
+        address: options.from || DEFAULT_FROM,
+        name: DEFAULT_FROM_NAME,
+      },
+      to: [
+        {
+          email_address: {
+            address: options.to,
+            name: options.to.split("@")[0],
+          },
+        },
+      ],
       subject: options.subject,
-      html: options.html,
-      text: options.text,
+      htmlbody: options.html,
+      textbody: options.text,
     }),
   });
 
   if (!response.ok) {
     const error = await response.json();
-    console.error("Resend error:", error);
-    throw new Error(`Resend error: ${JSON.stringify(error)}`);
+    console.error("ZeptoMail error:", error);
+    throw new Error(`ZeptoMail error: ${JSON.stringify(error)}`);
   }
 
   return true;
 }
 
-// Send email using SendGrid
-async function sendWithSendGrid(options: EmailOptions): Promise<boolean> {
-  const response = await fetch("https://api.sendgrid.com/v3/mail/send", {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${process.env.SENDGRID_API_KEY}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      personalizations: [{ to: [{ email: options.to }] }],
-      from: { email: options.from || DEFAULT_FROM },
-      subject: options.subject,
-      content: [
-        { type: "text/plain", value: options.text || "" },
-        { type: "text/html", value: options.html },
-      ],
-    }),
-  });
-
-  if (!response.ok) {
-    const error = await response.text();
-    console.error("SendGrid error:", error);
-    throw new Error(`SendGrid error: ${error}`);
-  }
-
-  return true;
-}
-
-// Send email (auto-detects provider)
+// Send email (uses ZeptoMail)
 export async function sendEmail(options: EmailOptions): Promise<boolean> {
-  const provider = getEmailProvider();
+  // Check if ZeptoMail is configured
+  if (!process.env.ZEPTOMAIL_TOKEN || !process.env.ZEPTOMAIL_FROM_EMAIL) {
+    console.warn(
+      "📧 [DEV MODE] ZeptoMail not configured. Email would be sent:",
+      {
+        from: options.from || DEFAULT_FROM,
+        to: options.to,
+        subject: options.subject,
+        preview:
+          options.text?.substring(0, 100) || options.html.substring(0, 100),
+      }
+    );
+    return true;
+  }
 
   try {
-    switch (provider) {
-      case "resend":
-        console.log(`📧 Sending email via Resend to: ${options.to}`);
-        return await sendWithResend(options);
-
-      case "sendgrid":
-        console.log(`📧 Sending email via SendGrid to: ${options.to}`);
-        return await sendWithSendGrid(options);
-
-      case "development":
-      default:
-        // In development, just log the email
-        console.log("📧 [DEV MODE] Email would be sent:", {
-          from: options.from || DEFAULT_FROM,
-          to: options.to,
-          subject: options.subject,
-          preview:
-            options.text?.substring(0, 100) || options.html.substring(0, 100),
-        });
-        return true;
-    }
+    console.log(`📧 Sending email via ZeptoMail to: ${options.to}`);
+    return await sendWithZeptoMail(options);
   } catch (error) {
     console.error("Email sending failed:", error);
-    // In production, you might want to throw the error
-    // For now, we log and return false
     return false;
   }
 }
@@ -288,11 +265,13 @@ export const emailTemplates = {
   quoteSent: (
     clientName: string,
     vendorName: string,
-    totalPrice: string,
+    totalPrice: string | number,
     quoteUrl: string
-  ): EmailTemplate => ({
-    subject: `Quote from ${vendorName} - ₦${totalPrice}`,
-    html: `
+  ): EmailTemplate => {
+    const formattedPrice = formatCurrency(Number(totalPrice) || 0);
+    return {
+      subject: `Quote from ${vendorName} - ${formattedPrice}`,
+      html: `
       <!DOCTYPE html>
       <html>
         <head>
@@ -314,7 +293,7 @@ export const emailTemplates = {
             <div class="content">
               <p>Hi ${clientName},</p>
               <p>${vendorName} has sent you a quote for your event.</p>
-              <div class="price">₦${totalPrice}</div>
+              <div class="price">${formattedPrice}</div>
               <a href="${quoteUrl}" class="button">View Full Quote</a>
               <p>Review the details and respond to secure your booking!</p>
             </div>
@@ -325,8 +304,9 @@ export const emailTemplates = {
         </body>
       </html>
     `,
-    text: `Hi ${clientName},\n\n${vendorName} has sent you a quote for ₦${totalPrice}.\n\nView it at: ${quoteUrl}`,
-  }),
+      text: `Hi ${clientName},\n\n${vendorName} has sent you a quote for ${formattedPrice}.\n\nView it at: ${quoteUrl}`,
+    };
+  },
 
   // Booking confirmed notification
   bookingConfirmed: (
@@ -419,6 +399,24 @@ export const emailTemplates = {
       </html>
     `,
     text: `Hi ${clientName},\n\nHow was your experience with ${vendorName}?\n\nLeave a review: ${reviewUrl}`,
+  }),
+
+  // Booking confirmation (client notification - after payment)
+  bookingConfirmationClient: (
+    data: BookingConfirmationEmailData
+  ): EmailTemplate => ({
+    subject: `✅ Booking Confirmed with ${data.vendorName}! 🎉`,
+    html: generateBookingConfirmationHTMLClient(data),
+    text: generateBookingConfirmationTextClient(data),
+  }),
+
+  // Booking confirmation (vendor notification - after payment)
+  bookingConfirmationVendor: (
+    data: BookingConfirmationEmailData & { vendorBusinessName: string }
+  ): EmailTemplate => ({
+    subject: `🎉 New Booking Confirmed - ${data.clientName}`,
+    html: generateBookingConfirmationHTMLVendor(data),
+    text: generateBookingConfirmationTextVendor(data),
   }),
 };
 

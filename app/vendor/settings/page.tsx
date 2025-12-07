@@ -55,6 +55,15 @@ export default function VendorSettingsPage() {
     text: string;
   } | null>(null);
 
+  // Safe JSON helper to avoid crashes on empty/error responses
+  const safeJson = async (res: Response) => {
+    try {
+      return await res.json();
+    } catch {
+      return null;
+    }
+  };
+
   // Profile state
   const [profile, setProfile] = useState<ProfileData>({
     name: "",
@@ -93,19 +102,20 @@ export default function VendorSettingsPage() {
       // Fetch user profile
       const profileRes = await fetch("/api/auth/me");
       if (profileRes.ok) {
-        const userData = await profileRes.json();
+        const userData = (await safeJson(profileRes)) || {};
+        const user = userData.user || userData;
         setProfile({
-          name: userData.name || "",
-          email: userData.email || "",
-          phone: userData.phone || "",
-          avatar: userData.avatar || userData.image || "",
+          name: user?.name || "",
+          email: user?.email || "",
+          phone: user?.phone || "",
+          avatar: user?.avatar || user?.image || "",
         });
       }
 
       // Fetch business profile
       const businessRes = await fetch("/api/vendor/profile");
       if (businessRes.ok) {
-        const data = await businessRes.json();
+        const data = (await safeJson(businessRes)) || {};
         const provider = data.provider;
         if (provider) {
           setBusiness({
@@ -133,7 +143,7 @@ export default function VendorSettingsPage() {
     setMessage(null);
     try {
       const res = await fetch("/api/auth/me", {
-        method: "PUT",
+        method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(profile),
       });
@@ -141,7 +151,7 @@ export default function VendorSettingsPage() {
       if (res.ok) {
         setMessage({ type: "success", text: "Profile updated successfully!" });
       } else {
-        const data = await res.json();
+        const data = (await safeJson(res)) || {};
         setMessage({
           type: "error",
           text: data.error || "Failed to update profile",
@@ -171,7 +181,7 @@ export default function VendorSettingsPage() {
           text: "Business info updated successfully!",
         });
       } else {
-        const data = await res.json();
+        const data = (await safeJson(res)) || {};
         setMessage({
           type: "error",
           text: data.message || "Failed to update business info",
@@ -203,7 +213,7 @@ export default function VendorSettingsPage() {
     setMessage(null);
     try {
       const res = await fetch("/api/auth/me", {
-        method: "PUT",
+        method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           currentPassword: passwordData.currentPassword,
@@ -219,7 +229,7 @@ export default function VendorSettingsPage() {
           confirmPassword: "",
         });
       } else {
-        const data = await res.json();
+        const data = (await safeJson(res)) || {};
         setMessage({
           type: "error",
           text: data.error || "Failed to change password",

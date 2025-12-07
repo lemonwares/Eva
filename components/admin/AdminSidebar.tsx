@@ -24,7 +24,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useAdminTheme } from "./AdminThemeContext";
 import { useState } from "react";
-import { signOut } from "next-auth/react";
+import { signOut, useSession } from "next-auth/react";
 
 const mainNavItems = [
   { icon: LayoutDashboard, label: "Overview", href: "/admin" },
@@ -64,6 +64,11 @@ export default function AdminSidebar({
 }: AdminSidebarProps) {
   const pathname = usePathname();
   const { darkMode, toggleDarkMode } = useAdminTheme();
+  const { data: session } = useSession();
+
+  const adminName = session?.user?.name || "Admin User";
+  const adminEmail = session?.user?.email || "admin@eva.com";
+  const adminInitial = adminName?.charAt(0).toUpperCase() || "A";
 
   const isActive = (href: string) => {
     if (href === "/admin") {
@@ -237,18 +242,26 @@ export default function AdminSidebar({
                 darkMode ? "bg-white/5" : "bg-gray-50"
               }`}
             >
-              <div className="w-9 h-9 rounded-full bg-linear-to-br from-blue-400 to-blue-600 flex items-center justify-center">
-                <span className="text-white font-semibold text-sm">A</span>
+              <div className="w-9 h-9 rounded-full bg-linear-to-br from-blue-400 to-blue-600 flex items-center justify-center shrink-0">
+                <span className="text-white font-semibold text-sm">
+                  {adminInitial}
+                </span>
               </div>
               <div className="flex-1 min-w-0">
                 <p
                   className={`font-medium text-sm truncate ${
                     darkMode ? "text-white" : "text-gray-900"
                   }`}
+                  title={adminName}
                 >
-                  Admin User
+                  {adminName}
                 </p>
-                <p className="text-gray-500 text-xs truncate">Administrator</p>
+                <p
+                  className="text-gray-500 text-xs truncate"
+                  title={adminEmail}
+                >
+                  {adminEmail}
+                </p>
               </div>
             </div>
           )}

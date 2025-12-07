@@ -23,8 +23,17 @@ export async function POST(
       return NextResponse.json({ message: "Forbidden" }, { status: 403 });
     }
 
+
     const { id } = await params;
-    const body = await request.json();
+    let body = {};
+    try {
+      body = await request.json();
+    } catch (err) {
+      return NextResponse.json(
+        { message: "Invalid or empty JSON body" },
+        { status: 400 }
+      );
+    }
     const validation = moderateReviewSchema.safeParse(body);
 
     if (!validation.success) {

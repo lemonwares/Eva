@@ -44,4 +44,26 @@ export const emailTemplates = {
       helpUrl,
     });
   },
+
+  contactSupport: (
+    name: string,
+    message: string,
+    referenceId: string,
+    dashboardUrl: string = "https://evamarketplace.vercel.app/dashboard",
+    helpUrl: string = "https://evamarketplace.vercel.app/help",
+    termsUrl: string = "https://evamarketplace.vercel.app/terms",
+    privacyUrl: string = "https://evamarketplace.vercel.app/privacy"
+  ): string => {
+    const template = loadTemplate("contactsupport.html");
+    return replaceVariables(template, {
+      name,
+      message,
+      referenceId,
+      dashboardUrl,
+      helpUrl,
+      termsUrl,
+      privacyUrl,
+      currentYear: new Date().getFullYear().toString(),
+    });
+  },
 };

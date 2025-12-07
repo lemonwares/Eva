@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
+import { formatCurrency } from "@/lib/formatters";
 import {
   ArrowLeft,
   MapPin,
@@ -359,7 +360,7 @@ export default function CategoryDetailPage() {
                       </div>
                       {vendor.priceFrom && (
                         <span className="text-sm font-medium text-foreground">
-                          From ₦{vendor.priceFrom.toLocaleString()}
+                          From {formatCurrency(vendor.priceFrom)}
                         </span>
                       )}
                     </div>
