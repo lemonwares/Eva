@@ -9,6 +9,7 @@ interface UserProfile {
   name: string;
   email: string;
   phone?: string;
+  avatar?: string;
   image?: string;
   notificationPreferences?: {
     email: boolean;
