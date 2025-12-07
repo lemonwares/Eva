@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { z } from "zod";
 import { sendTemplatedEmail, sendEmail, emailTemplates } from "@/lib/email";
+import { formatCurrency } from "@/lib/formatters";
 
 const acceptSchema = z.object({
   paymentMode: z.enum(["FULL_PAYMENT", "DEPOSIT_BALANCE", "CASH_ON_DELIVERY"]),
@@ -169,69 +170,124 @@ export async function POST(
       return booking;
     });
 
-    // Send confirmation emails to client and vendor
-    const eventDate = quote.inquiry?.eventDate || new Date();
-    const eventDateStr = eventDate.toLocaleDateString("en-NG", {
-      weekday: "long",
-      year: "numeric",
-      month: "long",
-      day: "numeric",
-    });
-    const bookingUrl = `${
-      process.env.NEXTAUTH_URL || "http://localhost:3000"
-    }/bookings/${result.id}`;
+    // Send confirmation emails ONLY for CASH_ON_DELIVERY bookings
+    // (Paid bookings will get emails from the Stripe webhook after payment is completed)
+    if (validatedData.paymentMode === "CASH_ON_DELIVERY") {
+      const eventDate = quote.inquiry?.eventDate || new Date();
+      const eventDateStr = eventDate.toLocaleDateString("en-US", {
+        weekday: "long",
+        year: "numeric",
+        month: "long",
+        day: "numeric",
+      });
+      const bookingUrl = `${
+        process.env.NEXTAUTH_URL || "http://localhost:3000"
+      }/bookings/${result.id}`;
 
-    // Email to client
-    await sendTemplatedEmail(
-      validatedData.clientEmail,
-      emailTemplates.bookingConfirmed(
-        validatedData.clientName,
-        quote.provider.businessName,
-        eventDateStr,
-        "Event",
-        bookingUrl
-      )
-    ).catch((err) => console.error("Failed to send client confirmation:", err));
-
-    // Email to vendor (get vendor owner email)
-    if (quote.provider.ownerUserId) {
-      const vendorOwner = await prisma.user.findUnique({
-        where: { id: quote.provider.ownerUserId },
-        select: { email: true },
+      // Get additional provider details
+      const providerDetails = await prisma.provider.findUnique({
+        where: { id: quote.provider.id },
+        select: {
+          phonePublic: true,
+          website: true,
+        },
       });
 
-      if (vendorOwner?.email) {
+      // Prepare booking confirmation data
+      const bookingConfirmationData = {
+        clientName: validatedData.clientName,
+        vendorName: quote.provider.businessName,
+        bookingId: result.id,
+        eventDate: eventDateStr,
+        eventType: quote.inquiry?.fromName || "Your Event",
+        eventLocation: validatedData.eventLocation || "",
+        guestsCount: quote.inquiry?.guestsCount || 0,
+        totalAmount: quote.totalPrice,
+        paymentMode: validatedData.paymentMode,
+        depositAmount: depositAmount || 0,
+        balanceAmount: balanceAmount || 0,
+        balanceDueDate: balanceDueDate
+          ? balanceDueDate.toLocaleDateString()
+          : undefined,
+        bookingUrl,
+        vendorEmail: "",
+        vendorPhone: providerDetails?.phonePublic || "",
+        vendorWebsite: providerDetails?.website || "",
+      };
+
+      // Get vendor user email
+      if (quote.provider.ownerUserId) {
+        const vendorUser = await prisma.user.findUnique({
+          where: { id: quote.provider.ownerUserId },
+          select: { email: true },
+        });
+        if (vendorUser?.email) {
+          bookingConfirmationData.vendorEmail = vendorUser.email;
+        }
+      }
+
+      // Send email to client
+      try {
+        const clientTemplate = emailTemplates.bookingConfirmationClient(
+          bookingConfirmationData
+        );
         await sendEmail({
-          to: vendorOwner.email,
-          subject: `New Booking Confirmed - ${validatedData.clientName}`,
-          html: `
-            <div style="font-family: Arial, sans-serif; max-width: 600px;">
-              <h2>🎉 Congratulations! Booking Confirmed</h2>
-              <p>Great news! Your quote has been accepted and a booking has been created.</p>
-              
-              <div style="background: #f0f0f0; padding: 20px; border-radius: 8px; margin: 20px 0;">
-                <p><strong>Client:</strong> ${validatedData.clientName}</p>
-                <p><strong>Email:</strong> ${validatedData.clientEmail}</p>
-                ${
-                  validatedData.clientPhone
-                    ? `<p><strong>Phone:</strong> ${validatedData.clientPhone}</p>`
-                    : ""
-                }
-                <p><strong>Event Date:</strong> ${eventDateStr}</p>
-                <p><strong>Total:</strong> ₦${quote.totalPrice.toFixed(2)}</p>
-                <p><strong>Payment Mode:</strong> ${validatedData.paymentMode.replace(
-                  /_/g,
-                  " "
-                )}</p>
-              </div>
-              
-              <p>Log in to your dashboard to manage this booking.</p>
-            </div>
-          `,
-        }).catch((err) =>
-          console.error("Failed to send vendor notification:", err)
+          to: validatedData.clientEmail,
+          subject: clientTemplate.subject,
+          html: clientTemplate.html,
+          text: clientTemplate.text,
+        });
+        console.log(
+          `✅ Booking confirmation email sent to client: ${validatedData.clientEmail}`
+        );
+      } catch (error) {
+        console.error(
+          "Failed to send client booking confirmation email:",
+          error
         );
       }
+
+      // Send email to vendor
+      if (quote.provider.ownerUserId) {
+        try {
+          const vendorOwner = await prisma.user.findUnique({
+            where: { id: quote.provider.ownerUserId },
+            select: { email: true },
+          });
+
+          if (vendorOwner?.email) {
+            const vendorTemplate = emailTemplates.bookingConfirmationVendor({
+              ...bookingConfirmationData,
+              vendorBusinessName: quote.provider.businessName,
+              bookingUrl: `${
+                process.env.NEXTAUTH_URL || "http://localhost:3000"
+              }/vendor/bookings/${result.id}`,
+              vendorEmail: validatedData.clientEmail,
+              vendorPhone: validatedData.clientPhone || "",
+            });
+
+            await sendEmail({
+              to: vendorOwner.email,
+              subject: vendorTemplate.subject,
+              html: vendorTemplate.html,
+              text: vendorTemplate.text,
+            });
+            console.log(
+              `✅ Booking confirmation email sent to vendor: ${vendorOwner.email}`
+            );
+          }
+        } catch (error) {
+          console.error(
+            "Failed to send vendor booking confirmation email:",
+            error
+          );
+        }
+      }
+    } else {
+      // For paid bookings, just log that emails will be sent after payment
+      console.log(
+        `⏳ Booking created with payment required. Confirmation emails will be sent after payment is completed via Stripe webhook.`
+      );
     }
 
     return NextResponse.json({

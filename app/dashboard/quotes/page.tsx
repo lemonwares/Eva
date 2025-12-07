@@ -7,22 +7,24 @@ import { useSession } from "next-auth/react";
 import { formatCurrency, formatDate } from "@/lib/formatters";
 
 interface QuoteItem {
-  description: string;
-  quantity: number;
+  name: string;
+  qty: number;
   unitPrice: number;
-  total: number;
+  totalPrice: number;
 }
 
 interface Quote {
   id: string;
   status: string;
-  totalAmount: number;
+  totalPrice: number;
+  subtotal: number;
+  tax: number;
+  discount: number;
+  depositPercentage: number;
   validUntil: string;
-  description?: string;
-  items: QuoteItem[];
+  terms?: string;
   notes?: string;
-  depositPercentage?: number;
-  allowedPaymentModes?: string[];
+  items: QuoteItem[];
   createdAt: string;
   updatedAt: string;
   inquiry: {
@@ -195,7 +197,7 @@ export default function QuotesPage() {
 
   const calculateDeposit = (quote: Quote) => {
     const percentage = quote.depositPercentage || 30;
-    return (quote.totalAmount * percentage) / 100;
+    return (quote.totalPrice * percentage) / 100;
   };
 
   const getStatusColor = (status: string) => {
@@ -332,7 +334,7 @@ export default function QuotesPage() {
                 }`}
               >
                 <p className={`text-2xl font-bold ${textPrimary}`}>
-                  {formatCurrency(quote.totalAmount)}
+                  {formatCurrency(quote.totalPrice)}
                 </p>
               </div>
 
@@ -586,7 +588,7 @@ export default function QuotesPage() {
                           <td
                             className={`px-4 py-3 text-right font-bold text-lg ${textPrimary}`}
                           >
-                            {formatCurrency(selectedQuote.totalAmount)}
+                            {formatCurrency(selectedQuote.totalPrice)}
                           </td>
                         </tr>
                       </tfoot>
@@ -777,7 +779,7 @@ export default function QuotesPage() {
                       {selectedQuote.provider.businessName}
                     </p>
                     <p className={`text-sm ${textMuted}`}>
-                      Total: {formatCurrency(selectedQuote.totalAmount)}
+                      Total: {formatCurrency(selectedQuote.totalPrice)}
                     </p>
                   </div>
                 </div>
@@ -826,7 +828,7 @@ export default function QuotesPage() {
                         </svg>
                       </div>
                       <p className={`text-sm ${textMuted}`}>
-                        Pay {formatCurrency(selectedQuote.totalAmount)} now
+                        Pay {formatCurrency(selectedQuote.totalPrice)} now
                       </p>
                     </div>
                   </label>
@@ -869,7 +871,7 @@ export default function QuotesPage() {
                         Pay {formatCurrency(calculateDeposit(selectedQuote))}{" "}
                         deposit now,
                         {formatCurrency(
-                          selectedQuote.totalAmount -
+                          selectedQuote.totalPrice -
                             calculateDeposit(selectedQuote)
                         )}{" "}
                         before event

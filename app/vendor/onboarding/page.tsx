@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import ImageUpload, { MultiImageUpload } from "@/components/ui/ImageUpload";
+import { formatCurrency } from "@/lib/formatters";
 
 // Step types
 type OnboardingStep =
@@ -400,7 +401,7 @@ export default function VendorOnboardingPage() {
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Starting Price (₦)
+                Starting Price (€)
               </label>
               <input
                 type="number"
@@ -742,7 +743,7 @@ export default function VendorOnboardingPage() {
                 </h4>
                 <p className="text-gray-900">
                   {formData.priceFrom
-                    ? `₦${formData.priceFrom}`
+                    ? formatCurrency(formData.priceFrom)
                     : "Not specified"}
                 </p>
               </div>

@@ -2,6 +2,7 @@
 
 import AdminLayout from "@/components/admin/AdminLayout";
 import { useAdminTheme } from "@/components/admin/AdminThemeContext";
+import { formatCurrency } from "@/lib/formatters";
 import Modal from "@/components/admin/Modal";
 import ConfirmDialog from "@/components/admin/ConfirmDialog";
 import {
@@ -303,7 +304,7 @@ function ViewBookingModal({
                     {item.name} x{item.qty}
                   </span>
                   <span className={darkMode ? "text-white" : "text-gray-900"}>
-                    ₦{item.totalPrice?.toLocaleString()}
+                    {formatCurrency(item.totalPrice ?? 0)}
                   </span>
                 </div>
               ))}
@@ -316,12 +317,9 @@ function ViewBookingModal({
                   Total
                 </span>
                 <span className="text-accent">
-                  ₦
-                  {(
-                    booking.totalPrice ||
-                    booking.quote?.totalPrice ||
-                    0
-                  ).toLocaleString()}
+                  {formatCurrency(
+                    booking.totalPrice ?? booking.quote?.totalPrice ?? 0
+                  )}
                 </span>
               </div>
             </div>
@@ -873,10 +871,14 @@ export default function AdminBookingsPage() {
                       <td className="px-6 py-4">
                         <div>
                           <p className={`text-sm ${textPrimary}`}>
-                            {booking.user.name || "No Name"}
+                            {booking.user?.name ||
+                              booking.clientName ||
+                              "No Name"}
                           </p>
                           <p className={`text-xs ${textMuted}`}>
-                            {booking.user.email}
+                            {booking.user?.email ||
+                              booking.clientEmail ||
+                              "N/A"}
                           </p>
                         </div>
                       </td>
@@ -892,10 +894,9 @@ export default function AdminBookingsPage() {
                       <td
                         className={`px-6 py-4 text-sm font-medium ${textPrimary}`}
                       >
-                        ₦
-                        {booking.totalPrice?.toLocaleString() ||
-                          booking.quote?.totalPrice?.toLocaleString() ||
-                          "0"}
+                        {formatCurrency(
+                          booking.totalPrice ?? booking.quote?.totalPrice ?? 0
+                        )}
                       </td>
                       <td className="px-6 py-4">
                         <span

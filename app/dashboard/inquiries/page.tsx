@@ -110,7 +110,7 @@ export default function InquiriesPage() {
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ message: newMessage }),
+          body: JSON.stringify({ text: newMessage }),
         }
       );
 
@@ -384,7 +384,7 @@ export default function InquiriesPage() {
               )}
 
               {/* Messages */}
-              <div className="flex-1 overflow-y-auto p-4 space-y-4 min-h-[300px] max-h-[400px]">
+              <div className="flex-1 overflow-y-auto p-4 space-y-4 h-[400px] max-h-[400px]">
                 {/* Initial inquiry */}
                 <div className="flex justify-end">
                   <div className="max-w-[80%]">

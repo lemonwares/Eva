@@ -1,10 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
+import { sendEmail } from "@/lib/mail";
+import { emailTemplates } from "@/templates/templateLoader";
 
 const contactSchema = z.object({
-  name: z.string().min(1).max(100),
+  name: z.string().min(1).max(100).optional(),
   email: z.string().email(),
-  subject: z.string().min(1).max(200),
+  subject: z.string().min(1).max(200).optional(),
   message: z.string().min(10).max(5000),
   type: z
     .enum(["general", "support", "vendor", "partnership"])
@@ -24,26 +26,66 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { name, email, subject, message, type } = validation.data;
+    const {
+      name = "Guest",
+      email,
+      subject = "Support Request",
+      message,
+      type,
+    } = validation.data;
 
-    // In production, this would:
-    // 1. Save to database
-    // 2. Send email notification to support
-    // 3. Send confirmation email to user
+    const referenceId = `EVA-${Date.now().toString(36).toUpperCase()}`;
 
-    // For now, just log it
-    console.log("Contact form submission:", {
+    // Send confirmation email to user with branded template
+    try {
+      const userEmailHtml = emailTemplates.contactSupport(
+        name,
+        message,
+        referenceId
+      );
+      await sendEmail({
+        to: email,
+        subject: "We've received your message - EVA Support",
+        html: userEmailHtml,
+      });
+    } catch (emailError) {
+      console.error("Failed to send confirmation email:", emailError);
+      // Don't fail the request if confirmation email fails
+    }
+
+    // Send notification email to support team
+    try {
+      await sendEmail({
+        to: process.env.SUPPORT_EMAIL || "hello@eva.com",
+        subject: `[${type.toUpperCase()}] ${subject} - ${referenceId}`,
+        html: `
+          <h2>New Contact Form Submission</h2>
+          <p><strong>Reference ID:</strong> ${referenceId}</p>
+          <p><strong>Type:</strong> ${type}</p>
+          <p><strong>From:</strong> ${name} (${email})</p>
+          <p><strong>Subject:</strong> ${subject}</p>
+          <p><strong>Message:</strong></p>
+          <p>${message.replace(/\n/g, "<br />")}</p>
+          <hr />
+          <p><small>Submitted at: ${new Date().toISOString()}</small></p>
+        `,
+      });
+    } catch (emailError) {
+      console.error("Failed to send support notification:", emailError);
+      // Don't fail the request if support email fails
+    }
+
+    console.log("Contact form submission processed:", {
       name,
       email,
       subject,
       type,
-      message: message.substring(0, 100) + "...",
       submittedAt: new Date().toISOString(),
     });
 
     return NextResponse.json({
       message: "Thank you for your message. We'll get back to you shortly.",
-      referenceId: `EVA-${Date.now().toString(36).toUpperCase()}`,
+      referenceId,
     });
   } catch (error: any) {
     console.error("Error processing contact form:", error);

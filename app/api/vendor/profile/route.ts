@@ -64,7 +64,26 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const body = await request.json();
+    let body;
+    try {
+      body = await request.json();
+      console.log("Request body parsed successfully:", {
+        hasPhotos: Array.isArray(body.photos),
+        photosLength: Array.isArray(body.photos)
+          ? body.photos.length
+          : "not-array",
+        photosType: typeof body.photos,
+        coverImageType: typeof body.coverImage,
+        keys: Object.keys(body),
+      });
+    } catch (parseError) {
+      console.error("JSON parse error:", parseError);
+      return NextResponse.json(
+        { message: "Invalid JSON in request body" },
+        { status: 400 }
+      );
+    }
+
     const {
       businessName,
       description,
@@ -93,6 +112,24 @@ export async function POST(request: NextRequest) {
         { status: 400 }
       );
     }
+
+    // Validate and normalize array fields
+    const validateArray = (field: any, fieldName: string): string[] => {
+      if (!field) return [];
+      if (!Array.isArray(field)) {
+        console.warn(`${fieldName} is not an array:`, field);
+        return [];
+      }
+      return field.filter((item) => typeof item === "string");
+    };
+
+    const categories_valid = validateArray(categories, "categories");
+    const subcategories_valid = validateArray(subcategories, "subcategories");
+    const cultureTraditionTags_valid = validateArray(
+      cultureTraditionTags,
+      "cultureTraditionTags"
+    );
+    const photos_valid = validateArray(photos, "photos");
 
     // Geocode the postcode
     let geoLat: number | null = null;
@@ -152,14 +189,14 @@ export async function POST(request: NextRequest) {
         serviceRadiusMiles: Number(serviceRadiusMiles),
         geoLat,
         geoLng,
-        categories: categories || [],
-        subcategories: subcategories || [],
-        cultureTraditionTags: cultureTraditionTags || [],
+        categories: categories_valid,
+        subcategories: subcategories_valid,
+        cultureTraditionTags: cultureTraditionTags_valid,
         instagram: instagram || null,
         tiktok: tiktok || null,
         facebook: facebook || null,
         coverImage: coverImage || null,
-        photos: photos || [],
+        photos: photos_valid,
         priceFrom: priceFrom ? Number(priceFrom) : null,
         isPublished: isPublished ?? false,
         isVerified: false,
@@ -180,11 +217,23 @@ export async function POST(request: NextRequest) {
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : "Unknown error";
     console.error("Error creating vendor profile:", message);
+    console.error("Full error:", error);
 
     // Check for specific Prisma errors
     if (message.includes("Unique constraint")) {
       return NextResponse.json(
         { message: "A vendor profile with this information already exists" },
+        { status: 400 }
+      );
+    }
+
+    if (message.includes("JSON")) {
+      return NextResponse.json(
+        {
+          message:
+            "Invalid data format. Please ensure all array fields are properly formatted.",
+          error: message,
+        },
         { status: 400 }
       );
     }

@@ -2,6 +2,17 @@
 
 import VendorLayout from "@/components/vendor/VendorLayout";
 import { useVendorTheme } from "@/components/vendor/VendorThemeContext";
+import { formatCurrency } from "@/lib/formatters";
+import ServiceModal, {
+  type ServiceData,
+} from "@/components/vendor/modals/ServiceModal";
+import PhotoModal, {
+  type PhotoItem,
+} from "@/components/vendor/modals/PhotoModal";
+import DescriptionModal from "@/components/vendor/modals/DescriptionModal";
+import InfoModal, {
+  type BusinessInfoData,
+} from "@/components/vendor/modals/InfoModal";
 import {
   Camera,
   Star,
@@ -76,6 +87,13 @@ export default function VendorProfilePage() {
   const coverInputRef = useRef<HTMLInputElement>(null);
   const logoInputRef = useRef<HTMLInputElement>(null);
 
+  // Modal states
+  const [serviceModalOpen, setServiceModalOpen] = useState(false);
+  const [photoModalOpen, setPhotoModalOpen] = useState(false);
+  const [descriptionModalOpen, setDescriptionModalOpen] = useState(false);
+  const [infoModalOpen, setInfoModalOpen] = useState(false);
+  const [editingService, setEditingService] = useState<Listing | null>(null);
+
   useEffect(() => {
     fetchProfile();
   }, []);
@@ -93,6 +111,154 @@ export default function VendorProfilePage() {
       setIsLoading(false);
     }
   }
+
+  // Service modal handlers
+  const handleAddService = async (data: ServiceData) => {
+    try {
+      const res = await fetch("/api/vendor/listings", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      });
+
+      if (!res.ok) throw new Error("Failed to create service");
+
+      // Refresh profile to show new service
+      await fetchProfile();
+    } catch (err) {
+      throw new Error(
+        err instanceof Error ? err.message : "Failed to create service"
+      );
+    }
+  };
+
+  const handleEditService = async (data: ServiceData) => {
+    if (!editingService) return;
+    try {
+      const res = await fetch(`/api/vendor/listings/${editingService.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      });
+
+      if (!res.ok) throw new Error("Failed to update service");
+
+      // Refresh profile to show updated service
+      await fetchProfile();
+      setEditingService(null);
+    } catch (err) {
+      throw new Error(
+        err instanceof Error ? err.message : "Failed to update service"
+      );
+    }
+  };
+
+  const handleServiceSubmit = async (data: ServiceData) => {
+    if (editingService) {
+      await handleEditService(data);
+    } else {
+      await handleAddService(data);
+    }
+  };
+
+  // Photo modal handlers
+  const handleAddPhoto = async (file: File) => {
+    try {
+      const formData = new FormData();
+      formData.append("files", file);
+
+      const uploadRes = await fetch("/api/upload", {
+        method: "POST",
+        body: formData,
+      });
+
+      const uploadData = await uploadRes.json();
+      if (!uploadRes.ok) throw new Error(uploadData.message);
+
+      // Add photo to vendor profile
+      const res = await fetch("/api/vendor/profile", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          photos: [...(provider?.photos || []), uploadData.url],
+        }),
+      });
+
+      if (!res.ok) throw new Error("Failed to save photo");
+
+      // Refresh profile
+      await fetchProfile();
+    } catch (err) {
+      throw new Error(
+        err instanceof Error ? err.message : "Failed to upload photo"
+      );
+    }
+  };
+
+  const handleDeletePhoto = async (photoUrl: string) => {
+    try {
+      const newPhotos = provider?.photos.filter((p) => p !== photoUrl) || [];
+
+      const res = await fetch("/api/vendor/profile", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ photos: newPhotos }),
+      });
+
+      if (!res.ok) throw new Error("Failed to delete photo");
+
+      // Refresh profile
+      await fetchProfile();
+    } catch (err) {
+      throw new Error(
+        err instanceof Error ? err.message : "Failed to delete photo"
+      );
+    }
+  };
+
+  // Description modal handler
+  const handleSaveDescription = async (description: string) => {
+    try {
+      const res = await fetch("/api/vendor/profile", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ description }),
+      });
+
+      if (!res.ok) throw new Error("Failed to save description");
+
+      // Refresh profile
+      await fetchProfile();
+    } catch (err) {
+      throw new Error(
+        err instanceof Error ? err.message : "Failed to save description"
+      );
+    }
+  };
+
+  // Info modal handler
+  const handleSaveInfo = async (data: BusinessInfoData) => {
+    try {
+      const res = await fetch("/api/vendor/profile", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          address: data.location,
+          phonePublic: data.phone,
+          email: data.email,
+        }),
+      });
+
+      if (!res.ok) throw new Error("Failed to save information");
+
+      // Refresh profile
+      await fetchProfile();
+    } catch (err) {
+      throw new Error(
+        err instanceof Error ? err.message : "Failed to save information"
+      );
+    }
+  };
 
   async function handleImageUpload(file: File, type: "cover" | "logo") {
     setIsUploading(type);
@@ -346,6 +512,7 @@ export default function VendorProfilePage() {
                 About
               </h3>
               <button
+                onClick={() => setDescriptionModalOpen(true)}
                 className={`p-2 rounded-lg ${
                   darkMode ? "hover:bg-white/10" : "hover:bg-gray-100"
                 } transition-colors`}
@@ -379,7 +546,13 @@ export default function VendorProfilePage() {
               >
                 Services & Packages
               </h3>
-              <button className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-accent/20 text-accent text-sm hover:bg-accent/30 transition-colors">
+              <button
+                onClick={() => {
+                  setEditingService(null);
+                  setServiceModalOpen(true);
+                }}
+                className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-accent/20 text-accent text-sm hover:bg-accent/30 transition-colors"
+              >
                 <Plus size={16} />
                 Add Service
               </button>
@@ -395,7 +568,7 @@ export default function VendorProfilePage() {
                 </p>
               </div>
             ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="space-y-2">
                 {provider.listings.map((listing) => (
                   <div
                     key={listing.id}
@@ -419,6 +592,10 @@ export default function VendorProfilePage() {
                         </p>
                       </div>
                       <button
+                        onClick={() => {
+                          setEditingService(listing);
+                          setServiceModalOpen(true);
+                        }}
                         className={`opacity-0 group-hover:opacity-100 p-1.5 rounded ${
                           darkMode ? "hover:bg-white/10" : "hover:bg-gray-200"
                         } transition-all`}
@@ -428,9 +605,9 @@ export default function VendorProfilePage() {
                     </div>
                     <p className="text-accent font-bold text-lg">
                       {listing.minPrice
-                        ? `₦${listing.minPrice.toLocaleString()}${
+                        ? `${formatCurrency(listing.minPrice)}${
                             listing.maxPrice
-                              ? ` - ₦${listing.maxPrice.toLocaleString()}`
+                              ? ` - ${formatCurrency(listing.maxPrice)}`
                               : "+"
                           }`
                         : "Price on request"}
@@ -457,7 +634,10 @@ export default function VendorProfilePage() {
               >
                 Portfolio Gallery
               </h3>
-              <button className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-accent/20 text-accent text-sm hover:bg-accent/30 transition-colors">
+              <button
+                onClick={() => setPhotoModalOpen(true)}
+                className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-accent/20 text-accent text-sm hover:bg-accent/30 transition-colors"
+              >
                 <Plus size={16} />
                 Add Photos
               </button>
@@ -601,6 +781,7 @@ export default function VendorProfilePage() {
                 Contact Information
               </h3>
               <button
+                onClick={() => setInfoModalOpen(true)}
                 className={`p-2 rounded-lg ${
                   darkMode ? "hover:bg-white/10" : "hover:bg-gray-100"
                 } transition-colors`}
@@ -858,7 +1039,7 @@ export default function VendorProfilePage() {
                 Starting Price
               </h3>
               <p className="text-accent text-2xl font-bold">
-                ₦{provider.priceFrom.toLocaleString()}
+                {formatCurrency(provider.priceFrom)}
               </p>
               <p
                 className={`text-sm ${
@@ -871,6 +1052,63 @@ export default function VendorProfilePage() {
           )}
         </div>
       </div>
+
+      {/* Modals */}
+      <ServiceModal
+        isOpen={serviceModalOpen}
+        onClose={() => {
+          setServiceModalOpen(false);
+          setEditingService(null);
+        }}
+        onSubmit={handleServiceSubmit}
+        initialData={
+          editingService
+            ? {
+                headline: editingService.headline,
+                longDescription: editingService.longDescription || "",
+                minPrice: editingService.minPrice,
+                maxPrice: editingService.maxPrice,
+              }
+            : undefined
+        }
+        darkMode={darkMode}
+      />
+
+      <PhotoModal
+        isOpen={photoModalOpen}
+        onClose={() => setPhotoModalOpen(false)}
+        onSubmit={handleAddPhoto}
+        existingPhotos={
+          provider?.photos?.map((photo) => ({ url: photo })) || []
+        }
+        onDeletePhoto={handleDeletePhoto}
+        darkMode={darkMode}
+      />
+
+      <DescriptionModal
+        isOpen={descriptionModalOpen}
+        onClose={() => setDescriptionModalOpen(false)}
+        onSubmit={handleSaveDescription}
+        initialValue={provider?.description || ""}
+        darkMode={darkMode}
+      />
+
+      <InfoModal
+        isOpen={infoModalOpen}
+        onClose={() => setInfoModalOpen(false)}
+        onSubmit={handleSaveInfo}
+        initialData={
+          provider
+            ? {
+                location: provider.address || "",
+                phone: provider.phonePublic || "",
+                email: provider.owner?.email || "",
+                experience: "",
+              }
+            : undefined
+        }
+        darkMode={darkMode}
+      />
     </VendorLayout>
   );
 }

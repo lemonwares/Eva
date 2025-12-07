@@ -2,7 +2,11 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/auth";
 import { z } from "zod";
-import { sendTemplatedEmail, emailTemplates } from "@/lib/email";
+import { sendEmail } from "@/lib/email";
+import {
+  generateInquiryEmailHTML,
+  generateInquiryEmailText,
+} from "@/lib/templates/inquiry-email";
 
 // Validation schema for inquiry creation
 const inquirySchema = z.object({
@@ -94,7 +98,7 @@ export async function GET(request: NextRequest) {
     ]);
 
     return NextResponse.json({
-      inquiries,
+      inquiries: Array.isArray(inquiries) ? inquiries : [],
       pagination: {
         page,
         limit,
@@ -105,7 +109,10 @@ export async function GET(request: NextRequest) {
   } catch (error: any) {
     console.error("Error fetching inquiries:", error);
     return NextResponse.json(
-      { message: "Internal server error" },
+      {
+        message: "Internal server error",
+        error: error?.message || String(error),
+      },
       { status: 500 }
     );
   }
@@ -191,25 +198,55 @@ export async function POST(request: NextRequest) {
     // Send email notification to vendor
     if (providerWithOwner?.owner?.email) {
       const baseUrl = process.env.NEXTAUTH_URL || "http://localhost:3000";
-      const inquiryUrl = `${baseUrl}/vendor/inquiries`;
-      const eventDate = validatedData.eventDate
-        ? new Date(validatedData.eventDate).toLocaleDateString("en-NG", {
-            day: "numeric",
-            month: "long",
-            year: "numeric",
-          })
-        : "Not specified";
+      const inquiryUrl = `${baseUrl}/vendor/inquiries/${inquiry.id}`;
 
-      await sendTemplatedEmail(
-        providerWithOwner.owner.email,
-        emailTemplates.newInquiry(
+      // Parse budget range to extract numeric value
+      let budgetAmount: number | undefined;
+      if (validatedData.budgetRange) {
+        const budgetMatch = validatedData.budgetRange.match(/\d+/);
+        if (budgetMatch) {
+          budgetAmount = parseInt(budgetMatch[0], 10);
+        }
+      }
+
+      const emailHTML = generateInquiryEmailHTML({
+        vendorName:
           providerWithOwner.owner.name || providerWithOwner.businessName,
-          validatedData.fromName,
-          "Event Inquiry",
-          eventDate,
-          inquiryUrl
-        )
-      );
+        clientName: validatedData.fromName,
+        clientEmail: validatedData.fromEmail,
+        eventType: body.eventType || "Event Inquiry",
+        eventDate: validatedData.eventDate
+          ? new Date(validatedData.eventDate).toISOString()
+          : new Date().toISOString(),
+        location: body.location,
+        guestCount: validatedData.guestsCount,
+        budget: budgetAmount,
+        message: validatedData.message,
+        inquiryUrl,
+      });
+
+      const emailText = generateInquiryEmailText({
+        vendorName:
+          providerWithOwner.owner.name || providerWithOwner.businessName,
+        clientName: validatedData.fromName,
+        clientEmail: validatedData.fromEmail,
+        eventType: body.eventType || "Event Inquiry",
+        eventDate: validatedData.eventDate
+          ? new Date(validatedData.eventDate).toISOString()
+          : new Date().toISOString(),
+        location: body.location,
+        guestCount: validatedData.guestsCount,
+        budget: budgetAmount,
+        message: validatedData.message,
+        inquiryUrl,
+      });
+
+      await sendEmail({
+        to: providerWithOwner.owner.email,
+        subject: `New Inquiry from ${validatedData.fromName} - Event Inquiry`,
+        html: emailHTML,
+        text: emailText,
+      });
     }
 
     return NextResponse.json(

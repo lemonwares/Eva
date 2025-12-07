@@ -49,6 +49,8 @@ export default function VendorLayoutSidebar({
   const pathname = usePathname();
   const { darkMode, toggleDarkMode } = useVendorTheme();
 
+  const vendorInitial = (vendorName?.[0] || "V").toUpperCase();
+
   const isActive = (href: string) => {
     if (href === "/vendor") {
       return pathname === "/vendor";
@@ -83,7 +85,9 @@ export default function VendorLayoutSidebar({
           <div className="flex items-center justify-between mb-0 lg:mb-0">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-full bg-linear-to-br from-accent to-pink-600 flex items-center justify-center">
-                <span className="text-white font-bold text-sm">E</span>
+                <span className="text-white font-bold text-sm">
+                  {vendorInitial}
+                </span>
               </div>
               <div>
                 <p

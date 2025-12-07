@@ -58,6 +58,7 @@ export default function AdminReviewsPage() {
   const [selectedReview, setSelectedReview] = useState<Review | null>(null);
   const [moderatorNotes, setModeratorNotes] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
+  const [approving, setApproving] = useState(false);
 
   const fetchReviews = useCallback(async () => {
     setIsLoading(true);
@@ -269,7 +270,11 @@ export default function AdminReviewsPage() {
                               {review.author.name || "Anonymous"}
                             </p>
                             <p className={`text-sm ${textMuted} truncate`}>
-                              {truncateText(review.content)}
+                              {truncateText(
+                                typeof review.content === "string"
+                                  ? review.content
+                                  : ""
+                              )}
                             </p>
                             <div className="flex items-center gap-1 mt-1">
                               {[1, 2, 3, 4, 5].map((star) => (
@@ -368,9 +373,11 @@ export default function AdminReviewsPage() {
               <button
                 className="flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-lg bg-accent text-white font-semibold hover:bg-accent/90 transition-colors disabled:opacity-50"
                 disabled={
-                  selectedReview.isApproved && !selectedReview.isFlagged
+                  (selectedReview.isApproved && !selectedReview.isFlagged) ||
+                  approving
                 }
                 onClick={async () => {
+                  setApproving(true);
                   try {
                     const res = await fetch(
                       `/api/reviews/${selectedReview.id}/moderate`,
@@ -378,8 +385,8 @@ export default function AdminReviewsPage() {
                         method: "POST",
                         headers: { "Content-Type": "application/json" },
                         body: JSON.stringify({
-                          action: "approve",
-                          notes: moderatorNotes,
+                          action: "APPROVE",
+                          reason: moderatorNotes,
                         }),
                       }
                     );
@@ -394,11 +401,22 @@ export default function AdminReviewsPage() {
                     }
                   } catch (err) {
                     console.error("Error approving review:", err);
+                  } finally {
+                    setApproving(false);
                   }
                 }}
               >
-                <CheckCircle size={18} />
-                Approve
+                {approving ? (
+                  <>
+                    <Loader2 className="animate-spin w-4 h-4" />
+                    Approving...
+                  </>
+                ) : (
+                  <>
+                    <CheckCircle size={18} />
+                    Approve
+                  </>
+                )}
               </button>
               <button
                 className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-lg border ${

@@ -3,6 +3,7 @@
 import VendorLayout from "@/components/vendor/VendorLayout";
 import { useVendorTheme } from "@/components/vendor/VendorThemeContext";
 import { Modal } from "@/components/ui/Modal";
+import { formatCurrency } from "@/lib/formatters";
 import {
   Search,
   ChevronLeft,
@@ -202,14 +203,14 @@ function ViewBookingModal({
                     {item.name} x{item.qty}
                   </span>
                   <span className="font-medium">
-                    ₦{item.totalPrice?.toLocaleString()}
+                    {formatCurrency(item.totalPrice ?? 0)}
                   </span>
                 </div>
               ))}
               <div className="pt-2 mt-2 border-t-2 border-gray-300 flex justify-between font-bold">
                 <span>Total</span>
                 <span className="text-accent">
-                  ₦{booking.pricingTotal?.toLocaleString()}
+                  {formatCurrency(booking.pricingTotal ?? 0)}
                 </span>
               </div>
             </div>
@@ -229,14 +230,14 @@ function ViewBookingModal({
             <div>
               <p className="text-gray-500">Total</p>
               <p className="font-medium">
-                ₦{booking.pricingTotal?.toLocaleString()}
+                {formatCurrency(booking.pricingTotal ?? 0)}
               </p>
             </div>
             {booking.depositAmount && (
               <div>
                 <p className="text-gray-500">Deposit</p>
                 <p className="font-medium">
-                  ₦{booking.depositAmount?.toLocaleString()}
+                  {formatCurrency(booking.depositAmount ?? 0)}
                 </p>
               </div>
             )}
@@ -244,7 +245,7 @@ function ViewBookingModal({
               <div>
                 <p className="text-gray-500">Balance</p>
                 <p className="font-medium">
-                  ₦{booking.balanceAmount?.toLocaleString()}
+                  {formatCurrency(booking.balanceAmount ?? 0)}
                 </p>
               </div>
             )}
@@ -710,7 +711,7 @@ export default function VendorBookingsPage() {
                           darkMode ? "text-white" : "text-gray-900"
                         }`}
                       >
-                        ₦{booking.pricingTotal?.toLocaleString() || "0"}
+                        {formatCurrency(booking.pricingTotal ?? 0)}
                       </td>
                       <td className="px-6 py-5">
                         <div className="relative">
@@ -860,7 +861,7 @@ export default function VendorBookingsPage() {
                         darkMode ? "text-white" : "text-gray-900"
                       }`}
                     >
-                      ₦{booking.pricingTotal?.toLocaleString() || "0"}
+                      {formatCurrency(booking.pricingTotal ?? 0)}
                     </span>
                   </div>
                 </div>
