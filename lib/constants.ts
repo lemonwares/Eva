@@ -1,3 +1,5 @@
+import { formatCurrency } from "./formatters";
+
 // Application constants
 
 // App info
@@ -205,14 +207,30 @@ export const PROVIDER_STATUSES = [
 // User roles
 export const USER_ROLES = ["USER", "VENDOR", "ADMIN"] as const;
 
-// Price ranges (in Naira)
+// Price ranges (in Euro)
 export const PRICE_RANGES = [
-  { label: "Under ₦50,000", min: 0, max: 50000 },
-  { label: "₦50,000 - ₦100,000", min: 50000, max: 100000 },
-  { label: "₦100,000 - ₦250,000", min: 100000, max: 250000 },
-  { label: "₦250,000 - ₦500,000", min: 250000, max: 500000 },
-  { label: "₦500,000 - ₦1,000,000", min: 500000, max: 1000000 },
-  { label: "Above ₦1,000,000", min: 1000000, max: Infinity },
+  { label: `Under ${formatCurrency(50000)}`, min: 0, max: 50000 },
+  {
+    label: `${formatCurrency(50000)} - ${formatCurrency(100000)}`,
+    min: 50000,
+    max: 100000,
+  },
+  {
+    label: `${formatCurrency(100000)} - ${formatCurrency(250000)}`,
+    min: 100000,
+    max: 250000,
+  },
+  {
+    label: `${formatCurrency(250000)} - ${formatCurrency(500000)}`,
+    min: 250000,
+    max: 500000,
+  },
+  {
+    label: `${formatCurrency(500000)} - ${formatCurrency(1000000)}`,
+    min: 500000,
+    max: 1000000,
+  },
+  { label: `Above ${formatCurrency(1000000)}`, min: 1000000, max: Infinity },
 ] as const;
 
 // Guest count ranges
@@ -290,12 +308,11 @@ export const MONTHS = [
 ] as const;
 
 // Currency
-export const DEFAULT_CURRENCY = "NGN";
+export const DEFAULT_CURRENCY = "EUR";
 export const SUPPORTED_CURRENCIES = [
-  { code: "NGN", symbol: "₦", name: "Nigerian Naira" },
-  { code: "USD", symbol: "$", name: "US Dollar" },
-  { code: "NGN", symbol: "₦", name: "British Pound" },
   { code: "EUR", symbol: "€", name: "Euro" },
+  { code: "USD", symbol: "$", name: "US Dollar" },
+  { code: "GBP", symbol: "£", name: "British Pound" },
   { code: "GHS", symbol: "₵", name: "Ghanaian Cedi" },
   { code: "KES", symbol: "KSh", name: "Kenyan Shilling" },
   { code: "ZAR", symbol: "R", name: "South African Rand" },

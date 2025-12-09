@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Mail, Phone, MapPin } from "lucide-react";
 import Modal from "@/components/admin/Modal";
 import { useAdminTheme } from "@/components/admin/AdminThemeContext";
+import { formatCurrency } from "@/lib/formatters";
 
 interface Provider {
   id: string;
@@ -237,8 +238,8 @@ export function ViewVendorModal({
               </p>
               {provider.priceFrom && (
                 <p className={`text-sm ${textSecondary}`}>
-                  <span className={textMuted}>Starting Price:</span> ₦
-                  {provider.priceFrom}
+                  <span className={textMuted}>Starting Price:</span>{" "}
+                  {formatCurrency(provider.priceFrom)}
                 </p>
               )}
               {provider.serviceRadius && (
@@ -463,7 +464,7 @@ export function EditVendorModal({
           </div>
           <div>
             <label className={`block text-sm font-medium ${textPrimary} mb-1`}>
-              Starting Price (₦)
+              Starting Price (€)
             </label>
             <input
               type="number"
@@ -739,7 +740,7 @@ export function AddVendorModal({
           </div>
           <div>
             <label className={`block text-sm font-medium ${textPrimary} mb-1`}>
-              Starting Price (₦)
+              Starting Price (€)
             </label>
             <input
               type="number"

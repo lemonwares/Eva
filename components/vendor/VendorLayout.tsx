@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, ReactNode } from "react";
+import { useEffect, useState, ReactNode } from "react";
 import VendorLayoutSidebar from "./VendorLayoutSidebar";
 import VendorLayoutHeader from "./VendorLayoutHeader";
 import { useVendorTheme } from "./VendorThemeContext";
@@ -27,7 +27,49 @@ export default function VendorLayout({
   vendorType,
 }: VendorLayoutProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [providerName, setProviderName] = useState<string | undefined>(
+    vendorName
+  );
+  const [providerType, setProviderType] = useState<string | undefined>(
+    vendorType
+  );
   const { darkMode } = useVendorTheme();
+
+  // Fetch provider details if not explicitly provided via props
+  useEffect(() => {
+    if (vendorName && vendorType) return;
+
+    let isMounted = true;
+
+    const loadProvider = async () => {
+      try {
+        const res = await fetch("/api/vendor/profile");
+        if (!res.ok) return;
+
+        const data = await res.json();
+        const provider = data?.provider;
+        if (!provider) return;
+
+        if (isMounted) {
+          setProviderName(vendorName ?? provider.businessName);
+          setProviderType(
+            vendorType ?? provider.categories?.[0] ?? "Vendor Portal"
+          );
+        }
+      } catch (error) {
+        console.error("Failed to load provider details for sidebar:", error);
+      }
+    };
+
+    loadProvider();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [vendorName, vendorType]);
+
+  const displayVendorName = providerName ?? "EVA Vendor";
+  const displayVendorType = providerType ?? "Vendor Portal";
 
   return (
     <div
@@ -38,8 +80,8 @@ export default function VendorLayout({
       <VendorLayoutSidebar
         isOpen={sidebarOpen}
         onClose={() => setSidebarOpen(false)}
-        vendorName={vendorName}
-        vendorType={vendorType}
+        vendorName={displayVendorName}
+        vendorType={displayVendorType}
       />
 
       <main className="flex-1 min-w-0 flex flex-col h-screen overflow-hidden">

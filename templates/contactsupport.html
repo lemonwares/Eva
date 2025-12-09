@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>We've Received Your Message</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    body {
+      font-family: 'IBM Plex Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      line-height: 1.6;
+      color: #1f2937;
+      background-color: #f9fafb;
+    }
+    .email-container {
+      max-width: 600px;
+      margin: 0 auto;
+      background: white;
+      border-radius: 16px;
+      overflow: hidden;
+      box-shadow: 0 4px 12px rgba(15, 23, 42, 0.1);
+    }
+    .header {
+      background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+      padding: 40px 20px;
+      text-align: center;
+    }
+    .logo {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 48px;
+      height: 48px;
+      background: #ec4899;
+      color: white;
+      font-weight: bold;
+      font-size: 24px;
+      border-radius: 12px;
+      margin-bottom: 16px;
+    }
+    .header-title {
+      font-size: 28px;
+      font-weight: 600;
+      color: white;
+      margin-bottom: 8px;
+    }
+    .header-subtitle {
+      font-size: 14px;
+      color: rgba(255, 255, 255, 0.8);
+      font-weight: 500;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+    }
+    .body {
+      padding: 40px;
+    }
+    .greeting {
+      margin-bottom: 24px;
+      font-size: 16px;
+      color: #1f2937;
+    }
+    .greeting strong {
+      color: #0f172a;
+    }
+    .content {
+      margin-bottom: 28px;
+      line-height: 1.8;
+      color: #4b5563;
+    }
+    .message-box {
+      background: linear-gradient(135deg, rgba(236, 72, 153, 0.05) 0%, rgba(15, 23, 42, 0.03) 100%);
+      border-left: 4px solid #ec4899;
+      padding: 20px;
+      margin: 24px 0;
+      border-radius: 8px;
+      font-style: italic;
+      color: #4b5563;
+      line-height: 1.8;
+    }
+    .divider {
+      height: 1px;
+      background: #e5e7eb;
+      margin: 28px 0;
+    }
+    .footer {
+      background: #f9fafb;
+      padding: 24px 40px;
+      border-top: 1px solid #e5e7eb;
+      text-align: center;
+    }
+    .footer-text {
+      font-size: 13px;
+      color: #6b7280;
+      margin-bottom: 12px;
+    }
+    .footer-links {
+      font-size: 13px;
+      color: #6b7280;
+    }
+    .footer-links a {
+      color: #ec4899;
+      text-decoration: none;
+      margin: 0 8px;
+    }
+    .footer-links a:hover {
+      text-decoration: underline;
+    }
+    .cta-button {
+      display: inline-block;
+      background: #0f172a;
+      color: white;
+      padding: 12px 32px;
+      border-radius: 99px;
+      text-decoration: none;
+      font-weight: 600;
+      font-size: 14px;
+      margin-top: 20px;
+      transition: background 0.3s ease;
+    }
+    .cta-button:hover {
+      background: #1e293b;
+    }
+    .reference {
+      background: #f0f9ff;
+      border: 1px solid #bfdbfe;
+      padding: 16px;
+      border-radius: 8px;
+      margin: 24px 0;
+      font-size: 13px;
+      color: #1e40af;
+    }
+    .reference-label {
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+    .reference-code {
+      font-family: 'Courier New', monospace;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+  <div class="email-container">
+    <!-- Header -->
+    <div class="header">
+      <div class="logo">EVA</div>
+      <div class="header-title">We've Received Your Message</div>
+      <div class="header-subtitle">Support Team</div>
+    </div>
+
+    <!-- Body -->
+    <div class="body">
+      <div class="greeting">Hi <strong>{{name}}</strong>,</div>
+
+      <div class="content">
+        Thank you for reaching out to EVA! We've received your message and appreciate you taking the time to contact us. Our support team will review your request and get back to you within <strong>24 hours</strong>.
+      </div>
+
+      <div class="reference">
+        <div class="reference-label">Your Reference ID</div>
+        <div class="reference-code">{{referenceId}}</div>
+      </div>
+
+      <div class="divider"></div>
+
+      <div class="content" style="margin-bottom: 12px; color: #6b7280; font-weight: 600;">Your message:</div>
+      <div class="message-box">{{message}}</div>
+
+      <div class="divider"></div>
+
+      <div class="content">
+        <strong>What happens next?</strong><br/>
+        Our team will carefully review your inquiry and respond with a solution or next steps. If you have any additional information to share, feel free to reply to this email.
+      </div>
+
+      <a href="{{dashboardUrl}}" class="cta-button">Go to your account</a>
+    </div>
+
+    <!-- Footer -->
+    <div class="footer">
+      <div class="footer-text">
+        © {{currentYear}} EVA. Find vendors who get your traditions.
+      </div>
+      <div class="footer-links">
+        <a href="{{helpUrl}}">Help Center</a>
+        <a href="{{termsUrl}}">Terms</a>
+        <a href="{{privacyUrl}}">Privacy</a>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

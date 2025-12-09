@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import { formatCurrency } from "@/lib/formatters";
 
 interface AnalyticsData {
   period: string;
@@ -431,10 +432,9 @@ export default function AdminOverviewPage() {
                         {formatDate(booking.eventDate)}
                       </td>
                       <td className={`py-3 text-sm ${textPrimary}`}>
-                        ₦
-                        {booking.totalPrice?.toLocaleString() ||
-                          booking.quote?.totalPrice?.toLocaleString() ||
-                          0}
+                        {formatCurrency(
+                          booking.totalPrice ?? booking.quote?.totalPrice ?? 0
+                        )}
                       </td>
                       <td className="py-3">
                         <span

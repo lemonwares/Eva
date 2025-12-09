@@ -20,8 +20,9 @@ const navItems = [
   { label: "Search", href: "/search" },
   { label: "Vendors", href: "/vendors" },
   { label: "Categories", href: "/categories" },
-  { label: "How it Works", href: "/#how-it-works" },
+  { label: "How it Works", href: "/how-it-works" },
   { label: "FAQs", href: "/faq" },
+
 ];
 
 export default function Header() {

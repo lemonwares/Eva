@@ -9,6 +9,7 @@ interface UserProfile {
   name: string;
   email: string;
   phone?: string;
+  avatar?: string;
   image?: string;
   notificationPreferences?: {
     email: boolean;
@@ -43,8 +44,9 @@ export default function SettingsPage() {
   const [profileForm, setProfileForm] = useState({
     name: "",
     phone: "",
-    image: "",
   });
+  // Loader for avatar upload
+  const [avatarUploading, setAvatarUploading] = useState(false);
 
   const [passwordForm, setPasswordForm] = useState({
     currentPassword: "",
@@ -74,7 +76,6 @@ export default function SettingsPage() {
         setProfileForm({
           name: data.user.name || "",
           phone: data.user.phone || "",
-          image: data.user.image || "",
         });
         if (data.user.notificationPreferences) {
           setNotifications(data.user.notificationPreferences);
@@ -158,7 +159,7 @@ export default function SettingsPage() {
     try {
       setSaving(true);
       const response = await fetch("/api/users/me", {
-        method: "PATCH",
+        method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ notificationPreferences: notifications }),
       });
@@ -307,9 +308,9 @@ export default function SettingsPage() {
                     darkMode ? "bg-gray-700" : "bg-gray-100"
                   } overflow-hidden shrink-0`}
                 >
-                  {profileForm.image ? (
+                  {profile && (profile.avatar || profile.image) ? (
                     <img
-                      src={profileForm.image}
+                      src={profile.avatar || profile.image}
                       alt=""
                       className="w-full h-full object-cover"
                     />
@@ -324,19 +325,70 @@ export default function SettingsPage() {
                   )}
                 </div>
                 <div>
-                  <input
-                    type="text"
-                    value={profileForm.image}
-                    onChange={(e) =>
-                      setProfileForm({ ...profileForm, image: e.target.value })
-                    }
-                    placeholder="Image URL"
-                    className={`${inputClass} w-64`}
-                  />
-                  <p className={`text-sm ${textMuted} mt-1`}>
-                    Enter an image URL for your avatar
-                  </p>
+                  <div className="flex flex-col items-start">
+                    <label
+                      htmlFor="avatarFile"
+                      className="cursor-pointer flex items-center gap-2 text-rose-500 hover:text-rose-600"
+                    >
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        className="w-7 h-7"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                        strokeWidth={2}
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          d="M15 10l4.553-2.276A2 2 0 0020 6.382V5a2 2 0 00-2-2H6a2 2 0 00-2 2v1.382a2 2 0 00.447 1.342L9 10m6 0v4m0 0l-4.553 2.276A2 2 0 014 17.618V19a2 2 0 002 2h12a2 2 0 002-2v-1.382a2 2 0 00-.447-1.342L15 14z"
+                        />
+                        <circle cx="12" cy="12" r="3" />
+                      </svg>
+                      <span className="text-sm font-medium">Change Avatar</span>
+                    </label>
+                    <input
+                      id="avatarFile"
+                      type="file"
+                      name="avatarFile"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={async (e) => {
+                        const file = e.target.files?.[0];
+                        if (!file) return;
+                        const formData = new FormData();
+                        formData.append("files", file); // Use 'files' key to match backend
+                        setAvatarUploading(true);
+                        try {
+                          const res = await fetch("/api/upload", {
+                            method: "POST",
+                            body: formData,
+                          });
+                          const data = await res.json();
+                          if (res.ok && data.url) {
+                            // Avatar upload handled separately, not in profileForm
+                          } else {
+                            alert(data.message || "Upload failed");
+                          }
+                        } catch (err) {
+                          alert("Upload failed");
+                        } finally {
+                          setAvatarUploading(false);
+                        }
+                      }}
+                    />
+                  </div>
                 </div>
+
+                {/* Loader for avatar upload */}
+                {avatarUploading && (
+                  <div className="flex items-center gap-2 mt-2">
+                    <div className="animate-spin w-5 h-5 border-2 border-rose-500 border-t-transparent rounded-full"></div>
+                    <span className="text-sm text-rose-500">
+                      Uploading avatar...
+                    </span>
+                  </div>
+                )}
               </div>
 
               {/* Name */}

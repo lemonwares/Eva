@@ -1,6 +1,8 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import { AnimatePresence, motion } from "framer-motion";
+import { Star } from "lucide-react";
 import Link from "next/link";
 import { useDashboardTheme } from "../layout";
 import { useSession } from "next-auth/react";
@@ -544,33 +546,217 @@ export default function BookingsPage() {
                       return null;
                     })()}
                     {booking.provider.phonePublic && (
-                      <a
-                        href={`tel:${booking.provider.phonePublic}`}
-                        className="px-4 py-2 text-sm bg-rose-500 text-white rounded-lg hover:bg-rose-600"
-                      >
-                        Contact Vendor
-                      </a>
-                    )}
-                    {/* Write Review button for completed bookings */}
-                    {booking.status === "COMPLETED" && !booking.hasReview && (
-                      <button
-                        onClick={() => openReviewModal(booking)}
-                        className={`px-4 py-2 text-sm rounded-lg flex items-center gap-2 ${
-                          darkMode
-                            ? "bg-amber-600 hover:bg-amber-500"
-                            : "bg-amber-500 hover:bg-amber-600"
-                        } text-white`}
-                      >
-                        <svg
-                          className="w-4 h-4"
-                          fill="currentColor"
-                          viewBox="0 0 24 24"
+                      <div className="flex items-center gap-2">
+                        <a
+                          href={`tel:${booking.provider.phonePublic}`}
+                          className="px-4 py-2 text-sm bg-rose-500 text-white rounded-lg hover:bg-rose-600"
                         >
-                          <path d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
-                        </svg>
-                        Write Review
-                      </button>
+                          Contact Vendor
+                        </a>
+                        {(booking.status === "COMPLETED" ||
+                          booking.status === "CONFIRMED") &&
+                          !booking.hasReview && (
+                            <button
+                              aria-label="Write a review"
+                              className="p-2 rounded-full bg-amber-100 hover:bg-amber-200 text-amber-600 shadow transition-all flex items-center justify-center"
+                              onClick={() => openReviewModal(booking)}
+                            >
+                              <Star className="w-5 h-5" />
+                            </button>
+                          )}
+                      </div>
                     )}
+                    {/* Review Modal with Framer Motion 3D Squeeze Animation */}
+                    <AnimatePresence>
+                      {reviewModalOpen && reviewBooking && (
+                        <motion.div
+                          initial={{ opacity: 0 }}
+                          animate={{ opacity: 1 }}
+                          exit={{ opacity: 0 }}
+                          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40"
+                          style={{ backdropFilter: "blur(2px)" }}
+                        >
+                          <motion.div
+                            initial={{
+                              scale: 0.2,
+                              borderRadius: "50%",
+                              y: 0,
+                              boxShadow: "0 0 0 0 rgba(0,0,0,0)",
+                            }}
+                            animate={{
+                              scale: 1,
+                              borderRadius: "1.5rem",
+                              y: 0,
+                              boxShadow: "0 8px 32px 0 rgba(0,0,0,0.18)",
+                            }}
+                            exit={{
+                              scale: 0.2,
+                              borderRadius: "50%",
+                              y: 0,
+                              boxShadow: "0 0 0 0 rgba(0,0,0,0)",
+                            }}
+                            transition={{
+                              type: "spring",
+                              stiffness: 400,
+                              damping: 30,
+                            }}
+                            className="bg-white dark:bg-gray-900 rounded-3xl shadow-2xl w-full max-w-md p-8 relative"
+                          >
+                            <button
+                              className="absolute top-4 right-4 text-gray-400 hover:text-gray-700 dark:hover:text-white"
+                              onClick={() => setReviewModalOpen(false)}
+                              aria-label="Close"
+                            >
+                              <svg
+                                width="24"
+                                height="24"
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth="2"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                              >
+                                <line x1="18" y1="6" x2="6" y2="18" />
+                                <line x1="6" y1="6" x2="18" y2="18" />
+                              </svg>
+                            </button>
+                            <div className="flex flex-col items-center gap-2 mb-4">
+                              <Star className="w-8 h-8 text-amber-500" />
+                              <h2 className="text-xl font-bold">
+                                Write a Review
+                              </h2>
+                              <p className="text-sm text-gray-500 dark:text-gray-400 text-center">
+                                Share your experience with{" "}
+                                <span className="font-semibold">
+                                  {reviewBooking.provider.businessName}
+                                </span>
+                              </p>
+                            </div>
+                            <form
+                              onSubmit={async (e) => {
+                                e.preventDefault();
+                                setSubmittingReview(true);
+                                setReviewError("");
+                                setReviewSuccess(false);
+                                try {
+                                  const res = await fetch("/api/reviews", {
+                                    method: "POST",
+                                    headers: {
+                                      "Content-Type": "application/json",
+                                    },
+                                    body: JSON.stringify({
+                                      bookingId: reviewBooking.id,
+                                      providerId: reviewBooking.provider.id,
+                                      rating: reviewForm.rating,
+                                      title: reviewForm.title,
+                                      body: reviewForm.body,
+                                      authorName:
+                                        session?.user?.name || "Anonymous",
+                                      authorEmail: session?.user?.email || "",
+                                    }),
+                                  });
+                                  if (!res.ok) {
+                                    const data = await res.json();
+                                    setReviewError(
+                                      data.message || "Failed to submit review"
+                                    );
+                                  } else {
+                                    setReviewSuccess(true);
+                                    setTimeout(() => {
+                                      setReviewModalOpen(false);
+                                      fetchBookings();
+                                    }, 1200);
+                                  }
+                                } catch (err) {
+                                  setReviewError(
+                                    "Network error. Please try again."
+                                  );
+                                } finally {
+                                  setSubmittingReview(false);
+                                }
+                              }}
+                              className="space-y-4"
+                            >
+                              <div className="flex items-center gap-2 justify-center">
+                                {[1, 2, 3, 4, 5].map((star) => (
+                                  <button
+                                    key={star}
+                                    type="button"
+                                    onClick={() =>
+                                      setReviewForm((f) => ({
+                                        ...f,
+                                        rating: star,
+                                      }))
+                                    }
+                                    className="focus:outline-none"
+                                  >
+                                    <Star
+                                      className={`w-7 h-7 ${
+                                        reviewForm.rating >= star
+                                          ? "text-amber-400"
+                                          : "text-gray-300"
+                                      }`}
+                                      fill={
+                                        reviewForm.rating >= star
+                                          ? "#fbbf24"
+                                          : "none"
+                                      }
+                                      strokeWidth={2}
+                                    />
+                                  </button>
+                                ))}
+                              </div>
+                              <input
+                                type="text"
+                                className="w-full px-4 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-amber-400"
+                                placeholder="Review title *"
+                                value={reviewForm.title}
+                                onChange={(e) =>
+                                  setReviewForm((f) => ({
+                                    ...f,
+                                    title: e.target.value,
+                                  }))
+                                }
+                                maxLength={80}
+                              />
+                              <textarea
+                                className="w-full px-4 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-amber-400"
+                                placeholder="Write your review..."
+                                value={reviewForm.body}
+                                onChange={(e) =>
+                                  setReviewForm((f) => ({
+                                    ...f,
+                                    body: e.target.value,
+                                  }))
+                                }
+                                rows={4}
+                                required
+                                maxLength={600}
+                              />
+                              {reviewError && (
+                                <div className="text-red-500 text-sm">
+                                  {reviewError}
+                                </div>
+                              )}
+                              {reviewSuccess && (
+                                <div className="text-green-600 text-sm font-medium">
+                                  Review submitted!
+                                </div>
+                              )}
+                              <button
+                                type="submit"
+                                className="w-full py-2 rounded-lg bg-amber-500 hover:bg-amber-600 text-white font-semibold transition-all disabled:opacity-60"
+                                disabled={submittingReview}
+                              >
+                                {submittingReview
+                                  ? "Submitting..."
+                                  : "Submit Review"}
+                              </button>
+                            </form>
+                          </motion.div>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
                     {booking.status === "COMPLETED" && booking.hasReview && (
                       <span
                         className={`px-4 py-2 text-sm rounded-lg flex items-center gap-2 ${

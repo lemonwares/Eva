@@ -84,16 +84,18 @@ export default function FavoritesPage() {
       : `Up to $${max?.toLocaleString()}`;
   };
 
-  const filteredFavorites = favorites.filter(
-    (fav) =>
-      fav.provider.businessName
-        .toLowerCase()
-        .includes(searchTerm.toLowerCase()) ||
-      fav.provider.city?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      fav.provider.categories.some((c) =>
-        c.name.toLowerCase().includes(searchTerm.toLowerCase())
+  const filteredFavorites = Array.isArray(favorites)
+    ? favorites.filter(
+        (fav) =>
+          fav.provider.businessName
+            .toLowerCase()
+            .includes(searchTerm.toLowerCase()) ||
+          fav.provider.city?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          fav.provider.categories.some((c) =>
+            c.name.toLowerCase().includes(searchTerm.toLowerCase())
+          )
       )
-  );
+    : [];
 
   const inputClass = `px-4 py-3 rounded-lg ${inputBg} border ${inputBorder} ${textPrimary} focus:outline-none focus:ring-2 focus:ring-rose-500`;
 
@@ -271,7 +273,7 @@ export default function FavoritesPage() {
                 </div>
 
                 {/* Categories */}
-                {favorite.provider.categories.length > 0 && (
+                {Array.isArray(favorite.provider.categories) && favorite.provider.categories.length > 0 && (
                   <div className="flex flex-wrap gap-1">
                     {favorite.provider.categories.slice(0, 3).map((cat, i) => (
                       <span

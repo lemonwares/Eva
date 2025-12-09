@@ -166,7 +166,7 @@ export async function POST(request: NextRequest) {
       line_items: [
         {
           price_data: {
-            currency: "usd",
+            currency: "eur",
             product_data: {
               name: description,
               description: `Vendor: ${booking.provider.businessName}`,
@@ -198,7 +198,7 @@ export async function POST(request: NextRequest) {
         bookingId: booking.id,
         paymentType,
         amount,
-        currency: "USD",
+        currency: "EUR",
         status: "PENDING",
         stripePaymentIntentId:
           (checkoutSession.payment_intent as string) || null,
