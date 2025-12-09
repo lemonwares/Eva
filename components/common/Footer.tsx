@@ -19,9 +19,7 @@ export default function Footer() {
                 <p className="text-xs uppercase tracking-[0.3em] text-background/70">
                   Event Vendor Atlas
                 </p>
-                <p className="text-base font-semibold">
-                  Find vendors, feel seen
-                </p>
+                <p className="text-base font-semibold">Book with confidence</p>
               </div>
             </div>
             <p className="mt-6 max-w-sm text-sm text-background/70">

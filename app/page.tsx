@@ -1,7 +1,6 @@
 import Footer from "@/components/common/Footer";
 import Header from "@/components/common/Header";
 import CategorySection from "@/components/sections/category-section";
-import FAQSection from "@/components/sections/faq-section";
 import HeroSection from "@/components/sections/hero-section";
 import TestimonialsSection from "@/components/sections/testimonials-section";
 import VendorsSection from "@/components/sections/vendors-section";
@@ -19,7 +18,6 @@ export default async function HomePage() {
       <CategorySection />
       <WhyChooseSection />
       <TestimonialsSection />
-      <FAQSection />
       <Footer />
     </div>
   );
