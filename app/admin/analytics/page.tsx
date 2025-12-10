@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from "react";
 import AdminLayout from "@/components/admin/AdminLayout";
 import { Toast, ToastType } from "@/components/admin/Toast";
 import { useAdminTheme } from "@/components/admin/AdminThemeContext";
+import { formatCurrency as sharedFormatCurrency } from "@/lib/formatters";
 
 interface AnalyticsData {
   overview: {
@@ -113,15 +114,9 @@ export default function AnalyticsPage() {
     fetchAnalytics();
   }, [fetchAnalytics]);
 
-  // Format currency
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat("en-NG", {
-      style: "currency",
-      currency: "NGN",
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0,
-    }).format(amount);
-  };
+  // Use shared formatCurrency (GBP, always .00)
+  const formatCurrency = (amount: number) =>
+    sharedFormatCurrency(amount, "GBP", "en-GB");
 
   // Format number
   const formatNumber = (num: number) => {

@@ -61,6 +61,28 @@ export async function GET(
             listings: true,
           },
         },
+        weeklySchedules: {
+          select: {
+            isClosed: true,
+            dayOfWeek: true,
+            startTime: true,
+            endTime: true,
+            providerId: true,
+            provider: true,
+            id: true,
+            updatedAt: true,
+            createdAt: true,
+          },
+        },
+        teamMembers: {
+          select: {
+            name: true,
+            imageUrl: true,
+            id: true,
+            providerId: true,
+            provider: true,
+          },
+        },
       },
     });
 
@@ -81,7 +103,18 @@ export async function GET(
       },
     });
 
-    return NextResponse.json({ provider });
+    // Map teamMembers to match frontend expectations (image instead of imageUrl)
+    const mappedProvider = {
+      ...provider,
+      teamMembers:
+        provider.teamMembers?.map((member: any) => ({
+          id: member.id,
+          name: member.name,
+          image: member.imageUrl || null,
+        })) || [],
+    };
+
+    return NextResponse.json({ provider: mappedProvider });
   } catch (error: any) {
     console.error("Error fetching provider:", error);
     return NextResponse.json(

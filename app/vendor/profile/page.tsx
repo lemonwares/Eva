@@ -662,6 +662,8 @@ export default function VendorProfilePage() {
                       src={photo}
                       alt={`Portfolio ${idx + 1}`}
                       fill
+                      unoptimized={true}
+                      loading="lazy"
                       className="object-cover"
                     />
                     <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">

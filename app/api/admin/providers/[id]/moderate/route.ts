@@ -20,6 +20,21 @@ const moderateProviderSchema = z.object({
 // POST /api/admin/providers/:id/moderate - Moderate a provider
 export async function POST(
   request: NextRequest,
+  ctx: { params: Promise<{ id: string }> }
+) {
+  return handleModerate(request, ctx);
+}
+
+// PATCH /api/admin/providers/:id/moderate - Moderate a provider (same as POST)
+export async function PATCH(
+  request: NextRequest,
+  ctx: { params: Promise<{ id: string }> }
+) {
+  return handleModerate(request, ctx);
+}
+
+async function handleModerate(
+  request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {

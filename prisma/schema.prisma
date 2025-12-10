@@ -182,13 +182,15 @@ model Provider {
   stripeOnboardingComplete Boolean @default(false) @map("stripe_onboarding_complete")
 
   // Relationships
-  owner     User       @relation(fields: [ownerUserId], references: [id], onDelete: Cascade)
-  listings  Listing[]
-  inquiries Inquiry[]
-  quotes    Quote[]
-  bookings  Booking[]
-  reviews   Review[]
-  favorites Favorite[]
+  owner           User             @relation(fields: [ownerUserId], references: [id], onDelete: Cascade)
+  listings        Listing[]
+  inquiries       Inquiry[]
+  quotes          Quote[]
+  bookings        Booking[]
+  reviews         Review[]
+  favorites       Favorite[]
+  teamMembers     TeamMember[]
+  weeklySchedules WeeklySchedule[]
 
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
@@ -204,6 +206,53 @@ model Provider {
   @@index([averageRating])
   @@index([priceFrom])
   @@map("providers")
+}
+
+// ============================================
+// TEAM MEMBERS (Vendor Staff)
+// ============================================
+
+model TeamMember {
+  id         String  @id @default(cuid())
+  providerId String  @map("provider_id")
+  name       String
+  role       String?
+  bio        String? @db.Text
+  imageUrl   String?
+  email      String?
+  phone      String?
+  isActive   Boolean @default(true)
+
+  // Relationships
+  provider Provider @relation(fields: [providerId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@index([providerId])
+  @@map("team_members")
+}
+
+// ============================================
+// WEEKLY SCHEDULE (Vendor Working Hours)
+// ============================================
+
+model WeeklySchedule {
+  id         String  @id @default(cuid())
+  providerId String  @map("provider_id")
+  dayOfWeek  Int // 0=Sunday, 1=Monday, ..., 6=Saturday
+  startTime  String // e.g. "09:00"
+  endTime    String // e.g. "17:00"
+  isClosed   Boolean @default(false)
+
+  // Relationships
+  provider Provider @relation(fields: [providerId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@index([providerId, dayOfWeek])
+  @@map("weekly_schedules")
 }
 
 // ============================================
@@ -553,7 +602,7 @@ model Payout {
   providerId String @map("provider_id")
 
   amount   Float
-  currency String @default("NGN")
+  currency String @default("GBP")
 
   // Stripe Connect
   stripePayoutId  String? @unique @map("stripe_payout_id")

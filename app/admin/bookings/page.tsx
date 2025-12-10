@@ -609,15 +609,24 @@ export default function AdminBookingsPage() {
 
   // Filter bookings by search query (client-side)
   const filteredBookings = searchQuery
-    ? bookings.filter(
-        (b) =>
-          b.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          b.user.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          b.user.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    ? bookings.filter((b) => {
+        const idMatch = b.id?.toLowerCase().includes(searchQuery.toLowerCase());
+        const userNameMatch =
+          b.user &&
+          b.user.name &&
+          b.user.name.toLowerCase().includes(searchQuery.toLowerCase());
+        const userEmailMatch =
+          b.user &&
+          b.user.email &&
+          b.user.email.toLowerCase().includes(searchQuery.toLowerCase());
+        const providerNameMatch =
+          b.provider &&
+          b.provider.businessName &&
           b.provider.businessName
             .toLowerCase()
-            .includes(searchQuery.toLowerCase())
-      )
+            .includes(searchQuery.toLowerCase());
+        return idMatch || userNameMatch || userEmailMatch || providerNameMatch;
+      })
     : bookings;
 
   // Show toast notification
