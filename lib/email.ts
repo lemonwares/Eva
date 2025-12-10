@@ -80,13 +80,25 @@ export async function sendEmail(options: EmailOptions): Promise<boolean> {
     return true;
   }
 
-  try {
-    console.log(`📧 Sending email via ZeptoMail to: ${options.to}`);
-    return await sendWithZeptoMail(options);
-  } catch (error) {
-    console.error("Email sending failed:", error);
-    return false;
+  const maxRetries = 5;
+  const delayMs = 2000;
+  let attempt = 0;
+  let lastError = null;
+
+  while (attempt < maxRetries) {
+    try {
+      console.log(`📧 Sending email via ZeptoMail to: ${options.to}`);
+      return await sendWithZeptoMail(options);
+    } catch (error) {
+      lastError = error;
+      console.error(`Email sending failed (attempt ${attempt + 1}):`, error);
+      if (attempt < maxRetries - 1) {
+        await new Promise((resolve) => setTimeout(resolve, delayMs));
+      }
+    }
+    attempt++;
   }
+  return false;
 }
 
 // Email templates

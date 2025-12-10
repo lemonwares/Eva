@@ -92,10 +92,10 @@ export function formatDateRange(
   }
 
   if (sameYear) {
-    return `${start.toLocaleDateString("en-NG", {
+    return `${start.toLocaleDateString("en-GB", {
       month: "short",
       day: "numeric",
-    })} - ${end.toLocaleDateString("en-NG", {
+    })} - ${end.toLocaleDateString("en-GB", {
       month: "short",
       day: "numeric",
       year: "numeric",
@@ -116,17 +116,17 @@ export function formatDateRange(
 // Currency formatting
 export function formatCurrency(
   amount: number,
-  currency: string = "EUR",
-  locale: string = "en-IE"
+  currency: string = "GBP",
+  locale: string = "en-GB"
 ): string {
   // Handle NaN, undefined, or null values
   if (amount === null || amount === undefined || isNaN(amount)) {
-    return "€0";
+    return "£0.00";
   }
   return new Intl.NumberFormat(locale, {
     style: "currency",
     currency,
-    minimumFractionDigits: 0,
+    minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   }).format(amount);
 }

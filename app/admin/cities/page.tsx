@@ -57,7 +57,7 @@ const emptyFormData: CityFormData = {
   slug: "",
   county: "",
   region: "",
-  country: "Nigeria",
+  country: "London",
   latitude: "",
   longitude: "",
   displayOrder: "0",
@@ -596,7 +596,7 @@ export default function AdminCitiesPage() {
                   });
                 }}
                 className={`w-full px-4 py-2.5 rounded-lg border ${inputBg} ${inputBorder} ${textPrimary} text-sm focus:outline-none focus:ring-2 focus:ring-accent/50`}
-                placeholder="e.g., Lagos"
+                placeholder="e.g., London"
               />
             </div>
             <div>
@@ -612,7 +612,7 @@ export default function AdminCitiesPage() {
                   setFormData({ ...formData, slug: e.target.value })
                 }
                 className={`w-full px-4 py-2.5 rounded-lg border ${inputBg} ${inputBorder} ${textPrimary} text-sm focus:outline-none focus:ring-2 focus:ring-accent/50`}
-                placeholder="e.g., lagos"
+                placeholder="e.g., london"
               />
             </div>
           </div>
@@ -631,7 +631,7 @@ export default function AdminCitiesPage() {
                   setFormData({ ...formData, region: e.target.value })
                 }
                 className={`w-full px-4 py-2.5 rounded-lg border ${inputBg} ${inputBorder} ${textPrimary} text-sm focus:outline-none focus:ring-2 focus:ring-accent/50`}
-                placeholder="e.g., South West"
+                placeholder="e.g., Greater London"
               />
             </div>
             <div>
@@ -647,7 +647,7 @@ export default function AdminCitiesPage() {
                   setFormData({ ...formData, county: e.target.value })
                 }
                 className={`w-full px-4 py-2.5 rounded-lg border ${inputBg} ${inputBorder} ${textPrimary} text-sm focus:outline-none focus:ring-2 focus:ring-accent/50`}
-                placeholder="e.g., Lagos State"
+                placeholder="e.g., England"
               />
             </div>
           </div>
@@ -666,7 +666,7 @@ export default function AdminCitiesPage() {
                   setFormData({ ...formData, country: e.target.value })
                 }
                 className={`w-full px-4 py-2.5 rounded-lg border ${inputBg} ${inputBorder} ${textPrimary} text-sm focus:outline-none focus:ring-2 focus:ring-accent/50`}
-                placeholder="Nigeria"
+                placeholder="United Kingdom"
               />
             </div>
             <div>
@@ -682,7 +682,7 @@ export default function AdminCitiesPage() {
                   setFormData({ ...formData, latitude: e.target.value })
                 }
                 className={`w-full px-4 py-2.5 rounded-lg border ${inputBg} ${inputBorder} ${textPrimary} text-sm focus:outline-none focus:ring-2 focus:ring-accent/50`}
-                placeholder="6.5244"
+                placeholder="51.5074"
               />
             </div>
             <div>
@@ -698,7 +698,7 @@ export default function AdminCitiesPage() {
                   setFormData({ ...formData, longitude: e.target.value })
                 }
                 className={`w-full px-4 py-2.5 rounded-lg border ${inputBg} ${inputBorder} ${textPrimary} text-sm focus:outline-none focus:ring-2 focus:ring-accent/50`}
-                placeholder="3.3792"
+                placeholder="-0.1278"
               />
             </div>
           </div>
@@ -750,7 +750,7 @@ export default function AdminCitiesPage() {
                 setFormData({ ...formData, metaTitle: e.target.value })
               }
               className={`w-full px-4 py-2.5 rounded-lg border ${inputBg} ${inputBorder} ${textPrimary} text-sm focus:outline-none focus:ring-2 focus:ring-accent/50`}
-              placeholder="Event vendors in Lagos"
+              placeholder="Event vendors in London"
               maxLength={60}
             />
             <p className={`text-xs ${textMuted} mt-1`}>
@@ -771,7 +771,7 @@ export default function AdminCitiesPage() {
               }
               rows={3}
               className={`w-full px-4 py-2.5 rounded-lg border ${inputBg} ${inputBorder} ${textPrimary} text-sm focus:outline-none focus:ring-2 focus:ring-accent/50 resize-none`}
-              placeholder="Find the best event vendors in Lagos..."
+              placeholder="Find the best event vendors in London..."
               maxLength={160}
             />
             <p className={`text-xs ${textMuted} mt-1`}>

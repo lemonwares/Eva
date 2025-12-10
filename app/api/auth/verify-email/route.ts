@@ -64,7 +64,7 @@ async function handleVerification(token: string) {
     // Find verification record by token
     const verification = await prisma.emailVerification.findUnique({
       where: { token },
-      include: { user: true }, // Include user data
+      include: { user: true },
     });
 
     console.log("Verification record found:", verification ? "Yes" : "No");
@@ -86,12 +86,43 @@ async function handleVerification(token: string) {
       );
     }
 
-    console.log("Token is valid, proceeding with verification");
+    // If already verified, allow re-verification for 2 minutes
+    if (verification.verifiedAt) {
+      const verifiedAt = new Date(verification.verifiedAt);
+      const now = new Date();
+      const diffMs = now.getTime() - verifiedAt.getTime();
+      if (diffMs < 2 * 60 * 1000) {
+        // Within 2 minutes grace period, return success (do not send another welcome email)
+        return NextResponse.json(
+          {
+            message: "Email verified successfully",
+            user: {
+              id: verification.user.id,
+              name: verification.user.name,
+              email: verification.user.email,
+            },
+          },
+          { status: 200 }
+        );
+      } else {
+        // After 2 minutes, delete the token and return error
+        await prisma.emailVerification.delete({ where: { token } });
+        return NextResponse.json(
+          { message: "Verification token has expired" },
+          { status: 400 }
+        );
+      }
+    }
 
-    // Mark user as verified
+    // Not yet verified: mark user as verified, set verifiedAt, send welcome email
     const user = await prisma.user.update({
       where: { id: verification.userId },
       data: { emailVerifiedAt: new Date() },
+    });
+
+    await prisma.emailVerification.update({
+      where: { token },
+      data: { verifiedAt: new Date() },
     });
 
     // Send welcome email
@@ -110,9 +141,6 @@ async function handleVerification(token: string) {
       subject: "Welcome to Eva Marketplace! 🎉",
       html: htmlContent,
     });
-
-    // Delete the verification record
-    await prisma.emailVerification.delete({ where: { token } });
 
     return NextResponse.json(
       {

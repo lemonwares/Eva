@@ -430,8 +430,8 @@ export default function AdminReviewsPage() {
                         method: "POST",
                         headers: { "Content-Type": "application/json" },
                         body: JSON.stringify({
-                          action: "reject",
-                          notes: moderatorNotes,
+                          action: "REJECT",
+                          reason: moderatorNotes,
                         }),
                       }
                     );
@@ -460,8 +460,8 @@ export default function AdminReviewsPage() {
                         method: "POST",
                         headers: { "Content-Type": "application/json" },
                         body: JSON.stringify({
-                          action: "flag",
-                          notes: moderatorNotes,
+                          action: "FLAG",
+                          reason: moderatorNotes,
                         }),
                       }
                     );
