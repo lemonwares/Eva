@@ -28,10 +28,10 @@ export default function AboutPage() {
               budget and location constraints.
             </p>
             <p className="text-gray-700">
-              We recognized the best vendors are often right around the corner,
+              We recognised the best vendors are often right around the corner,
               waiting to help, but clients were often stuck with a 25-mile
-              radius, so we help clients minimize travel costs and support their
-              local economy. Our platform brings diverse event experts and
+              radius, so we help clients minimise travel expenses and support
+              their local trade. Our platform brings diverse event experts and
               tradition tags for South Asian, African, Caribbean, Chinese, and
               Middle Eastern traditions, ensuring vendors truly understand what
               makes each celebration unique.
@@ -72,11 +72,11 @@ export default function AboutPage() {
                 Our Mission
               </h3>
               <p className="text-gray-700">
-                To democratize event planning by connecting clients with
+                To democratise event planning by connecting clients with
                 exceptional local vendors who meet their budget, location, and
                 cultural needs. EVA believes everyone deserves access to quality
                 event services without the hassle of endless searching or
-                breaking the bank on travel costs.
+                breaking the bank on travel expenses.
               </p>
             </div>
             <div className="bg-gray-50 rounded-lg p-6 shadow">
@@ -107,8 +107,8 @@ export default function AboutPage() {
                 <div>
                   <h4 className="font-semibold">Community First</h4>
                   <p className="text-gray-600 text-sm">
-                    We prioritize local involvement and community support,
-                    helping neighborhoods thrive through local commerce.
+                    We prioritise local involvement and community support,
+                    helping neighbourhoods thrive through local trade.
                   </p>
                 </div>
               </div>
@@ -160,8 +160,8 @@ export default function AboutPage() {
               <ol className="list-decimal list-inside space-y-4 text-gray-700">
                 <li>
                   <span className="font-semibold">Radius-First Discovery:</span>{" "}
-                  Default to inside each client travel cost and area. Find
-                  quality vendors right in your neighborhood.
+                  Default to inside each client travel expense and area. Find
+                  quality vendors right in your neighbourhood.
                 </li>
                 <li>
                   <span className="font-semibold">

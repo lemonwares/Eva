@@ -74,9 +74,9 @@ export default function PrivacyPage() {
                 Send administrative information, updates, and marketing
                 communications
               </li>
-              <li>Respond to inquiries and offer customer support</li>
-              <li>Personalize and improve user experience</li>
-              <li>Monitor and analyze usage patterns</li>
+              <li>Respond to enquiries and offer customer support</li>
+              <li>Personalise and improve user experience</li>
+              <li>Monitor and analyse usage patterns</li>
               <li>Detect, prevent, and address fraud and security issues</li>
             </ul>
           </section>
@@ -127,7 +127,7 @@ export default function PrivacyPage() {
             <h2 className="text-2xl font-semibold mb-4">6. Data Retention</h2>
             <p className="text-muted-foreground leading-relaxed">
               We retain your personal information for as long as necessary to
-              fulfill the purposes outlined in this policy, unless a longer
+              fulfil the purposes outlined in this policy, unless a longer
               retention period is required by law. When we no longer need your
               information, we will securely delete or anonymize it.
             </p>
@@ -180,7 +180,7 @@ export default function PrivacyPage() {
             </h2>
             <p className="text-muted-foreground leading-relaxed">
               We use cookies and similar technologies to enhance your
-              experience, analyze usage, and deliver personalized content. You
+              experience, analyse usage, and deliver personalised content. You
               can control cookie preferences through your browser settings. Note
               that disabling cookies may affect platform functionality.
             </p>

@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useState, useRef, useEffect, useMemo } from "react";
 import {
@@ -98,9 +99,14 @@ export default function Header() {
             href="/"
             className="flex items-center gap-3 rounded-full bg-card/60 px-4 py-2 shadow-sm"
           >
-            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-accent text-accent-foreground font-bold">
-              EVA
-            </div>
+            <Image
+              src="/logo.png"
+              alt="EVA Logo"
+              width={40}
+              height={40}
+              className="h-10 w-10 rounded-full object-contain bg-white"
+              priority
+            />
             <div>
               <p className="text-xs uppercase tracking-[0.3em] text-muted-foreground">
                 Event Vendor Atlas

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import { Mail, MapPin } from "lucide-react";
 
 export default function Footer() {
@@ -12,9 +13,14 @@ export default function Footer() {
           {/* Brand Section */}
           <div>
             <div className="flex items-center gap-3">
-              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-background/10 text-lg font-semibold">
-                EVA
-              </div>
+              <Image
+                src="/logo.png"
+                alt="EVA Logo"
+                width={48}
+                height={48}
+                className="h-12 w-12 rounded-2xl object-contain bg-white"
+                priority
+              />
               <div>
                 <p className="text-xs uppercase tracking-[0.3em] text-background/70">
                   Event Vendor Atlas
@@ -23,8 +29,8 @@ export default function Footer() {
               </div>
             </div>
             <p className="mt-6 max-w-sm text-sm text-background/70">
-              Connecting you with culturally-aware vendors, planners, and spaces
-              so every celebration feels authentically yours.
+              Connecting you with culturally-aware vendors, organisers, and
+              spaces so every celebration feels authentically yours.
             </p>
             <div className="mt-6 space-y-3 text-sm text-background/80">
               <div className="flex items-center gap-2">
@@ -59,7 +65,7 @@ export default function Footer() {
               </li>
               <li>
                 <Link
-                  href="/#vendors"
+                  href="/vendors"
                   className="text-background/80 transition hover:text-background"
                 >
                   For vendors
@@ -67,10 +73,18 @@ export default function Footer() {
               </li>
               <li>
                 <Link
-                  href="/#faq"
+                  href="/faq"
                   className="text-background/80 transition hover:text-background"
                 >
-                  Help center
+                  Help centre
+                </Link>
+              </li>
+              <li>
+                <Link
+                  href="/contact"
+                  className="text-background/80 transition hover:text-background"
+                >
+                  Contact
                 </Link>
               </li>
             </ul>
@@ -98,6 +112,14 @@ export default function Footer() {
                   Terms of service
                 </Link>
               </li>
+              <li>
+                <Link
+                  href="/cookies"
+                  className="text-background/80 transition hover:text-background"
+                >
+                  Cookies policy
+                </Link>
+              </li>
             </ul>
           </div>
         </div>
@@ -114,6 +136,12 @@ export default function Footer() {
               </Link>
               <Link href="/terms" className="hover:text-background transition">
                 Terms
+              </Link>
+              <Link
+                href="/cookies"
+                className="hover:text-background transition"
+              >
+                Cookies
               </Link>
             </div>
           </div>

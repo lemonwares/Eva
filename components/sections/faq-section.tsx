@@ -151,7 +151,7 @@ export default function FAQSection() {
           <div className="mb-8 inline-flex items-center gap-2 rounded-full border border-border/70 bg-card px-6 py-3">
             <HelpCircle className="h-4 w-4 text-accent" />
             <span className="text-sm font-semibold uppercase tracking-[0.3em] text-muted-foreground">
-              Support center
+              Support centre
             </span>
           </div>
 
