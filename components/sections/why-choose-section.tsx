@@ -12,7 +12,7 @@ export default function WhyChooseSection() {
       icon: Sparkles,
       title: "Cultural & Ceremony Matching",
       description:
-        "Our core differentiator. Find specialists who understand the nuances of your traditions.",
+        "Our core difference. Find specialists who understand the nuances of your traditions.",
     },
     {
       icon: Shield,
@@ -37,7 +37,7 @@ export default function WhyChooseSection() {
           Built for modern celebrations
         </p>
         <h2 className="mt-4 text-balance text-4xl font-semibold text-foreground sm:text-5xl">
-          Why couples and planners rely on EVA
+          Why couples and organisers rely on EVA
         </h2>
         <p className="mx-auto mt-4 max-w-3xl text-balance text-lg text-muted-foreground">
           We connect you with vetted professionals, tailored search filters, and

@@ -10,13 +10,13 @@ const faqs = [
     id: "01",
     question: "How do I book a vendor on Eva?",
     answer:
-      "Simply browse or search for your desired vendor, view their profile, and click the 'Request Quote' or 'Book Now' button. Fill in your event details and the vendor will respond to your inquiry.",
+      "Simply browse or search for your desired vendor, view their profile, and click the 'Request Quote' or 'Book Now' button. Fill in your event details and the vendor will respond to your enquiry.",
   },
   {
     id: "02",
     question: "Is there a fee to use Eva?",
     answer:
-      "No, Eva is free for event planners and clients. You only pay the vendors for their services. Vendors may pay a subscription or commission to be listed.",
+      "No, Eva is free for event organisers and clients. You only pay the vendors for their services. Vendors may pay a subscription or commission to be listed.",
   },
   {
     id: "03",
@@ -46,7 +46,7 @@ const faqs = [
     id: "07",
     question: "Can I manage all my bookings in one place?",
     answer:
-      "Yes, your Eva dashboard lets you track all inquiries, bookings, payments, and messages in one convenient place.",
+      "Yes, your Eva dashboard lets you track all enquiries, bookings, payments, and messages in one convenient place.",
   },
 ];
 
@@ -147,7 +147,7 @@ export default function FAQPage() {
               </h3>
               <p className="text-muted-foreground mb-6 max-w-md">
                 Can't find the answer you're looking for? Please chat with our
-                support team or visit the Help Center.
+                support team or visit the Help Centre.
               </p>
               <a
                 href="/contact"

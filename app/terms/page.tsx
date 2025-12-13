@@ -54,10 +54,10 @@ export default function TermsPage() {
               <li>Maintain and promptly update your account information</li>
               <li>
                 Maintain the security of your password and accept all risks of
-                unauthorized access
+                unauthorised access
               </li>
               <li>
-                Notify us immediately if you discover any unauthorized use of
+                Notify us immediately if you discover any unauthorised use of
                 your account
               </li>
             </ul>
@@ -74,10 +74,10 @@ export default function TermsPage() {
               <li>
                 Provide accurate descriptions of their services and pricing
               </li>
-              <li>Respond to inquiries in a timely manner</li>
-              <li>Honor quotes and bookings made through the platform</li>
+              <li>Respond to enquiries in a timely manner</li>
+              <li>Honour quotes and bookings made through the platform</li>
               <li>
-                Maintain appropriate licenses and insurance for their services
+                Maintain appropriate licences and insurance for their services
               </li>
               <li>Deliver services as described and agreed upon</li>
             </ul>
@@ -91,9 +91,9 @@ export default function TermsPage() {
               Clients using EVA agree to:
             </p>
             <ul className="list-disc list-inside text-muted-foreground space-y-2 ml-4">
-              <li>Provide accurate event details when making inquiries</li>
+              <li>Provide accurate event details when making enquiries</li>
               <li>Communicate respectfully with vendors</li>
-              <li>Honor accepted quotes and booking agreements</li>
+              <li>Honour accepted quotes and booking agreements</li>
               <li>Make payments as agreed in the booking terms</li>
               <li>Provide honest and fair reviews of vendor services</li>
             </ul>
@@ -118,7 +118,7 @@ export default function TermsPage() {
             </h2>
             <p className="text-muted-foreground leading-relaxed">
               Users may post reviews, photos, and other content on EVA. You
-              retain ownership of your content but grant EVA a license to use,
+              retain ownership of your content but grant EVA a licence to use,
               display, and distribute such content. All reviews must be honest,
               accurate, and based on genuine experiences. EVA reserves the right
               to remove content that violates these terms.
@@ -160,7 +160,7 @@ export default function TermsPage() {
             <p className="text-muted-foreground leading-relaxed">
               EVA reserves the right to suspend or terminate accounts that
               violate these terms. Users may close their accounts at any time.
-              Upon termination, users must fulfill any outstanding obligations
+              Upon termination, users must fulfil any outstanding obligations
               from accepted bookings.
             </p>
           </section>

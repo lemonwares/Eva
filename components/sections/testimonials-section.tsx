@@ -39,9 +39,9 @@ const fallbackTestimonials: Testimonial[] = [
   {
     id: "2",
     quote:
-      "As a planner, finding vendors who are culturally competent is my biggest challenge. EVA's platform has made my job so much easier.",
+      "As an organiser, finding vendors who are culturally competent is my biggest challenge. EVA's platform has made my job so much easier.",
     author: "David Chen",
-    role: "Event Planner",
+    role: "Event Organiser",
     initials: "DC",
     rating: 5,
   },
@@ -130,7 +130,7 @@ export default function TestimonialsSection() {
           Stories from the EVA community
         </p>
         <h2 className="mt-4 text-balance text-4xl font-semibold text-foreground sm:text-5xl">
-          Trusted by couples, planners, & hosts
+          Trusted by couples, organisers, and hosts
         </h2>
       </div>
 

@@ -37,12 +37,12 @@ export default function HeroSection() {
           </div>
           <div className="space-y-6">
             <h1 className="text-balance text-4xl font-semibold text-foreground sm:text-5xl lg:text-6xl">
-              Find vendors who honor every tradition you celebrate.
+              Find vendors who honour every tradition you celebrate.
             </h1>
             <p className="text-lg text-muted-foreground sm:text-xl">
-              EVA maps trusted photographers, planners, caterers, and more to
-              your postcode, culture, and ceremony details—so every moment feels
-              personal.
+              EVA maps trusted photographers, organisers, caterers, and more to
+              your postcode, culture, and ceremony details, so every moment
+              feels personal.
             </p>
           </div>
 
@@ -152,12 +152,12 @@ export default function HeroSection() {
             <div className="mt-8 grid gap-4 rounded-2xl border border-border/70 bg-card/70 p-4 text-sm text-muted-foreground">
               <div className="flex items-center gap-3">
                 <ShieldCheck size={18} className="text-foreground" />
-                <p>All vendors verified for quality & cultural expertise.</p>
+                <p>All vendors verified for quality and cultural expertise.</p>
               </div>
               <div className="flex items-center gap-3">
                 <Users size={18} className="text-foreground" />
                 <p>
-                  Collaborate with planners, family, and friends in one hub.
+                  Collaborate with organisers, family, and friends in one hub.
                 </p>
               </div>
             </div>

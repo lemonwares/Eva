@@ -640,7 +640,7 @@ export default function VendorsSection() {
           </div>
 
           <h2 className="text-balance text-3xl font-bold text-foreground sm:text-4xl mb-3">
-            Trusted by couples, planners, and venues alike
+            Trusted by couples, organisers, and venues alike
           </h2>
           <p className="max-w-2xl text-base text-muted-foreground">
             Browse our curated collection of verified vendors across different

@@ -24,13 +24,13 @@ const flowSteps = [
   {
     title: "Compare curated matches",
     description:
-      "Browse verified profiles, portfolios, and reviews. Filter by specialties like halal catering, dhol players, or same-day edits.",
+      "Browse verified profiles, portfolios, and reviews. Filter by specialities like halal catering, dhol players, or same-day edits.",
     icon: Filter,
   },
   {
     title: "Message and shortlist",
     description:
-      "Chat with vendors, request quotes, and save favorites in one place so family and planners can weigh in.",
+      "Chat with vendors, request quotes, and save favourites in one place so family and organisers can weigh in.",
     icon: HeartHandshake,
   },
   {
@@ -43,8 +43,8 @@ const flowSteps = [
 
 const tracks = [
   {
-    label: "For couples & planners",
-    title: "Organize every detail in one calm view",
+    label: "For couples & organisers",
+    title: "Organise every detail in one calm view",
     points: [
       "Postcode-first search with cultural tags",
       "Collaborative shortlists for family sign-off",
@@ -73,12 +73,12 @@ const assurances = [
   {
     icon: Users,
     title: "Shared workspaces",
-    copy: "Loop in partners, parents, or planners with comment threads that stay organized.",
+    copy: "Loop in partners, parents, or organisers with comment threads that stay organised.",
   },
   {
     icon: Star,
     title: "Transparent reviews",
-    copy: "See proof: portfolios, ratings, and cultural specialties are front and center.",
+    copy: "See proof: portfolios, ratings, and cultural specialities are front and centre.",
   },
   {
     icon: CalendarCheck,
@@ -325,7 +325,7 @@ export default function HowItWorksPage() {
               <div className="grid gap-4 rounded-4xl border border-background/20 bg-background/10 p-5 text-sm text-background">
                 {[
                   "4.9/5 average vendor rating",
-                  "Cultural specialists across 80+ traditions",
+                  "Cultural specialities across 80+ traditions",
                   "Response guidance so vendors reply fast",
                   "Built for mobile planning with family",
                 ].map((item) => (
