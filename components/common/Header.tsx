@@ -21,8 +21,8 @@ const navItems = [
   { label: "Vendors", href: "/vendors" },
   { label: "Categories", href: "/categories" },
   { label: "How it Works", href: "/how-it-works" },
+  { label: "About", href: "/about" },
   { label: "FAQs", href: "/faq" },
-
 ];
 
 export default function Header() {
