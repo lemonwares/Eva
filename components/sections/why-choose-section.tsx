@@ -68,7 +68,7 @@ export default function WhyChooseSection() {
         })}
       </div>
 
-      <div className="relative mx-auto mt-12 max-w-4xl rounded-[32px] border border-border/70 bg-card p-10 text-center shadow-xl">
+      <div className="relative mx-auto mt-12 max-w-4xl rounded-4xl border border-border/70 bg-card p-10 text-center shadow-xl">
         <p className="text-sm font-semibold uppercase tracking-[0.4em] text-muted-foreground">
           Ready to explore?
         </p>
