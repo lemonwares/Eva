@@ -755,12 +755,12 @@ export default function CategorySection() {
                     key={category.id}
                     className="group shrink-0 w-[320px] cursor-pointer"
                   >
-                    <div className="relative aspect-[4/3] overflow-hidden rounded-2xl bg-slate-200 shadow-md transition-all duration-300 group-hover:shadow-xl group-hover:-translate-y-1">
+                    <div className="relative aspect-4/3 overflow-hidden rounded-2xl bg-slate-200 shadow-md transition-all duration-300 group-hover:shadow-xl group-hover:-translate-y-1">
                       <div
                         className="absolute inset-0 bg-cover bg-center transition duration-500 group-hover:scale-105"
                         style={{ backgroundImage: `url(${category.image})` }}
                       />
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-black/10" />
+                      <div className="absolute inset-0 bg-linear-to-t from-black/70 via-black/30 to-black/10" />
 
                       <div className="absolute left-4 top-4 z-10">
                         <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-white text-slate-900 shadow-lg transition duration-300 group-hover:scale-110">
