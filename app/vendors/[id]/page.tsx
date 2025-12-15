@@ -14,6 +14,9 @@ import { useParams } from "next/navigation";
 import { useSession } from "next-auth/react";
 import Link from "next/link";
 import { formatCurrency } from "@/lib/formatters";
+import BookingModal, {
+  BookingService,
+} from "@/components/vendor/modals/BookingModal";
 import {
   ArrowLeft,
   MapPin,
@@ -230,14 +233,18 @@ function ScheduleDisplay({
         )}
       </AnimatePresence>
     </div>
+
   );
 }
 
 export default function VendorDetailPage() {
+  // Category filter state
+  const [selectedCategory, setSelectedCategory] = useState<string>("all");
   const params = useParams();
   const { data: session } = useSession();
   const [vendor, setVendor] = useState<Provider | null>(null);
   const [reviews, setReviews] = useState<Review[]>([]);
+  const [listings, setListings] = useState<BookingService[]>([]);
   const [teamMembers, setTeamMembers] = useState<
     { id: string; name: string; imageUrl: string | null }[]
   >([]);
@@ -260,11 +267,14 @@ export default function VendorDetailPage() {
     budgetRange: "",
     message: "",
   });
+    const [bookingModalOpen, setBookingModalOpen] = useState(false);
+  const [bookingPrefill, setBookingPrefill] = useState<BookingService[]>([]);
+
 
   // Auto-fill form when user is logged in
   useEffect(() => {
     if (session?.user) {
-      setInquiryForm((prev) => ({
+      setInquiryForm((prev: InquiryFormData) => ({
         ...prev,
         fromName: session.user.name || prev.fromName,
         fromEmail: session.user.email || prev.fromEmail,
@@ -272,14 +282,25 @@ export default function VendorDetailPage() {
     }
   }, [session]);
 
-  useEffect(() => {
-    if (params.id) {
-      fetchVendor();
-      fetchReviews();
-      fetchTeamMembers();
+
+
+  async function fetchListings() {
+    try {
+      const response = await fetch(`/api/listings?providerId=${params.id}`);
+      if (!response.ok) throw new Error("Failed to fetch listings");
+      const data = await response.json();
+      setListings(
+        (data.listings || []).map((l: any) => ({
+          id: l.id,
+          headline: l.headline,
+          minPrice: l.minPrice,
+          maxPrice: l.maxPrice,
+        }))
+      );
+    } catch (err) {
+      console.error("Error fetching listings:", err);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [params.id]);
+  }
 
   async function fetchTeamMembers() {
     try {
@@ -378,6 +399,84 @@ export default function VendorDetailPage() {
       setIsSubmitting(false);
     }
   }
+  useEffect(() => {
+    if (params.id) {
+      fetchVendor();
+      fetchReviews();
+      fetchListings();
+      fetchTeamMembers();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [params.id]);
+
+  // Booking modal handlers
+  const handleBookService = (service: BookingService) => {
+    setBookingPrefill([
+      {
+        id: service.id,
+        headline: service.headline,
+        minPrice: service.minPrice,
+        maxPrice: service.maxPrice,
+      },
+    ]);
+    setBookingModalOpen(true);
+  };
+
+  const handleBookMultiple = () => {
+    if (!Array.isArray(listings) || listings.length === 0) return;
+    setBookingPrefill(
+      listings.map((s: BookingService) => ({
+        id: s.id,
+        headline: s.headline,
+        minPrice: s.minPrice,
+        maxPrice: s.maxPrice,
+      }))
+    );
+    setBookingModalOpen(true);
+  };
+
+  const [bookingStatus, setBookingStatus] = useState<
+    null | "success" | "error" | "loading"
+  >(null);
+  const [bookingError, setBookingError] = useState<string>("");
+
+  const handleBookingSubmit = async (selected: BookingService[]) => {
+    if (!vendor) return;
+    setBookingStatus("loading");
+    setBookingError("");
+    try {
+      const res = await fetch("/api/bookings", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          providerId: vendor.id,
+          services: selected,
+          clientName: session?.user?.name || "",
+          clientEmail: session?.user?.email || "",
+          clientPhone: "",
+          eventDate: "", // You may want to collect this from user
+          eventLocation: "",
+          guestsCount: null,
+          specialRequests: "",
+          paymentMode: "FULL_PAYMENT",
+          pricingTotal: selected.reduce((sum, s) => sum + (s.minPrice || 0), 0),
+        }),
+      });
+      if (!res.ok) {
+        const data = await res.json();
+        setBookingStatus("error");
+        setBookingError(data.message || "Failed to create booking");
+        return;
+      }
+      setBookingStatus("success");
+      setBookingModalOpen(false);
+    } catch (err) {
+      setBookingStatus("error");
+      setBookingError(
+        err instanceof Error ? err.message : "Something went wrong"
+      );
+    }
+  };
 
   function closeInquiryModal() {
     setShowInquiryForm(false);
@@ -423,8 +522,65 @@ export default function VendorDetailPage() {
     <div className="min-h-screen bg-background">
       <Header />
 
-      <section className="max-w-7xl mx-auto px-4 mt-24">
-        <div className="flex flex-col lg:flex-row">
+      {/* Hero / Gallery */}
+      <section className="relative pt-20">
+        {images.length > 0 ? (
+          <div className="relative h-[50vh] md:h-[60vh] overflow-hidden">
+            <div
+              className="absolute inset-0 bg-cover bg-center transition-all duration-500"
+              style={{ backgroundImage: `url(${images[activeImageIndex]})` }}
+            />
+            <div className="absolute inset-0 bg-foreground/30" />
+            {/* Navigation Arrows */}
+            {images.length > 1 && (
+              <>
+                <button
+                  onClick={() =>
+                    setActiveImageIndex((prev: number) =>
+                      prev === 0 ? images.length - 1 : prev - 1
+                    )
+                  }
+                  className="absolute left-4 top-1/2 -translate-y-1/2 p-3 rounded-full bg-background/80 hover:bg-background transition"
+                >
+                  <ChevronLeft size={24} />
+                </button>
+                <button
+                  onClick={() =>
+                    setActiveImageIndex((prev: number) =>
+                      prev === images.length - 1 ? 0 : prev + 1
+                    )
+                  }
+                  className="absolute right-4 top-1/2 -translate-y-1/2 p-3 rounded-full bg-background/80 hover:bg-background transition"
+                >
+                  <ChevronRight size={24} />
+                </button>
+              </>
+            )}
+            {/* Image Indicators */}
+            {images.length > 1 && (
+              <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex gap-2">
+                {images.map((_, index) => (
+                  <button
+                    key={index}
+                    onClick={() => setActiveImageIndex(index)}
+                    className={`w-2 h-2 rounded-full transition ${
+                      index === activeImageIndex
+                        ? "bg-background w-6"
+                        : "bg-background/50"
+                    }`}
+                  />
+                ))}
+              </div>
+            )}
+          </div>
+        ) : (
+          <div className="h-64 bg-muted" />
+        )}
+      </section>
+
+      {/* Content */}
+      <section className="max-w-7xl mx-auto px-4 py-12">
+        <div className="flex flex-col lg:flex-row gap-12">
           {/* Main Content */}
           <div className="flex-1">
             {/* Back Link */}
@@ -721,19 +877,105 @@ export default function VendorDetailPage() {
             )}
 
             {/* Services */}
-            {vendor.subcategories.length > 0 && (
+            {listings.length > 0 && (
               <div className="mb-12">
-                <h2 className="text-xl font-semibold mb-4">Services</h2>
-                <div className="flex flex-wrap gap-2">
-                  {vendor.subcategories.map((service, index) => (
-                    <span
-                      key={index}
-                      className="px-4 py-2 rounded-full bg-muted text-sm font-medium"
+                <h2 className="text-xl font-semibold mb-4">
+                  Services & Packages
+                </h2>
+                {/* Category Tabs (below section title) */}
+                {vendor.categories && vendor.categories.length > 1 && (
+                  <div className="flex gap-2 mb-6">
+                    <button
+                      className={`px-4 py-1.5 rounded-lg font-medium border transition-colors ${
+                        selectedCategory === "all"
+                          ? "bg-accent text-white border-accent"
+                          : "bg-gray-50 border-gray-200 text-gray-700"
+                      }`}
+                      onClick={() => setSelectedCategory("all")}
                     >
-                      {service}
-                    </span>
-                  ))}
-                </div>
+                      All
+                    </button>
+                    {vendor.categories.map((cat: string) => (
+                      <button
+                        key={cat}
+                        className={`px-4 py-1.5 rounded-lg font-medium border transition-colors ${
+                          selectedCategory === cat
+                            ? "bg-accent text-white border-accent"
+                            : "bg-gray-50 border-gray-200 text-gray-700"
+                        }`}
+                        onClick={() => setSelectedCategory(cat)}
+                      >
+                        {cat}
+                      </button>
+                    ))}
+                  </div>
+                )}
+                {/* Services List */}
+                {(() => {
+                  // Filter listings by selected category
+                  let filteredListings = listings;
+                  if (
+                    selectedCategory !== "all" &&
+                    vendor.categories.includes(selectedCategory)
+                  ) {
+                    // If listings had category info, filter here. For now, show all for 'all'.
+                    // If you add category info to listings, filter by it here.
+                  }
+                  return filteredListings.length === 0 ? (
+                    <div className="text-center py-8 text-gray-400">
+                      <p>No services listed yet.</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-2">
+                      {filteredListings.map((listing: BookingService) => (
+                        <div
+                          key={listing.id}
+                          className="p-4 rounded-lg bg-gray-50 border border-gray-200 hover:border-accent/50 transition-colors group flex flex-col gap-2"
+                        >
+                          <div className="flex items-start justify-between mb-2">
+                            <div>
+                              <h4 className="font-medium text-gray-900">
+                                {listing.headline}
+                              </h4>
+                              {/* Add description if available */}
+                            </div>
+                            <div className="flex flex-col gap-2 items-end">
+                              <button
+                                onClick={() => handleBookService(listing)}
+                                className="mt-2 px-4 py-1.5 rounded bg-accent text-white text-sm font-semibold hover:bg-accent/90 transition-colors"
+                              >
+                                Book
+                              </button>
+                            </div>
+                          </div>
+                          <p className="text-accent font-bold text-lg">
+                            {listing.minPrice
+                              ? `${formatCurrency(listing.minPrice)}${
+                                  listing.maxPrice
+                                    ? ` - ${formatCurrency(listing.maxPrice)}`
+                                    : "+"
+                                }`
+                              : "Price on request"}
+                          </p>
+                        </div>
+                      ))}
+                      <button
+                        onClick={handleBookMultiple}
+                        className="w-full mt-4 py-2 rounded-lg bg-accent/10 text-accent font-semibold hover:bg-accent/20 transition-colors"
+                      >
+                        Book Multiple Services
+                      </button>
+                      {/* Booking Modal */}
+                      <BookingModal
+                        isOpen={bookingModalOpen}
+                        onClose={() => setBookingModalOpen(false)}
+                        services={bookingPrefill}
+                        onBook={handleBookingSubmit}
+                        darkMode={false}
+                      />
+                    </div>
+                  );
+                })()}
               </div>
             )}
 
@@ -742,14 +984,16 @@ export default function VendorDetailPage() {
               <div className="mb-12">
                 <h2 className="text-xl font-semibold mb-4">Specializations</h2>
                 <div className="flex flex-wrap gap-2">
-                  {vendor.cultureTraditionTags.map((tag, index) => (
-                    <span
-                      key={index}
-                      className="px-4 py-2 rounded-full bg-accent/10 text-accent text-sm font-medium"
-                    >
-                      {tag}
-                    </span>
-                  ))}
+                  {vendor.cultureTraditionTags.map(
+                    (tag: string, index: number) => (
+                      <span
+                        key={index}
+                        className="px-4 py-2 rounded-full bg-accent/10 text-accent text-sm font-medium"
+                      >
+                        {tag}
+                      </span>
+                    )
+                  )}
                 </div>
               </div>
             )}
@@ -762,7 +1006,7 @@ export default function VendorDetailPage() {
 
               {reviews.length > 0 ? (
                 <div className="space-y-6">
-                  {reviews.map((review) => (
+                  {reviews.map((review: Review) => (
                     <div
                       key={review.id}
                       className="p-6 rounded-2xl border border-border"
@@ -775,7 +1019,7 @@ export default function VendorDetailPage() {
                           <p className="font-semibold">{review.authorName}</p>
                           <div className="flex items-center gap-2">
                             <div className="flex items-center gap-1">
-                              {[...Array(review.rating)].map((_, i) => (
+                              {[...Array(review.rating)].map((_, i: number) => (
                                 <Star
                                   key={i}
                                   size={14}
@@ -1188,6 +1432,7 @@ export default function VendorDetailPage() {
           </div>
         </div>
       )}
+
 
       <Footer />
     </div>

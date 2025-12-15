@@ -128,5 +128,93 @@ export async function GET(request: NextRequest) {
   }
 }
 
+// POST /api/bookings - Create a new booking (direct from vendor page)
+export async function POST(request: NextRequest) {
+  try {
+    const session = await auth();
+    if (!session?.user?.id) {
+      return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
+    }
+
+    const body = await request.json();
+    const {
+      providerId,
+      services, // Array of { id, headline, minPrice, maxPrice }
+      clientName,
+      clientEmail,
+      clientPhone,
+      eventDate,
+      eventLocation,
+      guestsCount,
+      specialRequests,
+      paymentMode,
+      pricingTotal,
+    } = body;
+
+    if (!providerId || !Array.isArray(services) || services.length === 0) {
+      return NextResponse.json(
+        { message: "Missing required fields" },
+        { status: 400 }
+      );
+    }
+
+    // Create a quote for the booking (optional, for tracking)
+    const quote = await prisma.quote.create({
+      data: {
+        providerId,
+        items: services.map((s: any) => ({
+          name: s.headline,
+          qty: 1,
+          unitPrice: s.minPrice || 0,
+          totalPrice: s.minPrice || 0,
+        })),
+        subtotal: services.reduce(
+          (sum: number, s: any) => sum + (s.minPrice || 0),
+          0
+        ),
+        tax: 0,
+        discount: 0,
+        totalPrice: services.reduce(
+          (sum: number, s: any) => sum + (s.minPrice || 0),
+          0
+        ),
+        allowedPaymentModes: [paymentMode || "FULL_PAYMENT"],
+        depositPercentage: 0,
+        validUntil: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 1 week
+        status: "SENT",
+      },
+    });
+
+    // Create the booking
+    const booking = await prisma.booking.create({
+      data: {
+        quoteId: quote.id,
+        providerId,
+        clientName,
+        clientEmail,
+        clientPhone,
+        eventDate: new Date(eventDate),
+        eventLocation,
+        guestsCount: guestsCount ? Number(guestsCount) : null,
+        specialRequests,
+        paymentMode: paymentMode || "FULL_PAYMENT",
+        pricingTotal: pricingTotal || quote.totalPrice,
+        status: "PENDING_PAYMENT",
+        statusTimeline: [
+          { status: "PENDING_PAYMENT", timestamp: new Date().toISOString() },
+        ],
+      },
+    });
+
+    return NextResponse.json({ message: "Booking created", booking });
+  } catch (error: any) {
+    console.error("Error creating booking:", error);
+    return NextResponse.json(
+      { message: "Internal server error" },
+      { status: 500 }
+    );
+  }
+}
+
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
