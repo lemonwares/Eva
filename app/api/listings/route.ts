@@ -6,8 +6,8 @@ import { z } from "zod";
 const createListingSchema = z.object({
   headline: z.string().min(1).max(200),
   longDescription: z.string().max(5000).optional(),
-  minPrice: z.number().min(0).optional(),
-  maxPrice: z.number().min(0).optional(),
+  price: z.number().min(0),
+  timeEstimate: z.string().min(1).max(100),
   coverImageUrl: z.string().url().optional(),
   galleryUrls: z.array(z.string().url()).optional(),
 });
@@ -44,11 +44,15 @@ export async function POST(request: NextRequest) {
 
     const listing = await prisma.listing.create({
       data: {
-        ...validation.data,
+        headline: validation.data.headline,
+        longDescription: validation.data.longDescription,
+        price: validation.data.price,
+        timeEstimate: validation.data.timeEstimate,
+        coverImageUrl: validation.data.coverImageUrl,
+        galleryUrls: validation.data.galleryUrls || [],
         providerId: provider.id,
       },
     });
-
     return NextResponse.json(listing, { status: 201 });
   } catch (error: any) {
     console.error("Error creating listing:", error);
@@ -110,29 +114,6 @@ export async function GET(request: NextRequest) {
     }
 
     // Public listings for a provider
-    const [listings, total] = await Promise.all([
-      prisma.listing.findMany({
-        where: {
-          providerId,
-        },
-        skip,
-        take: limit,
-        orderBy: [{ minPrice: "asc" }, { createdAt: "desc" }],
-      }),
-      prisma.listing.count({
-        where: { providerId },
-      }),
-    ]);
-
-    return NextResponse.json({
-      listings,
-      pagination: {
-        page,
-        limit,
-        total,
-        pages: Math.ceil(total / limit),
-      },
-    });
   } catch (error: any) {
     console.error("Error fetching listings:", error);
     return NextResponse.json(

@@ -56,12 +56,34 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { headline, longDescription, minPrice, maxPrice, coverImageUrl } =
-      body;
+    const {
+      headline,
+      longDescription,
+      price,
+      timeEstimate,
+      coverImageUrl,
+      galleryUrls,
+    } = body;
 
     if (!headline || typeof headline !== "string" || headline.trim() === "") {
       return NextResponse.json(
         { message: "Service name (headline) is required" },
+        { status: 400 }
+      );
+    }
+    if (typeof price !== "number" || price < 0) {
+      return NextResponse.json(
+        { message: "Price is required and must be a non-negative number" },
+        { status: 400 }
+      );
+    }
+    if (
+      !timeEstimate ||
+      typeof timeEstimate !== "string" ||
+      timeEstimate.trim() === ""
+    ) {
+      return NextResponse.json(
+        { message: "Time estimate is required" },
         { status: 400 }
       );
     }
@@ -70,9 +92,10 @@ export async function POST(request: NextRequest) {
       data: {
         headline: headline.trim(),
         longDescription: longDescription || null,
-        minPrice: minPrice ? Number(minPrice) : null,
-        maxPrice: maxPrice ? Number(maxPrice) : null,
+        price,
+        timeEstimate: timeEstimate.trim(),
         coverImageUrl: coverImageUrl || null,
+        galleryUrls: galleryUrls || [],
         providerId: provider.id,
       },
     });

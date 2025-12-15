@@ -27,7 +27,17 @@ export default function LoginForm() {
       const result = await login({ email, password }, callbackUrl);
 
       if (!result.success) {
-        setError(result.message);
+        // Show a specific error if the backend says email is not verified
+        if (
+          result.message?.toLowerCase().includes("verify your email") ||
+          result.error?.toLowerCase().includes("verify your email")
+        ) {
+          setError(
+            "Your email address is not verified. Please check your inbox for a verification link before logging in."
+          );
+        } else {
+          setError(result.message);
+        }
         return;
       }
 

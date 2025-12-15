@@ -67,7 +67,11 @@ async function handleVerification(token: string) {
       include: { user: true },
     });
 
-    console.log("Verification record found:", verification ? "Yes" : "No");
+    if (verification) {
+      console.log("Verification record found:", verification);
+    } else {
+      console.log("Verification record found: No");
+    }
 
     if (!verification) {
       console.log("Error: Verification token not found in database");

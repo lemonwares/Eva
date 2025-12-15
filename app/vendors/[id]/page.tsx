@@ -1,15 +1,5 @@
 "use client";
 
-interface WeeklySchedule {
-  id: string;
-  providerId: string;
-  dayOfWeek: number;
-  startTime: string;
-  endTime: string;
-  isClosed: boolean;
-}
-
-import { useState, useEffect, useRef } from "react";
 import { useParams } from "next/navigation";
 import { useSession } from "next-auth/react";
 import Link from "next/link";
@@ -39,6 +29,26 @@ import Footer from "@/components/common/Footer";
 import FavoriteButton from "@/components/common/FavoriteButton";
 import ShareButton from "@/components/common/ShareButton";
 import Image from "next/image";
+import { useState, useEffect, useRef } from "react";
+
+interface WeeklySchedule {
+  id: string;
+  providerId: string;
+  dayOfWeek: number;
+  startTime: string;
+  endTime: string;
+  isClosed: boolean;
+}
+
+interface Listing {
+  id: string;
+  headline: string;
+  longDescription?: string;
+  price?: number;
+  timeEstimate?: string;
+  coverImageUrl?: string;
+  galleryUrls?: string[];
+}
 
 interface InquiryFormData {
   fromName: string;
@@ -234,6 +244,9 @@ function ScheduleDisplay({
 }
 
 export default function VendorDetailPage() {
+  // Listings state
+  const [listings, setListings] = useState<Listing[]>([]);
+  const [isListingsLoading, setIsListingsLoading] = useState(true);
   // Ref for the Google Maps iframe section (must be first hook!)
   const mapRef = useRef<HTMLDivElement>(null);
 
@@ -280,9 +293,24 @@ export default function VendorDetailPage() {
       fetchVendor();
       fetchReviews();
       fetchTeamMembers();
+      fetchListings();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [params.id]);
+
+  async function fetchListings() {
+    setIsListingsLoading(true);
+    try {
+      const response = await fetch(`/api/providers/${params.id}/listings`);
+      if (!response.ok) throw new Error("Failed to fetch listings");
+      const data = await response.json();
+      setListings(data.listings || []);
+    } catch (err) {
+      setListings([]);
+    } finally {
+      setIsListingsLoading(false);
+    }
+  }
 
   async function fetchTeamMembers() {
     try {
@@ -476,7 +504,7 @@ export default function VendorDetailPage() {
                   {vendor.address && (
                     <span className="flex items-center gap-1">
                       <MapPin size={16} />
-                      {vendor.address}
+                      {vendor.address}, {vendor.city}
                     </span>
                   )}
                   <div className="flex items-center gap-1">
@@ -654,22 +682,20 @@ export default function VendorDetailPage() {
               >
                 <X size={28} />
               </button>
-
               <div className="w-full max-w-5xl mx-auto flex flex-col items-center pt-12 md:pt-16 px-4 md:px-0">
                 <div className="w-full ">
                   <h2 className="text-4xl max-md:text-3xl font-bold mb-1">
                     Image gallery
                   </h2>
                   <p className="text-muted-foreground mb-6 text-2xl max-md:text-lg">
-                    {vendor?.businessName ?? ""}
+                    {vendor?.businessName}
                   </p>
                 </div>
-
-                {/* Guard against null/undefined images */}
-                {Array.isArray(images) && images[0] && (
+                {/* Large image at the top, full width */}
+                {images[0] && (
                   <div className="w-full mb-8">
                     <Image
-                      src={images[0] ?? ""}
+                      src={images[0]}
                       alt="Gallery main image"
                       width={1200}
                       height={500}
@@ -679,111 +705,24 @@ export default function VendorDetailPage() {
                     />
                   </div>
                 )}
-
-                {/* Collage + extra images */}
-                {Array.isArray(images) && images.length > 1 && (
-                  <div className="w-full overflow-y-auto pb-8">
-                    {/* 2-column row: images[1], images[2] */}
-                    {(images[1] || images[2]) && (
-                      <div className="grid grid-cols-2 gap-6 mb-6">
-                        {images[1] && (
-                          <div className="relative">
-                            <Image
-                              src={images[1] ?? ""}
-                              alt="Gallery image 2"
-                              width={600}
-                              height={350}
-                              unoptimized={true}
-                              className="object-cover w-full h-[200px] md:h-[250px] rounded-2xl shadow"
-                              style={{ background: "#f3f4f6" }}
-                            />
-                          </div>
-                        )}
-                        {images[2] && (
-                          <div className="relative">
-                            <Image
-                              src={images[2] ?? ""}
-                              alt="Gallery image 3"
-                              width={600}
-                              height={350}
-                              unoptimized={true}
-                              className="object-cover w-full h-[200px] md:h-[250px] rounded-2xl shadow"
-                              style={{ background: "#f3f4f6" }}
-                            />
-                          </div>
-                        )}
-                      </div>
-                    )}
-
-                    {/* Tall full-width image: images[3] */}
-                    {images[3] && (
-                      <div className="w-full mb-6">
+                {/* Grid of smaller images below, 2 columns */}
+                <div className="w-full overflow-y-auto pb-8">
+                  <div className="grid grid-cols-2 gap-6">
+                    {images.slice(1).map((img, idx) => (
+                      <div key={idx} className="relative">
                         <Image
-                          src={images[3] ?? ""}
-                          alt="Gallery image 4"
-                          width={1200}
-                          height={500}
+                          src={img}
+                          alt={`Gallery image ${idx + 2}`}
+                          width={600}
+                          height={350}
                           unoptimized={true}
-                          className="object-cover w-full h-[260px] md:h-80 rounded-2xl shadow"
+                          className="object-cover w-full h-[200px] md:h-[250px] rounded-2xl shadow"
                           style={{ background: "#f3f4f6" }}
                         />
                       </div>
-                    )}
-
-                    {/* 2-column row: images[4], images[5] */}
-                    {(images[4] || images[5]) && (
-                      <div className="grid grid-cols-2 gap-6 mb-6">
-                        {images[4] && (
-                          <div className="relative">
-                            <Image
-                              src={images[4] ?? ""}
-                              alt="Gallery image 5"
-                              width={600}
-                              height={350}
-                              unoptimized={true}
-                              className="object-cover w-full h-[180px] md:h-[220px] rounded-2xl shadow"
-                              style={{ background: "#f3f4f6" }}
-                            />
-                          </div>
-                        )}
-                        {images[5] && (
-                          <div className="relative">
-                            <Image
-                              src={images[5] ?? ""}
-                              alt="Gallery image 6"
-                              width={600}
-                              height={350}
-                              unoptimized={true}
-                              className="object-cover w-full h-[180px] md:h-[220px] rounded-2xl shadow"
-                              style={{ background: "#f3f4f6" }}
-                            />
-                          </div>
-                        )}
-                      </div>
-                    )}
-
-                    {/* Extra images from index 6 onward – simple grid */}
-                    {images.length > 6 && (
-                      <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
-                        {images.slice(6).map((img, idx) =>
-                          img ? (
-                            <div key={idx} className="relative">
-                              <Image
-                                src={img ?? ""}
-                                alt={`Gallery image ${idx + 7}`}
-                                width={400}
-                                height={260}
-                                unoptimized={true}
-                                className="object-cover w-full h-40 md:h-[200px] rounded-2xl shadow"
-                                style={{ background: "#f3f4f6" }}
-                              />
-                            </div>
-                          ) : null
-                        )}
-                      </div>
-                    )}
+                    ))}
                   </div>
-                )}
+                </div>
               </div>
             </div>
           </div>
@@ -856,11 +795,11 @@ export default function VendorDetailPage() {
               </div>
             )}
 
-            {/* Culture Tags */}
+            {/* Specializations & Listings */}
             {vendor.cultureTraditionTags.length > 0 && (
               <div className="mb-12">
                 <h2 className="text-xl font-semibold mb-4">Specializations</h2>
-                <div className="flex flex-wrap gap-2">
+                <div className="flex flex-wrap gap-2 mb-4">
                   {vendor.cultureTraditionTags.map((tag, index) => {
                     const capTag =
                       tag.charAt(0).toUpperCase() + tag.slice(1).toLowerCase();
@@ -873,6 +812,70 @@ export default function VendorDetailPage() {
                       </span>
                     );
                   })}
+                </div>
+                {/* Listings Section */}
+                <div>
+                  <h3 className="text-lg font-semibold mb-2">
+                    Services & Packages
+                  </h3>
+                  {isListingsLoading ? (
+                    <p className="text-muted-foreground">Loading listings...</p>
+                  ) : listings.length === 0 ? (
+                    <p className="text-muted-foreground">
+                      No listings available.
+                    </p>
+                  ) : (
+                    <ul className="space-y-4">
+                      {listings.map((listing) => (
+                        <li
+                          key={listing.id}
+                          className="border rounded-lg p-4 flex items-start gap-4 bg-white"
+                        >
+                          {listing.coverImageUrl && (
+                            <img
+                              src={listing.coverImageUrl}
+                              alt="Cover"
+                              className="w-20 h-20 object-cover rounded-md border"
+                            />
+                          )}
+                          <div className="flex-1">
+                            <div className="flex items-center justify-between">
+                              <h4 className="font-semibold text-gray-900">
+                                {listing.headline}
+                              </h4>
+                            </div>
+                            <div className="text-gray-700 mt-1">
+                              {listing.longDescription}
+                            </div>
+                            <div className="text-gray-500 text-sm mt-2 flex gap-4">
+                              <span>
+                                Price:{" "}
+                                {listing.price
+                                  ? formatCurrency(listing.price)
+                                  : "-"}
+                              </span>
+                              <span>Time: {listing.timeEstimate}</span>
+                            </div>
+                            {listing.galleryUrls &&
+                              listing.galleryUrls.length > 0 && (
+                                <div className="flex gap-2 mt-2">
+                                  {listing.galleryUrls
+                                    .slice(0, 3)
+                                    .map((url, i) => (
+                                      <img
+                                        key={i}
+                                        src={url}
+                                        alt="Gallery"
+                                        className="w-12 h-12 object-cover rounded border"
+                                      />
+                                    ))}
+                                </div>
+                              )}
+                          </div>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
                 </div>
               </div>
             )}

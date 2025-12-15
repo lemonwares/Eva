@@ -63,20 +63,24 @@ export async function POST(request: NextRequest) {
         emailVerifiedAt,
       },
     });
+    console.log("User created:", user);
 
     // If not admin, create email verification token and try to send email
     if (role !== "ADMINISTRATOR") {
+      // Generate token ONCE and use for both DB and email
       const token = crypto.randomBytes(32).toString("hex");
 
-      await prisma.emailVerification.create({
+      // Save token to DB
+      const verificationRecord = await prisma.emailVerification.create({
         data: {
           userId: user.id,
           token,
           expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000), // 24 hours
         },
       });
+      console.log("EmailVerification record created:", verificationRecord);
 
-      // Try to send verification email (non-blocking)
+      // Use the same token for the email link
       try {
         const verificationUrl = `${
           process.env.AUTH_URL ||
@@ -86,13 +90,18 @@ export async function POST(request: NextRequest) {
 
         const htmlContent = emailTemplates.verification(name, verificationUrl);
 
-        await sendEmail({
+        const emailResult = await sendEmail({
           to: email,
           subject: "Verify Your Email Address - Eva Marketplace",
           html: htmlContent,
         });
-
-        console.log("Verification email sent to:", email);
+        console.log(
+          "Verification email sent to:",
+          email,
+          "Result:",
+          emailResult
+        );
+        console.log("Verification link:", verificationUrl);
       } catch (emailError) {
         // Log email error but don't fail registration
         console.error("Failed to send verification email:", emailError);

@@ -6,6 +6,9 @@ import { formatCurrency } from "@/lib/formatters";
 import ServiceModal, {
   type ServiceData,
 } from "@/components/vendor/modals/ServiceModal";
+import BookingModal, {
+  BookingService,
+} from "@/components/vendor/modals/BookingModal";
 import PhotoModal, {
   type PhotoItem,
 } from "@/components/vendor/modals/PhotoModal";
@@ -93,6 +96,9 @@ export default function VendorProfilePage() {
   const [descriptionModalOpen, setDescriptionModalOpen] = useState(false);
   const [infoModalOpen, setInfoModalOpen] = useState(false);
   const [editingService, setEditingService] = useState<Listing | null>(null);
+  const [bookingModalOpen, setBookingModalOpen] = useState(false);
+  const [bookingPrefill, setBookingPrefill] = useState<BookingService[]>([]);
+  const [selectedCategory, setSelectedCategory] = useState<string>("all");
 
   useEffect(() => {
     fetchProfile();
@@ -112,7 +118,37 @@ export default function VendorProfilePage() {
     }
   }
 
-  // Service modal handlers
+  // Booking modal handlers
+  const handleBookService = (service: Listing) => {
+    setBookingPrefill([
+      {
+        id: service.id,
+        headline: service.headline,
+        minPrice: service.minPrice,
+        maxPrice: service.maxPrice,
+      },
+    ]);
+    setBookingModalOpen(true);
+  };
+
+  const handleBookMultiple = () => {
+    if (!provider?.listings) return;
+    setBookingPrefill(
+      provider.listings.map((s) => ({
+        id: s.id,
+        headline: s.headline,
+        minPrice: s.minPrice,
+        maxPrice: s.maxPrice,
+      }))
+    );
+    setBookingModalOpen(true);
+  };
+
+  const handleBookingSubmit = (selected: BookingService[]) => {
+    // TODO: Implement booking logic (open booking flow, etc.)
+    // For now, just log
+    console.log("Booking these services:", selected);
+  };
   const handleAddService = async (data: ServiceData) => {
     try {
       const res = await fetch("/api/vendor/listings", {
@@ -532,7 +568,7 @@ export default function VendorProfilePage() {
 
           {/* Services Section */}
           <div
-            className={`${
+            className={`$${
               darkMode
                 ? "bg-[#141414] border-white/10"
                 : "bg-white border-gray-200"
@@ -540,7 +576,7 @@ export default function VendorProfilePage() {
           >
             <div className="flex items-center justify-between mb-4">
               <h3
-                className={`${
+                className={`$${
                   darkMode ? "text-white" : "text-gray-900"
                 } font-semibold`}
               >
@@ -557,63 +593,127 @@ export default function VendorProfilePage() {
                 Add Service
               </button>
             </div>
+            {/* Category Tabs (below section title) */}
+            {provider.categories && provider.categories.length > 1 && (
+              <div className="flex gap-2 mb-6">
+                <button
+                  className={`px-4 py-1.5 rounded-lg font-medium border transition-colors ${
+                    selectedCategory === "all"
+                      ? "bg-accent text-white border-accent"
+                      : darkMode
+                      ? "bg-white/5 border-white/10 text-white"
+                      : "bg-gray-50 border-gray-200 text-gray-700"
+                  }`}
+                  onClick={() => setSelectedCategory("all")}
+                >
+                  All
+                </button>
+                {provider.categories.map((cat) => (
+                  <button
+                    key={cat}
+                    className={`px-4 py-1.5 rounded-lg font-medium border transition-colors ${
+                      selectedCategory === cat
+                        ? "bg-accent text-white border-accent"
+                        : darkMode
+                        ? "bg-white/5 border-white/10 text-white"
+                        : "bg-gray-50 border-gray-200 text-gray-700"
+                    }`}
+                    onClick={() => setSelectedCategory(cat)}
+                  >
+                    {cat}
+                  </button>
+                ))}
+              </div>
+            )}
+            {/* Services List */}
             {!provider.listings || provider.listings.length === 0 ? (
               <div
-                className={`text-center py-8 ${
+                className={`text-center py-8 $${
                   darkMode ? "text-gray-500" : "text-gray-400"
                 }`}
               >
+                {" "}
                 <p>
                   No services listed yet. Add your first service or package.
-                </p>
+                </p>{" "}
               </div>
             ) : (
               <div className="space-y-2">
-                {provider.listings.map((listing) => (
-                  <div
-                    key={listing.id}
-                    className={`p-4 rounded-lg ${
-                      darkMode
-                        ? "bg-white/5 border-white/10 hover:border-accent/50"
-                        : "bg-gray-50 border-gray-200 hover:border-accent/50"
-                    } border transition-colors group`}
-                  >
-                    <div className="flex items-start justify-between mb-2">
-                      <div>
-                        <h4
-                          className={`font-medium ${
-                            darkMode ? "text-white" : "text-gray-900"
-                          }`}
-                        >
-                          {listing.headline}
-                        </h4>
-                        <p className="text-gray-500 text-sm mt-1 line-clamp-2">
-                          {listing.longDescription || "No description"}
-                        </p>
+                {provider.listings
+                  .filter((listing) =>
+                    selectedCategory === "all"
+                      ? true
+                      : provider.categories.includes(selectedCategory)
+                  )
+                  .map((listing) => (
+                    <div
+                      key={listing.id}
+                      className={`p-4 rounded-lg ${
+                        darkMode
+                          ? "bg-white/5 border-white/10 hover:border-accent/50"
+                          : "bg-gray-50 border-gray-200 hover:border-accent/50"
+                      } border transition-colors group flex flex-col gap-2`}
+                    >
+                      <div className="flex items-start justify-between mb-2">
+                        <div>
+                          <h4
+                            className={`font-medium ${
+                              darkMode ? "text-white" : "text-gray-900"
+                            }`}
+                          >
+                            {listing.headline}
+                          </h4>
+                          <p className="text-gray-500 text-sm mt-1 line-clamp-2">
+                            {listing.longDescription || "No description"}
+                          </p>
+                        </div>
+                        <div className="flex flex-col gap-2 items-end">
+                          <button
+                            onClick={() => {
+                              setEditingService(listing);
+                              setServiceModalOpen(true);
+                            }}
+                            className={`opacity-0 group-hover:opacity-100 p-1.5 rounded ${
+                              darkMode
+                                ? "hover:bg-white/10"
+                                : "hover:bg-gray-200"
+                            } transition-all`}
+                          >
+                            <Edit3 size={14} className="text-gray-400" />
+                          </button>
+                          <button
+                            onClick={() => handleBookService(listing)}
+                            className="mt-2 px-4 py-1.5 rounded bg-accent text-white text-sm font-semibold hover:bg-accent/90 transition-colors"
+                          >
+                            Book
+                          </button>
+                        </div>
                       </div>
-                      <button
-                        onClick={() => {
-                          setEditingService(listing);
-                          setServiceModalOpen(true);
-                        }}
-                        className={`opacity-0 group-hover:opacity-100 p-1.5 rounded ${
-                          darkMode ? "hover:bg-white/10" : "hover:bg-gray-200"
-                        } transition-all`}
-                      >
-                        <Edit3 size={14} className="text-gray-400" />
-                      </button>
+                      <p className="text-accent font-bold text-lg">
+                        {listing.minPrice
+                          ? `${formatCurrency(listing.minPrice)}${
+                              listing.maxPrice
+                                ? ` - ${formatCurrency(listing.maxPrice)}`
+                                : "+"
+                            }`
+                          : "Price on request"}
+                      </p>
                     </div>
-                    <p className="text-accent font-bold text-lg">
-                      {listing.minPrice
-                        ? `${formatCurrency(listing.minPrice)}${
-                            listing.maxPrice
-                              ? ` - ${formatCurrency(listing.maxPrice)}`
-                              : "+"
-                          }`
-                        : "Price on request"}
-                    </p>
-                  </div>
-                ))}
+                  ))}
+                <button
+                  onClick={handleBookMultiple}
+                  className="w-full mt-4 py-2 rounded-lg bg-accent/10 text-accent font-semibold hover:bg-accent/20 transition-colors"
+                >
+                  Book Multiple Services
+                </button>
+                {/* Booking Modal */}
+                <BookingModal
+                  isOpen={bookingModalOpen}
+                  onClose={() => setBookingModalOpen(false)}
+                  services={bookingPrefill}
+                  onBook={handleBookingSubmit}
+                  darkMode={darkMode}
+                />
               </div>
             )}
           </div>
