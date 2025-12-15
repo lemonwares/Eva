@@ -784,7 +784,7 @@ export default function VendorOnboardingPage() {
                 Portfolio Photos
               </label>
               <p className="text-sm text-gray-500 mb-3">
-                Upload your best work photos (up to 10)
+                Upload your best work photos (minimum 4, up to 10)
               </p>
               <MultiImageUpload
                 values={formData.photos}
@@ -792,6 +792,11 @@ export default function VendorOnboardingPage() {
                 maxImages={10}
                 type="gallery"
               />
+              {formData.photos.length > 0 && formData.photos.length < 4 && (
+                <p className="text-sm text-red-500 mt-2">
+                  Please upload at least 4 images to continue.
+                </p>
+              )}
             </div>
 
             <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
@@ -910,27 +915,39 @@ export default function VendorOnboardingPage() {
       case "basics":
         return (
           formData.businessName.trim() !== "" &&
-          formData.description.trim() !== ""
+          formData.description.trim() !== "" &&
+          formData.phonePublic.trim() !== "" &&
+          formData.website.trim() !== "" &&
+          formData.priceFrom !== null &&
+          formData.priceFrom > 0
         );
       case "location":
         return (
+          formData.address.trim() !== "" &&
           formData.city.trim() !== "" &&
           formData.postcode.trim() !== "" &&
           formData.serviceRadiusMiles > 0
         );
       case "categories":
-        return formData.categories.length > 0;
-      case "social":
-        return true; // Optional step
-      case "media":
-        return true; // Optional step
-      case "schedule":
-        // At least one day open and all open days have valid times
         return (
-          formData.weeklySchedule.some((d) => !d.isClosed) &&
+          formData.categories.length > 0 &&
+          formData.subcategories.length > 0 &&
+          formData.cultureTraditionTags.length > 0
+        );
+      case "social":
+        return (
+          formData.instagram.trim() !== "" &&
+          formData.tiktok.trim() !== "" &&
+          formData.facebook.trim() !== ""
+        );
+      case "media":
+        return formData.coverImage.trim() !== "" && formData.photos.length >= 4;
+      case "schedule":
+        // All days must be filled (not closed) and have valid times
+        return (
           formData.weeklySchedule.every(
             (d) => d.isClosed || (d.startTime && d.endTime)
-          )
+          ) && formData.weeklySchedule.some((d) => !d.isClosed)
         );
       case "review":
         return true;
