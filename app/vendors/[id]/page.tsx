@@ -233,6 +233,7 @@ function ScheduleDisplay({
         )}
       </AnimatePresence>
     </div>
+
   );
 }
 
@@ -266,6 +267,9 @@ export default function VendorDetailPage() {
     budgetRange: "",
     message: "",
   });
+    const [bookingModalOpen, setBookingModalOpen] = useState(false);
+  const [bookingPrefill, setBookingPrefill] = useState<BookingService[]>([]);
+
 
   // Auto-fill form when user is logged in
   useEffect(() => {
@@ -278,15 +282,7 @@ export default function VendorDetailPage() {
     }
   }, [session]);
 
-  useEffect(() => {
-    if (params.id) {
-      fetchVendor();
-      fetchReviews();
-      fetchListings();
-      fetchTeamMembers();
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [params.id]);
+
 
   async function fetchListings() {
     try {
@@ -303,6 +299,9 @@ export default function VendorDetailPage() {
       );
     } catch (err) {
       console.error("Error fetching listings:", err);
+    }
+  }
+
   async function fetchTeamMembers() {
     try {
       const response = await fetch(
@@ -400,11 +399,15 @@ export default function VendorDetailPage() {
       setIsSubmitting(false);
     }
   }
-
-  // ...imports...
-
-  const [bookingModalOpen, setBookingModalOpen] = useState(false);
-  const [bookingPrefill, setBookingPrefill] = useState<BookingService[]>([]);
+  useEffect(() => {
+    if (params.id) {
+      fetchVendor();
+      fetchReviews();
+      fetchListings();
+      fetchTeamMembers();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [params.id]);
 
   // Booking modal handlers
   const handleBookService = (service: BookingService) => {
@@ -528,7 +531,6 @@ export default function VendorDetailPage() {
               style={{ backgroundImage: `url(${images[activeImageIndex]})` }}
             />
             <div className="absolute inset-0 bg-foreground/30" />
-
             {/* Navigation Arrows */}
             {images.length > 1 && (
               <>
@@ -554,7 +556,6 @@ export default function VendorDetailPage() {
                 </button>
               </>
             )}
-
             {/* Image Indicators */}
             {images.length > 1 && (
               <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex gap-2">
@@ -580,8 +581,6 @@ export default function VendorDetailPage() {
       {/* Content */}
       <section className="max-w-7xl mx-auto px-4 py-12">
         <div className="flex flex-col lg:flex-row gap-12">
-      <section className="max-w-7xl mx-auto px-4 mt-24">
-        <div className="flex flex-col lg:flex-row">
           {/* Main Content */}
           <div className="flex-1">
             {/* Back Link */}
@@ -1433,6 +1432,7 @@ export default function VendorDetailPage() {
           </div>
         </div>
       )}
+
 
       <Footer />
     </div>
