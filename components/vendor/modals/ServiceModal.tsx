@@ -198,7 +198,7 @@ export default function ServiceModal({
                         darkMode ? "text-gray-300" : "text-gray-700"
                       }`}
                     >
-                      Min Price (€)
+                      Min Price (£)
                     </label>
                     <input
                       type="number"
@@ -228,7 +228,7 @@ export default function ServiceModal({
                         darkMode ? "text-gray-300" : "text-gray-700"
                       }`}
                     >
-                      Max Price (€)
+                      Max Price (£)
                     </label>
                     <input
                       type="number"

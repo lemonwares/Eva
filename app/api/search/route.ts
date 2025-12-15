@@ -108,6 +108,9 @@ export async function GET(request: NextRequest) {
       filters.cultureTraditionTags = { hasSome: cultureTags.split(",") };
     }
     if (verifiedOnly === "true") filters.isVerified = true;
+    if (request.nextUrl.searchParams.get("city")) {
+      filters.city = { equals: request.nextUrl.searchParams.get("city"), mode: "insensitive" };
+    }
 
     // Pagination
     const take = Number(limit);

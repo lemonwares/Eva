@@ -1,3 +1,5 @@
+// Fetch user favorites on mount
+
 "use client";
 
 import { useState, useEffect, useCallback, Suspense } from "react";
@@ -19,6 +21,7 @@ import {
   SlidersHorizontal,
   Heart,
 } from "lucide-react";
+import { formatCurrency } from "@/lib/formatters";
 
 interface Provider {
   id: string;
@@ -72,6 +75,13 @@ function SearchPageContent() {
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [showFilters, setShowFilters] = useState(false);
 
+  // Favorites state: Set of provider IDs
+  const [favoriteIds, setFavoriteIds] = useState<Set<string>>(new Set());
+  // Loading state for favorite actions (providerId -> boolean)
+  const [favoriteLoading, setFavoriteLoading] = useState<{
+    [id: string]: boolean;
+  }>({});
+
   const [filters, setFilters] = useState<SearchFilters>({
     query: searchParams.get("q") || "",
     category: searchParams.get("category") || "",
@@ -109,6 +119,22 @@ function SearchPageContent() {
     fetchFilterOptions();
   }, []);
 
+  useEffect(() => {
+    async function fetchFavorites() {
+      try {
+        const res = await fetch("/api/favorites");
+        if (res.ok) {
+          const data = await res.json();
+          const ids = (data.favorites || []).map((f: any) => f.provider.id);
+          setFavoriteIds(new Set(ids));
+        }
+      } catch (err) {
+        // Ignore errors (user may be unauthenticated)
+      }
+    }
+    fetchFavorites();
+  }, []);
+
   // Search providers
   const searchProviders = useCallback(
     async (resetPage = false) => {
@@ -122,7 +148,7 @@ function SearchPageContent() {
         if (filters.city) params.set("city", filters.city);
         if (filters.minPrice) params.set("minPrice", filters.minPrice);
         if (filters.maxPrice) params.set("maxPrice", filters.maxPrice);
-        if (filters.minRating) params.set("minRating", filters.minRating);
+        if (filters.minRating) params.set("rating", filters.minRating);
         if (filters.sortBy) params.set("sortBy", filters.sortBy);
         params.set("page", currentPage.toString());
         params.set("limit", "12");
@@ -167,7 +193,7 @@ function SearchPageContent() {
     if (filters.city) params.set("city", filters.city);
     if (filters.minPrice) params.set("minPrice", filters.minPrice);
     if (filters.maxPrice) params.set("maxPrice", filters.maxPrice);
-    if (filters.minRating) params.set("minRating", filters.minRating);
+    if (filters.minRating) params.set("rating", filters.minRating);
     if (filters.sortBy !== "relevance") params.set("sortBy", filters.sortBy);
 
     const newUrl = params.toString() ? `/search?${params}` : "/search";
@@ -249,11 +275,16 @@ function SearchPageContent() {
               <p className="text-muted-foreground">
                 {loading ? (
                   "Searching..."
-                ) : (
+                ) : providers.length > 0 ? (
                   <>
                     <span className="font-semibold text-foreground">
-                      {totalResults}
+                      {providers.length}
                     </span>{" "}
+                    vendors found
+                  </>
+                ) : (
+                  <>
+                    <span className="font-semibold text-foreground">0</span>{" "}
                     vendors found
                   </>
                 )}
@@ -500,13 +531,72 @@ function SearchPageContent() {
 
                           {/* Favorite button */}
                           <button
-                            onClick={(e) => {
+                            onClick={async (e) => {
                               e.preventDefault();
-                              // Handle favorite
+                              setFavoriteLoading((prev) => ({
+                                ...prev,
+                                [provider.id]: true,
+                              }));
+                              if (!favoriteIds.has(provider.id)) {
+                                // Add to favorites
+                                try {
+                                  const res = await fetch("/api/favorites", {
+                                    method: "POST",
+                                    headers: {
+                                      "Content-Type": "application/json",
+                                    },
+                                    body: JSON.stringify({
+                                      providerId: provider.id,
+                                    }),
+                                  });
+                                  if (res.ok) {
+                                    setFavoriteIds((prev) =>
+                                      new Set(prev).add(provider.id)
+                                    );
+                                  }
+                                } catch {}
+                              } else {
+                                // Remove from favorites
+                                try {
+                                  const res = await fetch(
+                                    `/api/favorites/${provider.id}`,
+                                    {
+                                      method: "DELETE",
+                                    }
+                                  );
+                                  if (res.ok) {
+                                    setFavoriteIds((prev) => {
+                                      const newSet = new Set(prev);
+                                      newSet.delete(provider.id);
+                                      return newSet;
+                                    });
+                                  }
+                                } catch {}
+                              }
+                              setFavoriteLoading((prev) => ({
+                                ...prev,
+                                [provider.id]: false,
+                              }));
                             }}
                             className="absolute top-3 right-3 p-2 bg-white/90 backdrop-blur-sm rounded-full hover:bg-white transition"
+                            aria-label={
+                              favoriteIds.has(provider.id)
+                                ? "Remove from favorites"
+                                : "Add to favorites"
+                            }
+                            disabled={favoriteLoading[provider.id]}
                           >
-                            <Heart className="w-4 h-4 text-gray-600" />
+                            {favoriteLoading[provider.id] ? (
+                              <Loader2 className="w-4 h-4 animate-spin text-accent" />
+                            ) : (
+                              <Heart
+                                className={`w-4 h-4 ${
+                                  favoriteIds.has(provider.id)
+                                    ? "fill-red-500 text-red-500"
+                                    : "text-gray-600"
+                                }`}
+                              />
+                            )}
                           </button>
                         </div>
 
@@ -536,7 +626,7 @@ function SearchPageContent() {
 
                             {provider.priceFrom && (
                               <span className="text-sm font-medium text-foreground">
-                                From ${provider.priceFrom.toLocaleString()}
+                                From {formatCurrency(provider?.priceFrom || 0)}
                               </span>
                             )}
                           </div>
@@ -592,6 +682,75 @@ function SearchPageContent() {
                         {/* Content */}
                         <div className="flex-1 min-w-0">
                           <div className="flex items-start justify-between gap-4 mb-2">
+                            {/* Favorite button (list view) */}
+                            <button
+                              onClick={async (e) => {
+                                e.preventDefault();
+                                setFavoriteLoading((prev) => ({
+                                  ...prev,
+                                  [provider.id]: true,
+                                }));
+                                if (!favoriteIds.has(provider.id)) {
+                                  // Add to favorites
+                                  try {
+                                    const res = await fetch("/api/favorites", {
+                                      method: "POST",
+                                      headers: {
+                                        "Content-Type": "application/json",
+                                      },
+                                      body: JSON.stringify({
+                                        providerId: provider.id,
+                                      }),
+                                    });
+                                    if (res.ok) {
+                                      setFavoriteIds((prev) =>
+                                        new Set(prev).add(provider.id)
+                                      );
+                                    }
+                                  } catch {}
+                                } else {
+                                  // Remove from favorites
+                                  try {
+                                    const res = await fetch(
+                                      `/api/favorites/${provider.id}`,
+                                      {
+                                        method: "DELETE",
+                                      }
+                                    );
+                                    if (res.ok) {
+                                      setFavoriteIds((prev) => {
+                                        const newSet = new Set(prev);
+                                        newSet.delete(provider.id);
+                                        return newSet;
+                                      });
+                                    }
+                                  } catch {}
+                                }
+                                setFavoriteLoading((prev) => ({
+                                  ...prev,
+                                  [provider.id]: false,
+                                }));
+                              }}
+                              className="ml-auto p-2 bg-white/90 backdrop-blur-sm rounded-full hover:bg-white transition"
+                              aria-label={
+                                favoriteIds.has(provider.id)
+                                  ? "Remove from favorites"
+                                  : "Add to favorites"
+                              }
+                              disabled={favoriteLoading[provider.id]}
+                            >
+                              {favoriteLoading[provider.id] ? (
+                                <Loader2 className="w-4 h-4 animate-spin text-accent" />
+                              ) : (
+                                <Heart
+                                  className={`w-4 h-4 ${
+                                    favoriteIds.has(provider.id)
+                                      ? "fill-red-500 text-red-500"
+                                      : "text-gray-600"
+                                  }`}
+                                />
+                              )}
+                            </button>
                             <div>
                               <h3 className="font-semibold text-foreground group-hover:text-accent transition-colors">
                                 {provider.businessName}
@@ -637,7 +796,7 @@ function SearchPageContent() {
 
                             {provider.priceFrom && (
                               <span className="text-sm font-medium text-foreground">
-                                From ${provider.priceFrom.toLocaleString()}
+                                From {formatCurrency(provider?.priceFrom || 0)}
                               </span>
                             )}
                           </div>

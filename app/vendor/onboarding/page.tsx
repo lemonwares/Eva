@@ -13,7 +13,15 @@ type OnboardingStep =
   | "categories"
   | "social"
   | "media"
+  | "schedule"
   | "review";
+
+interface WeeklyScheduleDay {
+  dayOfWeek: number; // 0=Sunday
+  startTime: string;
+  endTime: string;
+  isClosed: boolean;
+}
 
 interface OnboardingData {
   // Step 1: Basics
@@ -44,6 +52,9 @@ interface OnboardingData {
 
   // Step 6: Pricing
   priceFrom: number | null;
+
+  // Step 7: Weekly Schedule
+  weeklySchedule: WeeklyScheduleDay[];
 }
 
 const STEPS: { id: OnboardingStep; title: string; description: string }[] = [
@@ -71,6 +82,11 @@ const STEPS: { id: OnboardingStep; title: string; description: string }[] = [
     id: "media",
     title: "Photos & Media",
     description: "Showcase your work",
+  },
+  {
+    id: "schedule",
+    title: "Weekly Schedule",
+    description: "Set your weekly working hours",
   },
   {
     id: "review",
@@ -135,6 +151,15 @@ export default function VendorOnboardingPage() {
     coverImage: "",
     photos: [],
     priceFrom: null,
+    weeklySchedule: [
+      { dayOfWeek: 0, startTime: "09:00", endTime: "17:00", isClosed: false },
+      { dayOfWeek: 1, startTime: "09:00", endTime: "17:00", isClosed: false },
+      { dayOfWeek: 2, startTime: "09:00", endTime: "17:00", isClosed: false },
+      { dayOfWeek: 3, startTime: "09:00", endTime: "17:00", isClosed: false },
+      { dayOfWeek: 4, startTime: "09:00", endTime: "17:00", isClosed: false },
+      { dayOfWeek: 5, startTime: "09:00", endTime: "17:00", isClosed: false },
+      { dayOfWeek: 6, startTime: "09:00", endTime: "17:00", isClosed: false },
+    ],
   });
 
   const STORAGE_KEY = "vendor_onboarding_data";
@@ -253,6 +278,7 @@ export default function VendorOnboardingPage() {
     setError(null);
 
     try {
+      // 1. Create provider profile
       const res = await fetch("/api/vendor/profile", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -266,6 +292,28 @@ export default function VendorOnboardingPage() {
         const data = await res.json();
         throw new Error(data.message || "Failed to create profile");
       }
+
+      const { provider } = await res.json();
+      if (!provider?.id) throw new Error("Provider ID missing after creation");
+
+      // 2. Save weekly schedule for this provider
+      const scheduleRes = await Promise.all(
+        formData.weeklySchedule.map((day) =>
+          fetch("/api/admin/weekly-schedules", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              providerId: provider.id,
+              dayOfWeek: day.dayOfWeek,
+              startTime: day.startTime,
+              endTime: day.endTime,
+              isClosed: day.isClosed,
+            }),
+          })
+        )
+      );
+      const failed = scheduleRes.find((r) => !r.ok);
+      if (failed) throw new Error("Failed to save weekly schedule");
 
       // Clear saved data on success
       clearSavedData();
@@ -310,8 +358,103 @@ export default function VendorOnboardingPage() {
     }
   };
 
+  const WEEKDAYS = [
+    "Sunday",
+    "Monday",
+    "Tuesday",
+    "Wednesday",
+    "Thursday",
+    "Friday",
+    "Saturday",
+  ];
+
+  const handleScheduleChange = (
+    dayIdx: number,
+    field: keyof WeeklyScheduleDay,
+    value: string | boolean
+  ) => {
+    setFormData((prev) => {
+      const updated = prev.weeklySchedule.map((d, idx) =>
+        idx === dayIdx ? { ...d, [field]: value } : d
+      );
+      return { ...prev, weeklySchedule: updated };
+    });
+  };
+
   const renderStepContent = () => {
     switch (currentStep) {
+      case "schedule":
+        return (
+          <div className="space-y-6">
+            <p className="text-gray-600 mb-2">
+              Set your regular working hours for each day. Mark days as closed
+              if you do not work.
+            </p>
+            <div className="overflow-x-auto">
+              <table className="min-w-full border rounded-lg">
+                <thead>
+                  <tr className="bg-gray-100">
+                    <th className="px-3 py-2 text-left">Day</th>
+                    <th className="px-3 py-2 text-left">Open</th>
+                    <th className="px-3 py-2 text-left">Start Time</th>
+                    <th className="px-3 py-2 text-left">End Time</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {formData.weeklySchedule.map((day, idx) => (
+                    <tr key={day.dayOfWeek} className="border-b">
+                      <td className="px-3 py-2 font-medium">
+                        {WEEKDAYS[day.dayOfWeek]}
+                      </td>
+                      <td className="px-3 py-2">
+                        <input
+                          type="checkbox"
+                          checked={!day.isClosed}
+                          onChange={(e) =>
+                            handleScheduleChange(
+                              idx,
+                              "isClosed",
+                              !e.target.checked
+                            )
+                          }
+                        />
+                        <span className="ml-2 text-sm">
+                          {day.isClosed ? "Closed" : "Open"}
+                        </span>
+                      </td>
+                      <td className="px-3 py-2">
+                        <input
+                          type="time"
+                          value={day.startTime}
+                          disabled={day.isClosed}
+                          onChange={(e) =>
+                            handleScheduleChange(
+                              idx,
+                              "startTime",
+                              e.target.value
+                            )
+                          }
+                          className="border rounded px-2 py-1"
+                        />
+                      </td>
+                      <td className="px-3 py-2">
+                        <input
+                          type="time"
+                          value={day.endTime}
+                          disabled={day.isClosed}
+                          onChange={(e) =>
+                            handleScheduleChange(idx, "endTime", e.target.value)
+                          }
+                          className="border rounded px-2 py-1"
+                        />
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        );
       case "basics":
         return (
           <div className="space-y-6">
@@ -344,7 +487,7 @@ export default function VendorOnboardingPage() {
                 placeholder="Tell potential clients about your business, experience, and what makes you special..."
               />
               <p className="text-sm text-gray-500 mt-1">
-                {formData.description.length}/500 characters
+                {/* {formData.description.length}/500 characters */}
               </p>
             </div>
 
@@ -641,7 +784,7 @@ export default function VendorOnboardingPage() {
                 Portfolio Photos
               </label>
               <p className="text-sm text-gray-500 mb-3">
-                Upload your best work photos (up to 10)
+                Upload your best work photos (minimum 4, up to 10)
               </p>
               <MultiImageUpload
                 values={formData.photos}
@@ -649,6 +792,11 @@ export default function VendorOnboardingPage() {
                 maxImages={10}
                 type="gallery"
               />
+              {formData.photos.length > 0 && formData.photos.length < 4 && (
+                <p className="text-sm text-red-500 mt-2">
+                  Please upload at least 4 images to continue.
+                </p>
+              )}
             </div>
 
             <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
@@ -767,20 +915,40 @@ export default function VendorOnboardingPage() {
       case "basics":
         return (
           formData.businessName.trim() !== "" &&
-          formData.description.trim() !== ""
+          formData.description.trim() !== "" &&
+          formData.phonePublic.trim() !== "" &&
+          formData.website.trim() !== "" &&
+          formData.priceFrom !== null &&
+          formData.priceFrom > 0
         );
       case "location":
         return (
+          formData.address.trim() !== "" &&
           formData.city.trim() !== "" &&
           formData.postcode.trim() !== "" &&
           formData.serviceRadiusMiles > 0
         );
       case "categories":
-        return formData.categories.length > 0;
+        return (
+          formData.categories.length > 0 &&
+          formData.subcategories.length > 0 &&
+          formData.cultureTraditionTags.length > 0
+        );
       case "social":
-        return true; // Optional step
+        return (
+          formData.instagram.trim() !== "" &&
+          formData.tiktok.trim() !== "" &&
+          formData.facebook.trim() !== ""
+        );
       case "media":
-        return true; // Optional step
+        return formData.coverImage.trim() !== "" && formData.photos.length >= 4;
+      case "schedule":
+        // All days must be filled (not closed) and have valid times
+        return (
+          formData.weeklySchedule.every(
+            (d) => d.isClosed || (d.startTime && d.endTime)
+          ) && formData.weeklySchedule.some((d) => !d.isClosed)
+        );
       case "review":
         return true;
       default:
@@ -805,15 +973,15 @@ export default function VendorOnboardingPage() {
       {/* Progress Steps */}
       <div className="bg-white border-b border-gray-200">
         <div className="max-w-3xl mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between overflow-x-auto">
             {STEPS.map((step, index) => (
-              <div key={step.id} className="flex items-center">
+              <div key={step.id} className="flex items-center min-w-20">
                 <div
-                  className={`w-8 h-8 rounded-full flex items-center justify-center font-medium text-sm ${
+                  className={`w-8 h-8 rounded-full flex items-center justify-center font-medium text-sm transition-colors duration-200 ${
                     index < currentStepIndex
                       ? "bg-accent text-white"
                       : index === currentStepIndex
-                      ? "bg-accent text-white"
+                      ? "bg-accent text-white ring-2 ring-accent/40"
                       : "bg-gray-200 text-gray-600"
                   }`}
                 >

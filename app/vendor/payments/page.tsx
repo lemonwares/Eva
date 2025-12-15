@@ -250,7 +250,7 @@ export default function VendorPaymentsPage() {
                   darkMode ? "text-white" : "text-gray-900"
                 }`}
               >
-                ${formatCurrency(stats.availableBalance)}
+                {formatCurrency(stats.availableBalance)}
               </p>
               <p className="text-green-400 text-sm flex items-center gap-1 mt-2">
                 <TrendingUp size={14} />
@@ -276,7 +276,7 @@ export default function VendorPaymentsPage() {
                   darkMode ? "text-white" : "text-gray-900"
                 }`}
               >
-                ${formatCurrency(stats.pendingAmount)}
+                {formatCurrency(stats.pendingAmount)}
               </p>
               <p className="text-yellow-400 text-sm flex items-center gap-1 mt-2">
                 <Clock size={14} />
@@ -303,7 +303,7 @@ export default function VendorPaymentsPage() {
                   darkMode ? "text-white" : "text-gray-900"
                 }`}
               >
-                ${formatCurrency(stats.thisMonth)}
+                {formatCurrency(stats.thisMonth)}
               </p>
               <p className="text-green-400 text-sm flex items-center gap-1 mt-2">
                 <CalendarDays size={14} />
@@ -329,7 +329,7 @@ export default function VendorPaymentsPage() {
                   darkMode ? "text-white" : "text-gray-900"
                 }`}
               >
-                ${formatCurrency(stats.totalEarned)}
+                {formatCurrency(stats.totalEarned)}
               </p>
               <p
                 className={`${
@@ -504,7 +504,8 @@ export default function VendorPaymentsPage() {
                             tx.type
                           )}`}
                         >
-                          {tx.amount < 0 ? "-" : ""}${formatCurrency(tx.amount)}
+                          {tx.amount < 0 ? "-" : ""}
+                          {formatCurrency(tx.amount)}
                         </td>
                       </tr>
                     ))}
@@ -569,7 +570,8 @@ export default function VendorPaymentsPage() {
                       </div>
                     </div>
                     <span className={`font-bold ${getTypeStyle(tx.type)}`}>
-                      {tx.amount < 0 ? "-" : ""}${formatCurrency(tx.amount)}
+                      {tx.amount < 0 ? "-" : ""}
+                      {formatCurrency(tx.amount)}
                     </span>
                   </div>
                   <div

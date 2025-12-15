@@ -22,6 +22,7 @@ export async function GET(request: NextRequest) {
             bookings: true,
             inquiries: true,
             listings: true,
+            weeklySchedules: true,
           },
         },
       },

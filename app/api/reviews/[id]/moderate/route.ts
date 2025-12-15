@@ -23,7 +23,6 @@ export async function POST(
       return NextResponse.json({ message: "Forbidden" }, { status: 403 });
     }
 
-
     const { id } = await params;
     let body = {};
     try {
@@ -35,7 +34,6 @@ export async function POST(
       );
     }
     const validation = moderateReviewSchema.safeParse(body);
-
     if (!validation.success) {
       return NextResponse.json(
         { message: "Invalid request", errors: validation.error.issues },
@@ -43,7 +41,7 @@ export async function POST(
       );
     }
 
-    const { action, reason } = validation.data;
+    const { action } = validation.data;
 
     const review = await prisma.review.findUnique({
       where: { id },
@@ -55,7 +53,6 @@ export async function POST(
         rating: true,
       },
     });
-
     if (!review) {
       return NextResponse.json(
         { message: "Review not found" },
@@ -63,14 +60,12 @@ export async function POST(
       );
     }
 
+    // Admins can always change approval/flag state
     const wasApproved = review.isApproved;
-
-    // Determine new state based on action
     const updateData: any = {
       moderatedAt: new Date(),
       moderatedBy: session.user.id,
     };
-
     if (action === "APPROVE") {
       updateData.isApproved = true;
       updateData.isFlagged = false;
@@ -83,7 +78,7 @@ export async function POST(
 
     const willBeApproved = action === "APPROVE";
 
-    // Use transaction to update review and provider stats
+    // Always allow admin to change state, update provider stats if needed
     const updated = await prisma.$transaction(async (tx: any) => {
       const updatedReview = await tx.review.update({
         where: { id },

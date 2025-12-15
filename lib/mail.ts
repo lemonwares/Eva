@@ -21,46 +21,58 @@ export async function sendEmail({ to, subject, html }: EmailOptions) {
     return { success: false, error: "Email service not configured" };
   }
 
-  try {
-    const response = await axios.post(
-      "https://api.zeptomail.com/v1.1/email",
-      {
-        from: {
-          address: process.env.ZEPTOMAIL_FROM_EMAIL,
-          name: process.env.ZEPTOMAIL_FROM_NAME || "Eva Marketplace",
-        },
-        to: [
-          {
-            email_address: {
-              address: to,
-              name: to.split("@")[0],
-            },
-          },
-        ],
-        subject,
-        htmlbody: html,
-      },
-      {
-        headers: {
-          Authorization: process.env.ZEPTOMAIL_TOKEN,
-          "Content-Type": "application/json",
-        },
-      }
-    );
+  const maxRetries = 5;
+  const delayMs = 2000;
+  let attempt = 0;
+  let lastError = null;
 
-    return { success: true, data: response.data };
-  } catch (error: unknown) {
-    const axiosError = error as {
-      response?: { data?: unknown };
-      message?: string;
-    };
-    console.error(
-      "Email sending failed:",
-      axiosError.response?.data || axiosError.message
-    );
-    return {
-      success: false,
-      error: axiosError.response?.data || axiosError.message,
-    };
+  while (attempt < maxRetries) {
+    try {
+      const response = await axios.post(
+        "https://api.zeptomail.com/v1.1/email",
+        {
+          from: {
+            address: process.env.ZEPTOMAIL_FROM_EMAIL,
+            name: process.env.ZEPTOMAIL_FROM_NAME || "Eva Marketplace",
+          },
+          to: [
+            {
+              email_address: {
+                address: to,
+                name: to.split("@")[0],
+              },
+            },
+          ],
+          subject,
+          htmlbody: html,
+        },
+        {
+          headers: {
+            Authorization: process.env.ZEPTOMAIL_TOKEN,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+      return { success: true, data: response.data };
+    } catch (error: unknown) {
+      const axiosError = error as {
+        response?: { data?: unknown };
+        message?: string;
+      };
+      lastError = axiosError.response?.data || axiosError.message;
+      console.error(
+        `Email sending failed (attempt ${attempt + 1}):`,
+        lastError
+      );
+      // Only retry on network or server errors
+      if (attempt < maxRetries - 1) {
+        await new Promise((resolve) => setTimeout(resolve, delayMs));
+      }
+    }
+    attempt++;
   }
+  return {
+    success: false,
+    error: lastError || "Unknown error after retries",
+  };
 }

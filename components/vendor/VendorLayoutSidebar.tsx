@@ -27,6 +27,7 @@ const navItems = [
   { icon: Calendar, label: "Bookings", href: "/vendor/bookings" },
   { icon: CalendarDays, label: "Calendar", href: "/vendor/calendar" },
   { icon: Star, label: "Reviews", href: "/vendor/reviews" },
+  { icon: User, label: "Team", href: "/vendor/team" },
   { icon: CreditCard, label: "Payments", href: "/vendor/payments" },
   { icon: BarChart3, label: "Analytics", href: "/vendor/analytics" },
   { icon: User, label: "Profile", href: "/vendor/profile" },

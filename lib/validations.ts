@@ -68,7 +68,7 @@ export const dateRangeSchema = z
 export const priceSchema = z.object({
   min: z.coerce.number().min(0).optional(),
   max: z.coerce.number().min(0).optional(),
-  currency: z.string().length(3).default("NGN"),
+  currency: z.string().length(3).default("GBP"),
 });
 
 // Address schema
