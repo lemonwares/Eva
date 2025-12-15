@@ -1,22 +1,9 @@
 "use client";
 
-interface WeeklySchedule {
-  id: string;
-  providerId: string;
-  dayOfWeek: number;
-  startTime: string;
-  endTime: string;
-  isClosed: boolean;
-}
-
-import { useState, useEffect } from "react";
 import { useParams } from "next/navigation";
 import { useSession } from "next-auth/react";
 import Link from "next/link";
 import { formatCurrency } from "@/lib/formatters";
-import BookingModal, {
-  BookingService,
-} from "@/components/vendor/modals/BookingModal";
 import {
   ArrowLeft,
   MapPin,
@@ -42,6 +29,26 @@ import Footer from "@/components/common/Footer";
 import FavoriteButton from "@/components/common/FavoriteButton";
 import ShareButton from "@/components/common/ShareButton";
 import Image from "next/image";
+import { useState, useEffect, useRef } from "react";
+
+interface WeeklySchedule {
+  id: string;
+  providerId: string;
+  dayOfWeek: number;
+  startTime: string;
+  endTime: string;
+  isClosed: boolean;
+}
+
+interface Listing {
+  id: string;
+  headline: string;
+  longDescription?: string;
+  price?: number;
+  timeEstimate?: string;
+  coverImageUrl?: string;
+  galleryUrls?: string[];
+}
 
 interface InquiryFormData {
   fromName: string;
@@ -233,18 +240,20 @@ function ScheduleDisplay({
         )}
       </AnimatePresence>
     </div>
-
   );
 }
 
 export default function VendorDetailPage() {
-  // Category filter state
-  const [selectedCategory, setSelectedCategory] = useState<string>("all");
+  // Listings state
+  const [listings, setListings] = useState<Listing[]>([]);
+  const [isListingsLoading, setIsListingsLoading] = useState(true);
+  // Ref for the Google Maps iframe section (must be first hook!)
+  const mapRef = useRef<HTMLDivElement>(null);
+
   const params = useParams();
   const { data: session } = useSession();
   const [vendor, setVendor] = useState<Provider | null>(null);
   const [reviews, setReviews] = useState<Review[]>([]);
-  const [listings, setListings] = useState<BookingService[]>([]);
   const [teamMembers, setTeamMembers] = useState<
     { id: string; name: string; imageUrl: string | null }[]
   >([]);
@@ -267,14 +276,11 @@ export default function VendorDetailPage() {
     budgetRange: "",
     message: "",
   });
-    const [bookingModalOpen, setBookingModalOpen] = useState(false);
-  const [bookingPrefill, setBookingPrefill] = useState<BookingService[]>([]);
-
 
   // Auto-fill form when user is logged in
   useEffect(() => {
     if (session?.user) {
-      setInquiryForm((prev: InquiryFormData) => ({
+      setInquiryForm((prev) => ({
         ...prev,
         fromName: session.user.name || prev.fromName,
         fromEmail: session.user.email || prev.fromEmail,
@@ -282,23 +288,27 @@ export default function VendorDetailPage() {
     }
   }, [session]);
 
-
+  useEffect(() => {
+    if (params.id) {
+      fetchVendor();
+      fetchReviews();
+      fetchTeamMembers();
+      fetchListings();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [params.id]);
 
   async function fetchListings() {
+    setIsListingsLoading(true);
     try {
-      const response = await fetch(`/api/listings?providerId=${params.id}`);
+      const response = await fetch(`/api/providers/${params.id}/listings`);
       if (!response.ok) throw new Error("Failed to fetch listings");
       const data = await response.json();
-      setListings(
-        (data.listings || []).map((l: any) => ({
-          id: l.id,
-          headline: l.headline,
-          minPrice: l.minPrice,
-          maxPrice: l.maxPrice,
-        }))
-      );
+      setListings(data.listings || []);
     } catch (err) {
-      console.error("Error fetching listings:", err);
+      setListings([]);
+    } finally {
+      setIsListingsLoading(false);
     }
   }
 
@@ -324,6 +334,7 @@ export default function VendorDetailPage() {
       setVendor(data.provider || data);
 
       // console.log(`Data`, data);
+      // console.log(`Vendor:`, vendor);
       // take weekly schedule from provider payload when available
       if (data.provider && data.provider.weeklySchedules) {
         setWeeklySchedule(data.provider.weeklySchedules);
@@ -399,90 +410,20 @@ export default function VendorDetailPage() {
       setIsSubmitting(false);
     }
   }
-  useEffect(() => {
-    if (params.id) {
-      fetchVendor();
-      fetchReviews();
-      fetchListings();
-      fetchTeamMembers();
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [params.id]);
-
-  // Booking modal handlers
-  const handleBookService = (service: BookingService) => {
-    setBookingPrefill([
-      {
-        id: service.id,
-        headline: service.headline,
-        minPrice: service.minPrice,
-        maxPrice: service.maxPrice,
-      },
-    ]);
-    setBookingModalOpen(true);
-  };
-
-  const handleBookMultiple = () => {
-    if (!Array.isArray(listings) || listings.length === 0) return;
-    setBookingPrefill(
-      listings.map((s: BookingService) => ({
-        id: s.id,
-        headline: s.headline,
-        minPrice: s.minPrice,
-        maxPrice: s.maxPrice,
-      }))
-    );
-    setBookingModalOpen(true);
-  };
-
-  const [bookingStatus, setBookingStatus] = useState<
-    null | "success" | "error" | "loading"
-  >(null);
-  const [bookingError, setBookingError] = useState<string>("");
-
-  const handleBookingSubmit = async (selected: BookingService[]) => {
-    if (!vendor) return;
-    setBookingStatus("loading");
-    setBookingError("");
-    try {
-      const res = await fetch("/api/bookings", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          providerId: vendor.id,
-          services: selected,
-          clientName: session?.user?.name || "",
-          clientEmail: session?.user?.email || "",
-          clientPhone: "",
-          eventDate: "", // You may want to collect this from user
-          eventLocation: "",
-          guestsCount: null,
-          specialRequests: "",
-          paymentMode: "FULL_PAYMENT",
-          pricingTotal: selected.reduce((sum, s) => sum + (s.minPrice || 0), 0),
-        }),
-      });
-      if (!res.ok) {
-        const data = await res.json();
-        setBookingStatus("error");
-        setBookingError(data.message || "Failed to create booking");
-        return;
-      }
-      setBookingStatus("success");
-      setBookingModalOpen(false);
-    } catch (err) {
-      setBookingStatus("error");
-      setBookingError(
-        err instanceof Error ? err.message : "Something went wrong"
-      );
-    }
-  };
 
   function closeInquiryModal() {
     setShowInquiryForm(false);
     setSubmitSuccess(false);
     setSubmitError("");
   }
+
+  const formatCategories = (cats?: string[]) => {
+    if (!cats || cats.length === 0) return "";
+    return cats
+      .filter(Boolean)
+      .map((cat) => cat.charAt(0).toUpperCase() + cat.slice(1).toLowerCase())
+      .join(", ");
+  };
 
   const images = vendor
     ? ([vendor.coverImage, ...vendor.photos].filter(Boolean) as string[])
@@ -518,69 +459,19 @@ export default function VendorDetailPage() {
     );
   }
 
+  // Scroll to map section
+  const handleGetDirectionsClick = () => {
+    if (mapRef.current && typeof mapRef.current.scrollIntoView === "function") {
+      mapRef.current.scrollIntoView({ behavior: "smooth", block: "center" });
+    }
+  };
+
   return (
     <div className="min-h-screen bg-background">
       <Header />
 
-      {/* Hero / Gallery */}
-      <section className="relative pt-20">
-        {images.length > 0 ? (
-          <div className="relative h-[50vh] md:h-[60vh] overflow-hidden">
-            <div
-              className="absolute inset-0 bg-cover bg-center transition-all duration-500"
-              style={{ backgroundImage: `url(${images[activeImageIndex]})` }}
-            />
-            <div className="absolute inset-0 bg-foreground/30" />
-            {/* Navigation Arrows */}
-            {images.length > 1 && (
-              <>
-                <button
-                  onClick={() =>
-                    setActiveImageIndex((prev: number) =>
-                      prev === 0 ? images.length - 1 : prev - 1
-                    )
-                  }
-                  className="absolute left-4 top-1/2 -translate-y-1/2 p-3 rounded-full bg-background/80 hover:bg-background transition"
-                >
-                  <ChevronLeft size={24} />
-                </button>
-                <button
-                  onClick={() =>
-                    setActiveImageIndex((prev: number) =>
-                      prev === images.length - 1 ? 0 : prev + 1
-                    )
-                  }
-                  className="absolute right-4 top-1/2 -translate-y-1/2 p-3 rounded-full bg-background/80 hover:bg-background transition"
-                >
-                  <ChevronRight size={24} />
-                </button>
-              </>
-            )}
-            {/* Image Indicators */}
-            {images.length > 1 && (
-              <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex gap-2">
-                {images.map((_, index) => (
-                  <button
-                    key={index}
-                    onClick={() => setActiveImageIndex(index)}
-                    className={`w-2 h-2 rounded-full transition ${
-                      index === activeImageIndex
-                        ? "bg-background w-6"
-                        : "bg-background/50"
-                    }`}
-                  />
-                ))}
-              </div>
-            )}
-          </div>
-        ) : (
-          <div className="h-64 bg-muted" />
-        )}
-      </section>
-
-      {/* Content */}
-      <section className="max-w-7xl mx-auto px-4 py-12">
-        <div className="flex flex-col lg:flex-row gap-12">
+      <section className="max-w-7xl mx-auto px-4 mt-24">
+        <div className="flex flex-col lg:flex-row">
           {/* Main Content */}
           <div className="flex-1">
             {/* Back Link */}
@@ -608,12 +499,12 @@ export default function VendorDetailPage() {
                 </div>
                 <div className="flex flex-wrap items-center gap-4 text-muted-foreground">
                   <span className="font-medium text-foreground">
-                    {vendor.categories.join(", ")}
+                    {formatCategories(vendor.categories)}
                   </span>
-                  {vendor.city && (
+                  {vendor.address && (
                     <span className="flex items-center gap-1">
                       <MapPin size={16} />
-                      {vendor.city}
+                      {vendor.address}, {vendor.city}
                     </span>
                   )}
                   <div className="flex items-center gap-1">
@@ -627,7 +518,10 @@ export default function VendorDetailPage() {
                     </span>
                     <span>({vendor._count?.reviews || 0} reviews)</span>
                   </div>
-                  <div className="text-accent hover:cursor-pointer">
+                  <div
+                    className="text-accent hover:cursor-pointer"
+                    onClick={handleGetDirectionsClick}
+                  >
                     Get Directions
                   </div>
                 </div>
@@ -646,11 +540,14 @@ export default function VendorDetailPage() {
               <div className="col-span-2 border border-gray-300 rounded-2xl h-full overflow-hidden">
                 <Image
                   src={images[0]}
+                  onClick={() => {
+                    setShowImagesModal(true);
+                  }}
                   alt="Vendor main"
                   width={900}
                   height={300}
                   unoptimized={true}
-                  className="object-cover w-full h-full rounded-2xl shadow-lg"
+                  className="object-cover w-full h-full rounded-2xl shadow-lg hover:cursor-pointer"
                   style={{ height: "100%", width: "100%" }}
                   sizes="(max-width: 1200px) 100vw, 900px"
                   priority
@@ -679,7 +576,7 @@ export default function VendorDetailPage() {
                       />
                       {isLast && (
                         <button
-                          className="absolute bottom-3 right-0 -translate-x-1/2 bg-gray-400/60 hover:transition-all duration-300 hover:cursor-pointer text-accent-foreground px-4 py-2 rounded-full font-medium shadow hover:underline"
+                          className="absolute bottom-3 right-0 -translate-x-1/2 bg-gray-400/50 hover:transition-all duration-300 hover:cursor-pointer text-accent-foreground px-4 py-2 rounded-full font-medium shadow hover:underline"
                           onClick={() => {
                             setShowImagesModal(true);
                             setModalImageIndex(0);
@@ -777,7 +674,7 @@ export default function VendorDetailPage() {
         {/* See all images modal (desktop only) */}
         {showImagesModal && (
           <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex flex-col">
-            <div className="relative flex flex-col w-full h-full max-h-screen bg-background rounded-none md:rounded-2xl p-0 md:p-8 shadow-xl overflow-y-auto">
+            <div className="relative flex flex-col w-full h-full max-h-screen bg-background rounded-none p-0 md:p-8 shadow-xl overflow-y-auto">
               <button
                 onClick={() => setShowImagesModal(false)}
                 className="absolute top-4 right-4 p-2 rounded-full hover:bg-muted transition z-50"
@@ -786,10 +683,14 @@ export default function VendorDetailPage() {
                 <X size={28} />
               </button>
               <div className="w-full max-w-5xl mx-auto flex flex-col items-center pt-12 md:pt-16 px-4 md:px-0">
-                <h2 className="text-3xl font-bold mb-1">Image gallery</h2>
-                <p className="text-muted-foreground mb-6 text-lg">
-                  {vendor?.businessName}
-                </p>
+                <div className="w-full ">
+                  <h2 className="text-4xl max-md:text-3xl font-bold mb-1">
+                    Image gallery
+                  </h2>
+                  <p className="text-muted-foreground mb-6 text-2xl max-md:text-lg">
+                    {vendor?.businessName}
+                  </p>
+                </div>
                 {/* Large image at the top, full width */}
                 {images[0] && (
                   <div className="w-full mb-8">
@@ -842,6 +743,7 @@ export default function VendorDetailPage() {
                 </p>
                 {/* Google Maps Embed */}
                 <div
+                  ref={mapRef}
                   className="mt-6 rounded-lg overflow-hidden"
                   style={{ height: "350px" }}
                 >
@@ -877,122 +779,102 @@ export default function VendorDetailPage() {
             )}
 
             {/* Services */}
-            {listings.length > 0 && (
+            {vendor.subcategories.length > 0 && (
               <div className="mb-12">
-                <h2 className="text-xl font-semibold mb-4">
-                  Services & Packages
-                </h2>
-                {/* Category Tabs (below section title) */}
-                {vendor.categories && vendor.categories.length > 1 && (
-                  <div className="flex gap-2 mb-6">
-                    <button
-                      className={`px-4 py-1.5 rounded-lg font-medium border transition-colors ${
-                        selectedCategory === "all"
-                          ? "bg-accent text-white border-accent"
-                          : "bg-gray-50 border-gray-200 text-gray-700"
-                      }`}
-                      onClick={() => setSelectedCategory("all")}
+                <h2 className="text-xl font-semibold mb-4">Services</h2>
+                <div className="flex flex-wrap gap-2">
+                  {vendor.subcategories.map((service, index) => (
+                    <span
+                      key={index}
+                      className="px-4 py-2 rounded-full bg-muted text-sm font-medium"
                     >
-                      All
-                    </button>
-                    {vendor.categories.map((cat: string) => (
-                      <button
-                        key={cat}
-                        className={`px-4 py-1.5 rounded-lg font-medium border transition-colors ${
-                          selectedCategory === cat
-                            ? "bg-accent text-white border-accent"
-                            : "bg-gray-50 border-gray-200 text-gray-700"
-                        }`}
-                        onClick={() => setSelectedCategory(cat)}
-                      >
-                        {cat}
-                      </button>
-                    ))}
-                  </div>
-                )}
-                {/* Services List */}
-                {(() => {
-                  // Filter listings by selected category
-                  let filteredListings = listings;
-                  if (
-                    selectedCategory !== "all" &&
-                    vendor.categories.includes(selectedCategory)
-                  ) {
-                    // If listings had category info, filter here. For now, show all for 'all'.
-                    // If you add category info to listings, filter by it here.
-                  }
-                  return filteredListings.length === 0 ? (
-                    <div className="text-center py-8 text-gray-400">
-                      <p>No services listed yet.</p>
-                    </div>
-                  ) : (
-                    <div className="space-y-2">
-                      {filteredListings.map((listing: BookingService) => (
-                        <div
-                          key={listing.id}
-                          className="p-4 rounded-lg bg-gray-50 border border-gray-200 hover:border-accent/50 transition-colors group flex flex-col gap-2"
-                        >
-                          <div className="flex items-start justify-between mb-2">
-                            <div>
-                              <h4 className="font-medium text-gray-900">
-                                {listing.headline}
-                              </h4>
-                              {/* Add description if available */}
-                            </div>
-                            <div className="flex flex-col gap-2 items-end">
-                              <button
-                                onClick={() => handleBookService(listing)}
-                                className="mt-2 px-4 py-1.5 rounded bg-accent text-white text-sm font-semibold hover:bg-accent/90 transition-colors"
-                              >
-                                Book
-                              </button>
-                            </div>
-                          </div>
-                          <p className="text-accent font-bold text-lg">
-                            {listing.minPrice
-                              ? `${formatCurrency(listing.minPrice)}${
-                                  listing.maxPrice
-                                    ? ` - ${formatCurrency(listing.maxPrice)}`
-                                    : "+"
-                                }`
-                              : "Price on request"}
-                          </p>
-                        </div>
-                      ))}
-                      <button
-                        onClick={handleBookMultiple}
-                        className="w-full mt-4 py-2 rounded-lg bg-accent/10 text-accent font-semibold hover:bg-accent/20 transition-colors"
-                      >
-                        Book Multiple Services
-                      </button>
-                      {/* Booking Modal */}
-                      <BookingModal
-                        isOpen={bookingModalOpen}
-                        onClose={() => setBookingModalOpen(false)}
-                        services={bookingPrefill}
-                        onBook={handleBookingSubmit}
-                        darkMode={false}
-                      />
-                    </div>
-                  );
-                })()}
+                      {service}
+                    </span>
+                  ))}
+                </div>
               </div>
             )}
 
-            {/* Culture Tags */}
+            {/* Specializations & Listings */}
             {vendor.cultureTraditionTags.length > 0 && (
               <div className="mb-12">
                 <h2 className="text-xl font-semibold mb-4">Specializations</h2>
-                <div className="flex flex-wrap gap-2">
-                  {vendor.cultureTraditionTags.map(
-                    (tag: string, index: number) => (
+                <div className="flex flex-wrap gap-2 mb-4">
+                  {vendor.cultureTraditionTags.map((tag, index) => {
+                    const capTag =
+                      tag.charAt(0).toUpperCase() + tag.slice(1).toLowerCase();
+                    return (
                       <span
                         key={index}
                         className="px-4 py-2 rounded-full bg-accent/10 text-accent text-sm font-medium"
                       >
-                        {tag}
+                        {capTag}
                       </span>
-                    )
+                    );
+                  })}
+                </div>
+                {/* Listings Section */}
+                <div>
+                  <h3 className="text-lg font-semibold mb-2">
+                    Services & Packages
+                  </h3>
+                  {isListingsLoading ? (
+                    <p className="text-muted-foreground">Loading listings...</p>
+                  ) : listings.length === 0 ? (
+                    <p className="text-muted-foreground">
+                      No listings available.
+                    </p>
+                  ) : (
+                    <ul className="space-y-4">
+                      {listings.map((listing) => (
+                        <li
+                          key={listing.id}
+                          className="border rounded-lg p-4 flex items-start gap-4 bg-white"
+                        >
+                          {listing.coverImageUrl && (
+                            <img
+                              src={listing.coverImageUrl}
+                              alt="Cover"
+                              className="w-20 h-20 object-cover rounded-md border"
+                            />
+                          )}
+                          <div className="flex-1">
+                            <div className="flex items-center justify-between">
+                              <h4 className="font-semibold text-gray-900">
+                                {listing.headline}
+                              </h4>
+                            </div>
+                            <div className="text-gray-700 mt-1">
+                              {listing.longDescription}
+                            </div>
+                            <div className="text-gray-500 text-sm mt-2 flex gap-4">
+                              <span>
+                                Price:{" "}
+                                {listing.price
+                                  ? formatCurrency(listing.price)
+                                  : "-"}
+                              </span>
+                              <span>Time: {listing.timeEstimate}</span>
+                            </div>
+                            {listing.galleryUrls &&
+                              listing.galleryUrls.length > 0 && (
+                                <div className="flex gap-2 mt-2">
+                                  {listing.galleryUrls
+                                    .slice(0, 3)
+                                    .map((url, i) => (
+                                      <img
+                                        key={i}
+                                        src={url}
+                                        alt="Gallery"
+                                        className="w-12 h-12 object-cover rounded border"
+                                      />
+                                    ))}
+                                </div>
+                              )}
+                          </div>
+                        </li>
+                      ))}
+                    </ul>
                   )}
                 </div>
               </div>
@@ -1006,7 +888,7 @@ export default function VendorDetailPage() {
 
               {reviews.length > 0 ? (
                 <div className="space-y-6">
-                  {reviews.map((review: Review) => (
+                  {reviews.map((review) => (
                     <div
                       key={review.id}
                       className="p-6 rounded-2xl border border-border"
@@ -1019,7 +901,7 @@ export default function VendorDetailPage() {
                           <p className="font-semibold">{review.authorName}</p>
                           <div className="flex items-center gap-2">
                             <div className="flex items-center gap-1">
-                              {[...Array(review.rating)].map((_, i: number) => (
+                              {[...Array(review.rating)].map((_, i) => (
                                 <Star
                                   key={i}
                                   size={14}
@@ -1064,7 +946,7 @@ export default function VendorDetailPage() {
               <div className="mb-12">
                 <h2 className="text-xl font-semibold mb-4">Team Members</h2>
                 <div className="flex flex-wrap gap-6">
-                  {teamMembers.map((member, idx) => {
+                  {teamMembers.map((member) => {
                     const hasImage =
                       member.imageUrl &&
                       typeof member.imageUrl === "string" &&
@@ -1432,7 +1314,6 @@ export default function VendorDetailPage() {
           </div>
         </div>
       )}
-
 
       <Footer />
     </div>

@@ -18,10 +18,20 @@ function VerifyEmailContent() {
   const [success, setSuccess] = useState(false);
   const [resendSuccess, setResendSuccess] = useState(false);
 
+  // Only run verification once per token, and remember in sessionStorage
   useEffect(() => {
-    if (token) {
-      handleVerification(token);
+    if (token && typeof window !== "undefined") {
+      const alreadyVerified = sessionStorage.getItem(`verified-${token}`);
+      if (alreadyVerified) {
+        setSuccess(true);
+        setLoading(false);
+        return;
+      }
+      if (!success && !error) {
+        handleVerification(token);
+      }
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [token]);
 
   const handleVerification = async (verificationToken: string) => {
@@ -37,6 +47,11 @@ function VerifyEmailContent() {
       }
 
       setSuccess(true);
+
+      // Mark as verified in sessionStorage to prevent re-verification
+      if (typeof window !== "undefined") {
+        sessionStorage.setItem(`verified-${verificationToken}`, "true");
+      }
 
       // Redirect to login after 3 seconds
       setTimeout(() => {

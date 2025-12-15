@@ -7,8 +7,8 @@ import { z } from "zod";
 const listingSchema = z.object({
   headline: z.string().min(5, "Headline must be at least 5 characters"),
   longDescription: z.string().optional(),
-  minPrice: z.number().min(0).optional(),
-  maxPrice: z.number().min(0).optional(),
+  price: z.number().min(0),
+  timeEstimate: z.string().min(1).max(100),
   coverImageUrl: z.string().url().optional().or(z.literal("")),
   galleryUrls: z.array(z.string().url()).optional(),
 });
@@ -68,26 +68,17 @@ export async function POST(
 
     const body = await request.json();
     const validatedData = listingSchema.parse(body);
-
-    // Validate price range
-    if (
-      validatedData.minPrice &&
-      validatedData.maxPrice &&
-      validatedData.minPrice > validatedData.maxPrice
-    ) {
-      return NextResponse.json(
-        { message: "Minimum price cannot be greater than maximum price" },
-        { status: 400 }
-      );
-    }
-
     const listing = await prisma.listing.create({
       data: {
-        ...validatedData,
+        headline: validatedData.headline,
+        longDescription: validatedData.longDescription,
+        price: validatedData.price,
+        timeEstimate: validatedData.timeEstimate,
+        coverImageUrl: validatedData.coverImageUrl || null,
+        galleryUrls: validatedData.galleryUrls || [],
         providerId: id,
       },
     });
-
     return NextResponse.json(
       { message: "Listing created successfully", listing },
       { status: 201 }

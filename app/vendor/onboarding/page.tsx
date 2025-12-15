@@ -13,6 +13,7 @@ type OnboardingStep =
   | "categories"
   | "social"
   | "media"
+  | "listings"
   | "schedule"
   | "review";
 
@@ -21,6 +22,15 @@ interface WeeklyScheduleDay {
   startTime: string;
   endTime: string;
   isClosed: boolean;
+}
+
+interface ListingDraft {
+  headline: string;
+  longDescription: string;
+  price: number | null;
+  timeEstimate: string;
+  coverImageUrl: string;
+  galleryUrls: string[];
 }
 
 interface OnboardingData {
@@ -53,7 +63,10 @@ interface OnboardingData {
   // Step 6: Pricing
   priceFrom: number | null;
 
-  // Step 7: Weekly Schedule
+  // Step 7: Listings
+  listings: ListingDraft[];
+
+  // Step 8: Weekly Schedule
   weeklySchedule: WeeklyScheduleDay[];
 }
 
@@ -82,6 +95,11 @@ const STEPS: { id: OnboardingStep; title: string; description: string }[] = [
     id: "media",
     title: "Photos & Media",
     description: "Showcase your work",
+  },
+  {
+    id: "listings",
+    title: "Services & Packages",
+    description: "Add at least 3 services or packages you offer",
   },
   {
     id: "schedule",
@@ -133,6 +151,61 @@ export default function VendorOnboardingPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // Local draft state for a new listing
+  const [listingDraft, setListingDraft] = useState<ListingDraft>({
+    headline: "",
+    longDescription: "",
+    price: null,
+    timeEstimate: "",
+    coverImageUrl: "",
+    galleryUrls: [],
+  });
+
+  // Reset draft when step is entered
+  useEffect(() => {
+    if (currentStep === "listings") {
+      setListingDraft({
+        headline: "",
+        longDescription: "",
+        price: null,
+        timeEstimate: "",
+        coverImageUrl: "",
+        galleryUrls: [],
+      });
+    }
+  }, [currentStep]);
+
+  const handleDraftChange = (updates: Partial<ListingDraft>) => {
+    setListingDraft((prev) => ({ ...prev, ...updates }));
+  };
+
+  const handleAddListing = () => {
+    if (
+      listingDraft.headline.trim() &&
+      listingDraft.price !== null &&
+      listingDraft.price > 0 &&
+      listingDraft.timeEstimate.trim() &&
+      listingDraft.coverImageUrl.trim() &&
+      listingDraft.longDescription.trim()
+    ) {
+      updateFormData({ listings: [...formData.listings, listingDraft] });
+      setListingDraft({
+        headline: "",
+        longDescription: "",
+        price: null,
+        timeEstimate: "",
+        coverImageUrl: "",
+        galleryUrls: [],
+      });
+    }
+  };
+
+  const handleRemoveListing = (idx: number) => {
+    updateFormData({
+      listings: formData.listings.filter((_, i) => i !== idx),
+    });
+  };
+
   const [formData, setFormData] = useState<OnboardingData>({
     businessName: "",
     description: "",
@@ -151,6 +224,7 @@ export default function VendorOnboardingPage() {
     coverImage: "",
     photos: [],
     priceFrom: null,
+    listings: [],
     weeklySchedule: [
       { dayOfWeek: 0, startTime: "09:00", endTime: "17:00", isClosed: false },
       { dayOfWeek: 1, startTime: "09:00", endTime: "17:00", isClosed: false },
@@ -314,6 +388,30 @@ export default function VendorOnboardingPage() {
       );
       const failed = scheduleRes.find((r) => !r.ok);
       if (failed) throw new Error("Failed to save weekly schedule");
+
+      // 3. Save listings for this provider
+      if (formData.listings && formData.listings.length > 0) {
+        const listingsRes = await Promise.all(
+          formData.listings.map((listing) =>
+            fetch("/api/vendor/listings", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                providerId: provider.id,
+                headline: listing.headline,
+                longDescription: listing.longDescription,
+                price: listing.price,
+                timeEstimate: listing.timeEstimate,
+                coverImageUrl: listing.coverImageUrl,
+                galleryUrls: listing.galleryUrls,
+              }),
+            })
+          )
+        );
+        const failedListing = listingsRes.find((r) => !r.ok);
+        if (failedListing)
+          throw new Error("Failed to save one or more listings");
+      }
 
       // Clear saved data on success
       clearSavedData();
@@ -544,7 +642,7 @@ export default function VendorOnboardingPage() {
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Starting Price (€)
+                Starting Price (£)
               </label>
               <input
                 type="number"
@@ -905,6 +1003,200 @@ export default function VendorOnboardingPage() {
           </div>
         );
 
+      case "listings":
+        return (
+          <div className="space-y-8">
+            <h2 className="text-lg font-semibold text-gray-900">
+              Add Your Services/Packages
+            </h2>
+            <p className="text-gray-600 mb-4">
+              Add at least 3 services or packages you offer. These will be shown
+              to clients and can be booked.
+            </p>
+            {/* Listing form */}
+            <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Headline *
+                </label>
+                <input
+                  type="text"
+                  value={listingDraft.headline}
+                  onChange={(e) =>
+                    handleDraftChange({ headline: e.target.value })
+                  }
+                  className="w-full px-3 py-2 border rounded-lg"
+                  placeholder="e.g., Gold Wedding Photography Package"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Price (£) *
+                </label>
+                <input
+                  type="number"
+                  value={listingDraft.price ?? ""}
+                  onChange={(e) =>
+                    handleDraftChange({
+                      price: e.target.value ? Number(e.target.value) : null,
+                    })
+                  }
+                  className="w-full px-3 py-2 border rounded-lg"
+                  placeholder="e.g., 100"
+                  min="0"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Time Estimate *
+                </label>
+                <input
+                  type="text"
+                  value={listingDraft.timeEstimate}
+                  onChange={(e) =>
+                    handleDraftChange({ timeEstimate: e.target.value })
+                  }
+                  className="w-full px-3 py-2 border rounded-lg"
+                  placeholder="e.g., 6 hours, 1 day, etc."
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Cover Image *
+                </label>
+                <ImageUpload
+                  value={listingDraft.coverImageUrl}
+                  onChange={(url) => handleDraftChange({ coverImageUrl: url })}
+                  type="cover"
+                  aspectRatio="video"
+                  placeholder="Click or drag to upload"
+                  className="w-full"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Description *
+                </label>
+                <textarea
+                  value={listingDraft.longDescription}
+                  onChange={(e) =>
+                    handleDraftChange({ longDescription: e.target.value })
+                  }
+                  rows={3}
+                  className="w-full px-3 py-2 border rounded-lg"
+                  placeholder="Describe this service/package in detail"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Gallery Images
+                </label>
+                <MultiImageUpload
+                  values={listingDraft.galleryUrls}
+                  onChange={(urls) => handleDraftChange({ galleryUrls: urls })}
+                  maxImages={6}
+                  type="gallery"
+                />
+              </div>
+              <button
+                type="button"
+                onClick={handleAddListing}
+                disabled={
+                  !listingDraft.headline.trim() ||
+                  !listingDraft.price ||
+                  listingDraft.price <= 0 ||
+                  !listingDraft.timeEstimate.trim() ||
+                  !listingDraft.coverImageUrl.trim() ||
+                  !listingDraft.longDescription.trim()
+                }
+                className={`mt-2 px-6 py-2 rounded-lg font-medium transition-colors ${
+                  listingDraft.headline.trim() &&
+                  listingDraft.price &&
+                  listingDraft.price > 0 &&
+                  listingDraft.timeEstimate.trim() &&
+                  listingDraft.coverImageUrl.trim() &&
+                  listingDraft.longDescription.trim()
+                    ? "bg-accent text-white hover:bg-accent"
+                    : "bg-gray-200 text-gray-400 cursor-not-allowed"
+                }`}
+              >
+                Add Listing
+              </button>
+            </div>
+
+            {/* List of added listings */}
+            <div className="mt-6">
+              <h3 className="font-semibold text-gray-800 mb-2">
+                Your Listings
+              </h3>
+              {formData.listings.length === 0 ? (
+                <p className="text-gray-500">No listings added yet.</p>
+              ) : (
+                <ul className="space-y-4">
+                  {formData.listings.map((listing, idx) => (
+                    <li
+                      key={idx}
+                      className="border rounded-lg p-4 flex items-start gap-4 bg-white"
+                    >
+                      {listing.coverImageUrl && (
+                        <img
+                          src={listing.coverImageUrl}
+                          alt="Cover"
+                          className="w-20 h-20 object-cover rounded-md border"
+                        />
+                      )}
+                      <div className="flex-1">
+                        <div className="flex items-center justify-between">
+                          <h4 className="font-semibold text-gray-900">
+                            {listing.headline}
+                          </h4>
+                          <button
+                            type="button"
+                            onClick={() => handleRemoveListing(idx)}
+                            className="ml-2 text-red-600 hover:underline text-sm"
+                          >
+                            Remove
+                          </button>
+                        </div>
+                        <div className="text-gray-700 mt-1">
+                          {listing.longDescription}
+                        </div>
+                        <div className="text-gray-500 text-sm mt-2 flex gap-4">
+                          <span>
+                            Price:{" "}
+                            {listing.price
+                              ? formatCurrency(listing.price)
+                              : "-"}
+                          </span>
+                          <span>Time: {listing.timeEstimate}</span>
+                        </div>
+                        {listing.galleryUrls &&
+                          listing.galleryUrls.length > 0 && (
+                            <div className="flex gap-2 mt-2">
+                              {listing.galleryUrls.slice(0, 3).map((url, i) => (
+                                <img
+                                  key={i}
+                                  src={url}
+                                  alt="Gallery"
+                                  className="w-12 h-12 object-cover rounded border"
+                                />
+                              ))}
+                            </div>
+                          )}
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              )}
+              {formData.listings.length < 3 && (
+                <p className="text-red-500 mt-2 text-sm">
+                  Please add at least 3 listings to continue.
+                </p>
+              )}
+            </div>
+          </div>
+        );
+
       default:
         return null;
     }
@@ -929,11 +1221,8 @@ export default function VendorOnboardingPage() {
           formData.serviceRadiusMiles > 0
         );
       case "categories":
-        return (
-          formData.categories.length > 0 &&
-          formData.subcategories.length > 0 &&
-          formData.cultureTraditionTags.length > 0
-        );
+        // Only require at least one category to continue
+        return formData.categories.length > 0;
       case "social":
         return (
           formData.instagram.trim() !== "" &&
@@ -942,6 +1231,8 @@ export default function VendorOnboardingPage() {
         );
       case "media":
         return formData.coverImage.trim() !== "" && formData.photos.length >= 4;
+      case "listings":
+        return formData.listings.length >= 3;
       case "schedule":
         // All days must be filled (not closed) and have valid times
         return (
@@ -973,9 +1264,9 @@ export default function VendorOnboardingPage() {
       {/* Progress Steps */}
       <div className="bg-white border-b border-gray-200">
         <div className="max-w-3xl mx-auto px-4 py-4">
-          <div className="flex items-center justify-between overflow-x-auto">
+          <div className="flex items-center justify-between gap-0">
             {STEPS.map((step, index) => (
-              <div key={step.id} className="flex items-center min-w-20">
+              <div key={step.id} className="flex items-center flex-1 min-w-0">
                 <div
                   className={`w-8 h-8 rounded-full flex items-center justify-center font-medium text-sm transition-colors duration-200 ${
                     index < currentStepIndex
@@ -989,7 +1280,7 @@ export default function VendorOnboardingPage() {
                 </div>
                 {index < STEPS.length - 1 && (
                   <div
-                    className={`w-12 sm:w-20 h-1 ${
+                    className={`flex-1 h-1 mx-1 ${
                       index < currentStepIndex ? "bg-accent" : "bg-gray-200"
                     }`}
                   />

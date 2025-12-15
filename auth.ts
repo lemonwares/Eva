@@ -40,7 +40,15 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         });
 
         if (!user || !user.password) {
-          return null;
+          // NextAuth expects an Error to show a custom message
+          throw new Error("Invalid email or password");
+        }
+
+        // Block login if email is not verified
+        if (!user.emailVerifiedAt) {
+          throw new Error(
+            "Your email address is not verified. Please check your inbox for a verification link before logging in."
+          );
         }
 
         const passwordMatch = await bcrypt.compare(password, user.password);
