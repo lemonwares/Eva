@@ -9,7 +9,7 @@ interface WeeklySchedule {
   isClosed: boolean;
 }
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useParams } from "next/navigation";
 import { useSession } from "next-auth/react";
 import Link from "next/link";
@@ -234,6 +234,9 @@ function ScheduleDisplay({
 }
 
 export default function VendorDetailPage() {
+  // Ref for the Google Maps iframe section (must be first hook!)
+  const mapRef = useRef<HTMLDivElement>(null);
+
   const params = useParams();
   const { data: session } = useSession();
   const [vendor, setVendor] = useState<Provider | null>(null);
@@ -303,6 +306,7 @@ export default function VendorDetailPage() {
       setVendor(data.provider || data);
 
       // console.log(`Data`, data);
+      // console.log(`Vendor:`, vendor);
       // take weekly schedule from provider payload when available
       if (data.provider && data.provider.weeklySchedules) {
         setWeeklySchedule(data.provider.weeklySchedules);
@@ -385,6 +389,14 @@ export default function VendorDetailPage() {
     setSubmitError("");
   }
 
+  const formatCategories = (cats?: string[]) => {
+    if (!cats || cats.length === 0) return "";
+    return cats
+      .filter(Boolean)
+      .map((cat) => cat.charAt(0).toUpperCase() + cat.slice(1).toLowerCase())
+      .join(", ");
+  };
+
   const images = vendor
     ? ([vendor.coverImage, ...vendor.photos].filter(Boolean) as string[])
     : [];
@@ -419,6 +431,13 @@ export default function VendorDetailPage() {
     );
   }
 
+  // Scroll to map section
+  const handleGetDirectionsClick = () => {
+    if (mapRef.current && typeof mapRef.current.scrollIntoView === "function") {
+      mapRef.current.scrollIntoView({ behavior: "smooth", block: "center" });
+    }
+  };
+
   return (
     <div className="min-h-screen bg-background">
       <Header />
@@ -452,12 +471,12 @@ export default function VendorDetailPage() {
                 </div>
                 <div className="flex flex-wrap items-center gap-4 text-muted-foreground">
                   <span className="font-medium text-foreground">
-                    {vendor.categories.join(", ")}
+                    {formatCategories(vendor.categories)}
                   </span>
-                  {vendor.city && (
+                  {vendor.address && (
                     <span className="flex items-center gap-1">
                       <MapPin size={16} />
-                      {vendor.city}
+                      {vendor.address}
                     </span>
                   )}
                   <div className="flex items-center gap-1">
@@ -471,7 +490,10 @@ export default function VendorDetailPage() {
                     </span>
                     <span>({vendor._count?.reviews || 0} reviews)</span>
                   </div>
-                  <div className="text-accent hover:cursor-pointer">
+                  <div
+                    className="text-accent hover:cursor-pointer"
+                    onClick={handleGetDirectionsClick}
+                  >
                     Get Directions
                   </div>
                 </div>
@@ -490,11 +512,14 @@ export default function VendorDetailPage() {
               <div className="col-span-2 border border-gray-300 rounded-2xl h-full overflow-hidden">
                 <Image
                   src={images[0]}
+                  onClick={() => {
+                    setShowImagesModal(true);
+                  }}
                   alt="Vendor main"
                   width={900}
                   height={300}
                   unoptimized={true}
-                  className="object-cover w-full h-full rounded-2xl shadow-lg"
+                  className="object-cover w-full h-full rounded-2xl shadow-lg hover:cursor-pointer"
                   style={{ height: "100%", width: "100%" }}
                   sizes="(max-width: 1200px) 100vw, 900px"
                   priority
@@ -523,7 +548,7 @@ export default function VendorDetailPage() {
                       />
                       {isLast && (
                         <button
-                          className="absolute bottom-3 right-0 -translate-x-1/2 bg-gray-400/60 hover:transition-all duration-300 hover:cursor-pointer text-accent-foreground px-4 py-2 rounded-full font-medium shadow hover:underline"
+                          className="absolute bottom-3 right-0 -translate-x-1/2 bg-gray-400/50 hover:transition-all duration-300 hover:cursor-pointer text-accent-foreground px-4 py-2 rounded-full font-medium shadow hover:underline"
                           onClick={() => {
                             setShowImagesModal(true);
                             setModalImageIndex(0);
@@ -621,7 +646,7 @@ export default function VendorDetailPage() {
         {/* See all images modal (desktop only) */}
         {showImagesModal && (
           <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex flex-col">
-            <div className="relative flex flex-col w-full h-full max-h-screen bg-background rounded-none md:rounded-2xl p-0 md:p-8 shadow-xl overflow-y-auto">
+            <div className="relative flex flex-col w-full h-full max-h-screen bg-background rounded-none p-0 md:p-8 shadow-xl overflow-y-auto">
               <button
                 onClick={() => setShowImagesModal(false)}
                 className="absolute top-4 right-4 p-2 rounded-full hover:bg-muted transition z-50"
@@ -629,16 +654,22 @@ export default function VendorDetailPage() {
               >
                 <X size={28} />
               </button>
+
               <div className="w-full max-w-5xl mx-auto flex flex-col items-center pt-12 md:pt-16 px-4 md:px-0">
-                <h2 className="text-3xl font-bold mb-1">Image gallery</h2>
-                <p className="text-muted-foreground mb-6 text-lg">
-                  {vendor?.businessName}
-                </p>
-                {/* Large image at the top, full width */}
-                {images[0] && (
+                <div className="w-full ">
+                  <h2 className="text-4xl max-md:text-3xl font-bold mb-1">
+                    Image gallery
+                  </h2>
+                  <p className="text-muted-foreground mb-6 text-2xl max-md:text-lg">
+                    {vendor?.businessName ?? ""}
+                  </p>
+                </div>
+
+                {/* Guard against null/undefined images */}
+                {Array.isArray(images) && images[0] && (
                   <div className="w-full mb-8">
                     <Image
-                      src={images[0]}
+                      src={images[0] ?? ""}
                       alt="Gallery main image"
                       width={1200}
                       height={500}
@@ -648,24 +679,111 @@ export default function VendorDetailPage() {
                     />
                   </div>
                 )}
-                {/* Grid of smaller images below, 2 columns */}
-                <div className="w-full overflow-y-auto pb-8">
-                  <div className="grid grid-cols-2 gap-6">
-                    {images.slice(1).map((img, idx) => (
-                      <div key={idx} className="relative">
+
+                {/* Collage + extra images */}
+                {Array.isArray(images) && images.length > 1 && (
+                  <div className="w-full overflow-y-auto pb-8">
+                    {/* 2-column row: images[1], images[2] */}
+                    {(images[1] || images[2]) && (
+                      <div className="grid grid-cols-2 gap-6 mb-6">
+                        {images[1] && (
+                          <div className="relative">
+                            <Image
+                              src={images[1] ?? ""}
+                              alt="Gallery image 2"
+                              width={600}
+                              height={350}
+                              unoptimized={true}
+                              className="object-cover w-full h-[200px] md:h-[250px] rounded-2xl shadow"
+                              style={{ background: "#f3f4f6" }}
+                            />
+                          </div>
+                        )}
+                        {images[2] && (
+                          <div className="relative">
+                            <Image
+                              src={images[2] ?? ""}
+                              alt="Gallery image 3"
+                              width={600}
+                              height={350}
+                              unoptimized={true}
+                              className="object-cover w-full h-[200px] md:h-[250px] rounded-2xl shadow"
+                              style={{ background: "#f3f4f6" }}
+                            />
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+                    {/* Tall full-width image: images[3] */}
+                    {images[3] && (
+                      <div className="w-full mb-6">
                         <Image
-                          src={img}
-                          alt={`Gallery image ${idx + 2}`}
-                          width={600}
-                          height={350}
+                          src={images[3] ?? ""}
+                          alt="Gallery image 4"
+                          width={1200}
+                          height={500}
                           unoptimized={true}
-                          className="object-cover w-full h-[200px] md:h-[250px] rounded-2xl shadow"
+                          className="object-cover w-full h-[260px] md:h-80 rounded-2xl shadow"
                           style={{ background: "#f3f4f6" }}
                         />
                       </div>
-                    ))}
+                    )}
+
+                    {/* 2-column row: images[4], images[5] */}
+                    {(images[4] || images[5]) && (
+                      <div className="grid grid-cols-2 gap-6 mb-6">
+                        {images[4] && (
+                          <div className="relative">
+                            <Image
+                              src={images[4] ?? ""}
+                              alt="Gallery image 5"
+                              width={600}
+                              height={350}
+                              unoptimized={true}
+                              className="object-cover w-full h-[180px] md:h-[220px] rounded-2xl shadow"
+                              style={{ background: "#f3f4f6" }}
+                            />
+                          </div>
+                        )}
+                        {images[5] && (
+                          <div className="relative">
+                            <Image
+                              src={images[5] ?? ""}
+                              alt="Gallery image 6"
+                              width={600}
+                              height={350}
+                              unoptimized={true}
+                              className="object-cover w-full h-[180px] md:h-[220px] rounded-2xl shadow"
+                              style={{ background: "#f3f4f6" }}
+                            />
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+                    {/* Extra images from index 6 onward – simple grid */}
+                    {images.length > 6 && (
+                      <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
+                        {images.slice(6).map((img, idx) =>
+                          img ? (
+                            <div key={idx} className="relative">
+                              <Image
+                                src={img ?? ""}
+                                alt={`Gallery image ${idx + 7}`}
+                                width={400}
+                                height={260}
+                                unoptimized={true}
+                                className="object-cover w-full h-40 md:h-[200px] rounded-2xl shadow"
+                                style={{ background: "#f3f4f6" }}
+                              />
+                            </div>
+                          ) : null
+                        )}
+                      </div>
+                    )}
                   </div>
-                </div>
+                )}
               </div>
             </div>
           </div>
@@ -686,6 +804,7 @@ export default function VendorDetailPage() {
                 </p>
                 {/* Google Maps Embed */}
                 <div
+                  ref={mapRef}
                   className="mt-6 rounded-lg overflow-hidden"
                   style={{ height: "350px" }}
                 >
@@ -742,14 +861,18 @@ export default function VendorDetailPage() {
               <div className="mb-12">
                 <h2 className="text-xl font-semibold mb-4">Specializations</h2>
                 <div className="flex flex-wrap gap-2">
-                  {vendor.cultureTraditionTags.map((tag, index) => (
-                    <span
-                      key={index}
-                      className="px-4 py-2 rounded-full bg-accent/10 text-accent text-sm font-medium"
-                    >
-                      {tag}
-                    </span>
-                  ))}
+                  {vendor.cultureTraditionTags.map((tag, index) => {
+                    const capTag =
+                      tag.charAt(0).toUpperCase() + tag.slice(1).toLowerCase();
+                    return (
+                      <span
+                        key={index}
+                        className="px-4 py-2 rounded-full bg-accent/10 text-accent text-sm font-medium"
+                      >
+                        {capTag}
+                      </span>
+                    );
+                  })}
                 </div>
               </div>
             )}
@@ -820,7 +943,7 @@ export default function VendorDetailPage() {
               <div className="mb-12">
                 <h2 className="text-xl font-semibold mb-4">Team Members</h2>
                 <div className="flex flex-wrap gap-6">
-                  {teamMembers.map((member, idx) => {
+                  {teamMembers.map((member) => {
                     const hasImage =
                       member.imageUrl &&
                       typeof member.imageUrl === "string" &&
