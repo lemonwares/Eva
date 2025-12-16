@@ -3,7 +3,7 @@ import path from "path";
 
 function loadTemplate(filename: string): string {
   return fs.readFileSync(
-    path.join(process.cwd(), "app", "templates", filename),
+    path.join(process.cwd(), "templates", filename),
     "utf-8"
   );
 }
