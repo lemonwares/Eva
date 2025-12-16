@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/auth";
+import { getStripe, formatAmountForStripe } from "@/lib/stripe";
 
 // GET /api/bookings - List bookings (for authenticated vendor, client, or admin)
 export async function GET(request: NextRequest) {
@@ -129,6 +130,7 @@ export async function GET(request: NextRequest) {
 }
 
 // POST /api/bookings - Create a new booking (direct from vendor page)
+
 export async function POST(request: NextRequest) {
   try {
     const session = await auth();
@@ -185,7 +187,7 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    // Create the booking
+    // Create the booking (status: PENDING_PAYMENT)
     const booking = await prisma.booking.create({
       data: {
         quoteId: quote.id,
@@ -206,7 +208,46 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    return NextResponse.json({ message: "Booking created", booking });
+    // Stripe payment session
+    const stripe = getStripe();
+    const lineItems = services.map((s: any) => ({
+      price_data: {
+        currency: "GBP",
+        product_data: {
+          name: s.headline,
+        },
+        unit_amount: formatAmountForStripe(s.minPrice || 0, "GBP"),
+      },
+      quantity: 1,
+    }));
+
+    const successUrl = `${
+      process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000"
+    }/vendors/${providerId}?booking=success`;
+    const cancelUrl = `${
+      process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000"
+    }/vendors/${providerId}?booking=cancel`;
+
+    const sessionStripe = await stripe.checkout.sessions.create({
+      payment_method_types: ["card"],
+      mode: "payment",
+      line_items: lineItems,
+      customer_email: clientEmail,
+      client_reference_id: booking.id,
+      metadata: {
+        bookingId: booking.id,
+        providerId,
+        quoteId: quote.id,
+      },
+      success_url: successUrl,
+      cancel_url: cancelUrl,
+    });
+
+    return NextResponse.json({
+      message: "Booking created, payment required",
+      booking,
+      paymentUrl: sessionStripe.url,
+    });
   } catch (error: any) {
     console.error("Error creating booking:", error);
     return NextResponse.json(

@@ -20,7 +20,7 @@ export function getStripe(): Stripe {
 // Helper to format amount for Stripe (cents)
 export function formatAmountForStripe(
   amount: number,
-  currency: string = "USD"
+  currency: string = "GBP"
 ): number {
   const zeroDecimalCurrencies = ["JPY", "KRW", "VND"];
   if (zeroDecimalCurrencies.includes(currency.toUpperCase())) {
@@ -32,7 +32,7 @@ export function formatAmountForStripe(
 // Helper to format amount from Stripe (cents to dollars)
 export function formatAmountFromStripe(
   amount: number,
-  currency: string = "USD"
+  currency: string = "GBP"
 ): number {
   const zeroDecimalCurrencies = ["JPY", "KRW", "VND"];
   if (zeroDecimalCurrencies.includes(currency.toUpperCase())) {
