@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { sendEmail } from "@/lib/mail";
-import { emailTemplates } from "@/app/templates/templateLoader";
+import { emailTemplates } from "@/templates/templateLoader";
 
 // GET /api/auth/verify-email?token=xxx
 // Alternative endpoint for email link verification via query params
