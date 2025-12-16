@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import bcrypt from "bcryptjs";
 import crypto from "crypto";
-import { emailTemplates } from "@/public/templates/templateLoader";
+import { emailTemplates } from "@/app/templates/templateLoader";
 import { sendEmail } from "@/lib/mail";
 
 export async function POST(request: NextRequest) {
