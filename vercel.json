@@ -1,3 +1,12 @@
 {
-  "includeFiles": ["templates/**", "app/**"]
+  "includeFiles": ["templates/**", "app/**"],
+
+  "functions": {
+    "app/api/**.[jt]s": {
+      "includeFiles": ["templates/**"]
+    },
+    "api/**.[jt]s": {
+      "includeFiles": ["templates/**"]
+    }
+  }
 }
