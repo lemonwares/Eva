@@ -13,6 +13,7 @@ import {
   Globe,
   Instagram,
   Facebook,
+  CircleCheckBig,
   Calendar,
   MessageSquare,
   Loader2,
@@ -30,6 +31,8 @@ import FavoriteButton from "@/components/common/FavoriteButton";
 import ShareButton from "@/components/common/ShareButton";
 import Image from "next/image";
 import { useState, useEffect, useRef } from "react";
+import Confetti from "react-confetti";
+import { useSearchParams, useRouter } from "next/navigation";
 
 interface WeeklySchedule {
   id: string;
@@ -244,6 +247,32 @@ function ScheduleDisplay({
 }
 
 export default function VendorDetailPage() {
+  const searchParams =
+    typeof window !== "undefined"
+      ? new URLSearchParams(window.location.search)
+      : null;
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [showErrorModal, setShowErrorModal] = useState(false);
+  const [confettiDimensions, setConfettiDimensions] = useState({
+    width: 0,
+    height: 0,
+  });
+  const confettiRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      setConfettiDimensions({
+        width: window.innerWidth,
+        height: window.innerHeight,
+      });
+    }
+    if (searchParams) {
+      if (searchParams.get("booking") === "success") {
+        setShowSuccessModal(true);
+      } else if (searchParams.get("booking") === "cancel") {
+        setShowErrorModal(true);
+      }
+    }
+  }, []);
   // Listings state
   const [listings, setListings] = useState<Listing[]>([]);
   const [isListingsLoading, setIsListingsLoading] = useState(true);
@@ -276,6 +305,113 @@ export default function VendorDetailPage() {
     budgetRange: "",
     message: "",
   });
+  const [selectedListings, setSelectedListings] = useState<string[]>([]);
+  const [showBookingForm, setShowBookingForm] = useState(false);
+  const [bookingForm, setBookingForm] = useState({
+    eventDate: "",
+    guests: "",
+    eventLocation: "",
+    notes: "",
+  });
+  const [isBooking, setIsBooking] = useState(false);
+  const [bookingError, setBookingError] = useState("");
+  const [showAuthModal, setShowAuthModal] = useState(false);
+  const [bookingLoading, setBookingLoading] = useState<boolean>(false);
+
+  function handleListingToggle(listingId: string) {
+    setSelectedListings((prev) =>
+      prev.includes(listingId)
+        ? prev.filter((id) => id !== listingId)
+        : [...prev, listingId]
+    );
+  }
+
+  // Helper to get selected listing objects
+  const selectedListingObjects = listings.filter((l) =>
+    selectedListings.includes(l.id)
+  );
+
+  // Helper to get total price
+  const totalSelectedPrice = selectedListingObjects.reduce(
+    (sum, l) => sum + (l.price || 0),
+    0
+  );
+
+  // Booking process state
+
+  function handleBookClick() {
+    setShowBookingForm(true);
+  }
+
+  // Handler to select/deselect listings
+  function handleListingSelect(listingId: string) {
+    setSelectedListings((prev) =>
+      prev.includes(listingId)
+        ? prev.filter((id) => id !== listingId)
+        : [...prev, listingId]
+    );
+  }
+
+  // Handler for booking button
+  async function handleMultiListingBooking(e: React.FormEvent) {
+    e.preventDefault();
+    // Replace this with your booking/payment logic
+    alert(`Proceeding to book: ${selectedListings.join(", ")}`);
+  }
+
+  // Submit booking form
+  const handleBookingFormSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setBookingLoading(true);
+    setBookingError("");
+    try {
+      if (!vendor) throw new Error("Vendor not loaded");
+      if (!session?.user) throw new Error("User not authenticated");
+      // Build services array from selected listings
+      const services = selectedListingObjects.map((l) => ({
+        id: l.id,
+        headline: l.headline,
+        minPrice: l.price || 0,
+        maxPrice: l.price || 0,
+      }));
+      const res = await fetch("/api/bookings", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          providerId: vendor.id,
+          services,
+          clientName: session.user.name || "",
+          clientEmail: session.user.email || "",
+          clientPhone: "", // phone not available on session.user, send empty string or collect in form if needed
+          eventDate: bookingForm.eventDate,
+          eventLocation: bookingForm.eventLocation,
+          guestsCount: Number(bookingForm.guests),
+          specialRequests: bookingForm.notes,
+          paymentMode: "FULL_PAYMENT",
+          pricingTotal: totalSelectedPrice,
+        }),
+      });
+      if (res.status === 401) {
+        saveBookingProgress();
+        setShowAuthModal(true);
+        setBookingLoading(false);
+        return;
+      }
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.message || "Booking failed");
+      }
+      const data = await res.json();
+      if (data.paymentUrl) {
+        window.location.href = data.paymentUrl;
+      } else {
+        setShowBookingForm(false);
+      }
+    } catch (err: any) {
+      setBookingError(err.message || "Booking failed");
+    }
+    setBookingLoading(false);
+  };
 
   // Auto-fill form when user is logged in
   useEffect(() => {
@@ -429,6 +565,48 @@ export default function VendorDetailPage() {
     ? ([vendor.coverImage, ...vendor.photos].filter(Boolean) as string[])
     : [];
 
+  // Save booking progress to localStorage
+  function saveBookingProgress() {
+    if (!vendor) return;
+    const progress = {
+      vendorId: vendor.id,
+      selectedListings,
+      bookingForm,
+    };
+    localStorage.setItem("eva_booking_progress", JSON.stringify(progress));
+  }
+
+  // Restore booking progress from localStorage
+  function restoreBookingProgress() {
+    // Only restore if user is authenticated and vendor is loaded
+    if (session?.user && vendor) {
+      const raw = localStorage.getItem("eva_booking_progress");
+      if (raw) {
+        try {
+          const progress = JSON.parse(raw);
+          if (progress.vendorId === vendor.id) {
+            setSelectedListings(progress.selectedListings || []);
+            setBookingForm(
+              progress.bookingForm || {
+                eventDate: "",
+                guests: "",
+                eventLocation: "",
+                notes: "",
+              }
+            );
+            setShowBookingForm(true);
+          }
+        } catch {}
+        localStorage.removeItem("eva_booking_progress");
+      }
+    }
+  }
+
+  useEffect(() => {
+    restoreBookingProgress();
+    // eslint-disable-next-line
+  }, [vendor?.id]);
+
   if (isLoading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
@@ -468,6 +646,101 @@ export default function VendorDetailPage() {
 
   return (
     <div className="min-h-screen bg-background">
+      {/* Booking Success Modal */}
+      {showSuccessModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+          <div className="relative bg-white rounded-2xl shadow-xl p-8 max-w-md w-full flex flex-col items-center">
+            <div
+              ref={confettiRef}
+              style={{ position: "absolute", inset: 0, zIndex: 1 }}
+            >
+              <Confetti
+                width={confettiDimensions.width}
+                height={confettiDimensions.height}
+                numberOfPieces={300}
+                recycle={false}
+              />
+            </div>
+            <div className="relative z-10 flex flex-col items-center">
+              <span className="text-green-600 mb-4">
+                <svg width="48" height="48" fill="none" viewBox="0 0 24 24">
+                  <circle cx="12" cy="12" r="12" fill="#D1FAE5" />
+                  <path
+                    d="M7 13l3 3 7-7"
+                    stroke="#059669"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </svg>
+              </span>
+              <h2 className="text-2xl font-bold mb-2">Booking Successful!</h2>
+              <p className="mb-4 text-center">
+                Your payment was received and your booking is confirmed. Thank
+                you for booking with {vendor?.businessName}!
+              </p>
+              <button
+                className="px-6 py-3 rounded-full bg-accent text-accent-foreground font-semibold hover:opacity-90 transition"
+                onClick={() => {
+                  setShowSuccessModal(false);
+                  if (typeof window !== "undefined") {
+                    const url = new URL(window.location.href);
+                    url.searchParams.delete("booking");
+                    window.history.replaceState(
+                      {},
+                      document.title,
+                      url.pathname + url.search
+                    );
+                  }
+                }}
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      {/* Booking Error Modal */}
+      {showErrorModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+          <div className="relative bg-white rounded-2xl shadow-xl p-8 max-w-md w-full flex flex-col items-center">
+            <span className="text-red-600 mb-4">
+              <svg width="48" height="48" fill="none" viewBox="0 0 24 24">
+                <circle cx="12" cy="12" r="12" fill="#FEE2E2" />
+                <path
+                  d="M15 9l-6 6M9 9l6 6"
+                  stroke="#DC2626"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
+            </span>
+            <h2 className="text-2xl font-bold mb-2">Payment Cancelled</h2>
+            <p className="mb-4 text-center">
+              Your payment was not completed. Please try again to confirm your
+              booking.
+            </p>
+            <button
+              className="px-6 py-3 rounded-full bg-accent text-accent-foreground font-semibold hover:opacity-90 transition"
+              onClick={() => {
+                setShowErrorModal(false);
+                if (typeof window !== "undefined") {
+                  const url = new URL(window.location.href);
+                  url.searchParams.delete("booking");
+                  window.history.replaceState(
+                    {},
+                    document.title,
+                    url.pathname + url.search
+                  );
+                }
+              }}
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      )}
       <Header />
 
       <section className="max-w-7xl mx-auto px-4 mt-24">
@@ -825,56 +1098,103 @@ export default function VendorDetailPage() {
                       No listings available.
                     </p>
                   ) : (
-                    <ul className="space-y-4">
-                      {listings.map((listing) => (
-                        <li
-                          key={listing.id}
-                          className="border rounded-lg p-4 flex items-start gap-4 bg-white"
-                        >
-                          {listing.coverImageUrl && (
-                            <img
-                              src={listing.coverImageUrl}
-                              alt="Cover"
-                              className="w-20 h-20 object-cover rounded-md border"
-                            />
-                          )}
-                          <div className="flex-1">
-                            <div className="flex items-center justify-between">
-                              <h4 className="font-semibold text-gray-900">
-                                {listing.headline}
-                              </h4>
-                            </div>
-                            <div className="text-gray-700 mt-1">
-                              {listing.longDescription}
-                            </div>
-                            <div className="text-gray-500 text-sm mt-2 flex gap-4">
-                              <span>
-                                Price:{" "}
-                                {listing.price
-                                  ? formatCurrency(listing.price)
-                                  : "-"}
-                              </span>
-                              <span>Time: {listing.timeEstimate}</span>
-                            </div>
-                            {listing.galleryUrls &&
-                              listing.galleryUrls.length > 0 && (
-                                <div className="flex gap-2 mt-2">
-                                  {listing.galleryUrls
-                                    .slice(0, 3)
-                                    .map((url, i) => (
-                                      <img
-                                        key={i}
-                                        src={url}
-                                        alt="Gallery"
-                                        className="w-12 h-12 object-cover rounded border"
-                                      />
-                                    ))}
-                                </div>
+                    <form
+                      onSubmit={handleMultiListingBooking}
+                      className="space-y-4"
+                    >
+                      <ul className="space-y-4">
+                        {listings.map((listing) => {
+                          const isSelected = selectedListings.includes(
+                            listing.id
+                          );
+                          return (
+                            <li
+                              key={listing.id}
+                              className="border rounded-lg p-4 flex items-center gap-4 bg-white"
+                            >
+                              {listing.coverImageUrl && (
+                                <Image
+                                  width={80}
+                                  height={80}
+                                  loading="lazy"
+                                  src={listing.coverImageUrl}
+                                  alt="Cover"
+                                  className="w-20 h-20 object-cover object-center rounded-md border"
+                                />
                               )}
-                          </div>
-                        </li>
-                      ))}
-                    </ul>
+                              <div className="flex-1">
+                                <div className="flex items-center justify-between">
+                                  <h4 className="font-semibold text-gray-900">
+                                    {listing.headline}
+                                  </h4>
+                                </div>
+                                <div className="text-gray-700 mt-1 text-[14px]">
+                                  {listing.longDescription}
+                                </div>
+                                <div className="text-gray-500 text-sm mt-2 flex gap-4">
+                                  <span>
+                                    Price:{" "}
+                                    {listing.price
+                                      ? formatCurrency(listing.price)
+                                      : "-"}
+                                  </span>
+                                  <span>Time: {listing.timeEstimate}</span>
+                                </div>
+                                {listing.galleryUrls &&
+                                  listing.galleryUrls.length > 0 && (
+                                    <div className="flex gap-2 mt-2">
+                                      {listing.galleryUrls
+                                        .slice(0, 3)
+                                        .map((url, i) => (
+                                          <Image
+                                            key={i}
+                                            width={48}
+                                            height={48}
+                                            loading="lazy"
+                                            src={url}
+                                            alt="Gallery"
+                                            className="w-12 h-12 object-cover rounded border"
+                                          />
+                                        ))}
+                                    </div>
+                                  )}
+                              </div>
+                              <div>
+                                {!isSelected ? (
+                                  <button
+                                    type="button"
+                                    onClick={() =>
+                                      handleListingToggle(listing.id)
+                                    }
+                                    className="text-accent text-[14px] hover:underline hover:cursor-pointer transition"
+                                  >
+                                    Book Now
+                                  </button>
+                                ) : (
+                                  <button
+                                    type="button"
+                                    onClick={() =>
+                                      handleListingToggle(listing.id)
+                                    }
+                                    className="px-4 py-2 rounded-full text-accent flex items-center justify-center"
+                                    title="Deselect"
+                                  >
+                                    <CircleCheckBig />
+                                  </button>
+                                )}
+                              </div>
+                            </li>
+                          );
+                        })}
+                      </ul>
+                      {/* <button
+                        type="submit"
+                        disabled={selectedListings.length === 0}
+                        className="w-full py-4 rounded-full bg-accent text-accent-foreground font-semibold hover:opacity-90 transition disabled:opacity-50 disabled:cursor-not-allowed mt-4"
+                      >
+                        Book Selected ({selectedListings.length})
+                      </button> */}
+                    </form>
                   )}
                 </div>
               </div>
@@ -991,98 +1311,236 @@ export default function VendorDetailPage() {
           <div className="lg:w-96">
             <div className="sticky top-24 p-6 rounded-2xl border border-border bg-card shadow-lg">
               {/* Price */}
-              {vendor.priceFrom && (
-                <div className="mb-6">
-                  <p className="text-sm text-muted-foreground">Starting from</p>
-                  <p className="text-3xl font-bold">
-                    {formatCurrency(vendor.priceFrom)}
-                  </p>
+              {selectedListings.length === 0 && (
+                <>
+                  {vendor.priceFrom && (
+                    <div className="mb-6">
+                      <p className="text-sm text-muted-foreground">
+                        Starting from
+                      </p>
+                      <p className="text-3xl font-bold">
+                        {formatCurrency(vendor.priceFrom)}
+                      </p>
+                    </div>
+                  )}
+
+                  {/* CTA */}
+                  <button
+                    onClick={() => setShowInquiryForm(true)}
+                    className="w-full py-4 rounded-full bg-accent text-accent-foreground font-semibold hover:opacity-90 transition mb-4"
+                  >
+                    <MessageSquare className="inline-block mr-2" size={18} />
+                    Send Inquiry
+                  </button>
+
+                  {/* Contact Info */}
+                  <div className="space-y-4 pt-6 border-t border-border">
+                    {vendor.phonePublic && (
+                      <a
+                        href={`tel:${vendor.phonePublic}`}
+                        className="flex items-center gap-3 text-muted-foreground hover:text-foreground transition"
+                      >
+                        <Phone size={18} />
+                        <span>{vendor.phonePublic}</span>
+                      </a>
+                    )}
+                    {vendor.website && (
+                      <a
+                        href={vendor.website}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center gap-3 text-muted-foreground hover:text-foreground transition"
+                      >
+                        <Globe size={18} />
+                        <span>Visit Website</span>
+                      </a>
+                    )}
+                  </div>
+
+                  {/* Weekly Schedule */}
+                  <div className="mt-6 pt-6 border-t border-border">
+                    <h3 className="font-semibold mb-2 flex items-center gap-2">
+                      <Clock size={18} className="text-accent" /> Weekly
+                      Schedule
+                    </h3>
+                    {/* Collapsible schedule similar to provided design */}
+                    <ScheduleDisplay
+                      weeklySchedule={weeklySchedule}
+                      expanded={scheduleExpanded}
+                      onToggle={() => setScheduleExpanded((s) => !s)}
+                    />
+                  </div>
+
+                  {/* Social Media */}
+                  <div className="mt-6 pt-6 border-t border-border">
+                    <h3 className="font-semibold mb-2">Social Media</h3>
+                    <div className="space-y-2">
+                      {vendor.instagram && (
+                        <a
+                          href={`https://instagram.com/${vendor.instagram}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex items-center gap-3 text-muted-foreground hover:text-foreground transition"
+                        >
+                          <Instagram size={18} />
+                          <span>@{vendor.instagram}</span>
+                        </a>
+                      )}
+                      {vendor.facebook && (
+                        <a
+                          href={vendor.facebook}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex items-center gap-3 text-muted-foreground hover:text-foreground transition"
+                        >
+                          <Facebook size={18} />
+                          <span>Facebook</span>
+                        </a>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Location */}
+                  <div className="mt-6 pt-6 border-t border-border">
+                    <h3 className="font-semibold mb-2">Service Area</h3>
+                    <p className="text-muted-foreground">
+                      {vendor.city || vendor.postcode} •{" "}
+                      {vendor.serviceRadiusMiles} miles radius
+                    </p>
+                  </div>
+                </>
+              )}
+              {selectedListings.length > 0 && !showBookingForm && (
+                <div>
+                  <h3 className="text-lg font-bold mb-4">Selected Listings</h3>
+                  <ul className="mb-4">
+                    {selectedListingObjects.map((l) => (
+                      <li
+                        key={l.id}
+                        className="flex justify-between py-2 border-b"
+                      >
+                        <span>{l.headline}</span>
+                        <span>{l.price ? formatCurrency(l.price) : "-"}</span>
+                      </li>
+                    ))}
+                  </ul>
+                  <button
+                    className="w-full py-4 rounded-full bg-black text-white font-semibold hover:opacity-90 transition flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                    onClick={handleBookClick}
+                    disabled={bookingLoading}
+                  >
+                    {bookingLoading ? (
+                      <Loader2 className="animate-spin" size={18} />
+                    ) : (
+                      <>Book ({formatCurrency(totalSelectedPrice)})</>
+                    )}
+                  </button>
                 </div>
               )}
 
-              {/* CTA */}
-              <button
-                onClick={() => setShowInquiryForm(true)}
-                className="w-full py-4 rounded-full bg-accent text-accent-foreground font-semibold hover:opacity-90 transition mb-4"
-              >
-                <MessageSquare className="inline-block mr-2" size={18} />
-                Send Inquiry
-              </button>
-
-              {/* Contact Info */}
-              <div className="space-y-4 pt-6 border-t border-border">
-                {vendor.phonePublic && (
-                  <a
-                    href={`tel:${vendor.phonePublic}`}
-                    className="flex items-center gap-3 text-muted-foreground hover:text-foreground transition"
-                  >
-                    <Phone size={18} />
-                    <span>{vendor.phonePublic}</span>
-                  </a>
-                )}
-                {vendor.website && (
-                  <a
-                    href={vendor.website}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-center gap-3 text-muted-foreground hover:text-foreground transition"
-                  >
-                    <Globe size={18} />
-                    <span>Visit Website</span>
-                  </a>
-                )}
-              </div>
-
-              {/* Weekly Schedule */}
-              <div className="mt-6 pt-6 border-t border-border">
-                <h3 className="font-semibold mb-2 flex items-center gap-2">
-                  <Clock size={18} className="text-accent" /> Weekly Schedule
-                </h3>
-                {/* Collapsible schedule similar to provided design */}
-                <ScheduleDisplay
-                  weeklySchedule={weeklySchedule}
-                  expanded={scheduleExpanded}
-                  onToggle={() => setScheduleExpanded((s) => !s)}
-                />
-              </div>
-
-              {/* Social Media */}
-              <div className="mt-6 pt-6 border-t border-border">
-                <h3 className="font-semibold mb-2">Social Media</h3>
-                <div className="space-y-2">
-                  {vendor.instagram && (
-                    <a
-                      href={`https://instagram.com/${vendor.instagram}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex items-center gap-3 text-muted-foreground hover:text-foreground transition"
-                    >
-                      <Instagram size={18} />
-                      <span>@{vendor.instagram}</span>
-                    </a>
+              {/* Booking form modal/section */}
+              {showBookingForm && (
+                <div>
+                  <h3 className="text-lg font-bold mb-4">Booking Details</h3>
+                  {bookingError && (
+                    <div className="mb-4 p-4 rounded-lg bg-red-100 text-red-700 text-sm">
+                      {bookingError}
+                    </div>
                   )}
-                  {vendor.facebook && (
-                    <a
-                      href={vendor.facebook}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex items-center gap-3 text-muted-foreground hover:text-foreground transition"
+                  <form
+                    onSubmit={handleBookingFormSubmit}
+                    className="space-y-4"
+                  >
+                    <div>
+                      <label className="block text-sm font-medium mb-1">
+                        Event Date <span className="text-red-500">*</span>
+                      </label>
+                      <input
+                        type="date"
+                        required
+                        value={bookingForm.eventDate}
+                        onChange={(e) =>
+                          setBookingForm((f) => ({
+                            ...f,
+                            eventDate: e.target.value,
+                          }))
+                        }
+                        className="w-full px-4 py-3 rounded-xl border border-border bg-input focus:border-accent focus:ring-2 focus:ring-accent/30"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium mb-1">
+                        Guests <span className="text-red-500">*</span>
+                      </label>
+                      <input
+                        type="number"
+                        required
+                        value={bookingForm.guests}
+                        onChange={(e) =>
+                          setBookingForm((f) => ({
+                            ...f,
+                            guests: e.target.value,
+                          }))
+                        }
+                        className="w-full px-4 py-3 rounded-xl border border-border bg-input focus:border-accent focus:ring-2 focus:ring-accent/30"
+                        placeholder="100"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium mb-1">
+                        Event Location <span className="text-red-500">*</span>
+                      </label>
+                      <input
+                        type="text"
+                        required
+                        value={bookingForm.eventLocation}
+                        onChange={(e) =>
+                          setBookingForm((f) => ({
+                            ...f,
+                            eventLocation: e.target.value,
+                          }))
+                        }
+                        className="w-full px-4 py-3 rounded-xl border border-border bg-input focus:border-accent focus:ring-2 focus:ring-accent/30"
+                        placeholder="Venue, address, etc."
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium mb-1">
+                        Notes <span className="text-red-500">*</span>
+                      </label>
+                      <textarea
+                        rows={3}
+                        required
+                        value={bookingForm.notes}
+                        onChange={(e) =>
+                          setBookingForm((f) => ({
+                            ...f,
+                            notes: e.target.value,
+                          }))
+                        }
+                        className="w-full px-4 py-3 rounded-xl border border-border bg-input focus:border-accent focus:ring-2 focus:ring-accent/30 resize-none"
+                        placeholder="Any special requests or info..."
+                      />
+                    </div>
+                    <button
+                      type="submit"
+                      disabled={bookingLoading || isBooking}
+                      className="w-full py-4 rounded-full bg-black text-white font-semibold hover:opacity-90 transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                     >
-                      <Facebook size={18} />
-                      <span>Facebook</span>
-                    </a>
-                  )}
+                      {bookingLoading ? (
+                        <>
+                          <Loader2 className="animate-spin" size={18} />
+                          Processing...
+                        </>
+                      ) : isBooking ? (
+                        "Processing..."
+                      ) : (
+                        "Proceed to Payment"
+                      )}
+                    </button>
+                  </form>
                 </div>
-              </div>
-
-              {/* Location */}
-              <div className="mt-6 pt-6 border-t border-border">
-                <h3 className="font-semibold mb-2">Service Area</h3>
-                <p className="text-muted-foreground">
-                  {vendor.city || vendor.postcode} • {vendor.serviceRadiusMiles}{" "}
-                  miles radius
-                </p>
-              </div>
+              )}
             </div>
           </div>
         </div>
@@ -1311,6 +1769,35 @@ export default function VendorDetailPage() {
                 </form>
               </>
             )}
+          </div>
+        </div>
+      )}
+
+      {/* Auth Modal */}
+      {showAuthModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+          <div className="bg-white rounded-lg shadow-lg p-6 max-w-sm w-full">
+            <h2 className="text-lg font-semibold mb-2">Sign in required</h2>
+            <p className="mb-4">
+              You need to sign in to complete your booking. Your progress will
+              be saved and restored after login.
+            </p>
+            <button
+              className="w-full bg-accent text-white py-2 rounded hover:bg-accent-dark transition"
+              onClick={() => {
+                window.location.href = `/auth/signin?callbackUrl=${encodeURIComponent(
+                  window.location.pathname
+                )}`;
+              }}
+            >
+              Sign in
+            </button>
+            <button
+              className="w-full mt-2 bg-gray-200 text-gray-700 py-2 rounded hover:bg-gray-300 transition"
+              onClick={() => setShowAuthModal(false)}
+            >
+              Cancel
+            </button>
           </div>
         </div>
       )}

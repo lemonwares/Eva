@@ -4,58 +4,115 @@ import { getStripe, formatAmountFromStripe } from "@/lib/stripe";
 import { prisma } from "@/lib/prisma";
 import { sendEmail, emailTemplates } from "@/lib/email";
 import Stripe from "stripe";
+import crypto from "crypto";
 
 // Disable body parsing, need raw body for signature verification
 export const runtime = "nodejs";
 
 async function handleSuccessfulPayment(session: Stripe.Checkout.Session) {
-  const bookingId = session.metadata?.bookingId;
+  let bookingId = session.metadata?.bookingId;
   const paymentType = session.metadata?.paymentType as
     | "DEPOSIT"
     | "BALANCE"
     | "FULL";
-
-  if (!bookingId || !paymentType) {
-    console.error("Missing booking metadata in session:", session.id);
-    return;
-  }
-
   const paymentIntentId = session.payment_intent as string;
 
-  // Find the pending payment by checkout session ID
-  const pendingPayment = await prisma.payment.findFirst({
-    where: {
-      bookingId,
-      paymentType,
-      status: "PENDING",
-    },
-    orderBy: {
-      createdAt: "desc",
-    },
-  });
+  let booking;
 
-  if (pendingPayment) {
-    // Update the payment record
-    await prisma.payment.update({
-      where: { id: pendingPayment.id },
+  // If bookingId is not present, create booking and BookingListing(s) from metadata
+  if (!bookingId) {
+    // Required metadata: providerId, eventDate, contactName, contactEmail, listings, clientUserId
+    const providerId = session.metadata?.providerId;
+    const eventDate = session.metadata?.eventDate;
+    const contactName = session.metadata?.contactName;
+    const contactEmail = session.metadata?.contactEmail;
+    const contactPhone = session.metadata?.contactPhone || null;
+    const message = session.metadata?.message || null;
+    const eventLocation = session.metadata?.eventLocation || null;
+    const guestsCountRaw = session.metadata?.guestsCount;
+    const guestsCount =
+      guestsCountRaw !== undefined &&
+      guestsCountRaw !== null &&
+      guestsCountRaw !== ""
+        ? Number(guestsCountRaw)
+        : null;
+    const listingsRaw = session.metadata?.listings;
+    const clientUserId = session.metadata?.clientUserId;
+    let listingIds: string[] = [];
+    try {
+      listingIds = listingsRaw ? JSON.parse(listingsRaw) : [];
+    } catch (e) {
+      listingIds = [];
+    }
+    if (
+      !providerId ||
+      !eventDate ||
+      !contactName ||
+      !contactEmail ||
+      !listingIds.length
+    ) {
+      console.error(
+        "Missing required metadata for booking creation",
+        session.id
+      );
+      return;
+    }
+
+    // Calculate total price from session.amount_total
+    const pricingTotal = formatAmountFromStripe(session.amount_total || 0);
+
+    // Create booking (no quote, paymentMode FULL_PAYMENT)
+    booking = await prisma.booking.create({
       data: {
-        status: "SUCCEEDED",
+        id: crypto.randomUUID(),
+        providerId,
+        quoteId: crypto.randomUUID(), // Generate a unique quoteId for direct booking
+        clientName: contactName,
+        clientEmail: contactEmail,
+        clientPhone: contactPhone,
+        eventDate: new Date(eventDate),
+        eventLocation: eventLocation ?? null,
+        guestsCount: guestsCount ?? null,
+        specialRequests: message ?? null,
+        paymentMode: "FULL_PAYMENT",
+        pricingTotal,
+        depositAmount: 0,
+        balanceAmount: 0,
+        status: "CONFIRMED",
+        completedAt: new Date(),
+        depositPaidAt: new Date(),
+        balancePaidAt: new Date(),
+        statusTimeline: [
+          {
+            status: "CONFIRMED",
+            timestamp: new Date().toISOString(),
+            note: "Full payment received via Stripe - Booking confirmed",
+          },
+        ],
         stripePaymentIntentId: paymentIntentId,
-        stripeChargeId: session.id,
-        metadata: {
-          ...((pendingPayment.metadata as object) || {}),
-          completedAt: new Date().toISOString(),
-          customerEmail: session.customer_email,
-        },
+        createdAt: new Date(),
+        updatedAt: new Date(),
       },
+      include: { provider: true },
     });
-  } else {
-    // Create new payment record if not found
+    bookingId = booking.id;
+
+    // Create BookingListing join records
+    for (const listingId of listingIds) {
+      await prisma.bookingListing.create({
+        data: {
+          bookingId,
+          listingId,
+        },
+      });
+    }
+
+    // Create payment record
     await prisma.payment.create({
       data: {
         bookingId,
-        paymentType,
-        amount: formatAmountFromStripe(session.amount_total || 0),
+        paymentType: "FULL",
+        amount: pricingTotal,
         currency: session.currency?.toUpperCase() || "USD",
         status: "SUCCEEDED",
         stripePaymentIntentId: paymentIntentId,
@@ -67,17 +124,130 @@ async function handleSuccessfulPayment(session: Stripe.Checkout.Session) {
         },
       },
     });
-  }
+  } else {
+    // Find the pending payment by checkout session ID
+    const pendingPayment = await prisma.payment.findFirst({
+      where: {
+        bookingId,
+        paymentType,
+        status: "PENDING",
+      },
+      orderBy: {
+        createdAt: "desc",
+      },
+    });
 
-  // Update booking status based on payment type
-  const booking = await prisma.booking.findUnique({
-    where: { id: bookingId },
-    include: { payments: true },
-  });
+    if (pendingPayment) {
+      // Update the payment record
+      await prisma.payment.update({
+        where: { id: pendingPayment.id },
+        data: {
+          status: "SUCCEEDED",
+          stripePaymentIntentId: paymentIntentId,
+          stripeChargeId: session.id,
+          metadata: {
+            ...((pendingPayment.metadata as object) || {}),
+            completedAt: new Date().toISOString(),
+            customerEmail: session.customer_email,
+          },
+        },
+      });
+    } else {
+      // Create new payment record if not found
+      await prisma.payment.create({
+        data: {
+          bookingId,
+          paymentType,
+          amount: formatAmountFromStripe(session.amount_total || 0),
+          currency: session.currency?.toUpperCase() || "USD",
+          status: "SUCCEEDED",
+          stripePaymentIntentId: paymentIntentId,
+          stripeChargeId: session.id,
+          metadata: {
+            checkoutSessionId: session.id,
+            completedAt: new Date().toISOString(),
+            customerEmail: session.customer_email,
+          },
+        },
+      });
+    }
 
-  if (!booking) {
-    console.error("Booking not found:", bookingId);
-    return;
+    // Update booking status based on payment type
+    booking = await prisma.booking.findUnique({
+      where: { id: bookingId },
+      include: { payments: true, provider: true },
+    });
+    if (!booking) {
+      console.error("Booking not found:", bookingId);
+      return;
+    }
+
+    const now = new Date();
+    const statusUpdate: Record<string, unknown> = {
+      updatedAt: now,
+    };
+
+    switch (paymentType) {
+      case "DEPOSIT":
+        statusUpdate.depositPaidAt = now;
+        statusUpdate.stripeDepositIntentId = paymentIntentId;
+        statusUpdate.status = "DEPOSIT_PAID";
+        statusUpdate.statusTimeline = [
+          ...((booking.statusTimeline as Array<{
+            status: string;
+            timestamp: string;
+            note?: string;
+          }>) || []),
+          {
+            status: "DEPOSIT_PAID",
+            timestamp: now.toISOString(),
+            note: "Deposit payment received via Stripe",
+          },
+        ];
+        break;
+
+      case "BALANCE":
+        statusUpdate.balancePaidAt = now;
+        statusUpdate.stripeBalanceIntentId = paymentIntentId;
+        statusUpdate.status = "CONFIRMED";
+        statusUpdate.statusTimeline = [
+          ...((booking.statusTimeline as Array<{
+            status: string;
+            timestamp: string;
+            note?: string;
+          }>) || []),
+          {
+            status: "CONFIRMED",
+            timestamp: now.toISOString(),
+            note: "Balance payment received via Stripe - Booking fully paid",
+          },
+        ];
+        break;
+
+      case "FULL":
+        statusUpdate.depositPaidAt = now;
+        statusUpdate.balancePaidAt = now;
+        statusUpdate.stripePaymentIntentId = paymentIntentId;
+        statusUpdate.status = "CONFIRMED";
+        statusUpdate.statusTimeline = [
+          ...((booking.statusTimeline as Array<{
+            status: string;
+            timestamp: string;
+            note?: string;
+          }>) || []),
+          {
+            status: "CONFIRMED",
+            timestamp: now.toISOString(),
+            note: "Full payment received via Stripe - Booking confirmed",
+          },
+        ];
+        break;
+    }
+
+    await prisma.booking.update({
+      where: { id: bookingId },
+      data: statusUpdate,
+    });
   }
 
   const now = new Date();
