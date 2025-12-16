@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import crypto from "crypto";
 import z from "zod";
-import { emailTemplates } from "@/templates/templateLoader";
+import { emailTemplates } from "@/public/templates/templateLoader";
 import { sendEmail } from "@/lib/mail";
 
 // POST /api/auth/forgot-password
