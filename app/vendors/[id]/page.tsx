@@ -1,22 +1,9 @@
 "use client";
 
-interface WeeklySchedule {
-  id: string;
-  providerId: string;
-  dayOfWeek: number;
-  startTime: string;
-  endTime: string;
-  isClosed: boolean;
-}
-
-import { useState, useEffect } from "react";
 import { useParams } from "next/navigation";
 import { useSession } from "next-auth/react";
 import Link from "next/link";
 import { formatCurrency } from "@/lib/formatters";
-import BookingModal, {
-  BookingService,
-} from "@/components/vendor/modals/BookingModal";
 import {
   ArrowLeft,
   MapPin,
@@ -26,6 +13,7 @@ import {
   Globe,
   Instagram,
   Facebook,
+  CircleCheckBig,
   Calendar,
   MessageSquare,
   Loader2,
@@ -42,6 +30,28 @@ import Footer from "@/components/common/Footer";
 import FavoriteButton from "@/components/common/FavoriteButton";
 import ShareButton from "@/components/common/ShareButton";
 import Image from "next/image";
+import { useState, useEffect, useRef } from "react";
+import Confetti from "react-confetti";
+import { useSearchParams, useRouter } from "next/navigation";
+
+interface WeeklySchedule {
+  id: string;
+  providerId: string;
+  dayOfWeek: number;
+  startTime: string;
+  endTime: string;
+  isClosed: boolean;
+}
+
+interface Listing {
+  id: string;
+  headline: string;
+  longDescription?: string;
+  price?: number;
+  timeEstimate?: string;
+  coverImageUrl?: string;
+  galleryUrls?: string[];
+}
 
 interface InquiryFormData {
   fromName: string;
@@ -233,18 +243,46 @@ function ScheduleDisplay({
         )}
       </AnimatePresence>
     </div>
-
   );
 }
 
 export default function VendorDetailPage() {
-  // Category filter state
-  const [selectedCategory, setSelectedCategory] = useState<string>("all");
+  const searchParams =
+    typeof window !== "undefined"
+      ? new URLSearchParams(window.location.search)
+      : null;
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [showErrorModal, setShowErrorModal] = useState(false);
+  const [confettiDimensions, setConfettiDimensions] = useState({
+    width: 0,
+    height: 0,
+  });
+  const confettiRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      setConfettiDimensions({
+        width: window.innerWidth,
+        height: window.innerHeight,
+      });
+    }
+    if (searchParams) {
+      if (searchParams.get("booking") === "success") {
+        setShowSuccessModal(true);
+      } else if (searchParams.get("booking") === "cancel") {
+        setShowErrorModal(true);
+      }
+    }
+  }, []);
+  // Listings state
+  const [listings, setListings] = useState<Listing[]>([]);
+  const [isListingsLoading, setIsListingsLoading] = useState(true);
+  // Ref for the Google Maps iframe section (must be first hook!)
+  const mapRef = useRef<HTMLDivElement>(null);
+
   const params = useParams();
   const { data: session } = useSession();
   const [vendor, setVendor] = useState<Provider | null>(null);
   const [reviews, setReviews] = useState<Review[]>([]);
-  const [listings, setListings] = useState<BookingService[]>([]);
   const [teamMembers, setTeamMembers] = useState<
     { id: string; name: string; imageUrl: string | null }[]
   >([]);
@@ -267,14 +305,118 @@ export default function VendorDetailPage() {
     budgetRange: "",
     message: "",
   });
-    const [bookingModalOpen, setBookingModalOpen] = useState(false);
-  const [bookingPrefill, setBookingPrefill] = useState<BookingService[]>([]);
+  const [selectedListings, setSelectedListings] = useState<string[]>([]);
+  const [showBookingForm, setShowBookingForm] = useState(false);
+  const [bookingForm, setBookingForm] = useState({
+    eventDate: "",
+    guests: "",
+    eventLocation: "",
+    notes: "",
+  });
+  const [isBooking, setIsBooking] = useState(false);
+  const [bookingError, setBookingError] = useState("");
+  const [showAuthModal, setShowAuthModal] = useState(false);
+  const [bookingLoading, setBookingLoading] = useState<boolean>(false);
 
+  function handleListingToggle(listingId: string) {
+    setSelectedListings((prev) =>
+      prev.includes(listingId)
+        ? prev.filter((id) => id !== listingId)
+        : [...prev, listingId]
+    );
+  }
+
+  // Helper to get selected listing objects
+  const selectedListingObjects = listings.filter((l) =>
+    selectedListings.includes(l.id)
+  );
+
+  // Helper to get total price
+  const totalSelectedPrice = selectedListingObjects.reduce(
+    (sum, l) => sum + (l.price || 0),
+    0
+  );
+
+  // Booking process state
+
+  function handleBookClick() {
+    setShowBookingForm(true);
+  }
+
+  // Handler to select/deselect listings
+  function handleListingSelect(listingId: string) {
+    setSelectedListings((prev) =>
+      prev.includes(listingId)
+        ? prev.filter((id) => id !== listingId)
+        : [...prev, listingId]
+    );
+  }
+
+  // Handler for booking button
+  async function handleMultiListingBooking(e: React.FormEvent) {
+    e.preventDefault();
+    // Replace this with your booking/payment logic
+    alert(`Proceeding to book: ${selectedListings.join(", ")}`);
+  }
+
+  // Submit booking form
+  const handleBookingFormSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setBookingLoading(true);
+    setBookingError("");
+    try {
+      if (!vendor) throw new Error("Vendor not loaded");
+      if (!session?.user) throw new Error("User not authenticated");
+      // Build services array from selected listings
+      const services = selectedListingObjects.map((l) => ({
+        id: l.id,
+        headline: l.headline,
+        minPrice: l.price || 0,
+        maxPrice: l.price || 0,
+      }));
+      const res = await fetch("/api/bookings", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          providerId: vendor.id,
+          services,
+          clientName: session.user.name || "",
+          clientEmail: session.user.email || "",
+          clientPhone: "", // phone not available on session.user, send empty string or collect in form if needed
+          eventDate: bookingForm.eventDate,
+          eventLocation: bookingForm.eventLocation,
+          guestsCount: Number(bookingForm.guests),
+          specialRequests: bookingForm.notes,
+          paymentMode: "FULL_PAYMENT",
+          pricingTotal: totalSelectedPrice,
+        }),
+      });
+      if (res.status === 401) {
+        saveBookingProgress();
+        setShowAuthModal(true);
+        setBookingLoading(false);
+        return;
+      }
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.message || "Booking failed");
+      }
+      const data = await res.json();
+      if (data.paymentUrl) {
+        window.location.href = data.paymentUrl;
+      } else {
+        setShowBookingForm(false);
+      }
+    } catch (err: any) {
+      setBookingError(err.message || "Booking failed");
+    }
+    setBookingLoading(false);
+  };
 
   // Auto-fill form when user is logged in
   useEffect(() => {
     if (session?.user) {
-      setInquiryForm((prev: InquiryFormData) => ({
+      setInquiryForm((prev) => ({
         ...prev,
         fromName: session.user.name || prev.fromName,
         fromEmail: session.user.email || prev.fromEmail,
@@ -282,23 +424,27 @@ export default function VendorDetailPage() {
     }
   }, [session]);
 
-
+  useEffect(() => {
+    if (params.id) {
+      fetchVendor();
+      fetchReviews();
+      fetchTeamMembers();
+      fetchListings();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [params.id]);
 
   async function fetchListings() {
+    setIsListingsLoading(true);
     try {
-      const response = await fetch(`/api/listings?providerId=${params.id}`);
+      const response = await fetch(`/api/providers/${params.id}/listings`);
       if (!response.ok) throw new Error("Failed to fetch listings");
       const data = await response.json();
-      setListings(
-        (data.listings || []).map((l: any) => ({
-          id: l.id,
-          headline: l.headline,
-          minPrice: l.minPrice,
-          maxPrice: l.maxPrice,
-        }))
-      );
+      setListings(data.listings || []);
     } catch (err) {
-      console.error("Error fetching listings:", err);
+      setListings([]);
+    } finally {
+      setIsListingsLoading(false);
     }
   }
 
@@ -324,6 +470,7 @@ export default function VendorDetailPage() {
       setVendor(data.provider || data);
 
       // console.log(`Data`, data);
+      // console.log(`Vendor:`, vendor);
       // take weekly schedule from provider payload when available
       if (data.provider && data.provider.weeklySchedules) {
         setWeeklySchedule(data.provider.weeklySchedules);
@@ -399,84 +546,6 @@ export default function VendorDetailPage() {
       setIsSubmitting(false);
     }
   }
-  useEffect(() => {
-    if (params.id) {
-      fetchVendor();
-      fetchReviews();
-      fetchListings();
-      fetchTeamMembers();
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [params.id]);
-
-  // Booking modal handlers
-  const handleBookService = (service: BookingService) => {
-    setBookingPrefill([
-      {
-        id: service.id,
-        headline: service.headline,
-        minPrice: service.minPrice,
-        maxPrice: service.maxPrice,
-      },
-    ]);
-    setBookingModalOpen(true);
-  };
-
-  const handleBookMultiple = () => {
-    if (!Array.isArray(listings) || listings.length === 0) return;
-    setBookingPrefill(
-      listings.map((s: BookingService) => ({
-        id: s.id,
-        headline: s.headline,
-        minPrice: s.minPrice,
-        maxPrice: s.maxPrice,
-      }))
-    );
-    setBookingModalOpen(true);
-  };
-
-  const [bookingStatus, setBookingStatus] = useState<
-    null | "success" | "error" | "loading"
-  >(null);
-  const [bookingError, setBookingError] = useState<string>("");
-
-  const handleBookingSubmit = async (selected: BookingService[]) => {
-    if (!vendor) return;
-    setBookingStatus("loading");
-    setBookingError("");
-    try {
-      const res = await fetch("/api/bookings", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          providerId: vendor.id,
-          services: selected,
-          clientName: session?.user?.name || "",
-          clientEmail: session?.user?.email || "",
-          clientPhone: "",
-          eventDate: "", // You may want to collect this from user
-          eventLocation: "",
-          guestsCount: null,
-          specialRequests: "",
-          paymentMode: "FULL_PAYMENT",
-          pricingTotal: selected.reduce((sum, s) => sum + (s.minPrice || 0), 0),
-        }),
-      });
-      if (!res.ok) {
-        const data = await res.json();
-        setBookingStatus("error");
-        setBookingError(data.message || "Failed to create booking");
-        return;
-      }
-      setBookingStatus("success");
-      setBookingModalOpen(false);
-    } catch (err) {
-      setBookingStatus("error");
-      setBookingError(
-        err instanceof Error ? err.message : "Something went wrong"
-      );
-    }
-  };
 
   function closeInquiryModal() {
     setShowInquiryForm(false);
@@ -484,9 +553,59 @@ export default function VendorDetailPage() {
     setSubmitError("");
   }
 
+  const formatCategories = (cats?: string[]) => {
+    if (!cats || cats.length === 0) return "";
+    return cats
+      .filter(Boolean)
+      .map((cat) => cat.charAt(0).toUpperCase() + cat.slice(1).toLowerCase())
+      .join(", ");
+  };
+
   const images = vendor
     ? ([vendor.coverImage, ...vendor.photos].filter(Boolean) as string[])
     : [];
+
+  // Save booking progress to localStorage
+  function saveBookingProgress() {
+    if (!vendor) return;
+    const progress = {
+      vendorId: vendor.id,
+      selectedListings,
+      bookingForm,
+    };
+    localStorage.setItem("eva_booking_progress", JSON.stringify(progress));
+  }
+
+  // Restore booking progress from localStorage
+  function restoreBookingProgress() {
+    // Only restore if user is authenticated and vendor is loaded
+    if (session?.user && vendor) {
+      const raw = localStorage.getItem("eva_booking_progress");
+      if (raw) {
+        try {
+          const progress = JSON.parse(raw);
+          if (progress.vendorId === vendor.id) {
+            setSelectedListings(progress.selectedListings || []);
+            setBookingForm(
+              progress.bookingForm || {
+                eventDate: "",
+                guests: "",
+                eventLocation: "",
+                notes: "",
+              }
+            );
+            setShowBookingForm(true);
+          }
+        } catch {}
+        localStorage.removeItem("eva_booking_progress");
+      }
+    }
+  }
+
+  useEffect(() => {
+    restoreBookingProgress();
+    // eslint-disable-next-line
+  }, [vendor?.id]);
 
   if (isLoading) {
     return (
@@ -518,69 +637,124 @@ export default function VendorDetailPage() {
     );
   }
 
+  // Open Google Maps with vendor address
+  const handleGetDirectionsClick = () => {
+    if (!vendor) return;
+    const addressParts = [
+      vendor.address,
+      vendor.postcode,
+      vendor.city,
+      "England",
+    ];
+    const address = addressParts.filter(Boolean).join(", ");
+    if (!address) return;
+    const mapsUrl = `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(
+      address
+    )}`;
+    window.open(mapsUrl, "_blank");
+  };
+
   return (
     <div className="min-h-screen bg-background">
+      {/* Booking Success Modal */}
+      {showSuccessModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+          <div className="relative bg-white rounded-2xl shadow-xl p-8 max-w-md w-full flex flex-col items-center">
+            <div
+              ref={confettiRef}
+              style={{ position: "absolute", inset: 0, zIndex: 1 }}
+            >
+              <Confetti
+                width={confettiDimensions.width}
+                height={confettiDimensions.height}
+                numberOfPieces={300}
+                recycle={false}
+              />
+            </div>
+            <div className="relative z-10 flex flex-col items-center">
+              <span className="text-green-600 mb-4">
+                <svg width="48" height="48" fill="none" viewBox="0 0 24 24">
+                  <circle cx="12" cy="12" r="12" fill="#D1FAE5" />
+                  <path
+                    d="M7 13l3 3 7-7"
+                    stroke="#059669"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </svg>
+              </span>
+              <h2 className="text-2xl font-bold mb-2">Booking Successful!</h2>
+              <p className="mb-4 text-center">
+                Your payment was received and your booking is confirmed. Thank
+                you for booking with {vendor?.businessName}!
+              </p>
+              <button
+                className="px-6 py-3 rounded-full bg-accent text-accent-foreground font-semibold hover:opacity-90 transition"
+                onClick={() => {
+                  setShowSuccessModal(false);
+                  if (typeof window !== "undefined") {
+                    const url = new URL(window.location.href);
+                    url.searchParams.delete("booking");
+                    window.history.replaceState(
+                      {},
+                      document.title,
+                      url.pathname + url.search
+                    );
+                  }
+                }}
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      {/* Booking Error Modal */}
+      {showErrorModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+          <div className="relative bg-white rounded-2xl shadow-xl p-8 max-w-md w-full flex flex-col items-center">
+            <span className="text-red-600 mb-4">
+              <svg width="48" height="48" fill="none" viewBox="0 0 24 24">
+                <circle cx="12" cy="12" r="12" fill="#FEE2E2" />
+                <path
+                  d="M15 9l-6 6M9 9l6 6"
+                  stroke="#DC2626"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
+            </span>
+            <h2 className="text-2xl font-bold mb-2">Payment Cancelled</h2>
+            <p className="mb-4 text-center">
+              Your payment was not completed. Please try again to confirm your
+              booking.
+            </p>
+            <button
+              className="px-6 py-3 rounded-full bg-accent text-accent-foreground font-semibold hover:opacity-90 transition"
+              onClick={() => {
+                setShowErrorModal(false);
+                if (typeof window !== "undefined") {
+                  const url = new URL(window.location.href);
+                  url.searchParams.delete("booking");
+                  window.history.replaceState(
+                    {},
+                    document.title,
+                    url.pathname + url.search
+                  );
+                }
+              }}
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      )}
       <Header />
 
-      {/* Hero / Gallery */}
-      <section className="relative pt-20">
-        {images.length > 0 ? (
-          <div className="relative h-[50vh] md:h-[60vh] overflow-hidden">
-            <div
-              className="absolute inset-0 bg-cover bg-center transition-all duration-500"
-              style={{ backgroundImage: `url(${images[activeImageIndex]})` }}
-            />
-            <div className="absolute inset-0 bg-foreground/30" />
-            {/* Navigation Arrows */}
-            {images.length > 1 && (
-              <>
-                <button
-                  onClick={() =>
-                    setActiveImageIndex((prev: number) =>
-                      prev === 0 ? images.length - 1 : prev - 1
-                    )
-                  }
-                  className="absolute left-4 top-1/2 -translate-y-1/2 p-3 rounded-full bg-background/80 hover:bg-background transition"
-                >
-                  <ChevronLeft size={24} />
-                </button>
-                <button
-                  onClick={() =>
-                    setActiveImageIndex((prev: number) =>
-                      prev === images.length - 1 ? 0 : prev + 1
-                    )
-                  }
-                  className="absolute right-4 top-1/2 -translate-y-1/2 p-3 rounded-full bg-background/80 hover:bg-background transition"
-                >
-                  <ChevronRight size={24} />
-                </button>
-              </>
-            )}
-            {/* Image Indicators */}
-            {images.length > 1 && (
-              <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex gap-2">
-                {images.map((_, index) => (
-                  <button
-                    key={index}
-                    onClick={() => setActiveImageIndex(index)}
-                    className={`w-2 h-2 rounded-full transition ${
-                      index === activeImageIndex
-                        ? "bg-background w-6"
-                        : "bg-background/50"
-                    }`}
-                  />
-                ))}
-              </div>
-            )}
-          </div>
-        ) : (
-          <div className="h-64 bg-muted" />
-        )}
-      </section>
-
-      {/* Content */}
-      <section className="max-w-7xl mx-auto px-4 py-12">
-        <div className="flex flex-col lg:flex-row gap-12">
+      <section className="max-w-7xl mx-auto px-4 mt-24">
+        <div className="flex flex-col lg:flex-row">
           {/* Main Content */}
           <div className="flex-1">
             {/* Back Link */}
@@ -608,12 +782,12 @@ export default function VendorDetailPage() {
                 </div>
                 <div className="flex flex-wrap items-center gap-4 text-muted-foreground">
                   <span className="font-medium text-foreground">
-                    {vendor.categories.join(", ")}
+                    {formatCategories(vendor.categories)}
                   </span>
-                  {vendor.city && (
+                  {vendor.address && (
                     <span className="flex items-center gap-1">
                       <MapPin size={16} />
-                      {vendor.city}
+                      {vendor.address}, {vendor.city}
                     </span>
                   )}
                   <div className="flex items-center gap-1">
@@ -627,7 +801,10 @@ export default function VendorDetailPage() {
                     </span>
                     <span>({vendor._count?.reviews || 0} reviews)</span>
                   </div>
-                  <div className="text-accent hover:cursor-pointer">
+                  <div
+                    className="text-accent hover:cursor-pointer"
+                    onClick={handleGetDirectionsClick}
+                  >
                     Get Directions
                   </div>
                 </div>
@@ -646,11 +823,14 @@ export default function VendorDetailPage() {
               <div className="col-span-2 border border-gray-300 rounded-2xl h-full overflow-hidden">
                 <Image
                   src={images[0]}
+                  onClick={() => {
+                    setShowImagesModal(true);
+                  }}
                   alt="Vendor main"
                   width={900}
                   height={300}
                   unoptimized={true}
-                  className="object-cover w-full h-full rounded-2xl shadow-lg"
+                  className="object-cover w-full h-full rounded-2xl shadow-lg hover:cursor-pointer"
                   style={{ height: "100%", width: "100%" }}
                   sizes="(max-width: 1200px) 100vw, 900px"
                   priority
@@ -679,7 +859,7 @@ export default function VendorDetailPage() {
                       />
                       {isLast && (
                         <button
-                          className="absolute bottom-3 right-0 -translate-x-1/2 bg-gray-400/60 hover:transition-all duration-300 hover:cursor-pointer text-accent-foreground px-4 py-2 rounded-full font-medium shadow hover:underline"
+                          className="absolute bottom-3 right-0 -translate-x-1/2 bg-gray-400/50 hover:transition-all duration-300 hover:cursor-pointer text-accent-foreground px-4 py-2 rounded-full font-medium shadow hover:underline"
                           onClick={() => {
                             setShowImagesModal(true);
                             setModalImageIndex(0);
@@ -777,7 +957,7 @@ export default function VendorDetailPage() {
         {/* See all images modal (desktop only) */}
         {showImagesModal && (
           <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex flex-col">
-            <div className="relative flex flex-col w-full h-full max-h-screen bg-background rounded-none md:rounded-2xl p-0 md:p-8 shadow-xl overflow-y-auto">
+            <div className="relative flex flex-col w-full h-full max-h-screen bg-background rounded-none p-0 md:p-8 shadow-xl overflow-y-auto">
               <button
                 onClick={() => setShowImagesModal(false)}
                 className="absolute top-4 right-4 p-2 rounded-full hover:bg-muted transition z-50"
@@ -786,10 +966,14 @@ export default function VendorDetailPage() {
                 <X size={28} />
               </button>
               <div className="w-full max-w-5xl mx-auto flex flex-col items-center pt-12 md:pt-16 px-4 md:px-0">
-                <h2 className="text-3xl font-bold mb-1">Image gallery</h2>
-                <p className="text-muted-foreground mb-6 text-lg">
-                  {vendor?.businessName}
-                </p>
+                <div className="w-full ">
+                  <h2 className="text-4xl max-md:text-3xl font-bold mb-1">
+                    Image gallery
+                  </h2>
+                  <p className="text-muted-foreground mb-6 text-2xl max-md:text-lg">
+                    {vendor?.businessName}
+                  </p>
+                </div>
                 {/* Large image at the top, full width */}
                 {images[0] && (
                   <div className="w-full mb-8">
@@ -842,6 +1026,7 @@ export default function VendorDetailPage() {
                 </p>
                 {/* Google Maps Embed */}
                 <div
+                  ref={mapRef}
                   className="mt-6 rounded-lg overflow-hidden"
                   style={{ height: "350px" }}
                 >
@@ -877,122 +1062,149 @@ export default function VendorDetailPage() {
             )}
 
             {/* Services */}
-            {listings.length > 0 && (
+            {vendor.subcategories.length > 0 && (
               <div className="mb-12">
-                <h2 className="text-xl font-semibold mb-4">
-                  Services & Packages
-                </h2>
-                {/* Category Tabs (below section title) */}
-                {vendor.categories && vendor.categories.length > 1 && (
-                  <div className="flex gap-2 mb-6">
-                    <button
-                      className={`px-4 py-1.5 rounded-lg font-medium border transition-colors ${
-                        selectedCategory === "all"
-                          ? "bg-accent text-white border-accent"
-                          : "bg-gray-50 border-gray-200 text-gray-700"
-                      }`}
-                      onClick={() => setSelectedCategory("all")}
+                <h2 className="text-xl font-semibold mb-4">Services</h2>
+                <div className="flex flex-wrap gap-2">
+                  {vendor.subcategories.map((service, index) => (
+                    <span
+                      key={index}
+                      className="px-4 py-2 rounded-full bg-muted text-sm font-medium"
                     >
-                      All
-                    </button>
-                    {vendor.categories.map((cat: string) => (
-                      <button
-                        key={cat}
-                        className={`px-4 py-1.5 rounded-lg font-medium border transition-colors ${
-                          selectedCategory === cat
-                            ? "bg-accent text-white border-accent"
-                            : "bg-gray-50 border-gray-200 text-gray-700"
-                        }`}
-                        onClick={() => setSelectedCategory(cat)}
-                      >
-                        {cat}
-                      </button>
-                    ))}
-                  </div>
-                )}
-                {/* Services List */}
-                {(() => {
-                  // Filter listings by selected category
-                  let filteredListings = listings;
-                  if (
-                    selectedCategory !== "all" &&
-                    vendor.categories.includes(selectedCategory)
-                  ) {
-                    // If listings had category info, filter here. For now, show all for 'all'.
-                    // If you add category info to listings, filter by it here.
-                  }
-                  return filteredListings.length === 0 ? (
-                    <div className="text-center py-8 text-gray-400">
-                      <p>No services listed yet.</p>
-                    </div>
-                  ) : (
-                    <div className="space-y-2">
-                      {filteredListings.map((listing: BookingService) => (
-                        <div
-                          key={listing.id}
-                          className="p-4 rounded-lg bg-gray-50 border border-gray-200 hover:border-accent/50 transition-colors group flex flex-col gap-2"
-                        >
-                          <div className="flex items-start justify-between mb-2">
-                            <div>
-                              <h4 className="font-medium text-gray-900">
-                                {listing.headline}
-                              </h4>
-                              {/* Add description if available */}
-                            </div>
-                            <div className="flex flex-col gap-2 items-end">
-                              <button
-                                onClick={() => handleBookService(listing)}
-                                className="mt-2 px-4 py-1.5 rounded bg-accent text-white text-sm font-semibold hover:bg-accent/90 transition-colors"
-                              >
-                                Book
-                              </button>
-                            </div>
-                          </div>
-                          <p className="text-accent font-bold text-lg">
-                            {listing.minPrice
-                              ? `${formatCurrency(listing.minPrice)}${
-                                  listing.maxPrice
-                                    ? ` - ${formatCurrency(listing.maxPrice)}`
-                                    : "+"
-                                }`
-                              : "Price on request"}
-                          </p>
-                        </div>
-                      ))}
-                      <button
-                        onClick={handleBookMultiple}
-                        className="w-full mt-4 py-2 rounded-lg bg-accent/10 text-accent font-semibold hover:bg-accent/20 transition-colors"
-                      >
-                        Book Multiple Services
-                      </button>
-                      {/* Booking Modal */}
-                      <BookingModal
-                        isOpen={bookingModalOpen}
-                        onClose={() => setBookingModalOpen(false)}
-                        services={bookingPrefill}
-                        onBook={handleBookingSubmit}
-                        darkMode={false}
-                      />
-                    </div>
-                  );
-                })()}
+                      {service}
+                    </span>
+                  ))}
+                </div>
               </div>
             )}
 
-            {/* Culture Tags */}
+            {/* Specializations & Listings */}
             {vendor.cultureTraditionTags.length > 0 && (
               <div className="mb-12">
                 <h2 className="text-xl font-semibold mb-4">Specializations</h2>
-                <div className="flex flex-wrap gap-2">
-                  {vendor.cultureTraditionTags.map(
-                    (tag: string, index: number) => (
+                <div className="flex flex-wrap gap-2 mb-4">
+                  {vendor.cultureTraditionTags.map((tag, index) => {
+                    const capTag =
+                      tag.charAt(0).toUpperCase() + tag.slice(1).toLowerCase();
+                    return (
                       <span
                         key={index}
                         className="px-4 py-2 rounded-full bg-accent/10 text-accent text-sm font-medium"
                       >
-                        {tag}
+                        {capTag}
                       </span>
-                    )
+                    );
+                  })}
+                </div>
+                {/* Listings Section */}
+                <div>
+                  <h3 className="text-lg font-semibold mb-2">
+                    Services & Packages
+                  </h3>
+                  {isListingsLoading ? (
+                    <p className="text-muted-foreground">Loading listings...</p>
+                  ) : listings.length === 0 ? (
+                    <p className="text-muted-foreground">
+                      No listings available.
+                    </p>
+                  ) : (
+                    <form
+                      onSubmit={handleMultiListingBooking}
+                      className="space-y-4"
+                    >
+                      <ul className="space-y-4">
+                        {listings.map((listing) => {
+                          const isSelected = selectedListings.includes(
+                            listing.id
+                          );
+                          return (
+                            <li
+                              key={listing.id}
+                              className="border rounded-lg p-4 flex items-center gap-4 bg-white"
+                            >
+                              {listing.coverImageUrl && (
+                                <Image
+                                  width={80}
+                                  height={80}
+                                  loading="lazy"
+                                  src={listing.coverImageUrl}
+                                  alt="Cover"
+                                  className="w-20 h-20 object-cover object-center rounded-md border"
+                                />
+                              )}
+                              <div className="flex-1">
+                                <div className="flex items-center justify-between">
+                                  <h4 className="font-semibold text-gray-900">
+                                    {listing.headline}
+                                  </h4>
+                                </div>
+                                <div className="text-gray-700 mt-1 text-[14px]">
+                                  {listing.longDescription}
+                                </div>
+                                <div className="text-gray-500 text-sm mt-2 flex gap-4">
+                                  <span>
+                                    Price:{" "}
+                                    {listing.price
+                                      ? formatCurrency(listing.price)
+                                      : "-"}
+                                  </span>
+                                  <span>Time: {listing.timeEstimate}</span>
+                                </div>
+                                {listing.galleryUrls &&
+                                  listing.galleryUrls.length > 0 && (
+                                    <div className="flex gap-2 mt-2">
+                                      {listing.galleryUrls
+                                        .slice(0, 3)
+                                        .map((url, i) => (
+                                          <Image
+                                            key={i}
+                                            width={48}
+                                            height={48}
+                                            loading="lazy"
+                                            src={url}
+                                            alt="Gallery"
+                                            className="w-12 h-12 object-cover rounded border"
+                                          />
+                                        ))}
+                                    </div>
+                                  )}
+                              </div>
+                              <div>
+                                {!isSelected ? (
+                                  <button
+                                    type="button"
+                                    onClick={() =>
+                                      handleListingToggle(listing.id)
+                                    }
+                                    className="text-accent text-[14px] hover:underline hover:cursor-pointer transition"
+                                  >
+                                    Book Now
+                                  </button>
+                                ) : (
+                                  <button
+                                    type="button"
+                                    onClick={() =>
+                                      handleListingToggle(listing.id)
+                                    }
+                                    className="px-4 py-2 rounded-full text-accent flex items-center justify-center"
+                                    title="Deselect"
+                                  >
+                                    <CircleCheckBig />
+                                  </button>
+                                )}
+                              </div>
+                            </li>
+                          );
+                        })}
+                      </ul>
+                      {/* <button
+                        type="submit"
+                        disabled={selectedListings.length === 0}
+                        className="w-full py-4 rounded-full bg-accent text-accent-foreground font-semibold hover:opacity-90 transition disabled:opacity-50 disabled:cursor-not-allowed mt-4"
+                      >
+                        Book Selected ({selectedListings.length})
+                      </button> */}
+                    </form>
                   )}
                 </div>
               </div>
@@ -1006,7 +1218,7 @@ export default function VendorDetailPage() {
 
               {reviews.length > 0 ? (
                 <div className="space-y-6">
-                  {reviews.map((review: Review) => (
+                  {reviews.map((review) => (
                     <div
                       key={review.id}
                       className="p-6 rounded-2xl border border-border"
@@ -1019,7 +1231,7 @@ export default function VendorDetailPage() {
                           <p className="font-semibold">{review.authorName}</p>
                           <div className="flex items-center gap-2">
                             <div className="flex items-center gap-1">
-                              {[...Array(review.rating)].map((_, i: number) => (
+                              {[...Array(review.rating)].map((_, i) => (
                                 <Star
                                   key={i}
                                   size={14}
@@ -1064,7 +1276,7 @@ export default function VendorDetailPage() {
               <div className="mb-12">
                 <h2 className="text-xl font-semibold mb-4">Team Members</h2>
                 <div className="flex flex-wrap gap-6">
-                  {teamMembers.map((member, idx) => {
+                  {teamMembers.map((member) => {
                     const hasImage =
                       member.imageUrl &&
                       typeof member.imageUrl === "string" &&
@@ -1109,98 +1321,236 @@ export default function VendorDetailPage() {
           <div className="lg:w-96">
             <div className="sticky top-24 p-6 rounded-2xl border border-border bg-card shadow-lg">
               {/* Price */}
-              {vendor.priceFrom && (
-                <div className="mb-6">
-                  <p className="text-sm text-muted-foreground">Starting from</p>
-                  <p className="text-3xl font-bold">
-                    {formatCurrency(vendor.priceFrom)}
-                  </p>
+              {selectedListings.length === 0 && (
+                <>
+                  {vendor.priceFrom && (
+                    <div className="mb-6">
+                      <p className="text-sm text-muted-foreground">
+                        Starting from
+                      </p>
+                      <p className="text-3xl font-bold">
+                        {formatCurrency(vendor.priceFrom)}
+                      </p>
+                    </div>
+                  )}
+
+                  {/* CTA */}
+                  <button
+                    onClick={() => setShowInquiryForm(true)}
+                    className="w-full py-4 rounded-full bg-accent text-accent-foreground font-semibold hover:opacity-90 transition mb-4"
+                  >
+                    <MessageSquare className="inline-block mr-2" size={18} />
+                    Send Inquiry
+                  </button>
+
+                  {/* Contact Info */}
+                  <div className="space-y-4 pt-6 border-t border-border">
+                    {vendor.phonePublic && (
+                      <a
+                        href={`tel:${vendor.phonePublic}`}
+                        className="flex items-center gap-3 text-muted-foreground hover:text-foreground transition"
+                      >
+                        <Phone size={18} />
+                        <span>{vendor.phonePublic}</span>
+                      </a>
+                    )}
+                    {vendor.website && (
+                      <a
+                        href={vendor.website}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center gap-3 text-muted-foreground hover:text-foreground transition"
+                      >
+                        <Globe size={18} />
+                        <span>Visit Website</span>
+                      </a>
+                    )}
+                  </div>
+
+                  {/* Weekly Schedule */}
+                  <div className="mt-6 pt-6 border-t border-border">
+                    <h3 className="font-semibold mb-2 flex items-center gap-2">
+                      <Clock size={18} className="text-accent" /> Weekly
+                      Schedule
+                    </h3>
+                    {/* Collapsible schedule similar to provided design */}
+                    <ScheduleDisplay
+                      weeklySchedule={weeklySchedule}
+                      expanded={scheduleExpanded}
+                      onToggle={() => setScheduleExpanded((s) => !s)}
+                    />
+                  </div>
+
+                  {/* Social Media */}
+                  <div className="mt-6 pt-6 border-t border-border">
+                    <h3 className="font-semibold mb-2">Social Media</h3>
+                    <div className="space-y-2">
+                      {vendor.instagram && (
+                        <a
+                          href={`https://instagram.com/${vendor.instagram}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex items-center gap-3 text-muted-foreground hover:text-foreground transition"
+                        >
+                          <Instagram size={18} />
+                          <span>@{vendor.instagram}</span>
+                        </a>
+                      )}
+                      {vendor.facebook && (
+                        <a
+                          href={vendor.facebook}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex items-center gap-3 text-muted-foreground hover:text-foreground transition"
+                        >
+                          <Facebook size={18} />
+                          <span>Facebook</span>
+                        </a>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Location */}
+                  <div className="mt-6 pt-6 border-t border-border">
+                    <h3 className="font-semibold mb-2">Service Area</h3>
+                    <p className="text-muted-foreground">
+                      {vendor.city || vendor.postcode} •{" "}
+                      {vendor.serviceRadiusMiles} miles radius
+                    </p>
+                  </div>
+                </>
+              )}
+              {selectedListings.length > 0 && !showBookingForm && (
+                <div>
+                  <h3 className="text-lg font-bold mb-4">Selected Listings</h3>
+                  <ul className="mb-4">
+                    {selectedListingObjects.map((l) => (
+                      <li
+                        key={l.id}
+                        className="flex justify-between py-2 border-b"
+                      >
+                        <span>{l.headline}</span>
+                        <span>{l.price ? formatCurrency(l.price) : "-"}</span>
+                      </li>
+                    ))}
+                  </ul>
+                  <button
+                    className="w-full py-4 rounded-full bg-black text-white font-semibold hover:opacity-90 transition flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                    onClick={handleBookClick}
+                    disabled={bookingLoading}
+                  >
+                    {bookingLoading ? (
+                      <Loader2 className="animate-spin" size={18} />
+                    ) : (
+                      <>Book ({formatCurrency(totalSelectedPrice)})</>
+                    )}
+                  </button>
                 </div>
               )}
 
-              {/* CTA */}
-              <button
-                onClick={() => setShowInquiryForm(true)}
-                className="w-full py-4 rounded-full bg-accent text-accent-foreground font-semibold hover:opacity-90 transition mb-4"
-              >
-                <MessageSquare className="inline-block mr-2" size={18} />
-                Send Inquiry
-              </button>
-
-              {/* Contact Info */}
-              <div className="space-y-4 pt-6 border-t border-border">
-                {vendor.phonePublic && (
-                  <a
-                    href={`tel:${vendor.phonePublic}`}
-                    className="flex items-center gap-3 text-muted-foreground hover:text-foreground transition"
-                  >
-                    <Phone size={18} />
-                    <span>{vendor.phonePublic}</span>
-                  </a>
-                )}
-                {vendor.website && (
-                  <a
-                    href={vendor.website}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-center gap-3 text-muted-foreground hover:text-foreground transition"
-                  >
-                    <Globe size={18} />
-                    <span>Visit Website</span>
-                  </a>
-                )}
-              </div>
-
-              {/* Weekly Schedule */}
-              <div className="mt-6 pt-6 border-t border-border">
-                <h3 className="font-semibold mb-2 flex items-center gap-2">
-                  <Clock size={18} className="text-accent" /> Weekly Schedule
-                </h3>
-                {/* Collapsible schedule similar to provided design */}
-                <ScheduleDisplay
-                  weeklySchedule={weeklySchedule}
-                  expanded={scheduleExpanded}
-                  onToggle={() => setScheduleExpanded((s) => !s)}
-                />
-              </div>
-
-              {/* Social Media */}
-              <div className="mt-6 pt-6 border-t border-border">
-                <h3 className="font-semibold mb-2">Social Media</h3>
-                <div className="space-y-2">
-                  {vendor.instagram && (
-                    <a
-                      href={`https://instagram.com/${vendor.instagram}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex items-center gap-3 text-muted-foreground hover:text-foreground transition"
-                    >
-                      <Instagram size={18} />
-                      <span>@{vendor.instagram}</span>
-                    </a>
+              {/* Booking form modal/section */}
+              {showBookingForm && (
+                <div>
+                  <h3 className="text-lg font-bold mb-4">Booking Details</h3>
+                  {bookingError && (
+                    <div className="mb-4 p-4 rounded-lg bg-red-100 text-red-700 text-sm">
+                      {bookingError}
+                    </div>
                   )}
-                  {vendor.facebook && (
-                    <a
-                      href={vendor.facebook}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex items-center gap-3 text-muted-foreground hover:text-foreground transition"
+                  <form
+                    onSubmit={handleBookingFormSubmit}
+                    className="space-y-4"
+                  >
+                    <div>
+                      <label className="block text-sm font-medium mb-1">
+                        Event Date <span className="text-red-500">*</span>
+                      </label>
+                      <input
+                        type="date"
+                        required
+                        value={bookingForm.eventDate}
+                        onChange={(e) =>
+                          setBookingForm((f) => ({
+                            ...f,
+                            eventDate: e.target.value,
+                          }))
+                        }
+                        className="w-full px-4 py-3 rounded-xl border border-border bg-input focus:border-accent focus:ring-2 focus:ring-accent/30"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium mb-1">
+                        Guests <span className="text-red-500">*</span>
+                      </label>
+                      <input
+                        type="number"
+                        required
+                        value={bookingForm.guests}
+                        onChange={(e) =>
+                          setBookingForm((f) => ({
+                            ...f,
+                            guests: e.target.value,
+                          }))
+                        }
+                        className="w-full px-4 py-3 rounded-xl border border-border bg-input focus:border-accent focus:ring-2 focus:ring-accent/30"
+                        placeholder="100"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium mb-1">
+                        Event Location <span className="text-red-500">*</span>
+                      </label>
+                      <input
+                        type="text"
+                        required
+                        value={bookingForm.eventLocation}
+                        onChange={(e) =>
+                          setBookingForm((f) => ({
+                            ...f,
+                            eventLocation: e.target.value,
+                          }))
+                        }
+                        className="w-full px-4 py-3 rounded-xl border border-border bg-input focus:border-accent focus:ring-2 focus:ring-accent/30"
+                        placeholder="Venue, address, etc."
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium mb-1">
+                        Notes <span className="text-red-500">*</span>
+                      </label>
+                      <textarea
+                        rows={3}
+                        required
+                        value={bookingForm.notes}
+                        onChange={(e) =>
+                          setBookingForm((f) => ({
+                            ...f,
+                            notes: e.target.value,
+                          }))
+                        }
+                        className="w-full px-4 py-3 rounded-xl border border-border bg-input focus:border-accent focus:ring-2 focus:ring-accent/30 resize-none"
+                        placeholder="Any special requests or info..."
+                      />
+                    </div>
+                    <button
+                      type="submit"
+                      disabled={bookingLoading || isBooking}
+                      className="w-full py-4 rounded-full bg-black text-white font-semibold hover:opacity-90 transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                     >
-                      <Facebook size={18} />
-                      <span>Facebook</span>
-                    </a>
-                  )}
+                      {bookingLoading ? (
+                        <>
+                          <Loader2 className="animate-spin" size={18} />
+                          Processing...
+                        </>
+                      ) : isBooking ? (
+                        "Processing..."
+                      ) : (
+                        "Proceed to Payment"
+                      )}
+                    </button>
+                  </form>
                 </div>
-              </div>
-
-              {/* Location */}
-              <div className="mt-6 pt-6 border-t border-border">
-                <h3 className="font-semibold mb-2">Service Area</h3>
-                <p className="text-muted-foreground">
-                  {vendor.city || vendor.postcode} • {vendor.serviceRadiusMiles}{" "}
-                  miles radius
-                </p>
-              </div>
+              )}
             </div>
           </div>
         </div>
@@ -1433,6 +1783,34 @@ export default function VendorDetailPage() {
         </div>
       )}
 
+      {/* Auth Modal */}
+      {showAuthModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+          <div className="bg-white rounded-lg shadow-lg p-6 max-w-sm w-full">
+            <h2 className="text-lg font-semibold mb-2">Sign in required</h2>
+            <p className="mb-4">
+              You need to sign in to complete your booking. Your progress will
+              be saved and restored after login.
+            </p>
+            <button
+              className="w-full bg-accent text-white py-2 rounded hover:bg-accent-dark transition"
+              onClick={() => {
+                window.location.href = `/auth/signin?callbackUrl=${encodeURIComponent(
+                  window.location.pathname
+                )}`;
+              }}
+            >
+              Sign in
+            </button>
+            <button
+              className="w-full mt-2 bg-gray-200 text-gray-700 py-2 rounded hover:bg-gray-300 transition"
+              onClick={() => setShowAuthModal(false)}
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      )}
 
       <Footer />
     </div>

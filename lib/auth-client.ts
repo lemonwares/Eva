@@ -40,9 +40,16 @@ export async function login(
     });
 
     if (result?.error) {
+      // If backend provides a specific error message, use it
+      let errorMsg = result.error || "Invalid email or password";
+      // Map generic 'Configuration' error to account not verified message
+      if (errorMsg.trim().toLowerCase() === "configuration") {
+        errorMsg =
+          "Your email address is not verified. Please check your inbox for a verification link before logging in.";
+      }
       return {
         success: false,
-        message: "Invalid email or password",
+        message: errorMsg,
         error: result.error,
       };
     }

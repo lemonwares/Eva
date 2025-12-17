@@ -286,7 +286,7 @@ function AccountTypeCard({
       }`}
     >
       <div className="flex items-center gap-3">
-        <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-accent/20 text-2xl">
+        <div className="flex h-11 min-w-11 items-center justify-center rounded-xl bg-accent/20 text-2xl">
           {title === "Client" ? "🎉" : "🛠️"}
         </div>
         <div>

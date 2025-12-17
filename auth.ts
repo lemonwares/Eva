@@ -4,6 +4,8 @@ import Credentials from "next-auth/providers/credentials";
 import { prisma } from "@/lib/prisma";
 import bcrypt from "bcryptjs";
 import { z } from "zod";
+import { emailTemplates } from "@/templates/templateLoader";
+import { sendEmail } from "@/lib/mail";
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
   // Explicit secret so JWT validation works across API routes
@@ -40,7 +42,15 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         });
 
         if (!user || !user.password) {
-          return null;
+          // NextAuth expects an Error to show a custom message
+          throw new Error("Invalid email or password");
+        }
+
+        // Block login if email is not verified
+        if (!user.emailVerifiedAt) {
+          throw new Error(
+            "Your email address is not verified. Please check your inbox for a verification link before logging in."
+          );
         }
 
         const passwordMatch = await bcrypt.compare(password, user.password);
@@ -72,6 +82,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
             where: { email: user.email! },
           });
 
+          let isNewUser = false;
           // If user doesn't exist, create them
           if (!dbUser) {
             dbUser = await prisma.user.create({
@@ -99,6 +110,34 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
                 id_token: account.id_token,
               },
             });
+            isNewUser = true;
+          }
+
+          // Send welcome email if new user
+          if (isNewUser) {
+            try {
+              const dashboardUrl = `${
+                process.env.AUTH_URL || "http://localhost:3000"
+              }/dashboard`;
+              const helpUrl = `${
+                process.env.AUTH_URL || "http://localhost:3000"
+              }/help`;
+              const htmlContent = emailTemplates.welcome(
+                dbUser.name,
+                dashboardUrl,
+                helpUrl
+              );
+              await sendEmail({
+                to: dbUser.email,
+                subject: "Welcome to Eva Marketplace! 🎉",
+                html: htmlContent,
+              });
+            } catch (emailErr) {
+              console.error(
+                "Failed to send welcome email after Google sign in:",
+                emailErr
+              );
+            }
           }
 
           // Update user info in token for later use

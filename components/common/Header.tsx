@@ -16,7 +16,35 @@ import {
   Heart,
 } from "lucide-react";
 import { useSession, signOut } from "next-auth/react";
-
+import { motion } from "framer-motion";
+// Animated loading modal for session loading
+// Only show when status is 'loading'
+const LoadingModal = () => (
+  <div className="fixed inset-0 z-9999 flex items-center justify-center bg-black/50">
+    <motion.div
+      initial={{ rotate: 0, scale: 1 }}
+      animate={{
+        rotate: [0, 20, -20, 15, -15, 10, -10, 0],
+        scale: [1, 1.1, 0.95, 1.08, 0.92, 1.05, 1],
+      }}
+      transition={{
+        duration: 1.2,
+        repeat: Infinity,
+        ease: "easeInOut",
+      }}
+      className="flex flex-col items-center"
+    >
+      <Image
+        src="/logo.png"
+        alt="EVA Logo"
+        width={80}
+        height={80}
+        className="h-20 w-20 rounded-full object-contain bg-white shadow-lg"
+        priority
+      />
+    </motion.div>
+  </div>
+);
 const navItems = [
   { label: "Search", href: "/search" },
   { label: "Vendors", href: "/vendors" },
@@ -91,128 +119,247 @@ export default function Header() {
   ));
 
   return (
-    <header className="fixed top-0 left-0 right-0 z-50 border-b border-border/70 bg-background/90 backdrop-blur-lg">
-      <nav className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-20">
-          {/* Logo */}
-          <Link
-            href="/"
-            className="flex items-center gap-3 rounded-full bg-card/60 px-4 py-2 shadow-sm"
-          >
-            <Image
-              src="/logo.png"
-              alt="EVA Logo"
-              width={40}
-              height={40}
-              className="h-10 w-10 rounded-full object-contain bg-white"
-              priority
-            />
-            <div>
-              <p className="text-xs uppercase tracking-[0.3em] text-muted-foreground">
-                Event Vendor Atlas
-              </p>
-              <p className="text-sm font-semibold text-foreground">
-                Book with confidence
-              </p>
-            </div>
-          </Link>
-
-          {/* Desktop navigation */}
-          <div className="hidden md:flex items-center gap-8">{navLinks}</div>
-
-          {/* CTAs */}
-          <div className="hidden md:flex items-center gap-3">
-            <button
-              onClick={handleSearch}
-              className="flex h-10 w-10 items-center justify-center rounded-full border border-border text-muted-foreground hover:text-foreground hover:border-foreground transition-colors"
-              aria-label="Search vendors"
+    <>
+      {isLoading && <LoadingModal />}
+      <header className="fixed top-0 left-0 right-0 z-50 border-b border-border/70 bg-background/90 backdrop-blur-lg">
+        <nav className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center justify-between h-20">
+            {/* Logo */}
+            <Link
+              href="/"
+              className="flex items-center gap-3 rounded-full bg-card/60 px-4 py-2 shadow-sm"
             >
-              <Search size={18} />
-            </button>
+              <Image
+                src="/logo.png"
+                alt="EVA Logo"
+                width={40}
+                height={40}
+                className="h-10 w-10 rounded-full object-contain bg-white"
+                priority
+              />
+              <div>
+                <p className="text-xs uppercase tracking-[0.3em] text-muted-foreground">
+                  Event Vendor Atlas
+                </p>
+                <p className="text-sm font-semibold text-foreground">
+                  Book with confidence
+                </p>
+              </div>
+            </Link>
 
-            {isLoading ? (
-              <div className="h-10 w-10 rounded-full border border-border bg-muted animate-pulse" />
-            ) : session?.user ? (
-              <div className="relative" ref={dropdownRef}>
-                <button
-                  onClick={() =>
-                    setIsProfileDropdownOpen(!isProfileDropdownOpen)
-                  }
-                  className="flex h-10 w-10 items-center justify-center rounded-full border border-border bg-accent text-accent-foreground font-semibold hover:border-foreground transition-colors"
-                  aria-label="User menu"
+            {/* Desktop navigation */}
+            <div className="hidden md:flex items-center gap-8">{navLinks}</div>
+            {/* CTAs */}
+            <div className="hidden md:flex items-center gap-3">
+              <button
+                onClick={handleSearch}
+                className="flex h-10 w-10 items-center justify-center rounded-full border border-border text-muted-foreground hover:text-foreground hover:border-foreground transition-colors"
+                aria-label="Search vendors"
+              >
+                <Search size={18} />
+              </button>
+
+              {isLoading || !session?.user ? (
+                <Link
+                  href="/auth"
+                  className="inline-flex items-center gap-2 rounded-full border border-transparent bg-foreground px-6 py-2 text-sm font-semibold text-background transition hover:-translate-y-0.5"
                 >
-                  {session.user.image ? (
-                    <img
-                      src={session.user.image}
-                      alt={session.user.name || "User"}
-                      className="h-full w-full rounded-full object-cover"
-                    />
-                  ) : (
-                    <span className="text-sm">
-                      {getInitials(session.user.name)}
-                    </span>
+                  Join EVA
+                  <ArrowUpRight size={16} />
+                </Link>
+              ) : (
+                <div className="relative" ref={dropdownRef}>
+                  <button
+                    onClick={() =>
+                      setIsProfileDropdownOpen(!isProfileDropdownOpen)
+                    }
+                    className="flex h-10 w-10 items-center justify-center rounded-full border border-border bg-accent text-accent-foreground font-semibold hover:border-foreground transition-colors"
+                    aria-label="User menu"
+                  >
+                    {session.user.image ? (
+                      <img
+                        src={session.user.image}
+                        alt={session.user.name || "User"}
+                        className="h-full w-full rounded-full object-cover"
+                      />
+                    ) : (
+                      <span className="text-sm">
+                        {getInitials(session.user.name)}
+                      </span>
+                    )}
+                  </button>
+
+                  {/* Dropdown Menu */}
+                  {isProfileDropdownOpen && (
+                    <div className="absolute right-0 mt-2 w-56 rounded-lg border border-border bg-background shadow-lg overflow-hidden">
+                      {/* User Info */}
+                      <div className="px-4 py-3 border-b border-border">
+                        <p className="text-sm font-semibold text-foreground">
+                          {session.user.name || "User"}
+                        </p>
+                        <p className="text-xs text-muted-foreground truncate">
+                          {session.user.email}
+                        </p>
+                      </div>
+
+                      {/* Menu Items */}
+                      <div className="py-2">
+                        <Link
+                          href={dashboardUrl}
+                          className="flex items-center gap-3 px-4 py-2 text-sm text-foreground hover:bg-accent transition-colors"
+                          onClick={() => setIsProfileDropdownOpen(false)}
+                        >
+                          <LayoutDashboard size={16} />
+                          Dashboard
+                        </Link>
+                        <Link
+                          href="/profile"
+                          className="flex items-center gap-3 px-4 py-2 text-sm text-foreground hover:bg-accent transition-colors"
+                          onClick={() => setIsProfileDropdownOpen(false)}
+                        >
+                          <User size={16} />
+                          Profile
+                        </Link>
+                        <Link
+                          href="/favorites"
+                          className="flex items-center gap-3 px-4 py-2 text-sm text-foreground hover:bg-accent transition-colors"
+                          onClick={() => setIsProfileDropdownOpen(false)}
+                        >
+                          <Heart size={16} />
+                          Favorites
+                        </Link>
+                        <Link
+                          href="/settings"
+                          className="flex items-center gap-3 px-4 py-2 text-sm text-foreground hover:bg-accent transition-colors"
+                          onClick={() => setIsProfileDropdownOpen(false)}
+                        >
+                          <Settings size={16} />
+                          Settings
+                        </Link>
+                      </div>
+
+                      {/* Sign Out */}
+                      <div className="border-t border-border py-2">
+                        <button
+                          onClick={handleSignOut}
+                          className="flex items-center gap-3 w-full px-4 py-2 text-sm text-destructive hover:bg-accent hover:text-white transition-colors"
+                        >
+                          <LogOut size={16} />
+                          Sign Out
+                        </button>
+                      </div>
+                    </div>
                   )}
-                </button>
+                </div>
+              )}
+            </div>
+            {/* Mobile button */}
+            <button
+              className="md:hidden rounded-full border border-border p-2 text-foreground"
+              onClick={() => setIsMenuOpen((prev) => !prev)}
+              aria-label="Toggle navigation"
+            >
+              {isMenuOpen ? <X size={20} /> : <Menu size={20} />}
+            </button>
+          </div>
 
-                {/* Dropdown Menu */}
-                {isProfileDropdownOpen && (
-                  <div className="absolute right-0 mt-2 w-56 rounded-lg border border-border bg-background shadow-lg overflow-hidden">
+          {/* Mobile menu */}
+          {isMenuOpen && (
+            <div className="md:hidden pb-6">
+              <div className="flex flex-col gap-4 border-t border-border/60 pt-6">
+                {navLinks}
+
+                {isLoading || !session?.user ? (
+                  <div className="flex items-center gap-3 pt-2">
+                    <Link
+                      href="/auth"
+                      className="flex-1 rounded-full bg-foreground px-6 py-3 text-center text-sm font-semibold text-background"
+                    >
+                      Join EVA
+                    </Link>
+                    <button
+                      onClick={handleSearch}
+                      className="flex h-11 w-11 items-center justify-center rounded-full border border-border text-muted-foreground"
+                      aria-label="Search vendors"
+                    >
+                      <Search size={18} />
+                    </button>
+                  </div>
+                ) : (
+                  <div className="flex flex-col gap-2 pt-2">
                     {/* User Info */}
-                    <div className="px-4 py-3 border-b border-border">
-                      <p className="text-sm font-semibold text-foreground">
-                        {session.user.name || "User"}
-                      </p>
-                      <p className="text-xs text-muted-foreground truncate">
-                        {session.user.email}
-                      </p>
+                    <div className="flex items-center gap-3 px-4 py-2 rounded-lg bg-accent">
+                      <div className="flex h-10 w-10 items-center justify-center rounded-full bg-foreground text-background font-semibold">
+                        {session.user.image ? (
+                          <img
+                            src={session.user.image}
+                            alt={session.user.name || "User"}
+                            className="h-full w-full rounded-full object-cover"
+                          />
+                        ) : (
+                          <span className="text-sm">
+                            {getInitials(session.user.name)}
+                          </span>
+                        )}
+                      </div>
+                      <div className="flex-1">
+                        <p className="text-sm font-semibold text-foreground">
+                          {session.user.name || "User"}
+                        </p>
+                        <p className="text-xs text-muted-foreground truncate">
+                          {session.user.email}
+                        </p>
+                      </div>
                     </div>
 
-                    {/* Menu Items */}
-                    <div className="py-2">
-                      <Link
-                        href={dashboardUrl}
-                        className="flex items-center gap-3 px-4 py-2 text-sm text-foreground hover:bg-accent transition-colors"
-                        onClick={() => setIsProfileDropdownOpen(false)}
-                      >
-                        <LayoutDashboard size={16} />
-                        Dashboard
-                      </Link>
-                      <Link
-                        href="/profile"
-                        className="flex items-center gap-3 px-4 py-2 text-sm text-foreground hover:bg-accent transition-colors"
-                        onClick={() => setIsProfileDropdownOpen(false)}
-                      >
-                        <User size={16} />
-                        Profile
-                      </Link>
-                      <Link
-                        href="/favorites"
-                        className="flex items-center gap-3 px-4 py-2 text-sm text-foreground hover:bg-accent transition-colors"
-                        onClick={() => setIsProfileDropdownOpen(false)}
-                      >
-                        <Heart size={16} />
-                        Favorites
-                      </Link>
-                      <Link
-                        href="/settings"
-                        className="flex items-center gap-3 px-4 py-2 text-sm text-foreground hover:bg-accent transition-colors"
-                        onClick={() => setIsProfileDropdownOpen(false)}
-                      >
-                        <Settings size={16} />
-                        Settings
-                      </Link>
-                    </div>
+                    {/* Mobile Menu Links */}
+                    <Link
+                      href={dashboardUrl}
+                      className="flex items-center gap-3 px-4 py-2 text-sm text-foreground hover:bg-accent rounded-lg transition-colors"
+                      onClick={() => setIsMenuOpen(false)}
+                    >
+                      <LayoutDashboard size={16} />
+                      Dashboard
+                    </Link>
+                    <Link
+                      href="/profile"
+                      className="flex items-center gap-3 px-4 py-2 text-sm text-foreground hover:bg-accent rounded-lg transition-colors"
+                      onClick={() => setIsMenuOpen(false)}
+                    >
+                      <User size={16} />
+                      Profile
+                    </Link>
+                    <Link
+                      href="/favorites"
+                      className="flex items-center gap-3 px-4 py-2 text-sm text-foreground hover:bg-accent rounded-lg transition-colors"
+                      onClick={() => setIsMenuOpen(false)}
+                    >
+                      <Heart size={16} />
+                      Favorites
+                    </Link>
+                    <Link
+                      href="/settings"
+                      className="flex items-center gap-3 px-4 py-2 text-sm text-foreground hover:bg-accent rounded-lg transition-colors"
+                      onClick={() => setIsMenuOpen(false)}
+                    >
+                      <Settings size={16} />
+                      Settings
+                    </Link>
+                    <button
+                      onClick={handleSignOut}
+                      className="flex items-center gap-3 px-4 py-2 text-sm text-destructive hover:bg-accent rounded-lg transition-colors"
+                    >
+                      <LogOut size={16} />
+                      Sign Out
+                    </button>
 
-                    {/* Sign Out */}
-                    <div className="border-t border-border py-2">
-                      <button
-                        onClick={handleSignOut}
-                        className="flex items-center gap-3 w-full px-4 py-2 text-sm text-destructive hover:bg-accent hover:text-white transition-colors"
-                      >
-                        <LogOut size={16} />
-                        Sign Out
-                      </button>
-                    </div>
+                    <button
+                      onClick={handleSearch}
+                      className="flex h-11 w-11 items-center justify-center rounded-full border border-border text-muted-foreground self-center mt-2"
+                      aria-label="Search vendors"
+                    >
+                      <Search size={18} />
+                    </button>
                   </div>
                 )}
               </div>
@@ -339,9 +486,9 @@ export default function Header() {
                 </div>
               )}
             </div>
-          </div>
-        )}
-      </nav>
-    </header>
+          )}
+        </nav>
+      </header>
+    </>
   );
 }

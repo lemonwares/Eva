@@ -2,10 +2,9 @@ import fs from "fs";
 import path from "path";
 
 function loadTemplate(filename: string): string {
-  return fs.readFileSync(
-    path.join(process.cwd(), "templates", filename),
-    "utf-8"
-  );
+  // Load from project root for Vercel compatibility
+  const templatePath = path.join(process.cwd(), "templates", filename);
+  return fs.readFileSync(templatePath, "utf8");
 }
 
 function replaceVariables(

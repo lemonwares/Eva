@@ -21,6 +21,7 @@ import { formatCurrency } from "@/lib/formatters";
 interface Provider {
   id: string;
   businessName: string;
+  address: string | null;
   description: string | null;
   categories: string[];
   coverImage: string | null;
@@ -56,6 +57,17 @@ const categoryImages: Record<string, string> = {
     "https://images.unsplash.com/photo-1478146896981-b80fe463b330?w=800&h=800&fit=crop",
   default:
     "https://images.unsplash.com/photo-1492684223066-81342ee5ff30?w=800&h=800&fit=crop",
+};
+
+const truncate = (str: string, max: number) =>
+  str.length > max ? str.slice(0, max - 3) + "..." : str;
+
+const formatCategories = (cats?: string) => {
+  const str = (cats ?? "").trim();
+
+  if (!str) return ""; // avoid null/undefined
+
+  return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
 };
 
 export default function VendorsPage() {
@@ -364,7 +376,7 @@ function VendorsPageContent() {
                     {/* Content */}
                     <div className="absolute inset-x-0 bottom-0 p-4 text-background">
                       <p className="text-xs font-medium text-background/70 mb-1">
-                        {vendor.categories[0] || "Services"}
+                        {formatCategories(vendor.categories[0]) || "Services"}
                       </p>
                       <h3 className="font-semibold text-lg leading-tight mb-2">
                         {vendor.businessName}
@@ -392,7 +404,12 @@ function VendorsPageContent() {
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-1 text-sm text-muted-foreground">
                         <MapPin className="h-4 w-4" />
-                        <span>{vendor.city || "UK"}</span>
+                        <span>
+                          {truncate(
+                            `${vendor.address}, ${vendor.city}` || "UK",
+                            25
+                          )}
+                        </span>
                       </div>
                       {vendor.priceFrom && (
                         <span className="text-sm font-medium text-foreground">
