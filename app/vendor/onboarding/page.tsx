@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import ImageUpload, { MultiImageUpload } from "@/components/ui/ImageUpload";
 import { formatCurrency } from "@/lib/formatters";
+import Image from "next/image";
 
 // Step types
 type OnboardingStep =
@@ -15,6 +16,7 @@ type OnboardingStep =
   | "media"
   | "listings"
   | "schedule"
+  | "team"
   | "review";
 
 interface WeeklyScheduleDay {
@@ -31,6 +33,11 @@ interface ListingDraft {
   timeEstimate: string;
   coverImageUrl: string;
   galleryUrls: string[];
+}
+
+interface TeamMember {
+  name: string;
+  photo?: string;
 }
 
 interface OnboardingData {
@@ -68,6 +75,8 @@ interface OnboardingData {
 
   // Step 8: Weekly Schedule
   weeklySchedule: WeeklyScheduleDay[];
+
+  teamMembers: TeamMember[];
 }
 
 const STEPS: { id: OnboardingStep; title: string; description: string }[] = [
@@ -100,6 +109,11 @@ const STEPS: { id: OnboardingStep; title: string; description: string }[] = [
     id: "listings",
     title: "Services & Packages",
     description: "Add at least 3 services or packages you offer",
+  },
+  {
+    id: "team",
+    title: "Team Members",
+    description: "Add at least one team member (name required, photo optional)",
   },
   {
     id: "schedule",
@@ -225,6 +239,7 @@ export default function VendorOnboardingPage() {
     photos: [],
     priceFrom: null,
     listings: [],
+    teamMembers: [],
     weeklySchedule: [
       { dayOfWeek: 0, startTime: "09:00", endTime: "17:00", isClosed: false },
       { dayOfWeek: 1, startTime: "09:00", endTime: "17:00", isClosed: false },
@@ -235,6 +250,29 @@ export default function VendorOnboardingPage() {
       { dayOfWeek: 6, startTime: "09:00", endTime: "17:00", isClosed: false },
     ],
   });
+
+  // For team members
+  const [teamMemberDraft, setTeamMemberDraft] = useState<TeamMember>({
+    name: "",
+    photo: "",
+  });
+
+  const handleAddTeamMember = () => {
+    if (teamMemberDraft.name.trim()) {
+      setFormData((prev) => ({
+        ...prev,
+        teamMembers: [...prev.teamMembers, { ...teamMemberDraft }],
+      }));
+      setTeamMemberDraft({ name: "", photo: "" });
+    }
+  };
+
+  const handleRemoveTeamMember = (idx: number) => {
+    setFormData((prev) => ({
+      ...prev,
+      teamMembers: prev.teamMembers.filter((_, i) => i !== idx),
+    }));
+  };
 
   const STORAGE_KEY = "vendor_onboarding_data";
   const STEP_STORAGE_KEY = "vendor_onboarding_step";
@@ -389,7 +427,29 @@ export default function VendorOnboardingPage() {
       const failed = scheduleRes.find((r) => !r.ok);
       if (failed) throw new Error("Failed to save weekly schedule");
 
-      // 3. Save listings for this provider
+      // 3. Save team members for this provider
+      if (formData.teamMembers && formData.teamMembers.length > 0) {
+        const teamRes = await Promise.all(
+          formData.teamMembers
+            .filter((m) => m.name && m.name.trim() !== "")
+            .map((member) =>
+              fetch("/api/admin/team-members", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                  providerId: provider.id,
+                  name: member.name,
+                  imageUrl: member.photo,
+                }),
+              })
+            )
+        );
+        const failedTeam = teamRes.find((r) => !r.ok);
+        if (failedTeam)
+          throw new Error("Failed to save one or more team members");
+      }
+
+      // 4. Save listings for this provider
       if (formData.listings && formData.listings.length > 0) {
         const listingsRes = await Promise.all(
           formData.listings.map((listing) =>
@@ -906,6 +966,106 @@ export default function VendorOnboardingPage() {
           </div>
         );
 
+      case "team":
+        return (
+          <div className="space-y-6">
+            <h2 className="text-lg font-semibold text-gray-900 mb-2">
+              Team Members
+            </h2>
+            <p className="text-gray-600 mb-4">
+              Add at least one team member. Name is required, photo is optional.
+            </p>
+            <div className="flex flex-col sm:flex-row sm:items-end gap-4 bg-gray-50 border border-gray-200 rounded-lg p-4 mb-4">
+              <div className="flex flex-col items-center gap-2">
+                <ImageUpload
+                  value={teamMemberDraft.photo}
+                  onChange={(url) =>
+                    setTeamMemberDraft({ ...teamMemberDraft, photo: url })
+                  }
+                  type="avatar"
+                  aspectRatio="square"
+                  placeholder="Upload photo"
+                  className="w-20 h-20 rounded-full border object-cover"
+                />
+                <span className="text-xs text-gray-500">Photo (optional)</span>
+              </div>
+              <div className="flex-1">
+                <label className="block text-sm font-medium mb-1">
+                  Name <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  value={teamMemberDraft.name}
+                  onChange={(e) =>
+                    setTeamMemberDraft({
+                      ...teamMemberDraft,
+                      name: e.target.value,
+                    })
+                  }
+                  placeholder="Team member name"
+                  className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-accent focus:border-transparent"
+                  required
+                />
+              </div>
+              <button
+                type="button"
+                className={`btn btn-accent h-10 px-6 rounded-lg font-medium ${
+                  !teamMemberDraft.name.trim()
+                    ? "opacity-50 cursor-not-allowed"
+                    : ""
+                }`}
+                onClick={handleAddTeamMember}
+                disabled={!teamMemberDraft.name.trim()}
+              >
+                Add
+              </button>
+            </div>
+            <div>
+              <h3 className="font-medium text-gray-700 mb-2">Current Team</h3>
+              {formData.teamMembers.length === 0 ? (
+                <p className="text-gray-500">No team members added yet.</p>
+              ) : (
+                <ul className="space-y-3">
+                  {formData.teamMembers.map((member, idx) => (
+                    <li
+                      key={idx}
+                      className="flex items-center gap-4 bg-white border border-gray-100 rounded-lg p-3"
+                    >
+                      {member.photo ? (
+                        <Image
+                          src={member.photo}
+                          alt={member.name}
+                          width={48}
+                          height={48}
+                          className="w-12 h-12 rounded-full object-cover border"
+                        />
+                      ) : (
+                        <Image
+                          width={48}
+                          height={48}
+                          src="/profile-dummy.png"
+                          alt="Default profile"
+                          className="w-12 h-12 rounded-full object-cover border bg-gray-200"
+                        />
+                      )}
+                      <span className="font-medium text-gray-900">
+                        {member.name}
+                      </span>
+                      <button
+                        type="button"
+                        className="ml-auto btn btn-xs btn-error"
+                        onClick={() => handleRemoveTeamMember(idx)}
+                      >
+                        Remove
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          </div>
+        );
+
       case "review":
         return (
           <div className="space-y-6">
@@ -1240,6 +1400,9 @@ export default function VendorOnboardingPage() {
             (d) => d.isClosed || (d.startTime && d.endTime)
           ) && formData.weeklySchedule.some((d) => !d.isClosed)
         );
+
+      case "team":
+        return formData.teamMembers.some((m) => m.name && m.name.trim() !== "");
       case "review":
         return true;
       default:
