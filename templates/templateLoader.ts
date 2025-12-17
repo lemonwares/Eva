@@ -3,7 +3,8 @@ import path from "path";
 
 function loadTemplate(filename: string): string {
   // Load from project root for Vercel compatibility
-  return fs.readFileSync(path.join(process.cwd(), filename), "utf-8");
+  const templatePath = path.join(process.cwd(), "templates", filename);
+  return fs.readFileSync(templatePath, "utf8");
 }
 
 function replaceVariables(

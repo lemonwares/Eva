@@ -637,11 +637,21 @@ export default function VendorDetailPage() {
     );
   }
 
-  // Scroll to map section
+  // Open Google Maps with vendor address
   const handleGetDirectionsClick = () => {
-    if (mapRef.current && typeof mapRef.current.scrollIntoView === "function") {
-      mapRef.current.scrollIntoView({ behavior: "smooth", block: "center" });
-    }
+    if (!vendor) return;
+    const addressParts = [
+      vendor.address,
+      vendor.postcode,
+      vendor.city,
+      "England",
+    ];
+    const address = addressParts.filter(Boolean).join(", ");
+    if (!address) return;
+    const mapsUrl = `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(
+      address
+    )}`;
+    window.open(mapsUrl, "_blank");
   };
 
   return (
