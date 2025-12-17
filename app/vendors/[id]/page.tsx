@@ -1018,10 +1018,27 @@ export default function VendorDetailPage() {
         <div className="flex flex-col lg:flex-row gap-12">
           {/* Main Content */}
           <div className="flex-1">
+            {/* Services */}
+            {vendor.subcategories.length > 0 && (
+              <div className="mb-12">
+                <h2 className="text-xl font-semibold mb-4">Services</h2>
+                <div className="flex flex-wrap gap-2">
+                  {vendor.subcategories.map((service, index) => (
+                    <span
+                      key={index}
+                      className="px-4 py-2 rounded-full bg-muted text-sm font-medium"
+                    >
+                      {service}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+
             {/* Specializations & Listings */}
             {vendor.cultureTraditionTags.length > 0 && (
               <div className="mb-12">
-                <h2 className="text-xl font-semibold mb-4">Specializations</h2>
+                {/* <h2 className="text-xl font-semibold mb-4">Specializations</h2>
                 <div className="flex flex-wrap gap-2 mb-4">
                   {vendor.cultureTraditionTags.map((tag, index) => {
                     const capTag =
@@ -1035,7 +1052,7 @@ export default function VendorDetailPage() {
                       </span>
                     );
                   })}
-                </div>
+                </div> */}
                 {/* Listings Section */}
                 <div>
                   <h3 className="text-lg font-semibold mb-2">
@@ -1146,23 +1163,6 @@ export default function VendorDetailPage() {
                       </button> */}
                     </form>
                   )}
-                </div>
-              </div>
-            )}
-
-            {/* Services */}
-            {vendor.subcategories.length > 0 && (
-              <div className="mb-12">
-                <h2 className="text-xl font-semibold mb-4">Services</h2>
-                <div className="flex flex-wrap gap-2">
-                  {vendor.subcategories.map((service, index) => (
-                    <span
-                      key={index}
-                      className="px-4 py-2 rounded-full bg-muted text-sm font-medium"
-                    >
-                      {service}
-                    </span>
-                  ))}
                 </div>
               </div>
             )}
@@ -1278,8 +1278,18 @@ export default function VendorDetailPage() {
               <div className="mb-12">
                 <h2 className="text-xl font-semibold mb-4">About</h2>
                 <p className="text-muted-foreground whitespace-pre-wrap">
-                  {vendor.description}
+                  {showFullDescription || vendor.description.length <= 500
+                    ? vendor.description
+                    : vendor.description.slice(0, 500) + "..."}
                 </p>
+                {vendor.description.length > 200 && (
+                  <button
+                    className="mt-2 text-accent font-medium hover:underline focus:outline-none"
+                    onClick={() => setShowFullDescription((prev) => !prev)}
+                  >
+                    {showFullDescription ? "Show less" : "Read more"}
+                  </button>
+                )}
                 {/* Google Maps Embed */}
                 <div
                   ref={mapRef}
