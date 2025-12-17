@@ -90,6 +90,20 @@ export async function PATCH(
         id: listingId,
         providerId: id,
       },
+      select: {
+        id: true,
+        createdAt: true,
+        updatedAt: true,
+        providerId: true,
+        headline: true,
+        longDescription: true,
+        price: true,
+        minPrice: true,
+        maxPrice: true,
+        timeEstimate: true,
+        coverImageUrl: true,
+        galleryUrls: true,
+      },
     });
 
     if (!listing) {
