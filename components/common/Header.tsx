@@ -221,7 +221,7 @@ export default function Header() {
                 href="/auth"
                 className="inline-flex items-center gap-2 rounded-full border border-transparent bg-foreground px-6 py-2 text-sm font-semibold text-background transition hover:-translate-y-0.5"
               >
-                Join EVA
+                Login
                 <ArrowUpRight size={16} />
               </Link>
             )}
@@ -327,7 +327,7 @@ export default function Header() {
                     href="/auth"
                     className="flex-1 rounded-full bg-foreground px-6 py-3 text-center text-sm font-semibold text-background"
                   >
-                    Join EVA
+                    Login
                   </Link>
                   <button
                     onClick={handleSearch}
