@@ -1017,67 +1017,6 @@ export default function VendorDetailPage() {
         <div className="flex flex-col lg:flex-row gap-12">
           {/* Main Content */}
           <div className="flex-1">
-            {/* Description */}
-            {vendor.description && (
-              <div className="mb-12">
-                <h2 className="text-xl font-semibold mb-4">About</h2>
-                <p className="text-muted-foreground whitespace-pre-wrap">
-                  {vendor.description}
-                </p>
-                {/* Google Maps Embed */}
-                <div
-                  ref={mapRef}
-                  className="mt-6 rounded-lg overflow-hidden"
-                  style={{ height: "350px" }}
-                >
-                  {(() => {
-                    const parts = [];
-                    if (vendor.address) parts.push(vendor.address);
-                    if (vendor.postcode) parts.push(vendor.postcode);
-                    if (vendor.city) parts.push(vendor.city);
-                    parts.push("England");
-                    const mapQuery = parts.filter(Boolean).join(", ");
-                    return mapQuery ? (
-                      <iframe
-                        width="100%"
-                        height="100%"
-                        frameBorder="0"
-                        style={{
-                          border: "1px solid gray",
-                          overflow: "hidden",
-                          borderRadius: "5px",
-                        }}
-                        src={`https://www.google.com/maps?q=${encodeURIComponent(
-                          mapQuery
-                        )}&hl=en&z=15&output=embed`}
-                        allowFullScreen
-                        aria-hidden="false"
-                        tabIndex={0}
-                        title="Google Map Location"
-                      />
-                    ) : null;
-                  })()}
-                </div>
-              </div>
-            )}
-
-            {/* Services */}
-            {vendor.subcategories.length > 0 && (
-              <div className="mb-12">
-                <h2 className="text-xl font-semibold mb-4">Services</h2>
-                <div className="flex flex-wrap gap-2">
-                  {vendor.subcategories.map((service, index) => (
-                    <span
-                      key={index}
-                      className="px-4 py-2 rounded-full bg-muted text-sm font-medium"
-                    >
-                      {service}
-                    </span>
-                  ))}
-                </div>
-              </div>
-            )}
-
             {/* Specializations & Listings */}
             {vendor.cultureTraditionTags.length > 0 && (
               <div className="mb-12">
@@ -1210,6 +1149,23 @@ export default function VendorDetailPage() {
               </div>
             )}
 
+            {/* Services */}
+            {vendor.subcategories.length > 0 && (
+              <div className="mb-12">
+                <h2 className="text-xl font-semibold mb-4">Services</h2>
+                <div className="flex flex-wrap gap-2">
+                  {vendor.subcategories.map((service, index) => (
+                    <span
+                      key={index}
+                      className="px-4 py-2 rounded-full bg-muted text-sm font-medium"
+                    >
+                      {service}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+
             {/* Reviews */}
             <div className="mb-12">
               <h2 className="text-xl font-semibold   mb-4">
@@ -1312,6 +1268,50 @@ export default function VendorDetailPage() {
                       </div>
                     );
                   })}
+                </div>
+              </div>
+            )}
+
+            {/* Description */}
+            {vendor.description && (
+              <div className="mb-12">
+                <h2 className="text-xl font-semibold mb-4">About</h2>
+                <p className="text-muted-foreground whitespace-pre-wrap">
+                  {vendor.description}
+                </p>
+                {/* Google Maps Embed */}
+                <div
+                  ref={mapRef}
+                  className="mt-6 rounded-lg overflow-hidden"
+                  style={{ height: "350px" }}
+                >
+                  {(() => {
+                    const parts = [];
+                    if (vendor.address) parts.push(vendor.address);
+                    if (vendor.postcode) parts.push(vendor.postcode);
+                    if (vendor.city) parts.push(vendor.city);
+                    parts.push("England");
+                    const mapQuery = parts.filter(Boolean).join(", ");
+                    return mapQuery ? (
+                      <iframe
+                        width="100%"
+                        height="100%"
+                        frameBorder="0"
+                        style={{
+                          border: "1px solid gray",
+                          overflow: "hidden",
+                          borderRadius: "5px",
+                        }}
+                        src={`https://www.google.com/maps?q=${encodeURIComponent(
+                          mapQuery
+                        )}&hl=en&z=15&output=embed`}
+                        allowFullScreen
+                        aria-hidden="false"
+                        tabIndex={0}
+                        title="Google Map Location"
+                      />
+                    ) : null;
+                  })()}
                 </div>
               </div>
             )}

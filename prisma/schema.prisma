@@ -283,6 +283,8 @@ model Listing {
   providerId      String   @map("provider_id")
   headline        String
   longDescription String?  @map("long_description") @db.Text
+  minPrice        Float?   @map("min_price")
+  maxPrice        Float?   @map("max_price")
   price           Float?   @map("price")
   timeEstimate    String?  @map("time_estimate")
   coverImageUrl   String?  @map("cover_image_url")

@@ -17,8 +17,8 @@ import {
 } from "lucide-react";
 import { useSession, signOut } from "next-auth/react";
 import { motion } from "framer-motion";
+
 // Animated loading modal for session loading
-// Only show when status is 'loading'
 const LoadingModal = () => (
   <div className="fixed inset-0 z-9999 flex items-center justify-center bg-black/50">
     <motion.div
@@ -45,6 +45,7 @@ const LoadingModal = () => (
     </motion.div>
   </div>
 );
+
 const navItems = [
   { label: "Search", href: "/search" },
   { label: "Vendors", href: "/vendors" },
@@ -75,7 +76,6 @@ export default function Header() {
     }
   }, [session?.user?.role]);
 
-  // console.log("Session data in Header:", session);
   // Close dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -97,32 +97,57 @@ export default function Header() {
   };
 
   const handleSignOut = async () => {
-    // Close menus then force a redirecting sign-out to ensure navigation completes.
     setIsProfileDropdownOpen(false);
     setIsMenuOpen(false);
     await signOut({ callbackUrl: "/", redirect: true });
   };
 
   const handleSearch = () => {
+    setIsMenuOpen(false);
     router.push("/search");
   };
 
-  const navLinks = navItems.map((item) => (
-    <Link
-      key={item.label}
-      href={item.href}
-      className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
-      onClick={() => setIsMenuOpen(false)}
-    >
-      {item.label}
-    </Link>
-  ));
+  // Close mobile menu when route changes
+  useEffect(() => {
+    setIsMenuOpen(false);
+  }, [router]);
+
+  // Prevent body scroll when mobile menu is open
+  useEffect(() => {
+    if (isMenuOpen) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "unset";
+    }
+    return () => {
+      document.body.style.overflow = "unset";
+    };
+  }, [isMenuOpen]);
+
+  // Memoize nav links to prevent recreation on every render
+  const navLinks = useMemo(
+    () =>
+      navItems.map((item) => (
+        <Link
+          key={item.label}
+          href={item.href}
+          className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
+          onClick={() => setIsMenuOpen(false)}
+        >
+          {item.label}
+        </Link>
+      )),
+    []
+  );
 
   return (
     <>
       {isLoading && <LoadingModal />}
-      <header className="fixed top-0 left-0 right-0 z-50 border-b border-border/70 bg-background/90 backdrop-blur-lg">
-        <nav className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <header className="fixed top-0 left-0 right-0 z-50 border-b border-border/70 bg-background/95 backdrop-blur-md supports-backdrop-filter:bg-background/80">
+        <nav
+          className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8"
+          aria-label="Main navigation"
+        >
           <div className="flex items-center justify-between h-20">
             {/* Logo */}
             <Link
@@ -149,7 +174,8 @@ export default function Header() {
 
             {/* Desktop navigation */}
             <div className="hidden md:flex items-center gap-8">{navLinks}</div>
-            {/* CTAs */}
+
+            {/* Desktop CTAs */}
             <div className="hidden md:flex items-center gap-3">
               <button
                 onClick={handleSearch}
@@ -164,7 +190,7 @@ export default function Header() {
                   href="/auth"
                   className="inline-flex items-center gap-2 rounded-full border border-transparent bg-foreground px-6 py-2 text-sm font-semibold text-background transition hover:-translate-y-0.5"
                 >
-                  Join EVA
+                  Login
                   <ArrowUpRight size={16} />
                 </Link>
               ) : (
@@ -242,7 +268,7 @@ export default function Header() {
                       <div className="border-t border-border py-2">
                         <button
                           onClick={handleSignOut}
-                          className="flex items-center gap-3 w-full px-4 py-2 text-sm text-destructive hover:bg-accent hover:text-white transition-colors"
+                          className="flex items-center gap-3 w-full px-4 py-2 text-sm text-destructive hover:bg-destructive/10 transition-colors"
                         >
                           <LogOut size={16} />
                           Sign Out
@@ -253,6 +279,7 @@ export default function Header() {
                 </div>
               )}
             </div>
+
             {/* Mobile button */}
             <button
               className="md:hidden rounded-full border border-border p-2 text-foreground"
@@ -265,27 +292,17 @@ export default function Header() {
 
           {/* Mobile menu */}
           {isMenuOpen && (
-            <div className="md:hidden pb-6">
+            <div
+              className="md:hidden pb-6 animate-in slide-in-from-top duration-200"
+              role="dialog"
+              aria-label="Mobile menu"
+            >
               <div className="flex flex-col gap-4 border-t border-border/60 pt-6">
                 {navLinks}
 
-                {isLoading || !session?.user ? (
-                  <div className="flex items-center gap-3 pt-2">
-                    <Link
-                      href="/auth"
-                      className="flex-1 rounded-full bg-foreground px-6 py-3 text-center text-sm font-semibold text-background"
-                    >
-                      Join EVA
-                    </Link>
-                    <button
-                      onClick={handleSearch}
-                      className="flex h-11 w-11 items-center justify-center rounded-full border border-border text-muted-foreground"
-                      aria-label="Search vendors"
-                    >
-                      <Search size={18} />
-                    </button>
-                  </div>
-                ) : (
+                {isLoading ? (
+                  <div className="h-11 rounded-full border border-border bg-muted animate-pulse" />
+                ) : session?.user ? (
                   <div className="flex flex-col gap-2 pt-2">
                     {/* User Info */}
                     <div className="flex items-center gap-3 px-4 py-2 rounded-lg bg-accent">
@@ -347,7 +364,7 @@ export default function Header() {
                     </Link>
                     <button
                       onClick={handleSignOut}
-                      className="flex items-center gap-3 px-4 py-2 text-sm text-destructive hover:bg-accent rounded-lg transition-colors"
+                      className="flex items-center gap-3 px-4 py-2 text-sm text-destructive hover:bg-destructive/10 rounded-lg transition-colors"
                     >
                       <LogOut size={16} />
                       Sign Out
@@ -361,130 +378,25 @@ export default function Header() {
                       <Search size={18} />
                     </button>
                   </div>
+                ) : (
+                  <div className="flex items-center gap-3 pt-2">
+                    <Link
+                      href="/auth"
+                      className="flex-1 rounded-full bg-foreground px-6 py-3 text-center text-sm font-semibold text-background"
+                      onClick={() => setIsMenuOpen(false)}
+                    >
+                      Login
+                    </Link>
+                    <button
+                      onClick={handleSearch}
+                      className="flex h-11 w-11 items-center justify-center rounded-full border border-border text-muted-foreground"
+                      aria-label="Search vendors"
+                    >
+                      <Search size={18} />
+                    </button>
+                  </div>
                 )}
               </div>
-            ) : (
-              <Link
-                href="/auth"
-                className="inline-flex items-center gap-2 rounded-full border border-transparent bg-foreground px-6 py-2 text-sm font-semibold text-background transition hover:-translate-y-0.5"
-              >
-                Login
-                <ArrowUpRight size={16} />
-              </Link>
-            )}
-          </div>
-
-          {/* Mobile button */}
-          <button
-            className="md:hidden rounded-full border border-border p-2 text-foreground"
-            onClick={() => setIsMenuOpen((prev) => !prev)}
-            aria-label="Toggle navigation"
-          >
-            {isMenuOpen ? <X size={20} /> : <Menu size={20} />}
-          </button>
-        </div>
-
-        {/* Mobile menu */}
-        {isMenuOpen && (
-          <div className="md:hidden pb-6">
-            <div className="flex flex-col gap-4 border-t border-border/60 pt-6">
-              {navLinks}
-
-              {isLoading ? (
-                <div className="h-11 rounded-full border border-border bg-muted animate-pulse" />
-              ) : session?.user ? (
-                <div className="flex flex-col gap-2 pt-2">
-                  {/* User Info */}
-                  <div className="flex items-center gap-3 px-4 py-2 rounded-lg bg-accent">
-                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-foreground text-background font-semibold">
-                      {session.user.image ? (
-                        <img
-                          src={session.user.image}
-                          alt={session.user.name || "User"}
-                          className="h-full w-full rounded-full object-cover"
-                        />
-                      ) : (
-                        <span className="text-sm">
-                          {getInitials(session.user.name)}
-                        </span>
-                      )}
-                    </div>
-                    <div className="flex-1">
-                      <p className="text-sm font-semibold text-foreground">
-                        {session.user.name || "User"}
-                      </p>
-                      <p className="text-xs text-muted-foreground truncate">
-                        {session.user.email}
-                      </p>
-                    </div>
-                  </div>
-
-                  {/* Mobile Menu Links */}
-                  <Link
-                    href={dashboardUrl}
-                    className="flex items-center gap-3 px-4 py-2 text-sm text-foreground hover:bg-accent rounded-lg transition-colors"
-                    onClick={() => setIsMenuOpen(false)}
-                  >
-                    <LayoutDashboard size={16} />
-                    Dashboard
-                  </Link>
-                  <Link
-                    href="/profile"
-                    className="flex items-center gap-3 px-4 py-2 text-sm text-foreground hover:bg-accent rounded-lg transition-colors"
-                    onClick={() => setIsMenuOpen(false)}
-                  >
-                    <User size={16} />
-                    Profile
-                  </Link>
-                  <Link
-                    href="/favorites"
-                    className="flex items-center gap-3 px-4 py-2 text-sm text-foreground hover:bg-accent rounded-lg transition-colors"
-                    onClick={() => setIsMenuOpen(false)}
-                  >
-                    <Heart size={16} />
-                    Favorites
-                  </Link>
-                  <Link
-                    href="/settings"
-                    className="flex items-center gap-3 px-4 py-2 text-sm text-foreground hover:bg-accent rounded-lg transition-colors"
-                    onClick={() => setIsMenuOpen(false)}
-                  >
-                    <Settings size={16} />
-                    Settings
-                  </Link>
-                  <button
-                    onClick={handleSignOut}
-                    className="flex items-center gap-3 px-4 py-2 text-sm text-destructive hover:bg-accent rounded-lg transition-colors"
-                  >
-                    <LogOut size={16} />
-                    Sign Out
-                  </button>
-
-                  <button
-                    onClick={handleSearch}
-                    className="flex h-11 w-11 items-center justify-center rounded-full border border-border text-muted-foreground self-center mt-2"
-                    aria-label="Search vendors"
-                  >
-                    <Search size={18} />
-                  </button>
-                </div>
-              ) : (
-                <div className="flex items-center gap-3 pt-2">
-                  <Link
-                    href="/auth"
-                    className="flex-1 rounded-full bg-foreground px-6 py-3 text-center text-sm font-semibold text-background"
-                  >
-                    Login
-                  </Link>
-                  <button
-                    onClick={handleSearch}
-                    className="flex h-11 w-11 items-center justify-center rounded-full border border-border text-muted-foreground"
-                    aria-label="Search vendors"
-                  >
-                    <Search size={18} />
-                  </button>
-                </div>
-              )}
             </div>
           )}
         </nav>
