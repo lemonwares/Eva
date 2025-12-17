@@ -363,6 +363,128 @@ export default function Header() {
                   </div>
                 )}
               </div>
+            ) : (
+              <Link
+                href="/auth"
+                className="inline-flex items-center gap-2 rounded-full border border-transparent bg-foreground px-6 py-2 text-sm font-semibold text-background transition hover:-translate-y-0.5"
+              >
+                Login
+                <ArrowUpRight size={16} />
+              </Link>
+            )}
+          </div>
+
+          {/* Mobile button */}
+          <button
+            className="md:hidden rounded-full border border-border p-2 text-foreground"
+            onClick={() => setIsMenuOpen((prev) => !prev)}
+            aria-label="Toggle navigation"
+          >
+            {isMenuOpen ? <X size={20} /> : <Menu size={20} />}
+          </button>
+        </div>
+
+        {/* Mobile menu */}
+        {isMenuOpen && (
+          <div className="md:hidden pb-6">
+            <div className="flex flex-col gap-4 border-t border-border/60 pt-6">
+              {navLinks}
+
+              {isLoading ? (
+                <div className="h-11 rounded-full border border-border bg-muted animate-pulse" />
+              ) : session?.user ? (
+                <div className="flex flex-col gap-2 pt-2">
+                  {/* User Info */}
+                  <div className="flex items-center gap-3 px-4 py-2 rounded-lg bg-accent">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-foreground text-background font-semibold">
+                      {session.user.image ? (
+                        <img
+                          src={session.user.image}
+                          alt={session.user.name || "User"}
+                          className="h-full w-full rounded-full object-cover"
+                        />
+                      ) : (
+                        <span className="text-sm">
+                          {getInitials(session.user.name)}
+                        </span>
+                      )}
+                    </div>
+                    <div className="flex-1">
+                      <p className="text-sm font-semibold text-foreground">
+                        {session.user.name || "User"}
+                      </p>
+                      <p className="text-xs text-muted-foreground truncate">
+                        {session.user.email}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Mobile Menu Links */}
+                  <Link
+                    href={dashboardUrl}
+                    className="flex items-center gap-3 px-4 py-2 text-sm text-foreground hover:bg-accent rounded-lg transition-colors"
+                    onClick={() => setIsMenuOpen(false)}
+                  >
+                    <LayoutDashboard size={16} />
+                    Dashboard
+                  </Link>
+                  <Link
+                    href="/profile"
+                    className="flex items-center gap-3 px-4 py-2 text-sm text-foreground hover:bg-accent rounded-lg transition-colors"
+                    onClick={() => setIsMenuOpen(false)}
+                  >
+                    <User size={16} />
+                    Profile
+                  </Link>
+                  <Link
+                    href="/favorites"
+                    className="flex items-center gap-3 px-4 py-2 text-sm text-foreground hover:bg-accent rounded-lg transition-colors"
+                    onClick={() => setIsMenuOpen(false)}
+                  >
+                    <Heart size={16} />
+                    Favorites
+                  </Link>
+                  <Link
+                    href="/settings"
+                    className="flex items-center gap-3 px-4 py-2 text-sm text-foreground hover:bg-accent rounded-lg transition-colors"
+                    onClick={() => setIsMenuOpen(false)}
+                  >
+                    <Settings size={16} />
+                    Settings
+                  </Link>
+                  <button
+                    onClick={handleSignOut}
+                    className="flex items-center gap-3 px-4 py-2 text-sm text-destructive hover:bg-accent rounded-lg transition-colors"
+                  >
+                    <LogOut size={16} />
+                    Sign Out
+                  </button>
+
+                  <button
+                    onClick={handleSearch}
+                    className="flex h-11 w-11 items-center justify-center rounded-full border border-border text-muted-foreground self-center mt-2"
+                    aria-label="Search vendors"
+                  >
+                    <Search size={18} />
+                  </button>
+                </div>
+              ) : (
+                <div className="flex items-center gap-3 pt-2">
+                  <Link
+                    href="/auth"
+                    className="flex-1 rounded-full bg-foreground px-6 py-3 text-center text-sm font-semibold text-background"
+                  >
+                    Login
+                  </Link>
+                  <button
+                    onClick={handleSearch}
+                    className="flex h-11 w-11 items-center justify-center rounded-full border border-border text-muted-foreground"
+                    aria-label="Search vendors"
+                  >
+                    <Search size={18} />
+                  </button>
+                </div>
+              )}
             </div>
           )}
         </nav>
