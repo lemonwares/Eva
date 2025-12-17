@@ -317,6 +317,7 @@ export default function VendorDetailPage() {
   const [bookingError, setBookingError] = useState("");
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [bookingLoading, setBookingLoading] = useState<boolean>(false);
+  const [showFullDescription, setShowFullDescription] = useState(false);
 
   function handleListingToggle(listingId: string) {
     setSelectedListings((prev) =>
@@ -1022,8 +1023,18 @@ export default function VendorDetailPage() {
               <div className="mb-12">
                 <h2 className="text-xl font-semibold mb-4">About</h2>
                 <p className="text-muted-foreground whitespace-pre-wrap">
-                  {vendor.description}
+                  {showFullDescription || vendor.description.length <= 500
+                    ? vendor.description
+                    : vendor.description.slice(0, 500) + "..."}
                 </p>
+                {vendor.description.length > 500 && (
+                  <button
+                    className="mt-2 text-accent font-medium hover:underline focus:outline-none"
+                    onClick={() => setShowFullDescription((prev) => !prev)}
+                  >
+                    {showFullDescription ? "Show less" : "Read more"}
+                  </button>
+                )}
                 {/* Google Maps Embed */}
                 <div
                   ref={mapRef}
