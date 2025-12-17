@@ -317,6 +317,7 @@ export default function VendorDetailPage() {
   const [bookingError, setBookingError] = useState("");
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [bookingLoading, setBookingLoading] = useState<boolean>(false);
+  const [showFullDescription, setShowFullDescription] = useState(false);
 
   function handleListingToggle(listingId: string) {
     setSelectedListings((prev) =>

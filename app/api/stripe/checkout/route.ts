@@ -153,7 +153,7 @@ export async function POST(request: NextRequest) {
 
     // Get base URL for success/cancel URLs
     const baseUrl =
-      process.env.NEXT_PUBLIC_APP_URL ||
+      process.env.AUTH_URL ||
       request.headers.get("origin") ||
       "http://localhost:3000";
 
@@ -166,7 +166,7 @@ export async function POST(request: NextRequest) {
       line_items: [
         {
           price_data: {
-            currency: "eur",
+            currency: "gbp",
             product_data: {
               name: description,
               description: `Vendor: ${booking.provider.businessName}`,
@@ -198,7 +198,7 @@ export async function POST(request: NextRequest) {
         bookingId: booking.id,
         paymentType,
         amount,
-        currency: "EUR",
+        currency: "GBP",
         status: "PENDING",
         stripePaymentIntentId:
           (checkoutSession.payment_intent as string) || null,
