@@ -8,6 +8,7 @@ import {
   Users,
 } from "lucide-react";
 import { ReactNode } from "react";
+import { signOut } from "next-auth/react";
 
 type VendorSidebarProps = {
   activeItem?: string;
@@ -27,6 +28,13 @@ export default function VendorSidebar({
   activeItem = "Dashboard",
   onLogout,
 }: VendorSidebarProps) {
+  const handleLogout = () => {
+    if (onLogout) {
+      onLogout();
+    } else {
+      signOut({ callbackUrl: "/", redirect: true });
+    }
+  };
   return (
     <aside className="w-72 bg-white border-r border-border flex flex-col justify-between py-8 px-6">
       <div>
@@ -52,7 +60,7 @@ export default function VendorSidebar({
       </div>
       <button
         className="flex items-center gap-2 text-muted-foreground hover:text-red-600 font-medium mt-8"
-        onClick={onLogout}
+        onClick={handleLogout}
       >
         <LogOut size={20} /> Log Out
       </button>

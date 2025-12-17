@@ -620,6 +620,14 @@ export default function VendorsSection() {
     }
   };
 
+  const formatCategories = (cats?: string) => {
+    const str = (cats ?? "").trim();
+
+    if (!str) return ""; // avoid null/undefined
+
+    return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
+  };
+
   return (
     <section
       id="vendors"
@@ -733,7 +741,7 @@ export default function VendorsSection() {
                     </div>
 
                     <div className="text-sm text-muted-foreground mb-2">
-                      {vendor.category}
+                      {formatCategories(vendor.category)}
                     </div>
 
                     <div className="flex items-center gap-2">

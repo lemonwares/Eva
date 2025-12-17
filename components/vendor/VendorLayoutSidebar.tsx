@@ -19,6 +19,7 @@ import {
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useVendorTheme } from "./VendorThemeContext";
+import { signOut } from "next-auth/react";
 
 const navItems = [
   { icon: LayoutDashboard, label: "Dashboard", href: "/vendor" },
@@ -177,6 +178,7 @@ export default function VendorLayoutSidebar({
             className={`flex items-center gap-3 px-4 py-3 rounded-xl ${
               darkMode ? "text-gray-400" : "text-gray-600"
             } hover:bg-red-500/10 hover:text-red-400 transition-colors w-full`}
+            onClick={() => signOut({ callbackUrl: "/", redirect: true })}
           >
             <LogOut size={20} />
             <span className="font-medium text-sm">Log Out</span>
