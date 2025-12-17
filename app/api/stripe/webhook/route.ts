@@ -113,7 +113,7 @@ async function handleSuccessfulPayment(session: Stripe.Checkout.Session) {
         bookingId,
         paymentType: "FULL",
         amount: pricingTotal,
-        currency: session.currency?.toUpperCase() || "USD",
+        currency: session.currency?.toUpperCase() || "GBP",
         status: "SUCCEEDED",
         stripePaymentIntentId: paymentIntentId,
         stripeChargeId: session.id,
@@ -159,7 +159,7 @@ async function handleSuccessfulPayment(session: Stripe.Checkout.Session) {
           bookingId,
           paymentType,
           amount: formatAmountFromStripe(session.amount_total || 0),
-          currency: session.currency?.toUpperCase() || "USD",
+          currency: session.currency?.toUpperCase() || "GBP",
           status: "SUCCEEDED",
           stripePaymentIntentId: paymentIntentId,
           stripeChargeId: session.id,
@@ -250,73 +250,6 @@ async function handleSuccessfulPayment(session: Stripe.Checkout.Session) {
     });
   }
 
-  const now = new Date();
-  const statusUpdate: Record<string, unknown> = {
-    updatedAt: now,
-  };
-
-  switch (paymentType) {
-    case "DEPOSIT":
-      statusUpdate.depositPaidAt = now;
-      statusUpdate.stripeDepositIntentId = paymentIntentId;
-      statusUpdate.status = "DEPOSIT_PAID";
-      statusUpdate.statusTimeline = [
-        ...((booking.statusTimeline as Array<{
-          status: string;
-          timestamp: string;
-          note?: string;
-        }>) || []),
-        {
-          status: "DEPOSIT_PAID",
-          timestamp: now.toISOString(),
-          note: "Deposit payment received via Stripe",
-        },
-      ];
-      break;
-
-    case "BALANCE":
-      statusUpdate.balancePaidAt = now;
-      statusUpdate.stripeBalanceIntentId = paymentIntentId;
-      statusUpdate.status = "CONFIRMED";
-      statusUpdate.statusTimeline = [
-        ...((booking.statusTimeline as Array<{
-          status: string;
-          timestamp: string;
-          note?: string;
-        }>) || []),
-        {
-          status: "CONFIRMED",
-          timestamp: now.toISOString(),
-          note: "Balance payment received via Stripe - Booking fully paid",
-        },
-      ];
-      break;
-
-    case "FULL":
-      statusUpdate.depositPaidAt = now;
-      statusUpdate.balancePaidAt = now;
-      statusUpdate.stripePaymentIntentId = paymentIntentId;
-      statusUpdate.status = "CONFIRMED";
-      statusUpdate.statusTimeline = [
-        ...((booking.statusTimeline as Array<{
-          status: string;
-          timestamp: string;
-          note?: string;
-        }>) || []),
-        {
-          status: "CONFIRMED",
-          timestamp: now.toISOString(),
-          note: "Full payment received via Stripe - Booking confirmed",
-        },
-      ];
-      break;
-  }
-
-  await prisma.booking.update({
-    where: { id: bookingId },
-    data: statusUpdate,
-  });
-
   console.log(
     `Payment successful for booking ${bookingId}, type: ${paymentType}`
   );
@@ -360,7 +293,7 @@ async function handleSuccessfulPayment(session: Stripe.Checkout.Session) {
       );
 
       const bookingUrl = `${
-        process.env.NEXTAUTH_URL || "http://localhost:3000"
+        process.env.AUTH_URL || "http://localhost:3000"
       }/bookings/${booking.id}`;
 
       // Prepare booking confirmation data
@@ -430,7 +363,7 @@ async function handleSuccessfulPayment(session: Stripe.Checkout.Session) {
               ...bookingConfirmationData,
               vendorBusinessName: booking.provider.businessName,
               bookingUrl: `${
-                process.env.NEXTAUTH_URL || "http://localhost:3000"
+                process.env.AUTH_URL || "http://localhost:3000"
               }/vendor/bookings/${booking.id}`,
               vendorEmail: booking.clientEmail,
               vendorPhone: booking.clientPhone || "",
