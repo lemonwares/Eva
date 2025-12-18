@@ -26,6 +26,7 @@ interface Category {
   metaTitle: string | null;
   metaDescription: string | null;
   seoIntro: string | null;
+  vendorCount?: number;
   subcategories?: {
     id: string;
     name: string;
@@ -113,11 +114,12 @@ export default function CategoryDetailPage() {
 
     setVendorsLoading(true);
     try {
+      // Use category.slug for filtering, since provider.categories is an array of slugs
       const queryParams = new URLSearchParams({
         page: pagination.page.toString(),
         limit: pagination.limit.toString(),
         published: "true",
-        category: category.name,
+        category: category.slug,
       });
 
       if (verifiedOnly) {

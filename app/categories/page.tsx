@@ -60,7 +60,6 @@ const defaultIconMap: Record<string, LucideIcon> = {
   Baking: Cake,
   Decorators: Sparkles,
   Decoration: Sparkles,
-  "Makeup Artists": Palette,
   Makeup: Palette,
 };
 
@@ -96,8 +95,6 @@ const categoryImages: Record<string, string> = {
     "https://images.unsplash.com/photo-1478146896981-b80fe463b330?w=800&h=600&fit=crop",
   Decoration:
     "https://images.unsplash.com/photo-1478146896981-b80fe463b330?w=800&h=600&fit=crop",
-  "Makeup Artists":
-    "https://images.unsplash.com/photo-1487412947147-5cebf100ffc2?w=800&h=600&fit=crop",
   Makeup:
     "https://images.unsplash.com/photo-1487412947147-5cebf100ffc2?w=800&h=600&fit=crop",
   default:
@@ -112,13 +109,16 @@ interface Category {
   icon: string | null;
   coverImage: string | null;
   isFeatured: boolean;
+  vendorCount?: number;
   subcategories?: {
     id: string;
     name: string;
     slug: string;
   }[];
+  _count?: {
+    providers: number;
+  };
 }
-
 export default function CategoriesPage() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -138,6 +138,13 @@ export default function CategoriesPage() {
     } finally {
       setIsLoading(false);
     }
+  }
+
+  function formatVendorCount(count: number) {
+    if (count > 999)
+      return (count / 1000).toFixed(count % 1000 === 0 ? 0 : 1) + "k";
+    if (count > 99) return "99+";
+    return count.toString();
   }
 
   return (
@@ -230,6 +237,16 @@ export default function CategoriesPage() {
                           <IconComponent size={26} />
                         </div>
                       </div>
+
+                      {/* --- VENDOR COUNT BADGE: Add this block --- */}
+
+                      {typeof category.vendorCount === "number" && (
+                        <div className="absolute right-4 bottom-4 z-10 rounded-full bg-white/90 px-3 py-1 text-xs font-bold text-foreground shadow">
+                          {formatVendorCount(category.vendorCount)} vendor
+                          {category.vendorCount === 1 ? "" : "s"}
+                        </div>
+                      )}
+                      {/* --- END VENDOR COUNT BADGE --- */}
 
                       {/* Content overlay */}
                       <div className="absolute inset-x-0 bottom-0 z-10 p-6">

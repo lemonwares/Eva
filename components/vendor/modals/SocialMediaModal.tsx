@@ -3,45 +3,33 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, Loader2 } from "lucide-react";
-import { formatCurrency } from "@/lib/formatters";
-import ImageUpload, { MultiImageUpload } from "@/components/ui/ImageUpload";
 
-interface ServiceModalProps {
+interface SocialMediaModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSubmit: (data: ServiceData) => Promise<void>;
-  initialData?: ServiceData;
+  onSubmit: (data: SocialMediaData) => Promise<void>;
+  initialData?: SocialMediaData;
   darkMode: boolean;
 }
 
-export interface ServiceData {
-  headline: string;
-  longDescription: string;
-  minPrice: number | null;
-  maxPrice: number | null;
-  timeEstimate?: string;
-  coverImageUrl?: string;
-  galleryUrls?: string[];
-  price: number;
+export interface SocialMediaData {
+  instagram: string;
+  facebook: string;
+  tiktok: string;
 }
 
-export default function ServiceModal({
+export default function SocialMediaModal({
   isOpen,
   onClose,
   onSubmit,
   initialData,
   darkMode,
-}: ServiceModalProps) {
-  const [formData, setFormData] = useState<ServiceData>(
+}: SocialMediaModalProps) {
+  const [formData, setFormData] = useState<SocialMediaData>(
     initialData || {
-      headline: "",
-      longDescription: "",
-      minPrice: null,
-      maxPrice: null,
-      timeEstimate: "",
-      coverImageUrl: "",
-      galleryUrls: [],
-      price: 0,
+      instagram: "",
+      facebook: "",
+      tiktok: "",
     }
   );
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -50,28 +38,16 @@ export default function ServiceModal({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
-
-    if (!formData.headline.trim()) {
-      setError("Service name is required");
-      return;
-    }
-
     setIsSubmitting(true);
     try {
       await onSubmit(formData);
-      setFormData({
-        headline: "",
-        longDescription: "",
-        minPrice: null,
-        maxPrice: null,
-        price: 0,
-        coverImageUrl: "",
-        galleryUrls: [],
-        timeEstimate: "",
-      });
       onClose();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to save service");
+      setError(
+        err instanceof Error
+          ? err.message
+          : "Failed to save social media details"
+      );
     } finally {
       setIsSubmitting(false);
     }
@@ -79,18 +55,7 @@ export default function ServiceModal({
 
   const handleClose = () => {
     if (!isSubmitting) {
-      setFormData(
-        initialData || {
-          headline: "",
-          longDescription: "",
-          minPrice: null,
-          maxPrice: null,
-          price: 0,
-          coverImageUrl: "",
-          galleryUrls: [],
-          timeEstimate: "",
-        }
-      );
+      setFormData(initialData || { instagram: "", facebook: "", tiktok: "" });
       setError(null);
       onClose();
     }
@@ -114,7 +79,7 @@ export default function ServiceModal({
             initial={{ opacity: 0, scale: 0.95, y: 20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 20 }}
-            className={`fixed inset-0 z-50 flex items-center justify-center p-4`}
+            className="fixed inset-0 z-50 flex items-center justify-center p-4"
           >
             <div
               className={`${
@@ -125,10 +90,8 @@ export default function ServiceModal({
             >
               {/* Header */}
               <div
-                className={`sticky top-0 flex items-center justify-between p-6 border-b  ${
-                  darkMode
-                    ? "border-white/10 bg-black text-white"
-                    : "border-gray-200 bg-white text-gray-900"
+                className={`sticky top-0 flex items-center justify-between p-6 border-b ${
+                  darkMode ? "border-white/10" : "border-gray-200"
                 }`}
               >
                 <h2
@@ -136,7 +99,7 @@ export default function ServiceModal({
                     darkMode ? "text-white" : "text-gray-900"
                   }`}
                 >
-                  {initialData ? "Edit Service" : "Add New Service"}
+                  Social Media Details
                 </h2>
                 <button
                   onClick={handleClose}
@@ -165,15 +128,15 @@ export default function ServiceModal({
                       darkMode ? "text-gray-300" : "text-gray-700"
                     }`}
                   >
-                    Service Name *
+                    Instagram Handle
                   </label>
                   <input
                     type="text"
-                    value={formData.headline}
+                    value={formData.instagram}
                     onChange={(e) =>
-                      setFormData({ ...formData, headline: e.target.value })
+                      setFormData({ ...formData, instagram: e.target.value })
                     }
-                    placeholder="e.g., Wedding Photography Package"
+                    placeholder="e.g., yourusername"
                     className={`w-full px-4 py-2.5 rounded-lg border transition-colors ${
                       darkMode
                         ? "bg-white/5 border-white/10 text-white placeholder-gray-500 focus:border-accent focus:ring-1 focus:ring-accent/30"
@@ -189,67 +152,45 @@ export default function ServiceModal({
                       darkMode ? "text-gray-300" : "text-gray-700"
                     }`}
                   >
-                    Description
+                    Facebook URL
                   </label>
-                  <textarea
-                    value={formData.longDescription}
+                  <input
+                    type="text"
+                    value={formData.facebook}
                     onChange={(e) =>
-                      setFormData({
-                        ...formData,
-                        longDescription: e.target.value,
-                      })
+                      setFormData({ ...formData, facebook: e.target.value })
                     }
-                    placeholder="Describe this service in detail..."
-                    rows={4}
+                    placeholder="e.g., https://facebook.com/yourpage"
                     className={`w-full px-4 py-2.5 rounded-lg border transition-colors ${
                       darkMode
                         ? "bg-white/5 border-white/10 text-white placeholder-gray-500 focus:border-accent focus:ring-1 focus:ring-accent/30"
                         : "bg-white border-gray-300 text-gray-900 placeholder-gray-400 focus:border-accent focus:ring-1 focus:ring-accent/30"
-                    } focus:outline-none resize-none`}
+                    } focus:outline-none`}
                     disabled={isSubmitting}
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium mb-1">
-                    Time Estimate
+                  <label
+                    className={`block text-sm font-medium mb-2 ${
+                      darkMode ? "text-gray-300" : "text-gray-700"
+                    }`}
+                  >
+                    TikTok Handle
                   </label>
                   <input
-                    className="w-full border rounded px-3 py-2"
-                    value={formData.timeEstimate}
+                    type="text"
+                    value={formData.tiktok}
                     onChange={(e) =>
-                      setFormData({ ...formData, timeEstimate: e.target.value })
+                      setFormData({ ...formData, tiktok: e.target.value })
                     }
-                    placeholder="e.g. 2 hours"
-                    maxLength={50}
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium mb-1">
-                    Price (£)
-                  </label>
-                  <input
-                    className="w-full border rounded px-3 py-2"
-                    value={formData.price}
-                    onChange={(e) =>
-                      setFormData({
-                        ...formData,
-                        price: Number(e.target.value),
-                      })
-                    }
-                    placeholder="e.g. £100"
-                    maxLength={4}
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium mb-1">
-                    Cover Image
-                  </label>
-                  <ImageUpload
-                    value={formData.coverImageUrl}
-                    onChange={(url) =>
-                      setFormData({ ...formData, coverImageUrl: url })
-                    }
+                    placeholder="e.g., yourusername"
+                    className={`w-full px-4 py-2.5 rounded-lg border transition-colors ${
+                      darkMode
+                        ? "bg-white/5 border-white/10 text-white placeholder-gray-500 focus:border-accent focus:ring-1 focus:ring-accent/30"
+                        : "bg-white border-gray-300 text-gray-900 placeholder-gray-400 focus:border-accent focus:ring-1 focus:ring-accent/30"
+                    } focus:outline-none`}
+                    disabled={isSubmitting}
                   />
                 </div>
 
@@ -274,7 +215,7 @@ export default function ServiceModal({
                     {isSubmitting && (
                       <Loader2 className="w-4 h-4 animate-spin" />
                     )}
-                    {initialData ? "Update Service" : "Add Service"}
+                    Save Social Media
                   </button>
                 </div>
               </form>

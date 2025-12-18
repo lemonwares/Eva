@@ -509,6 +509,7 @@ import {
   LogOut,
   LayoutDashboard,
   Heart,
+  LoaderCircle,
 } from "lucide-react";
 import { useSession, signOut } from "next-auth/react";
 import { motion } from "framer-motion";
@@ -516,7 +517,7 @@ import { motion } from "framer-motion";
 // Animated loading modal for session loading
 const LoadingModal = () => (
   <div className="fixed inset-0 z-9999 flex items-center justify-center bg-black/50">
-    <motion.div
+    {/* <motion.div
       initial={{ rotate: 0, scale: 1 }}
       animate={{
         rotate: [0, 20, -20, 15, -15, 10, -10, 0],
@@ -537,6 +538,14 @@ const LoadingModal = () => (
         className="h-20 w-20 rounded-full object-contain bg-white shadow-lg"
         priority
       />
+    </motion.div> */}
+
+    <motion.div
+      animate={{ rotate: 360 }}
+      transition={{ repeat: Infinity, duration: 1, ease: "linear" }}
+      className="flex flex-col items-center"
+    >
+      <LoaderCircle className="w-10 h-10 text-accent rotate-180" />
     </motion.div>
   </div>
 );

@@ -1163,6 +1163,39 @@ export default function VendorDetailPage() {
                       </button> */}
                     </form>
                   )}
+
+                  {/* For mobile */}
+                  {selectedListings.length > 0 && !showBookingForm && (
+                    <div className="hidden max-md:flex flex-col mt-6 p-4 border rounded-lg bg-white">
+                      <h3 className="text-lg font-bold mb-4">
+                        Selected Listings
+                      </h3>
+                      <ul className="mb-4">
+                        {selectedListingObjects.map((l) => (
+                          <li
+                            key={l.id}
+                            className="flex justify-between py-2 border-b"
+                          >
+                            <span>{l.headline}</span>
+                            <span>
+                              {l.price ? formatCurrency(l.price) : "-"}
+                            </span>
+                          </li>
+                        ))}
+                      </ul>
+                      <button
+                        className="w-full py-4 rounded-full bg-black text-white font-semibold hover:opacity-90 transition flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                        onClick={handleBookClick}
+                        disabled={bookingLoading}
+                      >
+                        {bookingLoading ? (
+                          <Loader2 className="animate-spin" size={18} />
+                        ) : (
+                          <>Book ({formatCurrency(totalSelectedPrice)})</>
+                        )}
+                      </button>
+                    </div>
+                  )}
                 </div>
               </div>
             )}
@@ -1432,7 +1465,7 @@ export default function VendorDetailPage() {
                 </>
               )}
               {selectedListings.length > 0 && !showBookingForm && (
-                <div>
+                <div className=" flex-col mt-6 p-4 border rounded-lg bg-white hidden lg:flex">
                   <h3 className="text-lg font-bold mb-4">Selected Listings</h3>
                   <ul className="mb-4">
                     {selectedListingObjects.map((l) => (
