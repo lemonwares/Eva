@@ -338,11 +338,24 @@ export default function VendorDetailPage() {
     0
   );
 
-  // Booking process state
-
-  function handleBookClick() {
+  // Booking mobile scroll function
+  const bookingRef = useRef<HTMLDivElement | null>(null);
+  const handleBookClick = () => {
     setShowBookingForm(true);
-  }
+  };
+
+  // Scroll to booking form after it is shown on mobile
+  useEffect(() => {
+    if (showBookingForm && window.innerWidth <= 768 && bookingRef.current) {
+      // Timeout ensures the form is rendered before scrolling
+      setTimeout(() => {
+        bookingRef.current?.scrollIntoView({
+          behavior: "smooth",
+          block: "start",
+        });
+      }, 100);
+    }
+  }, [showBookingForm]);
 
   // Handler to select/deselect listings
   function handleListingSelect(listingId: string) {
@@ -1154,19 +1167,15 @@ export default function VendorDetailPage() {
                           );
                         })}
                       </ul>
-                      {/* <button
-                        type="submit"
-                        disabled={selectedListings.length === 0}
-                        className="w-full py-4 rounded-full bg-accent text-accent-foreground font-semibold hover:opacity-90 transition disabled:opacity-50 disabled:cursor-not-allowed mt-4"
-                      >
-                        Book Selected ({selectedListings.length})
-                      </button> */}
                     </form>
                   )}
 
                   {/* For mobile */}
                   {selectedListings.length > 0 && !showBookingForm && (
-                    <div className="hidden max-md:flex flex-col mt-6 p-4 border rounded-lg bg-white">
+                    <div
+                      className="max-md:flex flex-col mt-6 p-4 border rounded-lg bg-white"
+                      style={{ display: "flex" }}
+                    >
                       <h3 className="text-lg font-bold mb-4">
                         Selected Listings
                       </h3>
@@ -1311,13 +1320,13 @@ export default function VendorDetailPage() {
               <div className="mb-12">
                 <h2 className="text-xl font-semibold mb-4">About</h2>
                 <p className="text-muted-foreground whitespace-pre-wrap">
-                  {showFullDescription || vendor.description.length <= 500
+                  {showFullDescription || vendor.description.length <= 300
                     ? vendor.description
-                    : vendor.description.slice(0, 500) + "..."}
+                    : vendor.description.slice(0, 300) + "..."}
                 </p>
-                {vendor.description.length > 200 && (
+                {vendor.description.length > 300 && (
                   <button
-                    className="mt-2 text-accent font-medium hover:underline focus:outline-none"
+                    className="mt-2 text-accent text-[14px] font-medium hover:underline hover:cursor-pointer focus:outline-none"
                     onClick={() => setShowFullDescription((prev) => !prev)}
                   >
                     {showFullDescription ? "Show less" : "Read more"}
@@ -1417,7 +1426,7 @@ export default function VendorDetailPage() {
                       <Clock size={18} className="text-accent" /> Weekly
                       Schedule
                     </h3>
-                    {/* Collapsible schedule similar to provided design */}
+
                     <ScheduleDisplay
                       weeklySchedule={weeklySchedule}
                       expanded={scheduleExpanded}
@@ -1465,7 +1474,10 @@ export default function VendorDetailPage() {
                 </>
               )}
               {selectedListings.length > 0 && !showBookingForm && (
-                <div className=" flex-col mt-6 p-4 border rounded-lg bg-white hidden lg:flex">
+                <div
+                  ref={bookingRef}
+                  className="flex flex-col mt-6 p-4 border rounded-lg bg-white"
+                >
                   <h3 className="text-lg font-bold mb-4">Selected Listings</h3>
                   <ul className="mb-4">
                     {selectedListingObjects.map((l) => (
@@ -1494,7 +1506,7 @@ export default function VendorDetailPage() {
 
               {/* Booking form modal/section */}
               {showBookingForm && (
-                <div>
+                <div ref={bookingRef}>
                   <h3 className="text-lg font-bold mb-4">Booking Details</h3>
                   {bookingError && (
                     <div className="mb-4 p-4 rounded-lg bg-red-100 text-red-700 text-sm">
