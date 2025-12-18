@@ -1243,11 +1243,12 @@ export default function VendorOnboardingPage() {
                     handleDraftChange({ longDescription: e.target.value })
                   }
                   rows={3}
+                  maxLength={200}
                   className="w-full px-3 py-2 border rounded-lg"
                   placeholder="Describe this service/package in detail"
                 />
               </div>
-              <div>
+              {/* <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Gallery Images
                 </label>
@@ -1257,7 +1258,7 @@ export default function VendorOnboardingPage() {
                   maxImages={6}
                   type="gallery"
                 />
-              </div>
+              </div> */}
               <button
                 type="button"
                 onClick={handleAddListing}
