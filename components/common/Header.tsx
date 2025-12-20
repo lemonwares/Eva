@@ -654,7 +654,7 @@ export default function Header() {
         >
           <div className="flex items-center justify-between h-20">
             {/* Logo */}
-            <Link
+            {/* <Link
               href="/"
               className="flex items-center gap-3 rounded-full bg-card/60 px-4 py-2 shadow-sm"
             >
@@ -674,6 +674,9 @@ export default function Header() {
                   Book with confidence
                 </p>
               </div>
+            </Link> */}
+            <Link href="/" className="flex items-center gap-3">
+              <div className="font-bold tracking-wide text-2xl">EVA</div>
             </Link>
 
             {/* Desktop navigation */}
