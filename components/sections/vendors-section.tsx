@@ -13,8 +13,10 @@ import {
 } from "lucide-react";
 import { useState, useEffect, useRef, useCallback } from "react";
 import Link from "next/link";
-import Image from "next/image";
 import { useSession } from "next-auth/react";
+import FavoriteButton from "../common/FavoriteButton";
+import ShareButton from "../common/ShareButton";
+import { useAuth } from "@/hooks/use-auth";
 
 interface Provider {
   id: string;
@@ -170,21 +172,52 @@ const categoryImages: Record<string, string> = {
 
 export default function VendorsSection() {
   const { data: session } = useSession();
-  const isLoggedIn = !!session?.user;
+  const { user } = useAuth();
 
   const [vendors, setVendors] = useState<VendorGalleryItem[]>(fallbackVendors);
   const [isLoading, setIsLoading] = useState(true);
   const [isUsingFallback, setIsUsingFallback] = useState(true);
   const [showLeftArrow, setShowLeftArrow] = useState(false);
   const [showRightArrow, setShowRightArrow] = useState(false);
-  const [favorites, setFavorites] = useState<Set<string>>(new Set());
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [isDragging, setIsDragging] = useState(false);
   const [startX, setStartX] = useState(0);
   const [scrollLeft, setScrollLeft] = useState(0);
-  const [shareVendor, setShareVendor] = useState<null | VendorGalleryItem>(
-    null
-  );
+  const [favorites, setFavorites] = useState<Set<string>>(new Set());
+
+  // Toggle favorite for a vendor
+  const toggleFavorite = (vendorId: string) => {
+    setFavorites((prev) => {
+      const newFavorites = new Set(prev);
+      if (newFavorites.has(vendorId)) {
+        newFavorites.delete(vendorId);
+      } else {
+        newFavorites.add(vendorId);
+      }
+      return newFavorites;
+    });
+  };
+
+  // Share handler for vendor
+  const handleShare = (e: React.MouseEvent, vendor: VendorGalleryItem) => {
+    e.preventDefault();
+    const shareUrl = `${window.location.origin}/vendors/${vendor.id}`;
+    if (navigator.share) {
+      navigator
+        .share({
+          title: vendor.title,
+          text: `Check out this vendor: ${vendor.title}`,
+          url: shareUrl,
+        })
+        .catch((err) => {
+          // Optionally handle error or fallback
+          console.error("Share failed", err);
+        });
+    } else {
+      // Optionally show a fallback modal or copy link
+      window.prompt("Copy this link to share:", shareUrl);
+    }
+  };
 
   // Update arrow visibility based on scroll position
   const updateArrowVisibility = useCallback(() => {
@@ -288,42 +321,6 @@ export default function VendorsSection() {
     setIsDragging(false);
   };
 
-  const toggleFavorite = (vendorId: string) => {
-    setFavorites((prev) => {
-      const newFavorites = new Set(prev);
-      if (newFavorites.has(vendorId)) {
-        newFavorites.delete(vendorId);
-      } else {
-        newFavorites.add(vendorId);
-      }
-      return newFavorites;
-    });
-  };
-
-  const handleShare = (e: React.MouseEvent, vendor: VendorGalleryItem) => {
-    e.preventDefault();
-    e.stopPropagation();
-
-    const shareUrl = `${window.location.origin}/vendors/${vendor.id}`;
-    console.log("handleShare called for vendor:", vendor);
-
-    if (navigator.share) {
-      navigator
-        .share({
-          title: vendor.title,
-          url: shareUrl,
-        })
-        .catch((err) => {
-          console.error("Share failed", err);
-          console.log("navigator.share failed, falling back to modal");
-          setShareVendor(vendor);
-        });
-    } else {
-      console.log("navigator.share not available, showing modal");
-      setShareVendor(vendor);
-    }
-  };
-
   const formatCategories = (cats?: string) => {
     const str = (cats ?? "").trim();
     if (!str) return "";
@@ -416,88 +413,80 @@ export default function VendorsSection() {
                   onMouseUp={handleMouseUpOrLeave}
                 >
                   {vendors.map((vendor) => (
-                    <Link
-                      key={vendor.id}
-                      href={
-                        isUsingFallback ? "/vendors" : `/vendors/${vendor.id}`
-                      }
-                      className="group"
-                    >
-                      <div className="relative aspect-square overflow-hidden rounded-2xl border border-border/70 bg-muted/50 shadow-lg transition duration-500 group-hover:-translate-y-1 group-hover:shadow-2xl">
-                        <div
-                          className="absolute inset-0 bg-cover bg-center transition duration-700 group-hover:scale-110"
-                          style={{
-                            backgroundImage: `url(${vendor.image})`,
-                          }}
-                        />
-                        {/* Top right controls */}
-                        <div className="absolute top-4 right-4 z-20 flex gap-2">
-                          {/* Favorite (only if logged in) */}
-                          {isLoggedIn && (
-                            <button
-                              onClick={(e) => {
-                                e.preventDefault();
-                                e.stopPropagation();
-                                toggleFavorite(vendor.id);
-                              }}
-                              className="h-10 w-10 rounded-full bg-white/90 flex items-center justify-center shadow hover:bg-white transition"
-                              aria-label="Add to favorites"
-                              type="button"
-                            >
-                              <Heart
-                                className={`h-5 w-5 transition ${
-                                  favorites.has(vendor.id)
-                                    ? "fill-red-500 text-red-500"
-                                    : "text-gray-600 hover:text-red-500"
-                                }`}
-                              />
-                            </button>
-                          )}
-                          {/* Share (always visible) */}
-                          <button
-                            onClick={(e) => handleShare(e, vendor)}
-                            className="h-10 w-10 rounded-full bg-white/90 flex items-center justify-center shadow hover:bg-white transition"
-                            aria-label="Share vendor"
-                            type="button"
-                          >
-                            <Share2 className="h-5 w-5 text-gray-600" />
-                          </button>
-                        </div>
-                        {/* Verified Badge */}
-                        {vendor.verified && (
-                          <div className="absolute left-4 top-4 z-10 rounded-full bg-card/90 p-2 shadow">
-                            <Award className="h-5 w-5 text-accent" />
-                          </div>
+                    <div key={vendor.id} className="relative group">
+                      {/* Action Buttons (not inside Link) */}
+                      <div className="flex gap-2 items-center absolute top-4 right-4 z-20 bg-card/90 rounded-full p-2 shadow-lg backdrop-blur-sm">
+                        {user && (
+                          <FavoriteButton
+                            providerId={vendor.id}
+                            initialFavorited={favorites.has(vendor.id)}
+                            variant="outline"
+                            onToggle={(isFav) => toggleFavorite(vendor.id)}
+                          />
                         )}
-                        {/* Gradient Overlay */}
-                        <div className="absolute inset-0 bg-linear-to-t from-foreground/80 via-foreground/20 to-transparent" />
-                        {/* Content */}
-                        <div className="absolute inset-x-0 bottom-0 p-4 text-background">
-                          <p className="text-xs font-medium text-background/70 mb-1">
-                            {formatCategories(vendor.category) || "Services"}
-                          </p>
-                          <h3 className="font-semibold text-lg leading-tight mb-2">
-                            {vendor.title}
-                          </h3>
-                          <div className="flex items-center gap-3">
-                            <div className="flex items-center gap-1">
-                              <Star
-                                className="h-4 w-4 text-accent"
-                                fill="currentColor"
-                              />
-                              <span className="text-sm font-medium">
-                                {typeof vendor.rating === "number" &&
-                                !isNaN(vendor.rating)
-                                  ? vendor.rating.toFixed(1)
-                                  : "New"}
+                        <ShareButton
+                          url={`${
+                            typeof window !== "undefined"
+                              ? window.location.origin
+                              : ""
+                          }/vendors/${vendor.id}`}
+                          title={vendor.title}
+                          description={`Check out this vendor: ${vendor.title}`}
+                          variant="ghost"
+                          className=""
+                        />
+                      </div>
+                      <Link
+                        href={
+                          isUsingFallback ? "/vendors" : `/vendors/${vendor.id}`
+                        }
+                        className="group"
+                        tabIndex={0}
+                        aria-label={`View details for ${vendor.title}`}
+                      >
+                        <div className="relative aspect-square overflow-hidden rounded-2xl border border-border/70 bg-muted/50 shadow-lg transition duration-500 group-hover:-translate-y-1 group-hover:shadow-2xl">
+                          <div
+                            className="absolute inset-0 bg-cover bg-center transition duration-700 group-hover:scale-110"
+                            style={{
+                              backgroundImage: `url(${vendor.image})`,
+                            }}
+                          />
+                          {/* Verified Badge */}
+                          {vendor.verified && (
+                            <div className="absolute left-4 top-4 z-10 rounded-full bg-card/90 p-2 shadow">
+                              <Award className="h-5 w-5 text-accent" />
+                            </div>
+                          )}
+                          {/* Gradient Overlay */}
+                          <div className="absolute inset-0 bg-linear-to-t from-foreground/80 via-foreground/20 to-transparent" />
+                          {/* Content */}
+                          <div className="absolute inset-x-0 bottom-0 p-4 text-background">
+                            <p className="text-xs font-medium text-background/70 mb-1">
+                              {formatCategories(vendor.category) || "Services"}
+                            </p>
+                            <h3 className="font-semibold text-lg leading-tight mb-2">
+                              {vendor.title}
+                            </h3>
+                            <div className="flex items-center gap-3">
+                              <div className="flex items-center gap-1">
+                                <Star
+                                  className="h-4 w-4 text-accent"
+                                  fill="currentColor"
+                                />
+                                <span className="text-sm font-medium">
+                                  {typeof vendor.rating === "number" &&
+                                  !isNaN(vendor.rating)
+                                    ? vendor.rating.toFixed(1)
+                                    : "New"}
+                                </span>
+                              </div>
+                              <span className="text-xs text-background/70">
+                                ({vendor.reviews} reviews)
                               </span>
                             </div>
-                            <span className="text-xs text-background/70">
-                              ({vendor.reviews} reviews)
-                            </span>
                           </div>
                         </div>
-                      </div>
+                      </Link>
                       {/* Card Footer */}
                       <div className="mt-3 px-1">
                         <div className="flex items-center gap-1 text-sm text-muted-foreground">
@@ -505,7 +494,7 @@ export default function VendorsSection() {
                           <span>{vendor.city || "UK"}</span>
                         </div>
                       </div>
-                    </Link>
+                    </div>
                   ))}
                 </div>
               </div>
@@ -528,64 +517,6 @@ export default function VendorsSection() {
           </div>
         </div>
       </section>
-
-      {shareVendor && (
-        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/40">
-          <div className="bg-white rounded-xl p-6 shadow-lg w-full max-w-xs relative">
-            <button
-              className="absolute top-2 right-2 text-gray-400 hover:text-gray-700"
-              onClick={() => setShareVendor(null)}
-            >
-              ×
-            </button>
-            <h3 className="font-bold mb-4 text-lg">Share Vendor</h3>
-            <div className="flex flex-col gap-3">
-              <button
-                className="w-full py-2 rounded bg-accent text-white font-semibold"
-                onClick={() => {
-                  navigator.clipboard.writeText(
-                    `${window.location.origin}/vendors/${shareVendor.id}`
-                  );
-                  setShareVendor(null);
-                  // Optionally show a toast: "Link copied!"
-                }}
-              >
-                Copy Link
-              </button>
-              <a
-                href={`https://wa.me/?text=${encodeURIComponent(
-                  `${shareVendor.title} - ${window.location.origin}/vendors/${shareVendor.id}`
-                )}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="w-full py-2 rounded bg-green-500 text-white font-semibold text-center"
-              >
-                Share on WhatsApp
-              </a>
-              <a
-                href={`https://twitter.com/intent/tweet?text=${encodeURIComponent(
-                  `${shareVendor.title} - ${window.location.origin}/vendors/${shareVendor.id}`
-                )}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="w-full py-2 rounded bg-blue-500 text-white font-semibold text-center"
-              >
-                Share on Twitter
-              </a>
-              <a
-                href={`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(
-                  `${window.location.origin}/vendors/${shareVendor.id}`
-                )}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="w-full py-2 rounded bg-blue-700 text-white font-semibold text-center"
-              >
-                Share on Facebook
-              </a>
-            </div>
-          </div>
-        </div>
-      )}
     </>
   );
 }

@@ -161,7 +161,7 @@ export default function FavoritesPage() {
         {/* Page Header */}
         <div className="mb-8">
           <div className="flex items-center gap-3 mb-2">
-            <div className="p-3 bg-linear-to-br from-pink-500 to-red-500 rounded-xl text-white">
+            <div className="p-3 mt-28 bg-linear-to-br from-pink-500 to-red-500 rounded-xl text-white">
               <FiHeart className="w-6 h-6" />
             </div>
             <div>

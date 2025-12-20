@@ -1,8 +1,43 @@
+"use client";
+
 import Link from "next/link";
-import Image from "next/image";
-import { Mail, MapPin } from "lucide-react";
+import { LoaderCircle, Mail, MapPin } from "lucide-react";
+import { IoToggle } from "react-icons/io5";
+import { useEffect, useState } from "react";
+import { motion } from "framer-motion";
 
 export default function Footer() {
+  const [showInstallModal, setShowInstallModal] = useState(false);
+  const [deferredPrompt, setDeferredPrompt] = useState(null as any);
+  const [isInstalling, setIsInstalling] = useState(false);
+
+  useEffect(() => {
+    const handler = (e: any) => {
+      e.preventDefault();
+      setDeferredPrompt(e);
+    };
+    window.addEventListener("beforeinstallprompt", handler);
+    return () => window.removeEventListener("beforeinstallprompt", handler);
+  }, []);
+
+  const handleInstallClick = () => {
+    setShowInstallModal(true);
+  };
+
+  const handleCloseModal = () => {
+    setShowInstallModal(false);
+  };
+
+  const handleContinue = async () => {
+    if (deferredPrompt) {
+      setIsInstalling(true);
+      deferredPrompt.prompt();
+      await deferredPrompt.userChoice;
+      setDeferredPrompt(null);
+      setIsInstalling(false);
+      setShowInstallModal(false);
+    }
+  };
   return (
     <footer
       id="contact"
@@ -12,7 +47,7 @@ export default function Footer() {
         <div className="grid gap-12 md:grid-cols-[1.5fr_1fr_1fr]">
           {/* Brand Section */}
           <div>
-            <div className="flex items-center gap-3">
+            {/* <div className="flex items-center gap-3">
               <Image
                 src="/logo.png"
                 alt="EVA Logo"
@@ -27,7 +62,8 @@ export default function Footer() {
                 </p>
                 <p className="text-base font-semibold">Book with confidence</p>
               </div>
-            </div>
+            </div> */}
+            <div className="font-bold text-2xl tracking-wide">EVA</div>
             <p className="mt-6 max-w-sm text-sm text-background/70">
               Connecting you with culturally-aware vendors, organisers, and
               spaces so every celebration feels authentically yours.
@@ -36,10 +72,10 @@ export default function Footer() {
               <div className="flex items-center gap-2">
                 <Mail size={16} />
                 <a
-                  href="mailto:hello@eva.com"
+                  href="mailto:hello@evalocal.com"
                   className="hover:text-background"
                 >
-                  hello@eva.com
+                  hello@evalocal.com
                 </a>
               </div>
               <div className="flex items-center gap-2">
@@ -47,6 +83,58 @@ export default function Footer() {
                 <span>London • Remote worldwide</span>
               </div>
             </div>
+
+            {/* Download knob section */}
+            <div
+              className="border border-gray-500 bg-gray-700 mt-5 rounded-md w-[300px] h-[50px] flex items-center py-1 px-2 gap-3"
+              style={{ cursor: "pointer" }}
+              onClick={handleInstallClick}
+            >
+              <IoToggle size={30} className="rotate-180 hover:cursor-pointer" />
+              <span>Install EVA</span>
+            </div>
+
+            {/* Install Modal */}
+            {showInstallModal && (
+              <div
+                className="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
+                onClick={handleCloseModal}
+              >
+                <div
+                  className="bg-white text-gray-900 rounded-lg shadow-lg p-6 min-w-[300px] max-w-[90vw]"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <h2 className="text-lg font-semibold mb-2">Install EVA</h2>
+                  <p className="mb-4">
+                    You're about to install this app on your device. Continue?
+                  </p>
+                  <div className="flex justify-end gap-3">
+                    <button
+                      className="px-4 py-2 rounded bg-gray-200 hover:bg-gray-300 text-gray-800"
+                      onClick={handleCloseModal}
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      className="px-4 py-2 rounded bg-accent text-white flex items-center gap-2"
+                      onClick={handleContinue}
+                      disabled={isInstalling}
+                    >
+                      {isInstalling ? (
+                        <motion.span
+                          animate={{ rotate: 360 }}
+                          transition={{ repeat: Infinity, duration: 1 }}
+                          className="loader mr-2 text-white text-2xl"
+                        >
+                          <LoaderCircle className="" />
+                        </motion.span> // Or use a spinner icon here
+                      ) : null}
+                      {isInstalling ? "Installing..." : "Continue"}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Company Section */}

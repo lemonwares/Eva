@@ -40,12 +40,21 @@ export async function login(
     });
 
     if (result?.error) {
-      // If backend provides a specific error message, use it
+      // Use backend error message directly, unless it is a known NextAuth 'configuration' error
       let errorMsg = result.error || "Invalid email or password";
-      // Map generic 'Configuration' error to account not verified message
-      if (errorMsg.trim().toLowerCase() === "configuration") {
+      // Only show 'not verified' if backend actually says so
+      if (
+        errorMsg.toLowerCase().includes("not verified") ||
+        errorMsg.toLowerCase().includes("verify your email")
+      ) {
         errorMsg =
           "Your email address is not verified. Please check your inbox for a verification link before logging in.";
+      } else if (
+        errorMsg.trim().toLowerCase() === "configuration" ||
+        errorMsg.trim().toLowerCase() === "forbidden"
+      ) {
+        // Show a generic error for unknown NextAuth errors
+        errorMsg = "Invalid email or password";
       }
       return {
         success: false,
