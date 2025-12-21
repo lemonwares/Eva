@@ -1,3 +1,11 @@
+// Increase body size limit for uploads (20MB)
+export const config = {
+  api: {
+    bodyParser: {
+      sizeLimit: "20mb",
+    },
+  },
+};
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { uploadImage, deleteImage } from "@/lib/cloudinary";
@@ -7,8 +15,9 @@ const ALLOWED_IMAGE_TYPES = [
   "image/png",
   "image/webp",
   "image/gif",
+  "image/avif",
 ];
-const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
+const MAX_FILE_SIZE = 20 * 1024 * 1024; // 20MB
 
 // Helper to convert File to base64 data URL
 async function fileToBase64(file: File): Promise<string> {

@@ -246,6 +246,12 @@ function ScheduleDisplay({
   );
 }
 
+// Utility to truncate text to a max length with ellipsis
+function truncate(str: string = "", max: number = 150) {
+  if (!str) return "";
+  return str.length > max ? str.slice(0, max) + "..." : str;
+}
+
 export default function VendorDetailPage() {
   const searchParams =
     typeof window !== "undefined"
@@ -1109,7 +1115,7 @@ export default function VendorDetailPage() {
                                   </h4>
                                 </div>
                                 <div className="text-gray-700 mt-1 text-[14px]">
-                                  {listing.longDescription}
+                                  {truncate(listing.longDescription, 150)}
                                 </div>
                                 <div className="text-gray-500 text-sm mt-2 flex gap-4">
                                   <span>

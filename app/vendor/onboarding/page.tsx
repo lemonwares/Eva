@@ -941,14 +941,19 @@ export default function VendorOnboardingPage() {
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Portfolio Photos
               </label>
-              <p className="text-sm text-gray-500 mb-3">
+              <p className="text-sm text-gray-500 mb-1">
                 Upload your best work photos (minimum 4, up to 10)
+              </p>
+              <p className="text-xs text-gray-600 mb-3">
+                Please upload at least 4 images. All image formats are accepted.
+                Each image must not exceed 3MB.
               </p>
               <MultiImageUpload
                 values={formData.photos}
                 onChange={(urls) => updateFormData({ photos: urls })}
                 maxImages={10}
                 type="gallery"
+                maxSizeMB={3}
               />
               {formData.photos.length > 0 && formData.photos.length < 4 && (
                 <p className="text-sm text-red-500 mt-2">
@@ -1182,12 +1187,16 @@ export default function VendorOnboardingPage() {
                 <input
                   type="text"
                   value={listingDraft.headline}
+                  maxLength={50}
                   onChange={(e) =>
-                    handleDraftChange({ headline: e.target.value })
+                    handleDraftChange({ headline: e.target.value.slice(0, 50) })
                   }
                   className="w-full px-3 py-2 border rounded-lg"
                   placeholder="e.g., Gold Wedding Photography Package"
                 />
+                <div className="text-xs text-gray-500 text-right mt-1">
+                  {50 - listingDraft.headline.length} characters left
+                </div>
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -1240,13 +1249,18 @@ export default function VendorOnboardingPage() {
                 <textarea
                   value={listingDraft.longDescription}
                   onChange={(e) =>
-                    handleDraftChange({ longDescription: e.target.value })
+                    handleDraftChange({
+                      longDescription: e.target.value.slice(0, 150),
+                    })
                   }
                   rows={3}
-                  maxLength={200}
+                  maxLength={150}
                   className="w-full px-3 py-2 border rounded-lg"
                   placeholder="Describe this service/package in detail"
                 />
+                <div className="text-xs text-gray-500 text-right mt-1">
+                  {150 - listingDraft.longDescription.length} characters left
+                </div>
               </div>
               {/* <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">

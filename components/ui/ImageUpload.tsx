@@ -255,6 +255,7 @@ interface MultiImageUploadProps {
   type?: "gallery" | "listing" | "general";
   className?: string;
   disabled?: boolean;
+  maxSizeMB?: number;
 }
 
 export function MultiImageUpload({
@@ -265,6 +266,7 @@ export function MultiImageUpload({
   type = "gallery",
   className = "",
   disabled = false,
+  maxSizeMB = 3,
 }: MultiImageUploadProps) {
   const [isUploading, setIsUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -278,6 +280,13 @@ export function MultiImageUpload({
     }
 
     const filesToUpload = Array.from(files).slice(0, remainingSlots);
+    // Validate all files
+    for (const file of filesToUpload) {
+      if (file.size > maxSizeMB * 1024 * 1024) {
+        setError(`Each image must not exceed ${maxSizeMB}MB.`);
+        return;
+      }
+    }
     setError(null);
     setIsUploading(true);
 
@@ -368,7 +377,7 @@ export function MultiImageUpload({
       <input
         ref={inputRef}
         type="file"
-        accept="image/jpeg,image/png,image/webp,image/gif"
+        accept="image/*"
         multiple
         onChange={(e) => e.target.files && handleFiles(e.target.files)}
         className="hidden"
