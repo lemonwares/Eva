@@ -76,6 +76,12 @@ export async function GET(request: NextRequest) {
           owner: {
             select: { id: true, name: true, email: true },
           },
+          category: {
+            select: { id: true, name: true, slug: true },
+          },
+          subcategory: {
+            select: { id: true, name: true, slug: true },
+          },
           _count: {
             select: {
               reviews: true,
