@@ -134,7 +134,7 @@ const CATEGORY_OPTIONS = [
   { id: "catering", name: "Catering" },
   { id: "venue", name: "Venues" },
   { id: "dj", name: "DJs & Music" },
-  { id: "decor", name: "Decoration" },
+  { id: "decorators", name: "Decorators" },
   { id: "flowers", name: "Florists" },
   { id: "cake", name: "Cakes & Desserts" },
   { id: "makeup", name: "Hair & Makeup" },
@@ -1262,17 +1262,7 @@ export default function VendorOnboardingPage() {
                   {150 - listingDraft.longDescription.length} characters left
                 </div>
               </div>
-              {/* <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Gallery Images
-                </label>
-                <MultiImageUpload
-                  values={listingDraft.galleryUrls}
-                  onChange={(urls) => handleDraftChange({ galleryUrls: urls })}
-                  maxImages={6}
-                  type="gallery"
-                />
-              </div> */}
+
               <button
                 type="button"
                 onClick={handleAddListing}

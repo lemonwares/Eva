@@ -415,12 +415,13 @@ export default function VendorsSection() {
                   {vendors.map((vendor) => (
                     <div key={vendor.id} className="relative group">
                       {/* Action Buttons (not inside Link) */}
-                      <div className="flex gap-2 items-center absolute top-4 right-4 z-20 bg-card/90 rounded-full p-2 shadow-lg backdrop-blur-sm">
+                      <div className="flex gap-2 items-center absolute top-4 right-4 z-20 rounded-full p-2">
                         {user && (
                           <FavoriteButton
                             providerId={vendor.id}
                             initialFavorited={favorites.has(vendor.id)}
                             variant="outline"
+                            className="text-accent"
                             onToggle={(isFav) => toggleFavorite(vendor.id)}
                           />
                         )}
@@ -433,7 +434,7 @@ export default function VendorsSection() {
                           title={vendor.title}
                           description={`Check out this vendor: ${vendor.title}`}
                           variant="ghost"
-                          className=""
+                          className="text-white hover:text-accent transition-colors duration-300 ease-in-out"
                         />
                       </div>
                       <Link
