@@ -615,12 +615,18 @@ function SearchPageContent() {
 
                           <div className="flex items-center justify-between">
                             <div className="flex items-center gap-1">
-                              <Star className="w-4 h-4 text-yellow-500 fill-yellow-500" />
-                              <span className="text-sm font-medium text-foreground">
-                                {provider.averageRating?.toFixed(1) || "New"}
+                              <Star
+                                className="w-5 h-5 text-yellow-500 fill-yellow-500 drop-shadow"
+                                fill="currentColor"
+                              />
+                              <span className="text-base font-bold text-foreground">
+                                {provider.averageRating &&
+                                provider.averageRating > 0
+                                  ? provider.averageRating.toFixed(1)
+                                  : "New"}
                               </span>
-                              <span className="text-sm text-muted-foreground">
-                                ({provider.reviewCount})
+                              <span className="text-xs text-muted-foreground ml-1">
+                                ({provider.reviewCount} reviews)
                               </span>
                             </div>
 
@@ -764,12 +770,18 @@ function SearchPageContent() {
                             </div>
 
                             <div className="flex items-center gap-1 shrink-0">
-                              <Star className="w-4 h-4 text-yellow-500 fill-yellow-500" />
-                              <span className="text-sm font-medium text-foreground">
-                                {provider.averageRating?.toFixed(1) || "New"}
+                              <Star
+                                className="w-5 h-5 text-yellow-500 fill-yellow-500 drop-shadow"
+                                fill="currentColor"
+                              />
+                              <span className="text-base font-bold text-foreground">
+                                {provider.averageRating &&
+                                provider.averageRating > 0
+                                  ? provider.averageRating.toFixed(1)
+                                  : "New"}
                               </span>
-                              <span className="text-sm text-muted-foreground">
-                                ({provider.reviewCount})
+                              <span className="text-xs text-muted-foreground ml-1">
+                                ({provider.reviewCount} reviews)
                               </span>
                             </div>
                           </div>
