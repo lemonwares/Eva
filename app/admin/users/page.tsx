@@ -853,7 +853,7 @@ export default function UsersPage() {
           </div>
           <div className={`${cardBg} ${cardBorder} rounded-xl p-4`}>
             <p className={`text-2xl font-bold text-blue-500`}>
-              {users.filter((u) => u.role === "VENDOR").length}
+              {users.filter((u) => u.role === "PROFESSIONAL").length}
             </p>
             <p className={textMuted}>Vendors</p>
           </div>
