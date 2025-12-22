@@ -42,12 +42,12 @@ export async function GET(request: NextRequest) {
       filters.role = role;
     }
 
-    // Map status filter to emailVerifiedAt
-    if (status === "ACTIVE") {
-      filters.emailVerifiedAt = { not: null };
-    } else if (status === "INACTIVE") {
-      filters.emailVerifiedAt = null;
-    }
+    // Map status filter to emailVerifiedAt only if status is provided
+    // if (status === "ACTIVE") {
+    //   filters.emailVerifiedAt = { not: null };
+    // } else if (status === "INACTIVE") {
+    //   filters.emailVerifiedAt = null;
+    // }
 
     const [rawUsers, total] = await Promise.all([
       prisma.user.findMany({
