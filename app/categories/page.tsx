@@ -59,7 +59,7 @@ const defaultIconMap: Record<string, LucideIcon> = {
   Bakers: Cake,
   Baking: Cake,
   Decorators: Sparkles,
-  Decoration: Sparkles,
+  // Decoration: Sparkles,
   Makeup: Palette,
 };
 
@@ -93,8 +93,8 @@ const categoryImages: Record<string, string> = {
     "https://images.unsplash.com/photo-1464349095431-e9a21285b5f3?w=800&h=600&fit=crop",
   Decorators:
     "https://images.unsplash.com/photo-1478146896981-b80fe463b330?w=800&h=600&fit=crop",
-  Decoration:
-    "https://images.unsplash.com/photo-1478146896981-b80fe463b330?w=800&h=600&fit=crop",
+  // Decoration:
+  //   "https://images.unsplash.com/photo-1478146896981-b80fe463b330?w=800&h=600&fit=crop",
   Makeup:
     "https://images.unsplash.com/photo-1487412947147-5cebf100ffc2?w=800&h=600&fit=crop",
   default:

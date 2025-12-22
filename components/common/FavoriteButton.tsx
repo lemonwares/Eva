@@ -127,9 +127,9 @@ export default function FavoriteButton({
     const base = "transition-all";
     switch (variant) {
       case "outline":
-        return `${base} p-3 rounded-full border ${
+        return `${base} p-3 rounded-full border bg-white ${
           isFavorited
-            ? "border-red-500 bg-red-50 dark:bg-red-500/10"
+            ? "border-red-500 bg-red-50 dark:bg-red-500/10 hover:scale-[1.1] transition-all duration-200 ease-in-out"
             : darkMode
             ? "border-gray-600 hover:bg-gray-700"
             : "border-gray-300 hover:bg-gray-100"
@@ -153,9 +153,9 @@ export default function FavoriteButton({
 
   const getIconColor = () => {
     if (isLoading || isChecking)
-      return darkMode ? "text-gray-400" : "text-gray-500";
+      return darkMode ? "text-accent" : "text-accent";
     if (isFavorited) return "text-red-500";
-    return darkMode ? "text-gray-300" : "text-gray-600";
+    return darkMode ? "text-accent" : "text-accent";
   };
 
   return (
