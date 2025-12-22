@@ -1084,6 +1084,7 @@ export default function VendorDetailPage() {
                                 <div className="text-gray-500 text-sm mt-2 flex gap-4">
                                   <span className="flex items-center gap-1">
                                     <span className="inline-flex items-center gap-1 font-medium text-accent">
+                                      {/* Money/Currency SVG icon */}
                                       <svg
                                         width="16"
                                         height="16"
@@ -1096,7 +1097,7 @@ export default function VendorDetailPage() {
                                           strokeLinecap="round"
                                           strokeLinejoin="round"
                                           strokeWidth={2}
-                                          d="M12 8v4l3 1m6-1a9 9 0 11-18 0 9 9 0 0118 0z"
+                                          d="M12 8c-2.21 0-4 1.343-4 3s1.79 3 4 3 4-1.343 4-3m-4 3v2m0-8V5m0 0c4.418 0 8 1.79 8 4s-3.582 4-8 4-8-1.79-8-4 3.582-4 8-4z"
                                         />
                                       </svg>
                                       {listing.price ? (
@@ -1109,7 +1110,8 @@ export default function VendorDetailPage() {
                                     </span>
                                   </span>
                                   <span className="flex items-center gap-1">
-                                    <span className="inline-flex items-center gap-1 font-medium text-blue-500">
+                                    <span className="inline-flex items-center gap-1 font-medium text-black">
+                                      {/* Time SVG icon */}
                                       <svg
                                         width="16"
                                         height="16"
