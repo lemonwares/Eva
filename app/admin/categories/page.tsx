@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import * as LucideIcons from "lucide-react";
 import AdminLayout from "@/components/admin/AdminLayout";
 import Modal from "@/components/admin/Modal";
 import ConfirmDialog from "@/components/admin/ConfirmDialog";
@@ -30,6 +31,7 @@ interface Category {
     subcategories: number;
     providers: number;
   };
+  vendorCount?: number;
   createdAt?: string;
   updatedAt?: string;
 }
@@ -58,7 +60,14 @@ function ViewCategoryModal({
               darkMode ? "bg-gray-700" : "bg-gray-100"
             } flex items-center justify-center`}
           >
-            <span className="text-2xl">{category.icon || "📁"}</span>
+            {(() => {
+              const iconName = category.icon as keyof typeof LucideIcons;
+              const IconComponent =
+                iconName && LucideIcons[iconName]
+                  ? (LucideIcons[iconName] as React.FC<{ size?: number }>)
+                  : LucideIcons.Folder;
+              return <IconComponent size={32} />;
+            })()}
           </div>
           <div className="flex-1">
             <h3 className={`text-xl font-bold ${textPrimary}`}>
@@ -110,7 +119,11 @@ function ViewCategoryModal({
             }`}
           >
             <p className={`text-2xl font-bold ${textPrimary}`}>
-              {category._count?.providers || 0}
+              {typeof category.vendorCount === "number"
+                ? category.vendorCount
+                : typeof category._count?.providers === "number"
+                ? category._count.providers
+                : 0}
             </p>
             <p className={`text-sm ${textMuted}`}>Providers</p>
           </div>
@@ -663,25 +676,6 @@ export default function CategoriesPage() {
               Manage vendor categories and subcategories
             </p>
           </div>
-          <button
-            onClick={handleAdd}
-            className="px-4 py-2 bg-rose-600 text-white rounded-lg hover:bg-rose-700 flex items-center gap-2"
-          >
-            <svg
-              className="w-5 h-5"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M12 4v16m8-8H4"
-              />
-            </svg>
-            <span>Add Category</span>
-          </button>
         </div>
 
         {/* Filters */}
@@ -786,7 +780,11 @@ export default function CategoriesPage() {
           <div className={`${cardBg} ${cardBorder} rounded-xl p-4`}>
             <p className={`text-2xl font-bold text-green-500`}>
               {categories.reduce(
-                (acc, c) => acc + (c._count?.providers || 0),
+                (acc, c) =>
+                  acc +
+                  (typeof c.vendorCount === "number"
+                    ? c.vendorCount
+                    : c._count?.providers || 0),
                 0
               )}
             </p>
@@ -842,7 +840,17 @@ export default function CategoriesPage() {
                           darkMode ? "bg-gray-700" : "bg-gray-200"
                         } flex items-center justify-center`}
                       >
-                        <span className="text-xl">{category.icon || "📁"}</span>
+                        {(() => {
+                          const iconName =
+                            category.icon as keyof typeof LucideIcons;
+                          const IconComponent =
+                            iconName && LucideIcons[iconName]
+                              ? (LucideIcons[iconName] as React.FC<{
+                                  size?: number;
+                                }>)
+                              : LucideIcons.Folder;
+                          return <IconComponent size={24} />;
+                        })()}
                       </div>
                       <div>
                         <h3 className={`font-semibold ${textPrimary}`}>
@@ -929,7 +937,12 @@ export default function CategoriesPage() {
                         />
                       </svg>
                       <span className={`text-sm ${textSecondary}`}>
-                        {category._count?.providers || 0} providers
+                        {typeof category.vendorCount === "number"
+                          ? category.vendorCount
+                          : typeof category._count?.providers === "number"
+                          ? category._count.providers
+                          : 0}{" "}
+                        providers
                       </span>
                     </div>
                   </div>
@@ -974,31 +987,6 @@ export default function CategoriesPage() {
                     >
                       View
                     </button>
-                    <button
-                      onClick={() => handleEdit(category)}
-                      className="flex-1 px-3 py-2 text-sm bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200"
-                    >
-                      Edit
-                    </button>
-                    <button
-                      onClick={() => setDeleteCategory(category)}
-                      className="p-2 text-red-500 rounded-lg hover:bg-red-100 dark:hover:bg-red-900/30"
-                      title="Delete"
-                    >
-                      <svg
-                        className="w-5 h-5"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-                        />
-                      </svg>
-                    </button>
                   </div>
                 </div>
               ))}
@@ -1025,17 +1013,6 @@ export default function CategoriesPage() {
           }}
           onSave={handleSave}
           mode={formMode}
-        />
-
-        {/* Confirm Delete Dialog */}
-        <ConfirmDialog
-          isOpen={deleteCategory !== null}
-          onClose={() => setDeleteCategory(null)}
-          onConfirm={handleDelete}
-          title="Delete Category"
-          message={`Are you sure you want to delete "${deleteCategory?.name}"? This will also remove all subcategories and may affect vendors using this category.`}
-          type="danger"
-          confirmText="Delete"
         />
 
         {/* Toast */}
