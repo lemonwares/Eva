@@ -21,6 +21,7 @@ export async function PATCH(
   request: NextRequest,
   ctx: { params: Promise<{ id: string }> }
 ) {
+  console.log("[PATCH /api/admin/providers/[id]/moderate] called");
   const session = await auth();
   if (!session?.user?.id || session.user.role !== "ADMINISTRATOR") {
     return NextResponse.json({ message: "Forbidden" }, { status: 403 });

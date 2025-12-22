@@ -506,9 +506,9 @@ export function EditVendorModal({
           >
             {categories.map((cat) => (
               <option
-                key={cat.id}
-                value={cat.id}
-                selected={editForm.categories.includes(cat.id)}
+                key={cat.slug}
+                value={cat.slug}
+                selected={editForm.categories.includes(cat.slug)}
               >
                 {cat.name}
               </option>
