@@ -64,8 +64,8 @@ const fallbackVendors: VendorGalleryItem[] = [
   },
   {
     id: "2",
-    title: "Professional Photography",
-    category: "Photography",
+    title: "Professional Photographers",
+    category: "Photographers",
     image:
       "https://images.unsplash.com/photo-1606800052052-a08af7148866?w=800&h=800&fit=crop",
     verified: true,
@@ -152,7 +152,7 @@ const fallbackVendors: VendorGalleryItem[] = [
 const categoryImages: Record<string, string> = {
   Venues:
     "https://images.unsplash.com/photo-1464366400600-7168b8af9bc3?w=800&h=800&fit=crop",
-  Photography:
+  Photographers:
     "https://images.unsplash.com/photo-1606800052052-a08af7148866?w=800&h=800&fit=crop",
   Catering:
     "https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=800&h=800&fit=crop",

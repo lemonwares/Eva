@@ -129,18 +129,15 @@ const STEPS: { id: OnboardingStep; title: string; description: string }[] = [
 
 // Category options (would normally come from API)
 const CATEGORY_OPTIONS = [
-  { id: "photography", name: "Photography" },
-  { id: "videography", name: "Videography" },
-  { id: "catering", name: "Catering" },
-  { id: "venue", name: "Venues" },
-  { id: "dj", name: "DJs & Music" },
+  { id: "venues", name: "Venues" },
+  { id: "photographers", name: "Photographers" },
+  { id: "caterers", name: "Caterers" },
+  { id: "music-djs", name: "Music & DJs" },
+  { id: "florists", name: "Florists" },
+  { id: "event-planners", name: "Event Planners" },
+  { id: "bakers", name: "Bakers" },
   { id: "decorators", name: "Decorators" },
-  { id: "flowers", name: "Florists" },
-  { id: "cake", name: "Cakes & Desserts" },
-  { id: "makeup", name: "Hair & Makeup" },
-  { id: "planning", name: "Event Planning" },
-  { id: "transport", name: "Transportation" },
-  { id: "entertainment", name: "Entertainment" },
+  { id: "makeup", name: "Makeup" },
 ];
 
 const CULTURE_TAGS = [
@@ -627,7 +624,7 @@ export default function VendorOnboardingPage() {
                   updateFormData({ businessName: e.target.value })
                 }
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-accent focus:border-transparent"
-                placeholder="e.g., Elite Photography Studios"
+                placeholder="e.g., Elite Photographers Studios"
               />
             </div>
 
@@ -1192,7 +1189,7 @@ export default function VendorOnboardingPage() {
                     handleDraftChange({ headline: e.target.value.slice(0, 50) })
                   }
                   className="w-full px-3 py-2 border rounded-lg"
-                  placeholder="e.g., Gold Wedding Photography Package"
+                  placeholder="e.g., Gold Wedding Photographers Package"
                 />
                 <div className="text-xs text-gray-500 text-right mt-1">
                   {50 - listingDraft.headline.length} characters left

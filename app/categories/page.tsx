@@ -47,7 +47,6 @@ const iconMap: Record<string, LucideIcon> = {
 const defaultIconMap: Record<string, LucideIcon> = {
   Venues: Building2,
   Photographers: Camera,
-  Photography: Camera,
   Caterers: Utensils,
   Catering: Utensils,
   "Music & DJs": Music,
@@ -68,8 +67,6 @@ const categoryImages: Record<string, string> = {
   Venues:
     "https://images.unsplash.com/photo-1519167758481-83f550bb49b3?w=800&h=600&fit=crop",
   Photographers:
-    "https://images.unsplash.com/photo-1606800052052-a08af7148866?w=800&h=600&fit=crop",
-  Photography:
     "https://images.unsplash.com/photo-1606800052052-a08af7148866?w=800&h=600&fit=crop",
   Caterers:
     "https://images.unsplash.com/photo-1555244162-803834f70033?w=800&h=600&fit=crop",
