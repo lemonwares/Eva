@@ -136,8 +136,8 @@ const fallbackVendors: VendorGalleryItem[] = [
   },
   {
     id: "8",
-    title: "Decoration & Styling",
-    category: "Decoration",
+    title: "Decorators & Styling",
+    category: "Decorators",
     image:
       "https://images.unsplash.com/photo-1478146896981-b80fe463b330?w=800&h=800&fit=crop",
     verified: true,
@@ -164,7 +164,7 @@ const categoryImages: Record<string, string> = {
     "https://images.unsplash.com/photo-1511578314322-379afb476865?w=800&h=800&fit=crop",
   Baking:
     "https://images.unsplash.com/photo-1464349095431-e9a21285b5f3?w=800&h=800&fit=crop",
-  Decoration:
+  Decorators:
     "https://images.unsplash.com/photo-1478146896981-b80fe463b330?w=800&h=800&fit=crop",
   default:
     "https://images.unsplash.com/photo-1492684223066-81342ee5ff30?w=800&h=800&fit=crop",
