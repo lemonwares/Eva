@@ -29,16 +29,7 @@ interface Provider {
     name: string | null;
     email: string;
   };
-  category: {
-    id: string;
-    name: string;
-    slug: string;
-  } | null;
-  subcategory: {
-    id: string;
-    name: string;
-    slug: string;
-  } | null;
+  categories?: string[];
   city: {
     id: string;
     name: string;
@@ -112,7 +103,8 @@ export function ViewVendorModal({
   provider,
   onAction,
   onEdit,
-}: ViewVendorModalProps) {
+  categories = [],
+}: ViewVendorModalProps & { categories?: Category[] }) {
   const { darkMode, textPrimary, textSecondary, textMuted } = useAdminTheme();
 
   if (!provider) return null;
@@ -230,7 +222,25 @@ export function ViewVendorModal({
             <div className="space-y-2">
               <p className={`text-sm ${textSecondary}`}>
                 <span className={textMuted}>Category:</span>{" "}
-                {provider.category?.name || "N/A"}
+                {(() => {
+                  const catIds = provider.categories ?? [];
+                  if (
+                    Array.isArray(catIds) &&
+                    catIds.length > 0 &&
+                    Array.isArray(categories) &&
+                    categories.length > 0
+                  ) {
+                    const match = categories.find(
+                      (cat: Category) => cat.id === catIds[0]
+                    );
+                    const rawName = match?.name || catIds[0] || "N/A";
+                    return typeof rawName === "string" && rawName.length > 0
+                      ? rawName.charAt(0).toUpperCase() +
+                          rawName.slice(1).toLowerCase()
+                      : rawName;
+                  }
+                  return "N/A";
+                })()}
               </p>
               <p className={`text-sm ${textSecondary}`}>
                 <span className={textMuted}>Joined:</span>{" "}
@@ -347,7 +357,6 @@ interface EditVendorModalProps {
     address: string;
     postcode: string;
     phone: string;
-    email: string;
     website: string;
     priceFrom: string;
     serviceRadius: string;
@@ -386,19 +395,6 @@ export function EditVendorModal({
               value={editForm.businessName}
               onChange={(e) =>
                 setEditForm({ ...editForm, businessName: e.target.value })
-              }
-              className={`w-full px-4 py-2.5 rounded-lg border ${inputBg} ${inputBorder} ${textPrimary} text-sm focus:outline-none focus:ring-2 focus:ring-accent/50`}
-            />
-          </div>
-          <div>
-            <label className={`block text-sm font-medium ${textPrimary} mb-1`}>
-              Email
-            </label>
-            <input
-              type="email"
-              value={editForm.email}
-              onChange={(e) =>
-                setEditForm({ ...editForm, email: e.target.value })
               }
               className={`w-full px-4 py-2.5 rounded-lg border ${inputBg} ${inputBorder} ${textPrimary} text-sm focus:outline-none focus:ring-2 focus:ring-accent/50`}
             />

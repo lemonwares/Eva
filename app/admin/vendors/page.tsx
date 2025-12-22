@@ -39,16 +39,7 @@ interface Provider {
     name: string | null;
     email: string;
   };
-  category: {
-    id: string;
-    name: string;
-    slug: string;
-  } | null;
-  subcategory: {
-    id: string;
-    name: string;
-    slug: string;
-  } | null;
+  categories?: string[];
   city: {
     id: string;
     name: string;
@@ -121,7 +112,6 @@ export default function AdminVendorsPage() {
     address: "",
     postcode: "",
     phone: "",
-    email: "",
     website: "",
     priceFrom: "",
     serviceRadius: "",
@@ -174,6 +164,7 @@ export default function AdminVendorsPage() {
         setProviders(data.providers || []);
         setPagination(data.pagination || null);
         setStatusCounts(data.statusCounts || null);
+        console.log(`Res:`, data);
       }
     } catch (err) {
       console.error("Error fetching providers:", err);
@@ -205,11 +196,10 @@ export default function AdminVendorsPage() {
       address: provider.address || "",
       postcode: provider.postcode || "",
       phone: provider.phone || "",
-      email: provider.email || "",
       website: provider.website || "",
       priceFrom: provider.priceFrom?.toString() || "",
       serviceRadius: provider.serviceRadius?.toString() || "",
-      categoryId: provider.category?.id || "",
+      categoryId: (provider.categories && provider.categories[0]) || "",
       isVerified: provider.isVerified,
       isFeatured: provider.isFeatured,
       isPublished: provider.isPublished,
@@ -233,7 +223,6 @@ export default function AdminVendorsPage() {
             address: editForm.address,
             postcode: editForm.postcode,
             phone: editForm.phone,
-            email: editForm.email,
             website: editForm.website,
             priceFrom: editForm.priceFrom
               ? parseFloat(editForm.priceFrom)
@@ -412,6 +401,7 @@ export default function AdminVendorsPage() {
         onView={handleView}
         onEdit={handleEdit}
         onDelete={handleDelete}
+        categories={categories}
       />
 
       {/* Modals */}
@@ -421,6 +411,7 @@ export default function AdminVendorsPage() {
         provider={selectedProvider}
         onAction={handleAction}
         onEdit={handleEdit}
+        categories={categories}
       />
 
       <EditVendorModal
