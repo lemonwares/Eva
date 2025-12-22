@@ -23,6 +23,7 @@ import {
   X,
   Send,
   Clock,
+  Currency,
 } from "lucide-react";
 import Header from "@/components/common/Header";
 import { motion, AnimatePresence } from "framer-motion";
@@ -771,8 +772,17 @@ export default function VendorDetailPage() {
             <div className="flex flex-wrap items-start justify-between gap-4 mb-8">
               <div>
                 <div className="flex items-center gap-3 mb-2">
-                  <h1 className="text-3xl md:text-4xl font-bold">
+                  <h1 className="text-3xl md:text-4xl font-bold flex items-center gap-3">
                     {vendor.businessName}
+                    <FavoriteButton providerId={vendor.id} />
+                    <ShareButton
+                      title={vendor.businessName}
+                      url={`${
+                        typeof window !== "undefined"
+                          ? window.location.origin
+                          : ""
+                      }/vendors/${vendor.id}`}
+                    />
                   </h1>
                   {vendor.isVerified && (
                     <div className="flex items-center gap-1 text-accent">
@@ -1084,22 +1094,11 @@ export default function VendorDetailPage() {
                                 <div className="text-gray-500 text-sm mt-2 flex gap-4">
                                   <span className="flex items-center gap-1">
                                     <span className="inline-flex items-center gap-1 font-medium text-accent">
-                                      {/* Money/Currency SVG icon */}
-                                      <svg
-                                        width="16"
-                                        height="16"
-                                        fill="none"
-                                        viewBox="0 0 24 24"
-                                        stroke="currentColor"
+                                      {/* Lucide DollarSign icon for price */}
+                                      <Currency
+                                        size={16}
                                         className="inline-block align-middle"
-                                      >
-                                        <path
-                                          strokeLinecap="round"
-                                          strokeLinejoin="round"
-                                          strokeWidth={2}
-                                          d="M12 8c-2.21 0-4 1.343-4 3s1.79 3 4 3 4-1.343 4-3m-4 3v2m0-8V5m0 0c4.418 0 8 1.79 8 4s-3.582 4-8 4-8-1.79-8-4 3.582-4 8-4z"
-                                        />
-                                      </svg>
+                                      />
                                       {listing.price ? (
                                         formatCurrency(listing.price)
                                       ) : (
