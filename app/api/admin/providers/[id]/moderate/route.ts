@@ -123,7 +123,9 @@ export async function PATCH(
     const updated = await prisma.provider.update({
       where: { id },
       data: updateData,
-      include: { owner: { select: { id: true, name: true, email: true } } },
+      include: {
+        owner: { select: { id: true, name: true, email: true, phone: true } },
+      },
     });
     return NextResponse.json({
       message: "Provider updated successfully",

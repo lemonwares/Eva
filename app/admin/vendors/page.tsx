@@ -22,7 +22,7 @@ interface Provider {
   description: string | null;
   address: string | null;
   postcode: string | null;
-  phone: string | null;
+  phonePublic: string | null;
   email: string | null;
   website: string | null;
   status: string;
@@ -33,7 +33,7 @@ interface Provider {
   reviewCount: number;
   priceFrom: number | null;
   createdAt: string;
-  serviceRadius: number | null;
+  serviceRadiusMiles: number | null;
   owner: {
     id: string;
     name: string | null;
@@ -115,7 +115,7 @@ export default function AdminVendorsPage() {
     website: "",
     priceFrom: "",
     serviceRadius: "",
-    categoryId: "",
+    categories: [] as string[],
     isVerified: false,
     isFeatured: false,
     isPublished: false,
@@ -189,17 +189,25 @@ export default function AdminVendorsPage() {
   };
 
   const handleEdit = (provider: Provider) => {
+    console.log("Editing provider:", provider);
     setSelectedProvider(provider);
     setEditForm({
       businessName: provider.businessName || "",
       description: provider.description || "",
       address: provider.address || "",
       postcode: provider.postcode || "",
-      phone: provider.phone || "",
+      phone: provider.phonePublic || "",
       website: provider.website || "",
-      priceFrom: provider.priceFrom?.toString() || "",
-      serviceRadius: provider.serviceRadius?.toString() || "",
-      categoryId: (provider.categories && provider.categories[0]) || "",
+      priceFrom:
+        provider.priceFrom !== null && provider.priceFrom !== undefined
+          ? provider.priceFrom.toString()
+          : "0",
+      serviceRadius:
+        provider.serviceRadiusMiles !== null &&
+        provider.serviceRadiusMiles !== undefined
+          ? provider.serviceRadiusMiles.toString()
+          : "0",
+      categories: provider.categories || [],
       isVerified: provider.isVerified,
       isFeatured: provider.isFeatured,
       isPublished: provider.isPublished,
@@ -224,13 +232,16 @@ export default function AdminVendorsPage() {
             postcode: editForm.postcode,
             phone: editForm.phone,
             website: editForm.website,
-            priceFrom: editForm.priceFrom
-              ? parseFloat(editForm.priceFrom)
-              : null,
-            serviceRadius: editForm.serviceRadius
-              ? parseInt(editForm.serviceRadius)
-              : null,
-            categoryId: editForm.categoryId || null,
+            priceFrom:
+              editForm.priceFrom !== "" && !isNaN(Number(editForm.priceFrom))
+                ? parseFloat(editForm.priceFrom)
+                : 0,
+            serviceRadius:
+              editForm.serviceRadius !== "" &&
+              !isNaN(Number(editForm.serviceRadius))
+                ? parseInt(editForm.serviceRadius)
+                : 0,
+            categories: editForm.categories,
             isVerified: editForm.isVerified,
             isFeatured: editForm.isFeatured,
             isPublished: editForm.isPublished,
