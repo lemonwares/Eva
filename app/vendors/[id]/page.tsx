@@ -1118,13 +1118,58 @@ export default function VendorDetailPage() {
                                   {truncate(listing.longDescription, 150)}
                                 </div>
                                 <div className="text-gray-500 text-sm mt-2 flex gap-4">
-                                  <span>
-                                    Price:{" "}
-                                    {listing.price
-                                      ? formatCurrency(listing.price)
-                                      : "-"}
+                                  <span className="flex items-center gap-1">
+                                    <span className="inline-flex items-center gap-1 font-medium text-accent">
+                                      <svg
+                                        width="16"
+                                        height="16"
+                                        fill="none"
+                                        viewBox="0 0 24 24"
+                                        stroke="currentColor"
+                                        className="inline-block align-middle"
+                                      >
+                                        <path
+                                          strokeLinecap="round"
+                                          strokeLinejoin="round"
+                                          strokeWidth={2}
+                                          d="M12 8v4l3 1m6-1a9 9 0 11-18 0 9 9 0 0118 0z"
+                                        />
+                                      </svg>
+                                      {listing.price ? (
+                                        formatCurrency(listing.price)
+                                      ) : (
+                                        <span className="text-gray-400">
+                                          Not listed
+                                        </span>
+                                      )}
+                                    </span>
                                   </span>
-                                  <span>Time: {listing.timeEstimate}</span>
+                                  <span className="flex items-center gap-1">
+                                    <span className="inline-flex items-center gap-1 font-medium text-blue-500">
+                                      <svg
+                                        width="16"
+                                        height="16"
+                                        fill="none"
+                                        viewBox="0 0 24 24"
+                                        stroke="currentColor"
+                                        className="inline-block align-middle"
+                                      >
+                                        <path
+                                          strokeLinecap="round"
+                                          strokeLinejoin="round"
+                                          strokeWidth={2}
+                                          d="M12 8v4l3 1m6-1a9 9 0 11-18 0 9 9 0 0118 0z"
+                                        />
+                                      </svg>
+                                      {listing.timeEstimate ? (
+                                        listing.timeEstimate
+                                      ) : (
+                                        <span className="text-gray-400">
+                                          No estimate
+                                        </span>
+                                      )}
+                                    </span>
+                                  </span>
                                 </div>
                                 {listing.galleryUrls &&
                                   listing.galleryUrls.length > 0 && (
@@ -1152,7 +1197,7 @@ export default function VendorDetailPage() {
                                     onClick={() =>
                                       handleListingToggle(listing.id)
                                     }
-                                    className="text-accent text-[14px] hover:underline hover:cursor-pointer transition"
+                                    className="text-accent text-[14px] font-bold hover:underline hover:cursor-pointer transition"
                                   >
                                     Book Now
                                   </button>
