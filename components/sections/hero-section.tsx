@@ -63,8 +63,8 @@ export default function HeroSection() {
 
           <div className="grid gap-6 sm:grid-cols-3">
             {[
-              { label: "Vetted vendors", value: "1,200+" },
-              { label: "Cultures supported", value: "80+" },
+              { label: "Vetted vendors", value: "120+" },
+              { label: "Cultures supported", value: "50+" },
               { label: "Avg. review", value: "4.9/5" },
             ].map((stat) => (
               <div
