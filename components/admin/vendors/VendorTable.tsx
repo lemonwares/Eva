@@ -20,7 +20,7 @@ interface Provider {
   description: string | null;
   address: string | null;
   postcode: string | null;
-  phone: string | null;
+  phonePublic: string | null;
   email: string | null;
   website: string | null;
   status: string;
@@ -31,7 +31,7 @@ interface Provider {
   reviewCount: number;
   priceFrom: number | null;
   createdAt: string;
-  serviceRadius: number | null;
+  serviceRadiusMiles: number | null;
   owner: {
     id: string;
     name: string | null;
