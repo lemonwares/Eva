@@ -110,6 +110,7 @@ export async function PATCH(
       "isVerified",
       "isFeatured",
       "isPublished",
+      "categories",
     ];
     const updateData: any = {};
     for (const key of allowedFields) {
