@@ -417,12 +417,13 @@ function VendorsPageContent() {
                               fill="currentColor"
                             />
                             <span className="text-sm font-medium">
-                              {vendor.averageRating?.toFixed(1) || "New"}
+                              {vendor.averageRating && vendor.averageRating > 0
+                                ? vendor.averageRating.toFixed(1)
+                                : "New"}
                             </span>
                           </div>
-                          <span className="text-xs text-background/70">
-                            ({vendor._count?.reviews || vendor.reviewCount || 0}{" "}
-                            reviews)
+                          <span className="text-xs text-muted-foreground ml-1">
+                            ({vendor.reviewCount} reviews)
                           </span>
                         </div>
                       </div>
