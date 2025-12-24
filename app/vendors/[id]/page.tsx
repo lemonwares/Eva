@@ -30,6 +30,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import Footer from "@/components/common/Footer";
 import FavoriteButton from "@/components/common/FavoriteButton";
 import ShareButton from "@/components/common/ShareButton";
+import VendorCard from "@/components/vendors/VendorCard";
 import Image from "next/image";
 import { useState, useEffect, useRef } from "react";
 import Confetti from "react-confetti";
@@ -67,10 +68,10 @@ interface InquiryFormData {
 interface Provider {
   id: string;
   businessName: string;
-  description: string | null;
+  description?: string | null;
   categories: string[];
-  subcategories: string[];
-  cultureTraditionTags: string[];
+  subcategories?: string[];
+  cultureTraditionTags?: string[];
   coverImage: string | null;
   photos: string[];
   isVerified: boolean;
@@ -79,23 +80,25 @@ interface Provider {
   reviewCount: number;
   city: string | null;
   address: string | null;
-  postcode: string;
-  weeklySchedule: WeeklySchedule[];
-  serviceRadiusMiles: number;
+  postcode?: string;
+  weeklySchedule?: WeeklySchedule[];
+  serviceRadiusMiles?: number;
   priceFrom: number | null;
-  phonePublic: string | null;
-  website: string | null;
-  instagram: string | null;
-  facebook: string | null;
-  owner: {
+  phonePublic?: string | null;
+  website?: string | null;
+  instagram?: string | null;
+  facebook?: string | null;
+  owner?: {
     id: string;
     name: string;
   };
-  _count: {
+  _count?: {
     reviews: number;
-    bookings: number;
+    bookings?: number;
   };
-  teamMembers: { name: string; image: string | null; id: string }[];
+  teamMembers?: { name: string; image: string | null; id: string }[];
+  geoLat?: number;
+  geoLng?: number;
 }
 
 interface Review {
@@ -319,6 +322,10 @@ export default function VendorDetailPage() {
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [bookingLoading, setBookingLoading] = useState<boolean>(false);
   const [showFullDescription, setShowFullDescription] = useState(false);
+  
+  // Recommendations state
+  const [recommendations, setRecommendations] = useState<Provider[]>([]);
+  const [isRecommendationsLoading, setIsRecommendationsLoading] = useState(false);
 
   function handleListingToggle(listingId: string) {
     setSelectedListings((prev) =>
@@ -606,8 +613,35 @@ export default function VendorDetailPage() {
 
   useEffect(() => {
     restoreBookingProgress();
-    // eslint-disable-next-line
+    if (vendor?.geoLat && vendor?.geoLng) {
+      fetchRecommendations();
+    }
+  // eslint-disable-next-line
   }, [vendor?.id]);
+
+  async function fetchRecommendations() {
+    if (!vendor?.geoLat || !vendor?.geoLng) return;
+    
+    setIsRecommendationsLoading(true);
+    try {
+      const params = new URLSearchParams({
+        lat: vendor.geoLat.toString(),
+        lng: vendor.geoLng.toString(),
+        excludeId: vendor.id,
+        limit: "4"
+      });
+      
+      const res = await fetch(`/api/providers/recommendations?${params.toString()}`);
+      if (res.ok) {
+        const data = await res.json();
+        setRecommendations(data.providers || []);
+      }
+    } catch (err) {
+      console.error("Failed to fetch recommendations", err);
+    } finally {
+      setIsRecommendationsLoading(false);
+    }
+  }
 
   if (isLoading) {
     return (
@@ -1029,11 +1063,11 @@ export default function VendorDetailPage() {
           {/* Main Content */}
           <div className="flex-1">
             {/* Specializations & Listings */}
-            {vendor.cultureTraditionTags.length > 0 && (
+            {(vendor.cultureTraditionTags?.length || 0) > 0 && (
               <div className="mb-12">
                 <h2 className="text-xl font-semibold mb-4">Specializations</h2>
                 <div className="flex flex-wrap gap-2 mb-4">
-                  {vendor.cultureTraditionTags.map((tag, index) => {
+                  {vendor.cultureTraditionTags?.map((tag, index) => {
                     const capTag =
                       tag.charAt(0).toUpperCase() + tag.slice(1).toLowerCase();
                     return (
@@ -1197,11 +1231,11 @@ export default function VendorDetailPage() {
             )}
 
             {/* Services */}
-            {vendor.subcategories.length > 0 && (
+            {(vendor.subcategories?.length || 0) > 0 && (
               <div className="mb-12">
                 <h2 className="text-xl font-semibold mb-4">Services</h2>
                 <div className="flex flex-wrap gap-2">
-                  {vendor.subcategories.map((service, index) => (
+                  {vendor.subcategories?.map((service, index) => (
                     <span
                       key={index}
                       className="px-4 py-2 rounded-full bg-muted text-sm font-medium"
@@ -1857,6 +1891,20 @@ export default function VendorDetailPage() {
             </button>
           </div>
         </div>
+      )}
+
+      {/* Recommendations Section */}
+      {recommendations.length > 0 && (
+        <section className="bg-muted/30 py-16 border-t border-border">
+          <div className="max-w-7xl mx-auto px-4">
+            <h2 className="text-2xl font-bold mb-8">Nearby Vendors</h2>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+              {recommendations.map((rec) => (
+                <VendorCard key={rec.id} vendor={rec} />
+              ))}
+            </div>
+          </div>
+        </section>
       )}
 
       <Footer />
