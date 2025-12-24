@@ -1085,11 +1085,11 @@ export default function VendorDetailPage() {
           {/* Main Content */}
           <div className="flex-1">
             {/* Services */}
-            {vendor.subcategories.length > 0 && (
+            {(vendor.subcategories?.length || 0) > 0 && (
               <div className="mb-12">
                 <h2 className="text-xl font-semibold mb-4">Services</h2>
                 <div className="flex flex-wrap gap-2">
-                  {vendor.subcategories.map((service, index) => (
+                  {vendor.subcategories?.map((service, index) => (
                     <span
                       key={index}
                       className="px-4 py-2 rounded-full bg-muted text-sm font-medium"
@@ -1390,11 +1390,11 @@ export default function VendorDetailPage() {
               <div className="mb-12">
                 <h2 className="text-xl font-semibold mb-4">About</h2>
                 <p className="text-muted-foreground whitespace-pre-wrap">
-                  {showFullDescription || vendor.description.length <= 300
+                  {showFullDescription || (vendor.description?.length || 0) <= 300
                     ? vendor.description
-                    : vendor.description.slice(0, 300) + "..."}
+                    : vendor.description?.slice(0, 300) + "..."}
                 </p>
-                {vendor.description.length > 300 && (
+                {(vendor.description?.length || 0) > 300 && (
                   <button
                     className="mt-2 text-accent text-[14px] font-medium hover:underline hover:cursor-pointer focus:outline-none"
                     onClick={() => setShowFullDescription((prev) => !prev)}
@@ -1498,7 +1498,7 @@ export default function VendorDetailPage() {
                     </h3>
 
                     <ScheduleDisplay
-                      weeklySchedule={weeklySchedule}
+                      weeklySchedule={vendor.weeklySchedule || []}
                       expanded={scheduleExpanded}
                       onToggle={() => setScheduleExpanded((s) => !s)}
                     />
