@@ -795,10 +795,13 @@ export default function CategorySection() {
         )}
 
         <div className="text-center mt-12">
-          <button className="group inline-flex items-center gap-3 rounded-full bg-accent px-8 py-3.5 text-sm font-semibold text-white transition-all hover:-translate-y-0.5 hover:shadow-lg ">
+          <Link
+            href="/categories"
+            className="group inline-flex items-center gap-3 rounded-full bg-accent px-8 py-3.5 text-sm font-semibold text-white transition-all hover:-translate-y-0.5 hover:shadow-lg "
+          >
             View all categories
             <ArrowRight className="h-4 w-4 transition group-hover:translate-x-1" />
-          </button>
+          </Link>
         </div>
       </div>
     </section>
