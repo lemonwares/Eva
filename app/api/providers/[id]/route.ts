@@ -106,6 +106,8 @@ export async function GET(
     // Map teamMembers to match frontend expectations (image instead of imageUrl)
     const mappedProvider = {
       ...provider,
+      averageRating: provider.averageRating,
+      reviewCount: provider.reviewCount,
       teamMembers:
         provider.teamMembers?.map((member: any) => ({
           id: member.id,

@@ -20,7 +20,7 @@ interface Provider {
   description: string | null;
   address: string | null;
   postcode: string | null;
-  phone: string | null;
+  phonePublic: string | null;
   email: string | null;
   website: string | null;
   status: string;
@@ -31,22 +31,13 @@ interface Provider {
   reviewCount: number;
   priceFrom: number | null;
   createdAt: string;
-  serviceRadius: number | null;
+  serviceRadiusMiles: number | null;
   owner: {
     id: string;
     name: string | null;
     email: string;
   };
-  category: {
-    id: string;
-    name: string;
-    slug: string;
-  } | null;
-  subcategory: {
-    id: string;
-    name: string;
-    slug: string;
-  } | null;
+  categories?: string[];
   city: {
     id: string;
     name: string;
@@ -65,6 +56,12 @@ interface Pagination {
   totalPages: number;
 }
 
+interface Category {
+  id: string;
+  name: string;
+  slug: string;
+}
+
 interface VendorTableProps {
   providers: Provider[];
   pagination: Pagination | null;
@@ -74,6 +71,7 @@ interface VendorTableProps {
   onView: (provider: Provider) => void;
   onEdit: (provider: Provider) => void;
   onDelete: (provider: Provider) => void;
+  categories?: Category[];
 }
 
 export default function VendorTable({
@@ -85,6 +83,7 @@ export default function VendorTable({
   onView,
   onEdit,
   onDelete,
+  categories = [],
 }: VendorTableProps) {
   const {
     darkMode,
@@ -273,9 +272,28 @@ export default function VendorTable({
                       </div>
                     </td>
                     <td className={`px-6 py-4 text-sm ${textSecondary}`}>
-                      {provider.category?.name ||
-                        provider.subcategory?.name ||
-                        "N/A"}
+                      {/* Map first category ID to name from categories list if available */}
+                      {(() => {
+                        const cats = categories ?? [];
+                        const catIds = provider.categories ?? [];
+                        if (
+                          Array.isArray(catIds) &&
+                          catIds.length > 0 &&
+                          Array.isArray(cats) &&
+                          cats.length > 0
+                        ) {
+                          const match = cats.find(
+                            (cat) => cat.id === catIds[0]
+                          );
+                          const rawName = match?.name || catIds[0] || "N/A";
+                          return typeof rawName === "string" &&
+                            rawName.length > 0
+                            ? rawName.charAt(0).toUpperCase() +
+                                rawName.slice(1).toLowerCase()
+                            : rawName;
+                        }
+                        return "N/A";
+                      })()}
                     </td>
                     <td className={`px-6 py-4 text-sm ${textSecondary}`}>
                       <div>
@@ -368,7 +386,27 @@ export default function VendorTable({
                         {provider.businessName}
                       </p>
                       <p className={`text-sm ${textMuted}`}>
-                        {provider.category?.name || "N/A"}
+                        {(() => {
+                          const cats = categories ?? [];
+                          const catIds = provider.categories ?? [];
+                          if (
+                            Array.isArray(catIds) &&
+                            catIds.length > 0 &&
+                            Array.isArray(cats) &&
+                            cats.length > 0
+                          ) {
+                            const match = cats.find(
+                              (cat) => cat.id === catIds[0]
+                            );
+                            const rawName = match?.name || catIds[0] || "N/A";
+                            return typeof rawName === "string" &&
+                              rawName.length > 0
+                              ? rawName.charAt(0).toUpperCase() +
+                                  rawName.slice(1).toLowerCase()
+                              : rawName;
+                          }
+                          return "N/A";
+                        })()}
                       </p>
                     </div>
                   </div>

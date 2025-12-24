@@ -72,7 +72,7 @@
 //     "https://images.unsplash.com/photo-1478146896981-b80fe463b330?w=800&h=600&fit=crop",
 //   Decoration:
 //     "https://images.unsplash.com/photo-1478146896981-b80fe463b330?w=800&h=600&fit=crop",
-//   "Makeup Artists":
+//   Makeup:
 //     "https://images.unsplash.com/photo-1487412947147-5cebf100ffc2?w=800&h=600&fit=crop",
 //   Makeup:
 //     "https://images.unsplash.com/photo-1487412947147-5cebf100ffc2?w=800&h=600&fit=crop",
@@ -97,7 +97,6 @@
 //   Baking: Cake,
 //   Decorators: Sparkles,
 //   Decoration: Sparkles,
-//   "Makeup Artists": Palette,
 //   Makeup: Palette,
 // };
 
@@ -200,12 +199,12 @@
 //   },
 //   {
 //     id: "9",
-//     name: "Makeup Artists",
-//     slug: "makeup-artists",
+//     name: "Makeup",
+//     slug: "makeup",
 //     icon: Palette,
-//     description: "Look your absolute best",
+//     description: "Professional makeup services",
 //     count: "140+ artists",
-//     image: categoryImages["Makeup Artists"],
+//     image: categoryImages.Makeup,
 //   },
 // ];
 
@@ -434,6 +433,7 @@ import {
 import { useState, useEffect, useRef, useCallback } from "react";
 
 import type { LucideIcon } from "lucide-react";
+import Link from "next/link";
 
 type Category = {
   id: string;
@@ -492,7 +492,7 @@ const categoryImages: Record<string, string> = {
     "https://images.unsplash.com/photo-1464349095431-e9a21285b5f3?w=800&h=600&fit=crop",
   Decorators:
     "https://images.unsplash.com/photo-1478146896981-b80fe463b330?w=800&h=600&fit=crop",
-  "Makeup Artists":
+  Makeup:
     "https://images.unsplash.com/photo-1487412947147-5cebf100ffc2?w=800&h=600&fit=crop",
   default:
     "https://images.unsplash.com/photo-1492684223066-81342ee5ff30?w=800&h=600&fit=crop",
@@ -507,7 +507,7 @@ const defaultIconMap: Record<string, LucideIcon> = {
   "Event Planners": Users,
   Bakers: Cake,
   Decorators: Sparkles,
-  "Makeup Artists": Palette,
+  Makeup: Palette,
 };
 
 const fallbackCategories: CategoryItem[] = [
@@ -585,12 +585,12 @@ const fallbackCategories: CategoryItem[] = [
   },
   {
     id: "9",
-    name: "Makeup Artists",
-    slug: "makeup-artists",
+    name: "Makeup",
+    slug: "makeup",
     icon: Palette,
-    description: "Look your absolute best",
+    description: "Professional makeup services",
     count: "140+ artists",
-    image: categoryImages["Makeup Artists"],
+    image: categoryImages.Makeup,
   },
 ];
 
@@ -751,9 +751,13 @@ export default function CategorySection() {
               {categories.map((category) => {
                 const Icon = category.icon;
                 return (
-                  <div
+                  <Link
                     key={category.id}
-                    className="group shrink-0 w-[320px] cursor-pointer"
+                    href={{
+                      pathname: `/categories/${category.slug}`,
+                      query: { filter: category.slug },
+                    }}
+                    className="group shrink-0 w-[320px]"
                   >
                     <div className="relative aspect-4/3 overflow-hidden rounded-2xl bg-slate-200 shadow-md transition-all duration-300 group-hover:shadow-xl group-hover:-translate-y-1">
                       <div
@@ -783,7 +787,7 @@ export default function CategorySection() {
                         </p>
                       </div>
                     </div>
-                  </div>
+                  </Link>
                 );
               })}
             </div>
@@ -791,10 +795,13 @@ export default function CategorySection() {
         )}
 
         <div className="text-center mt-12">
-          <button className="group inline-flex items-center gap-3 rounded-full bg-slate-900 px-8 py-3.5 text-sm font-semibold text-white transition-all hover:-translate-y-0.5 hover:shadow-lg hover:bg-purple-600">
+          <Link
+            href="/categories"
+            className="group inline-flex items-center gap-3 rounded-full bg-accent px-8 py-3.5 text-sm font-semibold text-white transition-all hover:-translate-y-0.5 hover:shadow-lg "
+          >
             View all categories
             <ArrowRight className="h-4 w-4 transition group-hover:translate-x-1" />
-          </button>
+          </Link>
         </div>
       </div>
     </section>

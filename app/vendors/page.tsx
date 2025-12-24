@@ -162,7 +162,7 @@ function VendorsPageContent() {
     "Flowers",
     "Planning",
     "Baking",
-    "Decoration",
+    "Decorators",
     "Makeup",
   ];
 

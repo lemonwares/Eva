@@ -76,12 +76,6 @@ export async function GET(request: NextRequest) {
           owner: {
             select: { id: true, name: true, email: true },
           },
-          category: {
-            select: { id: true, name: true, slug: true },
-          },
-          subcategory: {
-            select: { id: true, name: true, slug: true },
-          },
           _count: {
             select: {
               reviews: true,
@@ -103,15 +97,31 @@ export async function GET(request: NextRequest) {
     ]);
 
     // Transform providers to add status field for frontend
-    const providers = rawProviders.map((provider) => ({
-      ...provider,
-      status:
-        provider.isPublished && provider.isVerified
-          ? "ACTIVE"
-          : !provider.isPublished
-          ? "PENDING"
-          : "SUSPENDED",
-    }));
+    const providers = rawProviders.map((provider) => {
+      // Get the first category ID if available
+      const firstCategoryId =
+        Array.isArray(provider.categories) && provider.categories.length > 0
+          ? provider.categories[0]
+          : null;
+      let formattedCategory = null;
+      if (firstCategoryId) {
+        const formattedName =
+          firstCategoryId.charAt(0).toUpperCase() +
+          firstCategoryId.slice(1).toLowerCase();
+        formattedCategory = {
+          id: firstCategoryId,
+          name: formattedName,
+          slug: firstCategoryId.toLowerCase(),
+        };
+      }
+      // Only set SUSPENDED if not published, otherwise ACTIVE
+      let status = provider.isPublished === false ? "SUSPENDED" : "ACTIVE";
+      return {
+        ...provider,
+        status,
+        category: formattedCategory,
+      };
+    });
 
     const [activeCount, pendingCount, suspendedCount] = statusCounts;
 

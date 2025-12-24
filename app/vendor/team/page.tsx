@@ -10,7 +10,7 @@ export default function TeamPage() {
     { name: string; image: string; id: string }[]
   >([]);
   const [name, setName] = useState("");
-  const [image, setImage] = useState<string>("/favicon.co");
+  const [image, setImage] = useState<string>("/profile-dummy.png");
   const [providerId, setProviderId] = useState<string>("");
   const [loading, setLoading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);

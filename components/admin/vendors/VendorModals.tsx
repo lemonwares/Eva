@@ -12,7 +12,7 @@ interface Provider {
   description: string | null;
   address: string | null;
   postcode: string | null;
-  phone: string | null;
+  phonePublic: string | null;
   email: string | null;
   website: string | null;
   status: string;
@@ -23,22 +23,13 @@ interface Provider {
   reviewCount: number;
   priceFrom: number | null;
   createdAt: string;
-  serviceRadius: number | null;
+  serviceRadiusMiles: number | null;
   owner: {
     id: string;
     name: string | null;
     email: string;
   };
-  category: {
-    id: string;
-    name: string;
-    slug: string;
-  } | null;
-  subcategory: {
-    id: string;
-    name: string;
-    slug: string;
-  } | null;
+  categories?: string[];
   city: {
     id: string;
     name: string;
@@ -112,7 +103,8 @@ export function ViewVendorModal({
   provider,
   onAction,
   onEdit,
-}: ViewVendorModalProps) {
+  categories = [],
+}: ViewVendorModalProps & { categories?: Category[] }) {
   const { darkMode, textPrimary, textSecondary, textMuted } = useAdminTheme();
 
   if (!provider) return null;
@@ -207,12 +199,12 @@ export function ViewVendorModal({
                 <Mail size={16} className={textMuted} />
                 {provider.email || provider.owner.email}
               </p>
-              {provider.phone && (
+              {provider.phonePublic && (
                 <p
                   className={`flex items-center gap-2 text-sm ${textSecondary}`}
                 >
                   <Phone size={16} className={textMuted} />
-                  {provider.phone}
+                  {provider.phonePublic}
                 </p>
               )}
               {provider.address && (
@@ -230,24 +222,44 @@ export function ViewVendorModal({
             <div className="space-y-2">
               <p className={`text-sm ${textSecondary}`}>
                 <span className={textMuted}>Category:</span>{" "}
-                {provider.category?.name || "N/A"}
+                {(() => {
+                  const catIds = provider.categories ?? [];
+                  if (
+                    Array.isArray(catIds) &&
+                    catIds.length > 0 &&
+                    Array.isArray(categories) &&
+                    categories.length > 0
+                  ) {
+                    const match = categories.find(
+                      (cat: Category) => cat.id === catIds[0]
+                    );
+                    const rawName = match?.name || catIds[0] || "N/A";
+                    return typeof rawName === "string" && rawName.length > 0
+                      ? rawName.charAt(0).toUpperCase() +
+                          rawName.slice(1).toLowerCase()
+                      : rawName;
+                  }
+                  return "N/A";
+                })()}
               </p>
               <p className={`text-sm ${textSecondary}`}>
                 <span className={textMuted}>Joined:</span>{" "}
                 {formatDate(provider.createdAt)}
               </p>
-              {provider.priceFrom && (
-                <p className={`text-sm ${textSecondary}`}>
-                  <span className={textMuted}>Starting Price:</span>{" "}
-                  {formatCurrency(provider.priceFrom)}
-                </p>
-              )}
-              {provider.serviceRadius && (
-                <p className={`text-sm ${textSecondary}`}>
-                  <span className={textMuted}>Service Radius:</span>{" "}
-                  {provider.serviceRadius} miles
-                </p>
-              )}
+              {typeof provider.priceFrom === "number" &&
+                !isNaN(provider.priceFrom) && (
+                  <p className={`text-sm ${textSecondary}`}>
+                    <span className={textMuted}>Starting Price:</span>{" "}
+                    {formatCurrency(provider.priceFrom)}
+                  </p>
+                )}
+              {typeof provider.serviceRadiusMiles === "number" &&
+                !isNaN(provider.serviceRadiusMiles) && (
+                  <p className={`text-sm ${textSecondary}`}>
+                    <span className={textMuted}>Service Radius:</span>{" "}
+                    {provider.serviceRadiusMiles} miles
+                  </p>
+                )}
             </div>
           </div>
         </div>
@@ -347,11 +359,10 @@ interface EditVendorModalProps {
     address: string;
     postcode: string;
     phone: string;
-    email: string;
     website: string;
     priceFrom: string;
     serviceRadius: string;
-    categoryId: string;
+    categories: string[];
     isVerified: boolean;
     isFeatured: boolean;
     isPublished: boolean;
@@ -386,19 +397,6 @@ export function EditVendorModal({
               value={editForm.businessName}
               onChange={(e) =>
                 setEditForm({ ...editForm, businessName: e.target.value })
-              }
-              className={`w-full px-4 py-2.5 rounded-lg border ${inputBg} ${inputBorder} ${textPrimary} text-sm focus:outline-none focus:ring-2 focus:ring-accent/50`}
-            />
-          </div>
-          <div>
-            <label className={`block text-sm font-medium ${textPrimary} mb-1`}>
-              Email
-            </label>
-            <input
-              type="email"
-              value={editForm.email}
-              onChange={(e) =>
-                setEditForm({ ...editForm, email: e.target.value })
               }
               className={`w-full px-4 py-2.5 rounded-lg border ${inputBg} ${inputBorder} ${textPrimary} text-sm focus:outline-none focus:ring-2 focus:ring-accent/50`}
             />
@@ -492,18 +490,26 @@ export function EditVendorModal({
 
         <div>
           <label className={`block text-sm font-medium ${textPrimary} mb-1`}>
-            Category
+            Categories
           </label>
           <select
-            value={editForm.categoryId}
-            onChange={(e) =>
-              setEditForm({ ...editForm, categoryId: e.target.value })
-            }
+            multiple
+            value={editForm.categories}
+            onChange={(e) => {
+              const selected = Array.from(
+                e.target.selectedOptions,
+                (option) => option.value
+              );
+              setEditForm({ ...editForm, categories: selected });
+            }}
             className={`w-full px-4 py-2.5 rounded-lg border ${inputBg} ${inputBorder} ${textPrimary} text-sm focus:outline-none focus:ring-2 focus:ring-accent/50`}
           >
-            <option value="">Select Category</option>
             {categories.map((cat) => (
-              <option key={cat.id} value={cat.id}>
+              <option
+                key={cat.slug}
+                value={cat.slug}
+                selected={editForm.categories.includes(cat.slug)}
+              >
                 {cat.name}
               </option>
             ))}

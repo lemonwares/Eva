@@ -250,6 +250,12 @@ function ScheduleDisplay({
   );
 }
 
+// Utility to truncate text to a max length with ellipsis
+function truncate(str: string = "", max: number = 150) {
+  if (!str) return "";
+  return str.length > max ? str.slice(0, max) + "..." : str;
+}
+
 export default function VendorDetailPage() {
   const searchParams =
     typeof window !== "undefined"
@@ -322,10 +328,11 @@ export default function VendorDetailPage() {
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [bookingLoading, setBookingLoading] = useState<boolean>(false);
   const [showFullDescription, setShowFullDescription] = useState(false);
-  
+
   // Recommendations state
   const [recommendations, setRecommendations] = useState<Provider[]>([]);
-  const [isRecommendationsLoading, setIsRecommendationsLoading] = useState(false);
+  const [isRecommendationsLoading, setIsRecommendationsLoading] =
+    useState(false);
 
   function handleListingToggle(listingId: string) {
     setSelectedListings((prev) =>
@@ -346,11 +353,24 @@ export default function VendorDetailPage() {
     0
   );
 
-  // Booking process state
-
-  function handleBookClick() {
+  // Booking mobile scroll function
+  const bookingRef = useRef<HTMLDivElement | null>(null);
+  const handleBookClick = () => {
     setShowBookingForm(true);
-  }
+  };
+
+  // Scroll to booking form after it is shown on mobile
+  useEffect(() => {
+    if (showBookingForm && window.innerWidth <= 768 && bookingRef.current) {
+      // Timeout ensures the form is rendered before scrolling
+      setTimeout(() => {
+        bookingRef.current?.scrollIntoView({
+          behavior: "smooth",
+          block: "start",
+        });
+      }, 100);
+    }
+  }, [showBookingForm]);
 
   // Handler to select/deselect listings
   function handleListingSelect(listingId: string) {
@@ -616,22 +636,24 @@ export default function VendorDetailPage() {
     if (vendor?.geoLat && vendor?.geoLng) {
       fetchRecommendations();
     }
-  // eslint-disable-next-line
+    // eslint-disable-next-line
   }, [vendor?.id]);
 
   async function fetchRecommendations() {
     if (!vendor?.geoLat || !vendor?.geoLng) return;
-    
+
     setIsRecommendationsLoading(true);
     try {
       const params = new URLSearchParams({
         lat: vendor.geoLat.toString(),
         lng: vendor.geoLng.toString(),
         excludeId: vendor.id,
-        limit: "4"
+        limit: "4",
       });
-      
-      const res = await fetch(`/api/providers/recommendations?${params.toString()}`);
+
+      const res = await fetch(
+        `/api/providers/recommendations?${params.toString()}`
+      );
       if (res.ok) {
         const data = await res.json();
         setRecommendations(data.providers || []);
@@ -1062,10 +1084,27 @@ export default function VendorDetailPage() {
         <div className="flex flex-col lg:flex-row gap-12">
           {/* Main Content */}
           <div className="flex-1">
+            {/* Services */}
+            {vendor.subcategories.length > 0 && (
+              <div className="mb-12">
+                <h2 className="text-xl font-semibold mb-4">Services</h2>
+                <div className="flex flex-wrap gap-2">
+                  {vendor.subcategories.map((service, index) => (
+                    <span
+                      key={index}
+                      className="px-4 py-2 rounded-full bg-muted text-sm font-medium"
+                    >
+                      {service}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+
             {/* Specializations & Listings */}
             {(vendor.cultureTraditionTags?.length || 0) > 0 && (
               <div className="mb-12">
-                <h2 className="text-xl font-semibold mb-4">Specializations</h2>
+                {/* <h2 className="text-xl font-semibold mb-4">Specializations</h2>
                 <div className="flex flex-wrap gap-2 mb-4">
                   {vendor.cultureTraditionTags?.map((tag, index) => {
                     const capTag =
@@ -1079,7 +1118,7 @@ export default function VendorDetailPage() {
                       </span>
                     );
                   })}
-                </div>
+                </div> */}
                 {/* Listings Section */}
                 <div>
                   <h3 className="text-lg font-semibold mb-2">
@@ -1123,7 +1162,7 @@ export default function VendorDetailPage() {
                                   </h4>
                                 </div>
                                 <div className="text-gray-700 mt-1 text-[14px]">
-                                  {listing.longDescription}
+                                  {truncate(listing.longDescription, 150)}
                                 </div>
                                 <div className="text-gray-500 text-sm mt-2 flex gap-4">
                                   <span className="flex items-center gap-1">
@@ -1217,13 +1256,6 @@ export default function VendorDetailPage() {
                           );
                         })}
                       </ul>
-                      {/* <button
-                        type="submit"
-                        disabled={selectedListings.length === 0}
-                        className="w-full py-4 rounded-full bg-accent text-accent-foreground font-semibold hover:opacity-90 transition disabled:opacity-50 disabled:cursor-not-allowed mt-4"
-                      >
-                        Book Selected ({selectedListings.length})
-                      </button> */}
                     </form>
                   )}
                 </div>
@@ -1358,8 +1390,18 @@ export default function VendorDetailPage() {
               <div className="mb-12">
                 <h2 className="text-xl font-semibold mb-4">About</h2>
                 <p className="text-muted-foreground whitespace-pre-wrap">
-                  {vendor.description}
+                  {showFullDescription || vendor.description.length <= 300
+                    ? vendor.description
+                    : vendor.description.slice(0, 300) + "..."}
                 </p>
+                {vendor.description.length > 300 && (
+                  <button
+                    className="mt-2 text-accent text-[14px] font-medium hover:underline hover:cursor-pointer focus:outline-none"
+                    onClick={() => setShowFullDescription((prev) => !prev)}
+                  >
+                    {showFullDescription ? "Show less" : "Read more"}
+                  </button>
+                )}
                 {/* Google Maps Embed */}
                 <div
                   ref={mapRef}
@@ -1454,7 +1496,7 @@ export default function VendorDetailPage() {
                       <Clock size={18} className="text-accent" /> Weekly
                       Schedule
                     </h3>
-                    {/* Collapsible schedule similar to provided design */}
+
                     <ScheduleDisplay
                       weeklySchedule={weeklySchedule}
                       expanded={scheduleExpanded}
@@ -1502,7 +1544,10 @@ export default function VendorDetailPage() {
                 </>
               )}
               {selectedListings.length > 0 && !showBookingForm && (
-                <div>
+                <div
+                  ref={bookingRef}
+                  className="flex flex-col mt-6 p-4 border rounded-lg bg-white"
+                >
                   <h3 className="text-lg font-bold mb-4">Selected Listings</h3>
                   <ul className="mb-4">
                     {selectedListingObjects.map((l) => (
@@ -1531,7 +1576,7 @@ export default function VendorDetailPage() {
 
               {/* Booking form modal/section */}
               {showBookingForm && (
-                <div>
+                <div ref={bookingRef}>
                   <h3 className="text-lg font-bold mb-4">Booking Details</h3>
                   {bookingError && (
                     <div className="mb-4 p-4 rounded-lg bg-red-100 text-red-700 text-sm">

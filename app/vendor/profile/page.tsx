@@ -39,7 +39,9 @@ import {
 import Image from "next/image";
 import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
-
+import SocialMediaModal, {
+  type SocialMediaData,
+} from "@/components/vendor/modals/SocialMediaModal";
 interface Provider {
   id: string;
   businessName: string;
@@ -79,6 +81,8 @@ interface Listing {
   minPrice: number | null;
   maxPrice: number | null;
   coverImageUrl: string | null;
+  price: number;
+  timeEstimate: string | null;
 }
 
 export default function VendorProfilePage() {
@@ -99,6 +103,7 @@ export default function VendorProfilePage() {
   const [bookingModalOpen, setBookingModalOpen] = useState(false);
   const [bookingPrefill, setBookingPrefill] = useState<BookingService[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
+  const [socialModalOpen, setSocialModalOpen] = useState(false);
 
   useEffect(() => {
     fetchProfile();
@@ -197,6 +202,27 @@ export default function VendorProfilePage() {
     }
   };
 
+  // Social Modal handler
+  const handleSaveSocialMedia = async (data: SocialMediaData) => {
+    try {
+      const res = await fetch("/api/vendor/profile", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          instagram: data.instagram,
+          facebook: data.facebook,
+          tiktok: data.tiktok,
+        }),
+      });
+      if (!res.ok) throw new Error("Failed to save social media links");
+      await fetchProfile();
+    } catch (err) {
+      throw new Error(
+        err instanceof Error ? err.message : "Failed to save social media links"
+      );
+    }
+  };
+
   // Photo modal handlers
   const handleAddPhoto = async (file: File) => {
     try {
@@ -281,7 +307,8 @@ export default function VendorProfilePage() {
         body: JSON.stringify({
           address: data.location,
           phonePublic: data.phone,
-          email: data.email,
+          website: data.website,
+          // email is not updated here since it's not editable
         }),
       });
 
@@ -345,6 +372,15 @@ export default function VendorProfilePage() {
       .join("")
       .toUpperCase()
       .slice(0, 2);
+  };
+
+  // Capitalize/Uppercase function for categories
+  const formatCategories = (cats?: string) => {
+    const str = (cats ?? "").trim();
+
+    if (!str) return ""; // avoid null/undefined
+
+    return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
   };
 
   if (isLoading) {
@@ -479,14 +515,16 @@ export default function VendorProfilePage() {
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
                   <h2
-                    className={`text-xl sm:text-2xl font-bold ${
+                    className={`text-xl sm:text-2xl mt-20 max-md:mt-0 font-bold ${
                       darkMode ? "text-white" : "text-gray-900"
                     }`}
                   >
                     {provider.businessName}
                   </h2>
                   <p className={darkMode ? "text-gray-400" : "text-gray-600"}>
-                    {provider.categories?.join(", ") || "Vendor"}
+                    {/* {provider.categories?.join(", ") || "Vendor"} */}
+                    {formatCategories(provider.categories.join(", ")) ||
+                      "Vendor"}
                   </p>
                   <div className="flex items-center gap-4 mt-2">
                     {provider.averageRating !== null && (
@@ -508,7 +546,8 @@ export default function VendorProfilePage() {
                       >
                         <MapPin size={16} />
                         <span>
-                          {provider.city}, {provider.postcode}
+                          {provider.address}, {provider.city},{" "}
+                          {provider.postcode}
                         </span>
                       </div>
                     )}
@@ -648,64 +687,73 @@ export default function VendorProfilePage() {
                   .map((listing) => (
                     <div
                       key={listing.id}
-                      className={`p-4 rounded-lg ${
+                      className={`flex gap-4 p-4 rounded-lg ${
                         darkMode
                           ? "bg-white/5 border-white/10 hover:border-accent/50"
                           : "bg-gray-50 border-gray-200 hover:border-accent/50"
-                      } border transition-colors group flex flex-col gap-2`}
+                      } border transition-colors group`}
                     >
-                      <div className="flex items-start justify-between mb-2">
+                      {/* Cover Image */}
+                      <div className="w-32 h-32 shrink-0 rounded-lg overflow-hidden bg-gray-200">
+                        {listing.coverImageUrl ? (
+                          <img
+                            src={listing.coverImageUrl}
+                            alt={listing.headline}
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center text-gray-400">
+                            No Image
+                          </div>
+                        )}
+                      </div>
+                      {/* Details */}
+                      <div className="flex-1 flex flex-col justify-between">
                         <div>
-                          <h4
-                            className={`font-medium ${
-                              darkMode ? "text-white" : "text-gray-900"
-                            }`}
-                          >
-                            {listing.headline}
-                          </h4>
-                          <p className="text-gray-500 text-sm mt-1 line-clamp-2">
+                          <div className="flex items-start justify-between">
+                            <h4
+                              className={`font-medium ${
+                                darkMode ? "text-white" : "text-gray-900"
+                              }`}
+                            >
+                              {listing.headline}
+                            </h4>
+                            <button
+                              onClick={() => {
+                                setEditingService(listing);
+                                setServiceModalOpen(true);
+                              }}
+                              className={`p-1.5 rounded ${
+                                darkMode
+                                  ? "hover:bg-white/10"
+                                  : "hover:bg-gray-200"
+                              } transition-all`}
+                            >
+                              <Edit3 size={14} className="text-gray-400" />
+                            </button>
+                          </div>
+                          <p className="text-accent font-bold text-lg mt-1">
+                            Price:{" "}
+                            {listing.price
+                              ? `${formatCurrency(listing.price)}`
+                              : "Price on request"}
+                          </p>
+                          {listing.timeEstimate && (
+                            <p className="text-sm text-gray-500 mt-1">
+                              <span className="font-semibold">
+                                Estimated time:
+                              </span>{" "}
+                              {listing.timeEstimate}
+                            </p>
+                          )}
+                          <p className="text-gray-500 text-sm mt-2 line-clamp-2">
                             {listing.longDescription || "No description"}
                           </p>
                         </div>
-                        <div className="flex flex-col gap-2 items-end">
-                          <button
-                            onClick={() => {
-                              setEditingService(listing);
-                              setServiceModalOpen(true);
-                            }}
-                            className={`opacity-0 group-hover:opacity-100 p-1.5 rounded ${
-                              darkMode
-                                ? "hover:bg-white/10"
-                                : "hover:bg-gray-200"
-                            } transition-all`}
-                          >
-                            <Edit3 size={14} className="text-gray-400" />
-                          </button>
-                          <button
-                            onClick={() => handleBookService(listing)}
-                            className="mt-2 px-4 py-1.5 rounded bg-accent text-white text-sm font-semibold hover:bg-accent/90 transition-colors"
-                          >
-                            Book
-                          </button>
-                        </div>
                       </div>
-                      <p className="text-accent font-bold text-lg">
-                        {listing.minPrice
-                          ? `${formatCurrency(listing.minPrice)}${
-                              listing.maxPrice
-                                ? ` - ${formatCurrency(listing.maxPrice)}`
-                                : "+"
-                            }`
-                          : "Price on request"}
-                      </p>
                     </div>
                   ))}
-                <button
-                  onClick={handleBookMultiple}
-                  className="w-full mt-4 py-2 rounded-lg bg-accent/10 text-accent font-semibold hover:bg-accent/20 transition-colors"
-                >
-                  Book Multiple Services
-                </button>
+
                 {/* Booking Modal */}
                 <BookingModal
                   isOpen={bookingModalOpen}
@@ -968,6 +1016,7 @@ export default function VendorProfilePage() {
                 Social Media
               </h3>
               <button
+                onClick={() => setSocialModalOpen(true)}
                 className={`p-2 rounded-lg ${
                   darkMode ? "hover:bg-white/10" : "hover:bg-gray-100"
                 } transition-colors`}
@@ -1041,7 +1090,7 @@ export default function VendorProfilePage() {
           </div>
 
           {/* Achievements */}
-          <div
+          {/* <div
             className={`${
               darkMode
                 ? "bg-[#141414] border-white/10"
@@ -1122,7 +1171,7 @@ export default function VendorProfilePage() {
                 </div>
               )}
             </div>
-          </div>
+          </div> */}
 
           {/* Pricing */}
           {provider.priceFrom && (
@@ -1170,6 +1219,9 @@ export default function VendorProfilePage() {
                 longDescription: editingService.longDescription || "",
                 minPrice: editingService.minPrice,
                 maxPrice: editingService.maxPrice,
+                price: editingService.price,
+                timeEstimate: editingService.timeEstimate || "",
+                coverImageUrl: editingService.coverImageUrl || "",
               }
             : undefined
         }
@@ -1205,7 +1257,24 @@ export default function VendorProfilePage() {
                 location: provider.address || "",
                 phone: provider.phonePublic || "",
                 email: provider.owner?.email || "",
-                experience: "",
+                website: provider.website || "",
+                // experience: provider.experience || "",
+              }
+            : undefined
+        }
+        darkMode={darkMode}
+      />
+
+      <SocialMediaModal
+        isOpen={socialModalOpen}
+        onClose={() => setSocialModalOpen(false)}
+        onSubmit={handleSaveSocialMedia}
+        initialData={
+          provider
+            ? {
+                instagram: provider.instagram || "",
+                facebook: provider.facebook || "",
+                tiktok: provider.tiktok || "",
               }
             : undefined
         }

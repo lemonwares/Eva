@@ -129,18 +129,15 @@ const STEPS: { id: OnboardingStep; title: string; description: string }[] = [
 
 // Category options (would normally come from API)
 const CATEGORY_OPTIONS = [
-  { id: "photography", name: "Photography" },
-  { id: "videography", name: "Videography" },
-  { id: "catering", name: "Catering" },
-  { id: "venue", name: "Venues" },
-  { id: "dj", name: "DJs & Music" },
-  { id: "decor", name: "Decoration" },
-  { id: "flowers", name: "Florists" },
-  { id: "cake", name: "Cakes & Desserts" },
-  { id: "makeup", name: "Hair & Makeup" },
-  { id: "planning", name: "Event Planning" },
-  { id: "transport", name: "Transportation" },
-  { id: "entertainment", name: "Entertainment" },
+  { id: "venues", name: "Venues" },
+  { id: "photographers", name: "Photographers" },
+  { id: "caterers", name: "Caterers" },
+  { id: "music-djs", name: "Music & DJs" },
+  { id: "florists", name: "Florists" },
+  { id: "event-planners", name: "Event Planners" },
+  { id: "bakers", name: "Bakers" },
+  { id: "decorators", name: "Decorators" },
+  { id: "makeup", name: "Makeup" },
 ];
 
 const CULTURE_TAGS = [
@@ -627,7 +624,7 @@ export default function VendorOnboardingPage() {
                   updateFormData({ businessName: e.target.value })
                 }
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-accent focus:border-transparent"
-                placeholder="e.g., Elite Photography Studios"
+                placeholder="e.g., Elite Photographers Studios"
               />
             </div>
 
@@ -941,14 +938,19 @@ export default function VendorOnboardingPage() {
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Portfolio Photos
               </label>
-              <p className="text-sm text-gray-500 mb-3">
+              <p className="text-sm text-gray-500 mb-1">
                 Upload your best work photos (minimum 4, up to 10)
+              </p>
+              <p className="text-xs text-gray-600 mb-3">
+                Please upload at least 4 images. All image formats are accepted.
+                Each image must not exceed 3MB.
               </p>
               <MultiImageUpload
                 values={formData.photos}
                 onChange={(urls) => updateFormData({ photos: urls })}
                 maxImages={10}
                 type="gallery"
+                maxSizeMB={3}
               />
               {formData.photos.length > 0 && formData.photos.length < 4 && (
                 <p className="text-sm text-red-500 mt-2">
@@ -1182,12 +1184,16 @@ export default function VendorOnboardingPage() {
                 <input
                   type="text"
                   value={listingDraft.headline}
+                  maxLength={50}
                   onChange={(e) =>
-                    handleDraftChange({ headline: e.target.value })
+                    handleDraftChange({ headline: e.target.value.slice(0, 50) })
                   }
                   className="w-full px-3 py-2 border rounded-lg"
-                  placeholder="e.g., Gold Wedding Photography Package"
+                  placeholder="e.g., Gold Wedding Photographers Package"
                 />
+                <div className="text-xs text-gray-500 text-right mt-1">
+                  {50 - listingDraft.headline.length} characters left
+                </div>
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -1240,24 +1246,20 @@ export default function VendorOnboardingPage() {
                 <textarea
                   value={listingDraft.longDescription}
                   onChange={(e) =>
-                    handleDraftChange({ longDescription: e.target.value })
+                    handleDraftChange({
+                      longDescription: e.target.value.slice(0, 150),
+                    })
                   }
                   rows={3}
+                  maxLength={150}
                   className="w-full px-3 py-2 border rounded-lg"
                   placeholder="Describe this service/package in detail"
                 />
+                <div className="text-xs text-gray-500 text-right mt-1">
+                  {150 - listingDraft.longDescription.length} characters left
+                </div>
               </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Gallery Images
-                </label>
-                <MultiImageUpload
-                  values={listingDraft.galleryUrls}
-                  onChange={(urls) => handleDraftChange({ galleryUrls: urls })}
-                  maxImages={6}
-                  type="gallery"
-                />
-              </div>
+
               <button
                 type="button"
                 onClick={handleAddListing}

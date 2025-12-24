@@ -16,7 +16,8 @@ export interface BusinessInfoData {
   location: string;
   phone: string;
   email: string;
-  experience: string;
+  experience?: string;
+  website?: string;
 }
 
 export default function InfoModal({
@@ -32,6 +33,7 @@ export default function InfoModal({
       phone: "",
       email: "",
       experience: "",
+      website: "",
     }
   );
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -56,7 +58,9 @@ export default function InfoModal({
       await onSubmit(formData);
       onClose();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to save information");
+      setError(
+        err instanceof Error ? err.message : "Failed to save information"
+      );
     } finally {
       setIsSubmitting(false);
     }
@@ -99,7 +103,9 @@ export default function InfoModal({
           >
             <div
               className={`${
-                darkMode ? "bg-[#1a1a1a] border-white/10" : "bg-white border-gray-200"
+                darkMode
+                  ? "bg-[#1a1a1a] border-white/10"
+                  : "bg-white border-gray-200"
               } rounded-2xl border w-full max-w-md max-h-[90vh] overflow-y-auto`}
             >
               {/* Header */}
@@ -184,7 +190,7 @@ export default function InfoModal({
                   />
                 </div>
 
-                <div>
+                {/* <div>
                   <label
                     className={`block text-sm font-medium mb-2 ${
                       darkMode ? "text-gray-300" : "text-gray-700"
@@ -206,7 +212,7 @@ export default function InfoModal({
                     } focus:outline-none`}
                     disabled={isSubmitting}
                   />
-                </div>
+                </div> */}
 
                 <div>
                   <label
@@ -214,15 +220,15 @@ export default function InfoModal({
                       darkMode ? "text-gray-300" : "text-gray-700"
                     }`}
                   >
-                    Years of Experience
+                    Website URL
                   </label>
                   <input
                     type="text"
-                    value={formData.experience}
+                    value={formData.website}
                     onChange={(e) =>
-                      setFormData({ ...formData, experience: e.target.value })
+                      setFormData({ ...formData, website: e.target.value })
                     }
-                    placeholder="e.g., 5 years"
+                    placeholder="e.g., https://example.com"
                     className={`w-full px-4 py-2.5 rounded-lg border transition-colors ${
                       darkMode
                         ? "bg-white/5 border-white/10 text-white placeholder-gray-500 focus:border-accent focus:ring-1 focus:ring-accent/30"
@@ -250,7 +256,9 @@ export default function InfoModal({
                     disabled={isSubmitting}
                     className="flex-1 px-4 py-2.5 rounded-lg font-medium bg-accent text-white hover:bg-accent/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                   >
-                    {isSubmitting && <Loader2 className="w-4 h-4 animate-spin" />}
+                    {isSubmitting && (
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    )}
                     Save Information
                   </button>
                 </div>

@@ -73,7 +73,6 @@ export async function POST(request: NextRequest) {
   }
 }
 
-// GET /api/categories - List all categories (public)
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = request.nextUrl;
@@ -81,11 +80,11 @@ export async function GET(request: NextRequest) {
     const withSubcategories = searchParams.get("withSubcategories") === "true";
 
     const filters: any = {};
-
     if (featured) {
       filters.isFeatured = true;
     }
 
+    // Fetch all categories
     const categories = await prisma.category.findMany({
       where: filters,
       include: withSubcategories
@@ -105,7 +104,23 @@ export async function GET(request: NextRequest) {
       orderBy: { displayOrder: "asc" },
     });
 
-    return NextResponse.json(categories);
+    // For each category, count providers whose categories array contains the category slug
+    const categoriesWithVendorCount = await Promise.all(
+      categories.map(async (cat) => {
+        const vendorCount = await prisma.provider.count({
+          where: {
+            categories: { has: cat.slug },
+            isPublished: true, // Optional: only count published vendors
+          },
+        });
+        return {
+          ...cat,
+          vendorCount,
+        };
+      })
+    );
+
+    return NextResponse.json(categoriesWithVendorCount);
   } catch (error: any) {
     console.error("Error fetching categories:", error);
     return NextResponse.json(
