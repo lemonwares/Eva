@@ -333,6 +333,7 @@ export default function VendorDetailPage() {
   const [recommendations, setRecommendations] = useState<Provider[]>([]);
   const [isRecommendationsLoading, setIsRecommendationsLoading] =
     useState(false);
+  const [recommendationsError, setRecommendationsError] = useState<string>("");
 
   function handleListingToggle(listingId: string) {
     setSelectedListings((prev) =>
@@ -641,8 +642,8 @@ export default function VendorDetailPage() {
 
   async function fetchRecommendations() {
     if (!vendor?.geoLat || !vendor?.geoLng) return;
-
     setIsRecommendationsLoading(true);
+    setRecommendationsError("");
     try {
       const params = new URLSearchParams({
         lat: vendor.geoLat.toString(),
@@ -650,16 +651,18 @@ export default function VendorDetailPage() {
         excludeId: vendor.id,
         limit: "4",
       });
-
       const res = await fetch(
         `/api/providers/recommendations?${params.toString()}`
       );
-      if (res.ok) {
-        const data = await res.json();
-        setRecommendations(data.providers || []);
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.message || "Failed to fetch recommendations");
       }
-    } catch (err) {
-      console.error("Failed to fetch recommendations", err);
+      const data = await res.json();
+      setRecommendations(data.providers || []);
+    } catch (err: any) {
+      setRecommendationsError(err.message || "Failed to fetch recommendations");
+      setRecommendations([]);
     } finally {
       setIsRecommendationsLoading(false);
     }
@@ -1390,7 +1393,8 @@ export default function VendorDetailPage() {
               <div className="mb-12">
                 <h2 className="text-xl font-semibold mb-4">About</h2>
                 <p className="text-muted-foreground whitespace-pre-wrap">
-                  {showFullDescription || (vendor.description?.length || 0) <= 300
+                  {showFullDescription ||
+                  (vendor.description?.length || 0) <= 300
                     ? vendor.description
                     : vendor.description?.slice(0, 300) + "..."}
                 </p>
@@ -1939,18 +1943,38 @@ export default function VendorDetailPage() {
       )}
 
       {/* Recommendations Section */}
-      {recommendations.length > 0 && (
-        <section className="bg-muted/30 py-16 border-t border-border">
-          <div className="max-w-7xl mx-auto px-4">
-            <h2 className="text-2xl font-bold mb-8">Nearby Vendors</h2>
+      <section
+        className="bg-muted/30 py-16 border-t border-border"
+        aria-labelledby="nearby-vendors-heading"
+      >
+        <div className="max-w-7xl mx-auto px-4">
+          <h2 id="nearby-vendors-heading" className="text-2xl font-bold mb-8">
+            Nearby Vendors
+          </h2>
+          {isRecommendationsLoading ? (
+            <div className="flex justify-center items-center min-h-[120px]">
+              <Loader2 className="h-8 w-8 animate-spin text-accent" />
+              <span className="ml-3 text-muted-foreground">
+                Loading recommendations...
+              </span>
+            </div>
+          ) : recommendationsError ? (
+            <div className="text-red-600 text-center min-h-20">
+              {recommendationsError}
+            </div>
+          ) : recommendations.length === 0 ? (
+            <div className="text-muted-foreground text-center min-h-20">
+              No nearby vendors found.
+            </div>
+          ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
               {recommendations.map((rec) => (
                 <VendorCard key={rec.id} vendor={rec} />
               ))}
             </div>
-          </div>
-        </section>
-      )}
+          )}
+        </div>
+      </section>
 
       <Footer />
     </div>
