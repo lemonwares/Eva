@@ -48,10 +48,10 @@ export const emailTemplates = {
     name: string,
     message: string,
     referenceId: string,
-    dashboardUrl: string = "https://evamarketplace.vercel.app/dashboard",
-    helpUrl: string = "https://evamarketplace.vercel.app/help",
-    termsUrl: string = "https://evamarketplace.vercel.app/terms",
-    privacyUrl: string = "https://evamarketplace.vercel.app/privacy"
+    dashboardUrl: string = "https://evalocal.com/dashboard",
+    helpUrl: string = "https://evalocal.com/help",
+    termsUrl: string = "https://evalocal.com/terms",
+    privacyUrl: string = "https://evalocal.com/privacy"
   ): string => {
     const template = loadTemplate("contactsupport.html");
     return replaceVariables(template, {
