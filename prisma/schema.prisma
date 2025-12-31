@@ -161,6 +161,10 @@ model Provider {
   subcategories        String[] // Array of subcategory IDs
   cultureTraditionTags String[] @map("culture_tradition_tags")
 
+  // Search & SEO
+  slug String?  @unique @map("slug") // URL-friendly identifier
+  tags String[] @default([]) // General searchable tags
+
   // Location & Radius
   serviceRadiusMiles Float   @map("service_radius_miles")
   address            String?
@@ -224,6 +228,8 @@ model Provider {
   @@index([categories])
   @@index([averageRating])
   @@index([priceFrom])
+  @@index([slug])
+  @@index([tags])
   @@map("providers")
 }
 

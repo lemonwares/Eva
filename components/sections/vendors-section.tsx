@@ -379,12 +379,12 @@ export default function VendorsSection() {
 
           {/* Horizontal Scrollable Gallery */}
           {!isLoading && (
-            <div className="relative group">
+            <div className="relative">
               {/* Left Navigation Arrow */}
               {showLeftArrow && (
                 <button
                   onClick={() => scrollContainer("left")}
-                  className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-4 z-10 h-12 w-12 rounded-full bg-white dark:bg-gray-800 shadow-xl border border-border/20 flex items-center justify-center hover:bg-accent hover:text-white hover:border-accent transition-all duration-300 hover:scale-110 opacity-0 group-hover:opacity-100"
+                  className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-4 z-10 h-12 w-12 rounded-full bg-white dark:bg-gray-800 shadow-xl border border-border/20 flex items-center justify-center hover:bg-accent hover:text-white hover:border-accent transition-all duration-300 hover:scale-110"
                   aria-label="Previous vendors"
                 >
                   <ArrowRight className="h-5 w-5 rotate-180" />
@@ -395,7 +395,7 @@ export default function VendorsSection() {
               {showRightArrow && (
                 <button
                   onClick={() => scrollContainer("right")}
-                  className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-4 z-10 h-12 w-12 rounded-full bg-white dark:bg-gray-800 shadow-xl border border-border/20 flex items-center justify-center hover:bg-accent hover:text-white hover:border-accent transition-all duration-300 hover:scale-110 opacity-0 group-hover:opacity-100"
+                  className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-4 z-10 h-12 w-12 rounded-full bg-white dark:bg-gray-800 shadow-xl border border-border/20 flex items-center justify-center hover:bg-accent hover:text-white hover:border-accent transition-all duration-300 hover:scale-110"
                   aria-label="Next vendors"
                 >
                   <ArrowRight className="h-5 w-5" />
@@ -413,38 +413,43 @@ export default function VendorsSection() {
                   onMouseUp={handleMouseUpOrLeave}
                 >
                   {vendors.map((vendor) => (
-                    <div key={vendor.id} className="relative group">
-                      {/* Action Buttons (not inside Link) */}
-                      <div className="flex gap-2 items-center absolute top-4 right-4 z-20 rounded-full p-2">
-                        {user && (
-                          <FavoriteButton
-                            providerId={vendor.id}
-                            initialFavorited={favorites.has(vendor.id)}
-                            variant="outline"
-                            className="text-accent"
-                            onToggle={(isFav) => toggleFavorite(vendor.id)}
-                          />
-                        )}
-                        <ShareButton
-                          url={`${
-                            typeof window !== "undefined"
-                              ? window.location.origin
-                              : ""
-                          }/vendors/${vendor.id}`}
-                          title={vendor.title}
-                          description={`Check out this vendor: ${vendor.title}`}
-                          variant="ghost"
-                          className="text-white hover:text-accent transition-colors duration-300 ease-in-out"
-                        />
-                      </div>
+                    <div key={vendor.id} className="relative">
                       <Link
                         href={
                           isUsingFallback ? "/vendors" : `/vendors/${vendor.id}`
                         }
-                        className="group"
+                        className="group block"
                         tabIndex={0}
                         aria-label={`View details for ${vendor.title}`}
                       >
+                        {/* Action Buttons (positioned absolutely within the Link) */}
+                        <div className="flex gap-2 items-center absolute top-4 right-4 z-20 rounded-full p-2">
+                          {user && (
+                            <div onClick={(e) => e.preventDefault()}>
+                              <FavoriteButton
+                                providerId={vendor.id}
+                                initialFavorited={favorites.has(vendor.id)}
+                                variant="outline"
+                                className="text-accent"
+                                onToggle={(isFav) => toggleFavorite(vendor.id)}
+                              />
+                            </div>
+                          )}
+                          <div onClick={(e) => e.preventDefault()}>
+                            <ShareButton
+                              url={`${
+                                typeof window !== "undefined"
+                                  ? window.location.origin
+                                  : ""
+                              }/vendors/${vendor.id}`}
+                              title={vendor.title}
+                              description={`Check out this vendor: ${vendor.title}`}
+                              variant="ghost"
+                              className="text-white hover:text-accent transition-colors duration-300 ease-in-out"
+                            />
+                          </div>
+                        </div>
+
                         <div className="relative aspect-square overflow-hidden rounded-2xl border border-border/70 bg-muted/50 shadow-lg transition duration-500 group-hover:-translate-y-1 group-hover:shadow-2xl">
                           <div
                             className="absolute inset-0 bg-cover bg-center transition duration-700 group-hover:scale-110"
@@ -487,14 +492,15 @@ export default function VendorsSection() {
                             </div>
                           </div>
                         </div>
-                      </Link>
-                      {/* Card Footer */}
-                      <div className="mt-3 px-1">
-                        <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                          <MapPin className="h-4 w-4" />
-                          <span>{vendor.city || "UK"}</span>
+
+                        {/* Card Footer */}
+                        <div className="mt-3 px-1">
+                          <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                            <MapPin className="h-4 w-4" />
+                            <span>{vendor.city || "UK"}</span>
+                          </div>
                         </div>
-                      </div>
+                      </Link>
                     </div>
                   ))}
                 </div>

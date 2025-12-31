@@ -4,9 +4,9 @@
 
 import { useState, useEffect, useCallback, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
+import { useSession } from "next-auth/react";
 import Header from "@/components/common/Header";
 import Footer from "@/components/common/Footer";
-import Image from "next/image";
 import Link from "next/link";
 import {
   Search,
@@ -14,14 +14,18 @@ import {
   Star,
   Filter,
   X,
-  ChevronDown,
   Grid,
   List,
   Loader2,
   SlidersHorizontal,
-  Heart,
+  Hash,
+  Link2,
 } from "lucide-react";
 import { formatCurrency } from "@/lib/formatters";
+import TagInput from "@/components/ui/TagInput";
+import SearchModeToggle from "@/components/ui/SearchModeToggle";
+import EnhancedSearchInput from "@/components/ui/EnhancedSearchInput";
+import SearchResultCard from "@/components/ui/SearchResultCard";
 
 interface Provider {
   id: string;
@@ -59,11 +63,16 @@ interface SearchFilters {
   maxPrice: string;
   minRating: string;
   sortBy: string;
+  // Enhanced search fields
+  tags: string[];
+  slug: string;
+  searchType: "text" | "tags" | "slug" | "all";
 }
 
 function SearchPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { data: session, status } = useSession();
 
   const [providers, setProviders] = useState<Provider[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
@@ -82,6 +91,9 @@ function SearchPageContent() {
     [id: string]: boolean;
   }>({});
 
+  // Enhanced search state
+  const [availableTags, setAvailableTags] = useState<string[]>([]);
+
   const [filters, setFilters] = useState<SearchFilters>({
     query: searchParams.get("q") || "",
     category: searchParams.get("category") || "",
@@ -90,6 +102,10 @@ function SearchPageContent() {
     maxPrice: searchParams.get("maxPrice") || "",
     minRating: searchParams.get("minRating") || "",
     sortBy: searchParams.get("sortBy") || "relevance",
+    // Enhanced search fields
+    tags: searchParams.get("tags")?.split(",").filter(Boolean) || [],
+    slug: searchParams.get("slug") || "",
+    searchType: (searchParams.get("searchType") as any) || "all",
   });
 
   // Fetch categories and cities for filters
@@ -121,6 +137,11 @@ function SearchPageContent() {
 
   useEffect(() => {
     async function fetchFavorites() {
+      // Only fetch favorites if user is authenticated
+      if (status !== "authenticated") {
+        return;
+      }
+
       try {
         const res = await fetch("/api/favorites");
         if (res.ok) {
@@ -129,10 +150,26 @@ function SearchPageContent() {
           setFavoriteIds(new Set(ids));
         }
       } catch (err) {
-        // Ignore errors (user may be unauthenticated)
+        console.error("Error fetching favorites:", err);
       }
     }
     fetchFavorites();
+  }, [status]);
+
+  // Fetch available tags for autocomplete
+  useEffect(() => {
+    async function fetchTags() {
+      try {
+        const res = await fetch("/api/tags?type=popular&limit=100");
+        if (res.ok) {
+          const data = await res.json();
+          setAvailableTags(data.tags || []);
+        }
+      } catch (err) {
+        console.error("Error fetching tags:", err);
+      }
+    }
+    fetchTags();
   }, []);
 
   // Search providers
@@ -143,7 +180,15 @@ function SearchPageContent() {
 
       try {
         const params = new URLSearchParams();
+
+        // Enhanced search parameters
         if (filters.query) params.set("q", filters.query);
+        if (filters.tags.length > 0) params.set("tags", filters.tags.join(","));
+        if (filters.slug) params.set("slug", filters.slug);
+        if (filters.searchType !== "all")
+          params.set("searchType", filters.searchType);
+
+        // Existing parameters
         if (filters.category) params.set("category", filters.category);
         if (filters.city) params.set("city", filters.city);
         if (filters.minPrice) params.set("minPrice", filters.minPrice);
@@ -161,8 +206,8 @@ function SearchPageContent() {
           } else {
             setProviders((prev) => [...prev, ...(data.providers || [])]);
           }
-          setTotalResults(data.total || 0);
-          setHasMore(data.hasMore || false);
+          setTotalResults(data.meta?.total || data.total || 0);
+          setHasMore(data.meta?.hasMore || data.hasMore || false);
           if (resetPage) setPage(1);
         }
       } catch (error) {
@@ -183,12 +228,19 @@ function SearchPageContent() {
     filters.maxPrice,
     filters.minRating,
     filters.sortBy,
+    filters.tags,
+    filters.slug,
+    filters.searchType,
   ]);
 
   // Update URL when filters change
   useEffect(() => {
     const params = new URLSearchParams();
     if (filters.query) params.set("q", filters.query);
+    if (filters.tags.length > 0) params.set("tags", filters.tags.join(","));
+    if (filters.slug) params.set("slug", filters.slug);
+    if (filters.searchType !== "all")
+      params.set("searchType", filters.searchType);
     if (filters.category) params.set("category", filters.category);
     if (filters.city) params.set("city", filters.city);
     if (filters.minPrice) params.set("minPrice", filters.minPrice);
@@ -200,8 +252,8 @@ function SearchPageContent() {
     router.replace(newUrl, { scroll: false });
   }, [filters, router]);
 
-  const handleSearch = (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSearch = (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
     searchProviders(true);
   };
 
@@ -214,6 +266,9 @@ function SearchPageContent() {
       maxPrice: "",
       minRating: "",
       sortBy: "relevance",
+      tags: [],
+      slug: "",
+      searchType: "all",
     });
   };
 
@@ -222,7 +277,9 @@ function SearchPageContent() {
     filters.city ||
     filters.minPrice ||
     filters.maxPrice ||
-    filters.minRating;
+    filters.minRating ||
+    filters.tags.length > 0 ||
+    filters.slug;
 
   const loadMore = () => {
     setPage((prev) => prev + 1);
@@ -241,54 +298,143 @@ function SearchPageContent() {
               Find Your Perfect Vendor
             </h1>
 
-            {/* Search Bar */}
-            <form onSubmit={handleSearch} className="flex gap-3 mb-4">
-              <div className="flex-1 relative">
-                <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground w-5 h-5" />
-                <input
-                  type="text"
-                  placeholder="Search vendors, services, or locations..."
-                  value={filters.query}
-                  onChange={(e) =>
-                    setFilters((prev) => ({ ...prev, query: e.target.value }))
+            {/* Enhanced Search Bar */}
+            <form onSubmit={handleSearch} className="space-y-4 mb-4">
+              {/* Search Mode Toggle */}
+              <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center">
+                <SearchModeToggle
+                  value={filters.searchType}
+                  onChange={(mode) =>
+                    setFilters((prev) => ({ ...prev, searchType: mode }))
                   }
-                  className="w-full pl-12 pr-4 py-3 rounded-xl border border-border bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-accent"
+                  className="shrink-0"
                 />
+                <div className="text-xs text-muted-foreground">
+                  {filters.searchType === "all" && "Search across all fields"}
+                  {filters.searchType === "text" &&
+                    "Search names & descriptions"}
+                  {filters.searchType === "tags" && "Search by category tags"}
+                  {filters.searchType === "slug" && "Direct vendor lookup"}
+                </div>
               </div>
-              <button
-                type="submit"
-                className="px-6 py-3 bg-accent text-accent-foreground rounded-xl font-semibold hover:opacity-90 transition"
-              >
-                Search
-              </button>
-              <button
-                type="button"
-                onClick={() => setShowFilters(!showFilters)}
-                className="px-4 py-3 border border-border rounded-xl flex items-center gap-2 hover:bg-muted transition md:hidden"
-              >
-                <SlidersHorizontal className="w-5 h-5" />
-              </button>
+
+              <div className="flex gap-3">
+                {/* Main Search Input */}
+                {filters.searchType === "tags" ? (
+                  <TagInput
+                    value={filters.tags}
+                    onChange={(tags) =>
+                      setFilters((prev) => ({ ...prev, tags }))
+                    }
+                    suggestions={availableTags}
+                    placeholder="Add tags: wedding, photography, indian..."
+                    className="flex-1"
+                  />
+                ) : filters.searchType === "slug" ? (
+                  <EnhancedSearchInput
+                    value={filters.slug}
+                    onChange={(value) =>
+                      setFilters((prev) => ({ ...prev, slug: value }))
+                    }
+                    searchType={filters.searchType}
+                    onSubmit={() => handleSearch()}
+                    loading={loading}
+                    className="flex-1"
+                  />
+                ) : (
+                  <EnhancedSearchInput
+                    value={filters.query}
+                    onChange={(value) =>
+                      setFilters((prev) => ({ ...prev, query: value }))
+                    }
+                    searchType={filters.searchType}
+                    onSubmit={() => handleSearch()}
+                    loading={loading}
+                    className="flex-1"
+                  />
+                )}
+
+                <button
+                  type="submit"
+                  className="px-6 py-3 bg-accent text-accent-foreground rounded-xl font-semibold hover:opacity-90 transition"
+                >
+                  Search
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShowFilters(!showFilters)}
+                  className="px-4 py-3 border border-border rounded-xl flex items-center gap-2 hover:bg-muted transition md:hidden"
+                >
+                  <SlidersHorizontal className="w-5 h-5" />
+                </button>
+              </div>
+
+              {/* Active Search Indicators */}
+              {(filters.tags.length > 0 ||
+                filters.slug ||
+                (filters.query && filters.searchType !== "all")) && (
+                <div className="flex flex-wrap items-center gap-2 text-sm">
+                  <span className="text-muted-foreground">Active search:</span>
+
+                  {filters.searchType === "tags" && filters.tags.length > 0 && (
+                    <div className="flex items-center gap-1 px-2 py-1 bg-accent/10 text-accent rounded-full">
+                      <Hash className="w-3 h-3" />
+                      <span>
+                        {filters.tags.length} tag
+                        {filters.tags.length > 1 ? "s" : ""}
+                      </span>
+                    </div>
+                  )}
+
+                  {filters.searchType === "slug" && filters.slug && (
+                    <div className="flex items-center gap-1 px-2 py-1 bg-blue-100 text-blue-700 rounded-full">
+                      <Link2 className="w-3 h-3" />
+                      <span>Slug: {filters.slug}</span>
+                    </div>
+                  )}
+
+                  {filters.searchType === "text" && filters.query && (
+                    <div className="flex items-center gap-1 px-2 py-1 bg-green-100 text-green-700 rounded-full">
+                      <Search className="w-3 h-3" />
+                      <span>Text: "{filters.query}"</span>
+                    </div>
+                  )}
+                </div>
+              )}
             </form>
 
-            {/* Results count and view toggle */}
-            <div className="flex items-center justify-between">
-              <p className="text-muted-foreground">
-                {loading ? (
-                  "Searching..."
-                ) : providers.length > 0 ? (
-                  <>
-                    <span className="font-semibold text-foreground">
-                      {providers.length}
-                    </span>{" "}
-                    vendors found
-                  </>
-                ) : (
-                  <>
-                    <span className="font-semibold text-foreground">0</span>{" "}
-                    vendors found
-                  </>
+            {/* Enhanced Results count and view toggle */}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div className="flex flex-col sm:flex-row sm:items-center gap-2">
+                <p className="text-muted-foreground">
+                  {loading ? (
+                    "Searching..."
+                  ) : providers.length > 0 ? (
+                    <>
+                      <span className="font-semibold text-foreground">
+                        {providers.length}
+                      </span>{" "}
+                      vendors found
+                    </>
+                  ) : (
+                    <>
+                      <span className="font-semibold text-foreground">0</span>{" "}
+                      vendors found
+                    </>
+                  )}
+                </p>
+
+                {/* Search type indicator */}
+                {!loading && providers.length > 0 && (
+                  <span className="text-xs text-muted-foreground">
+                    via{" "}
+                    {filters.searchType === "all"
+                      ? "combined"
+                      : filters.searchType}{" "}
+                    search
+                  </span>
                 )}
-              </p>
+              </div>
               <div className="flex items-center gap-2">
                 {/* Sort dropdown */}
                 <select
@@ -493,151 +639,64 @@ function SearchPageContent() {
                 <>
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                     {providers.map((provider) => (
-                      <Link
+                      <SearchResultCard
                         key={provider.id}
-                        href={`/vendors/${provider.id}`}
-                        className="group block rounded-xl border border-border bg-card overflow-hidden hover:shadow-lg transition-all"
-                      >
-                        {/* Image */}
-                        <div className="relative aspect-4/3 overflow-hidden">
-                          {provider.coverImage ? (
-                            <Image
-                              src={provider.coverImage}
-                              alt={provider.businessName}
-                              fill
-                              className="object-cover group-hover:scale-105 transition-transform duration-300"
-                            />
-                          ) : (
-                            <div className="w-full h-full bg-linear-to-br from-pink-400 to-purple-500 flex items-center justify-center">
-                              <span className="text-4xl font-bold text-white">
-                                {provider.businessName.charAt(0)}
-                              </span>
-                            </div>
-                          )}
+                        provider={provider}
+                        viewMode="grid"
+                        isFavorite={favoriteIds.has(provider.id)}
+                        onToggleFavorite={async () => {
+                          setFavoriteLoading((prev) => ({
+                            ...prev,
+                            [provider.id]: true,
+                          }));
 
-                          {/* Badges */}
-                          <div className="absolute top-3 left-3 flex gap-2">
-                            {provider.isFeatured && (
-                              <span className="px-2 py-1 text-xs font-medium bg-yellow-400 text-yellow-900 rounded-full">
-                                Featured
-                              </span>
-                            )}
-                            {provider.isVerified && (
-                              <span className="px-2 py-1 text-xs font-medium bg-green-100 text-green-700 rounded-full">
-                                Verified
-                              </span>
-                            )}
-                          </div>
-
-                          {/* Favorite button */}
-                          <button
-                            onClick={async (e) => {
-                              e.preventDefault();
-                              setFavoriteLoading((prev) => ({
-                                ...prev,
-                                [provider.id]: true,
-                              }));
-                              if (!favoriteIds.has(provider.id)) {
-                                // Add to favorites
-                                try {
-                                  const res = await fetch("/api/favorites", {
-                                    method: "POST",
-                                    headers: {
-                                      "Content-Type": "application/json",
-                                    },
-                                    body: JSON.stringify({
-                                      providerId: provider.id,
-                                    }),
-                                  });
-                                  if (res.ok) {
-                                    setFavoriteIds((prev) =>
-                                      new Set(prev).add(provider.id)
-                                    );
-                                  }
-                                } catch {}
-                              } else {
-                                // Remove from favorites
-                                try {
-                                  const res = await fetch(
-                                    `/api/favorites/${provider.id}`,
-                                    {
-                                      method: "DELETE",
-                                    }
-                                  );
-                                  if (res.ok) {
-                                    setFavoriteIds((prev) => {
-                                      const newSet = new Set(prev);
-                                      newSet.delete(provider.id);
-                                      return newSet;
-                                    });
-                                  }
-                                } catch {}
+                          try {
+                            if (!favoriteIds.has(provider.id)) {
+                              // Add to favorites
+                              const res = await fetch("/api/favorites", {
+                                method: "POST",
+                                headers: {
+                                  "Content-Type": "application/json",
+                                },
+                                body: JSON.stringify({
+                                  providerId: provider.id,
+                                }),
+                              });
+                              if (res.ok) {
+                                setFavoriteIds((prev) =>
+                                  new Set(prev).add(provider.id)
+                                );
                               }
-                              setFavoriteLoading((prev) => ({
-                                ...prev,
-                                [provider.id]: false,
-                              }));
-                            }}
-                            className="absolute top-3 right-3 p-2 bg-white/90 backdrop-blur-sm rounded-full hover:bg-white transition"
-                            aria-label={
-                              favoriteIds.has(provider.id)
-                                ? "Remove from favorites"
-                                : "Add to favorites"
+                            } else {
+                              // Remove from favorites
+                              const res = await fetch(
+                                `/api/favorites/${provider.id}`,
+                                {
+                                  method: "DELETE",
+                                }
+                              );
+                              if (res.ok) {
+                                setFavoriteIds((prev) => {
+                                  const newSet = new Set(prev);
+                                  newSet.delete(provider.id);
+                                  return newSet;
+                                });
+                              }
                             }
-                            disabled={favoriteLoading[provider.id]}
-                          >
-                            {favoriteLoading[provider.id] ? (
-                              <Loader2 className="w-4 h-4 animate-spin text-accent" />
-                            ) : (
-                              <Heart
-                                className={`w-4 h-4 ${
-                                  favoriteIds.has(provider.id)
-                                    ? "fill-red-500 text-red-500"
-                                    : "text-gray-600"
-                                }`}
-                              />
-                            )}
-                          </button>
-                        </div>
-
-                        {/* Content */}
-                        <div className="p-4">
-                          <h3 className="font-semibold text-foreground mb-1 group-hover:text-accent transition-colors">
-                            {provider.businessName}
-                          </h3>
-
-                          {provider.city && (
-                            <div className="flex items-center gap-1 text-sm text-muted-foreground mb-2">
-                              <MapPin className="w-3.5 h-3.5" />
-                              <span>{provider.city}</span>
-                            </div>
-                          )}
-
-                          <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-1">
-                              <Star
-                                className="w-5 h-5 text-yellow-500 fill-yellow-500 drop-shadow"
-                                fill="currentColor"
-                              />
-                              <span className="text-base font-bold text-foreground">
-                                {provider.averageRating &&
-                                provider.averageRating > 0
-                                  ? provider.averageRating.toFixed(1)
-                                  : "New"}
-                              </span>
-                              <span className="text-xs text-muted-foreground ml-1">
-                                ({provider.reviewCount} reviews)
-                              </span>
-                            </div>
-
-                            {provider.priceFrom && (
-                              <span className="text-sm font-medium text-foreground">
-                                From {formatCurrency(provider?.priceFrom || 0)}
-                              </span>
-                            )}
-                          </div>
-                        </div>
-                      </Link>
+                          } catch (error) {
+                            console.error("Error toggling favorite:", error);
+                          } finally {
+                            setFavoriteLoading((prev) => ({
+                              ...prev,
+                              [provider.id]: false,
+                            }));
+                          }
+                        }}
+                        favoriteLoading={favoriteLoading[provider.id] || false}
+                        searchType={filters.searchType}
+                        showFavoriteButton={status === "authenticated"}
+                        // searchQuery={filters.query}
+                      />
                     ))}
                   </div>
 
@@ -662,158 +721,64 @@ function SearchPageContent() {
                 <>
                   <div className="space-y-4">
                     {providers.map((provider) => (
-                      <Link
+                      <SearchResultCard
                         key={provider.id}
-                        href={`/vendors/${provider.id}`}
-                        className="group flex gap-4 p-4 rounded-xl border border-border bg-card hover:shadow-lg transition-all"
-                      >
-                        {/* Image */}
-                        <div className="relative w-32 sm:w-48 aspect-square rounded-lg overflow-hidden shrink-0">
-                          {provider.coverImage ? (
-                            <Image
-                              src={provider.coverImage}
-                              alt={provider.businessName}
-                              fill
-                              className="object-cover"
-                            />
-                          ) : (
-                            <div className="w-full h-full bg-linear-to-br from-pink-400 to-purple-500 flex items-center justify-center">
-                              <span className="text-2xl font-bold text-white">
-                                {provider.businessName.charAt(0)}
-                              </span>
-                            </div>
-                          )}
-                        </div>
+                        provider={provider}
+                        viewMode="list"
+                        isFavorite={favoriteIds.has(provider.id)}
+                        onToggleFavorite={async () => {
+                          setFavoriteLoading((prev) => ({
+                            ...prev,
+                            [provider.id]: true,
+                          }));
 
-                        {/* Content */}
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-start justify-between gap-4 mb-2">
-                            {/* Favorite button (list view) */}
-                            <button
-                              onClick={async (e) => {
-                                e.preventDefault();
-                                setFavoriteLoading((prev) => ({
-                                  ...prev,
-                                  [provider.id]: true,
-                                }));
-                                if (!favoriteIds.has(provider.id)) {
-                                  // Add to favorites
-                                  try {
-                                    const res = await fetch("/api/favorites", {
-                                      method: "POST",
-                                      headers: {
-                                        "Content-Type": "application/json",
-                                      },
-                                      body: JSON.stringify({
-                                        providerId: provider.id,
-                                      }),
-                                    });
-                                    if (res.ok) {
-                                      setFavoriteIds((prev) =>
-                                        new Set(prev).add(provider.id)
-                                      );
-                                    }
-                                  } catch {}
-                                } else {
-                                  // Remove from favorites
-                                  try {
-                                    const res = await fetch(
-                                      `/api/favorites/${provider.id}`,
-                                      {
-                                        method: "DELETE",
-                                      }
-                                    );
-                                    if (res.ok) {
-                                      setFavoriteIds((prev) => {
-                                        const newSet = new Set(prev);
-                                        newSet.delete(provider.id);
-                                        return newSet;
-                                      });
-                                    }
-                                  } catch {}
-                                }
-                                setFavoriteLoading((prev) => ({
-                                  ...prev,
-                                  [provider.id]: false,
-                                }));
-                              }}
-                              className="ml-auto p-2 bg-white/90 backdrop-blur-sm rounded-full hover:bg-white transition"
-                              aria-label={
-                                favoriteIds.has(provider.id)
-                                  ? "Remove from favorites"
-                                  : "Add to favorites"
+                          try {
+                            if (!favoriteIds.has(provider.id)) {
+                              // Add to favorites
+                              const res = await fetch("/api/favorites", {
+                                method: "POST",
+                                headers: {
+                                  "Content-Type": "application/json",
+                                },
+                                body: JSON.stringify({
+                                  providerId: provider.id,
+                                }),
+                              });
+                              if (res.ok) {
+                                setFavoriteIds((prev) =>
+                                  new Set(prev).add(provider.id)
+                                );
                               }
-                              disabled={favoriteLoading[provider.id]}
-                            >
-                              {favoriteLoading[provider.id] ? (
-                                <Loader2 className="w-4 h-4 animate-spin text-accent" />
-                              ) : (
-                                <Heart
-                                  className={`w-4 h-4 ${
-                                    favoriteIds.has(provider.id)
-                                      ? "fill-red-500 text-red-500"
-                                      : "text-gray-600"
-                                  }`}
-                                />
-                              )}
-                            </button>
-                            <div>
-                              <h3 className="font-semibold text-foreground group-hover:text-accent transition-colors">
-                                {provider.businessName}
-                              </h3>
-                              {provider.city && (
-                                <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                                  <MapPin className="w-3.5 h-3.5" />
-                                  <span>{provider.city}</span>
-                                </div>
-                              )}
-                            </div>
-
-                            <div className="flex items-center gap-1 shrink-0">
-                              <Star
-                                className="w-5 h-5 text-yellow-500 fill-yellow-500 drop-shadow"
-                                fill="currentColor"
-                              />
-                              <span className="text-base font-bold text-foreground">
-                                {provider.averageRating &&
-                                provider.averageRating > 0
-                                  ? provider.averageRating.toFixed(1)
-                                  : "New"}
-                              </span>
-                              <span className="text-xs text-muted-foreground ml-1">
-                                ({provider.reviewCount} reviews)
-                              </span>
-                            </div>
-                          </div>
-
-                          {provider.description && (
-                            <p className="text-sm text-muted-foreground line-clamp-2 mb-3">
-                              {provider.description}
-                            </p>
-                          )}
-
-                          <div className="flex items-center justify-between">
-                            <div className="flex gap-2">
-                              {provider.isFeatured && (
-                                <span className="px-2 py-0.5 text-xs font-medium bg-yellow-100 text-yellow-700 rounded-full">
-                                  Featured
-                                </span>
-                              )}
-                              {provider.isVerified && (
-                                <span className="px-2 py-0.5 text-xs font-medium bg-green-100 text-green-700 rounded-full">
-                                  Verified
-                                </span>
-                              )}
-                            </div>
-
-                            {provider.priceFrom && (
-                              <span className="text-sm font-medium text-foreground">
-                                From {formatCurrency(provider?.priceFrom || 0)}
-                              </span>
-                            )}
-                          </div>
-                        </div>
-                      </Link>
+                            } else {
+                              // Remove from favorites
+                              const res = await fetch(
+                                `/api/favorites/${provider.id}`,
+                                {
+                                  method: "DELETE",
+                                }
+                              );
+                              if (res.ok) {
+                                setFavoriteIds((prev) => {
+                                  const newSet = new Set(prev);
+                                  newSet.delete(provider.id);
+                                  return newSet;
+                                });
+                              }
+                            }
+                          } catch (error) {
+                            console.error("Error toggling favorite:", error);
+                          } finally {
+                            setFavoriteLoading((prev) => ({
+                              ...prev,
+                              [provider.id]: false,
+                            }));
+                          }
+                        }}
+                        favoriteLoading={favoriteLoading[provider.id] || false}
+                        searchType={filters.searchType}
+                        showFavoriteButton={status === "authenticated"}
+                        // searchQuery={filters.query}
+                      />
                     ))}
                   </div>
 

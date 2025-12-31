@@ -47,7 +47,7 @@ export async function GET(
           where: { isApproved: true },
           include: {
             author: {
-              select: { id: true, name: true },
+              select: { id: true, name: true, avatar: true },
             },
           },
           orderBy: { createdAt: "desc" },

@@ -85,10 +85,10 @@ export default function CookiesPage() {
               If you have any questions about our use of cookies, please contact
               us at:{" "}
               <a
-                href="mailto:privacy@eva.events"
+                href="mailto:support@evalocal.com"
                 className="text-accent hover:underline"
               >
-                privacy@eva.events
+                support@evalocal.com
               </a>
             </p>
           </section>

@@ -27,11 +27,16 @@ function milesToKm(miles: number): number {
 }
 
 // GET /api/search
-// Supports two search modes:
-// Mode A: Find vendors within X miles of user's postcode (user specifies radius)
-// Mode B: Find vendors whose service radius covers user's location (vendor's serviceRadiusMiles)
+// Enhanced search supporting multiple modes:
+// - Text search (existing)
+// - Tag-based search (new)
+// - Slug search (new)
+// - Combined search (new)
 export async function GET(request: NextRequest) {
   try {
+    const searchParams = request.nextUrl.searchParams;
+
+    // Existing parameters (maintain backward compatibility)
     const {
       postcode,
       radius = 5, // User's search radius in miles (Mode A)
@@ -45,7 +50,14 @@ export async function GET(request: NextRequest) {
       sort = "distance",
       page = 1,
       limit = 20,
-    } = Object.fromEntries(request.nextUrl.searchParams.entries());
+    } = Object.fromEntries(searchParams.entries());
+
+    // New search parameters
+    const q = searchParams.get("q") || ""; // General text query
+    const tags = searchParams.get("tags") || ""; // Comma-separated tags
+    const slug = searchParams.get("slug") || ""; // Direct slug search
+    const searchType = searchParams.get("searchType") || "all"; // 'text', 'tags', 'slug', 'all'
+    const city = searchParams.get("city") || ""; // City filter
 
     // Geocode postcode/address using OpenStreetMap Nominatim
     let searchLat: number | null = null;
@@ -100,6 +112,8 @@ export async function GET(request: NextRequest) {
     const filters: Record<string, unknown> = {
       isPublished: true, // Only show published providers
     };
+
+    // Existing filters (maintain backward compatibility)
     if (category) filters.categories = { has: category };
     if (priceFrom) filters.priceFrom = { gte: Number(priceFrom) };
     if (priceTo) filters.priceFrom = { lte: Number(priceTo) };
@@ -108,25 +122,86 @@ export async function GET(request: NextRequest) {
       filters.cultureTraditionTags = { hasSome: cultureTags.split(",") };
     }
     if (verifiedOnly === "true") filters.isVerified = true;
-    if (request.nextUrl.searchParams.get("city")) {
-      filters.city = { equals: request.nextUrl.searchParams.get("city"), mode: "insensitive" };
+    if (city) {
+      filters.city = { equals: city, mode: "insensitive" };
+    }
+
+    // Enhanced search filters
+    if (searchType === "slug" && slug) {
+      // Direct slug search (highest priority)
+      filters.slug = slug;
+    } else if (searchType === "tags" && tags) {
+      // Tag-based search
+      const tagArray = tags
+        .split(",")
+        .map((t) => t.trim().toLowerCase())
+        .filter(Boolean);
+      if (tagArray.length > 0) {
+        filters.OR = [
+          { tags: { hasSome: tagArray } },
+          { categories: { hasSome: tagArray } },
+          { subcategories: { hasSome: tagArray } },
+          { cultureTraditionTags: { hasSome: tagArray } },
+        ];
+      }
+    } else if ((searchType === "text" || searchType === "all") && q) {
+      // Text search in multiple fields
+      const searchTerms = q.toLowerCase().split(" ").filter(Boolean);
+      if (searchTerms.length > 0) {
+        filters.OR = [
+          { businessName: { contains: q, mode: "insensitive" } },
+          { description: { contains: q, mode: "insensitive" } },
+          { tags: { hasSome: searchTerms } },
+          { categories: { hasSome: searchTerms } },
+          { subcategories: { hasSome: searchTerms } },
+          { city: { contains: q, mode: "insensitive" } },
+        ];
+      }
     }
 
     // Pagination
     const take = Number(limit);
     const skip = (Number(page) - 1) * take;
 
-    // Query providers
-    let providers = await prisma.provider.findMany({
-      where: filters,
-      take: 1000, // Get more for filtering by distance
-      orderBy:
-        sort === "rating"
-          ? { averageRating: "desc" }
-          : sort === "price"
-          ? { priceFrom: "asc" }
-          : { createdAt: "desc" },
-    });
+    // Query providers with error handling for new fields
+    let providers;
+    try {
+      providers = await prisma.provider.findMany({
+        where: filters,
+        take: 1000, // Get more for filtering by distance
+        orderBy:
+          sort === "rating"
+            ? { averageRating: "desc" }
+            : sort === "price"
+            ? { priceFrom: "asc" }
+            : { createdAt: "desc" },
+      });
+    } catch (dbError: any) {
+      console.error("Database error in search API:", dbError);
+
+      // Fallback: try without the new fields if they don't exist
+      const fallbackFilters: any = { ...filters };
+
+      // Remove potentially problematic fields
+      if (fallbackFilters.slug) delete fallbackFilters.slug;
+      if (fallbackFilters.OR) {
+        fallbackFilters.OR = fallbackFilters.OR.filter(
+          (condition: any) => !condition.tags && !condition.slug
+        );
+        if (fallbackFilters.OR.length === 0) delete fallbackFilters.OR;
+      }
+
+      providers = await prisma.provider.findMany({
+        where: fallbackFilters,
+        take: 1000,
+        orderBy:
+          sort === "rating"
+            ? { averageRating: "desc" }
+            : sort === "price"
+            ? { priceFrom: "asc" }
+            : { createdAt: "desc" },
+      });
+    }
 
     // Apply distance filtering based on search mode
     if (searchLat !== null && searchLng !== null) {
@@ -221,6 +296,17 @@ export async function GET(request: NextRequest) {
           searchMode,
           geocoded: searchLat !== null,
           city: geocodedCity,
+          // Enhanced search metadata
+          searchType,
+          query: q,
+          tags: tags
+            ? tags
+                .split(",")
+                .map((t) => t.trim())
+                .filter(Boolean)
+            : [],
+          slug,
+          hasMore: totalResults > skip + take,
         },
       },
       { status: 200 }

@@ -101,9 +101,9 @@ export default function AboutPage() {
             <h2 className="text-2xl font-semibold mb-4">Our Values</h2>
             <div className="flex flex-col gap-4">
               <div className="flex items-start gap-4">
-                <span className="inline-block w-10 h-10 bg-gray-100 flex items-center justify-center rounded-full text-xl">
+                {/* <span className="inline-block w-10 h-10 bg-gray-100 flex items-center justify-center rounded-full text-xl">
                   ❤️
-                </span>
+                </span> */}
                 <div>
                   <h4 className="font-semibold">Community First</h4>
                   <p className="text-gray-600 text-sm">
@@ -113,9 +113,9 @@ export default function AboutPage() {
                 </div>
               </div>
               <div className="flex items-start gap-4">
-                <span className="inline-block w-10 h-10 bg-pink-100 flex items-center justify-center rounded-full text-xl">
+                {/* <span className="inline-block w-10 h-10 bg-pink-100 flex items-center justify-center rounded-full text-xl">
                   🎉
-                </span>
+                </span> */}
                 <div>
                   <h4 className="font-semibold">Cultural Respect</h4>
                   <p className="text-gray-600 text-sm">
@@ -125,9 +125,9 @@ export default function AboutPage() {
                 </div>
               </div>
               <div className="flex items-start gap-4">
-                <span className="inline-block w-10 h-10 bg-green-100 flex items-center justify-center rounded-full text-xl">
+                {/* <span className="inline-block w-10 h-10 bg-green-100 flex items-center justify-center rounded-full text-xl">
                   🔍
-                </span>
+                </span> */}
                 <div>
                   <h4 className="font-semibold">Transparency</h4>
                   <p className="text-gray-600 text-sm">
@@ -214,7 +214,7 @@ export default function AboutPage() {
                   className="object-cover rounded-full"
                 />
               </div>
-              <h4 className="font-semibold">Abiodun Orhewere</h4>
+              <h4 className="font-semibold">Omonlua Orhewere</h4>
               <p className="text-sm text-gray-500 mb-1">Co-founder & CEO</p>
               <p className="text-xs text-gray-400 text-center">
                 Former event planner with 10+ years experience connecting

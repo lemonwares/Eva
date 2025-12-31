@@ -1,94 +1,144 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { auth } from "@/auth";
-import { z } from "zod";
 
-const createTagSchema = z.object({
-  name: z.string().min(1).max(100),
-  slug: z
-    .string()
-    .min(1)
-    .max(100)
-    .regex(/^[a-z0-9-]+$/),
-  description: z.string().optional(),
-  icon: z.string().optional(),
-  displayOrder: z.number().int().min(0).optional().default(0),
-  isActive: z.boolean().optional().default(true),
-});
-
-// POST /api/tags - Create a new tag (admin only)
-export async function POST(request: NextRequest) {
-  try {
-    const session = await auth();
-    if (!session?.user?.id) {
-      return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
-    }
-
-    if (session.user.role !== "ADMINISTRATOR") {
-      return NextResponse.json({ message: "Forbidden" }, { status: 403 });
-    }
-
-    const body = await request.json();
-    const validation = createTagSchema.safeParse(body);
-
-    if (!validation.success) {
-      return NextResponse.json(
-        { message: "Invalid request", errors: validation.error.issues },
-        { status: 400 }
-      );
-    }
-
-    const data = validation.data;
-
-    // Check slug uniqueness
-    const existing = await prisma.cultureTraditionTag.findUnique({
-      where: { slug: data.slug },
-    });
-
-    if (existing) {
-      return NextResponse.json(
-        { message: "Tag slug already exists" },
-        { status: 400 }
-      );
-    }
-
-    const tag = await prisma.cultureTraditionTag.create({
-      data,
-    });
-
-    return NextResponse.json(tag, { status: 201 });
-  } catch (error: any) {
-    console.error("Error creating tag:", error);
-    return NextResponse.json(
-      { message: "Internal server error" },
-      { status: 500 }
-    );
-  }
-}
-
-// GET /api/tags - List all tags (public)
+// GET /api/tags - Get available tags for autocomplete
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = request.nextUrl;
-    const activeOnly = searchParams.get("active") === "true";
-    const search = searchParams.get("search");
+    const query = searchParams.get("q") || "";
+    const limit = parseInt(searchParams.get("limit") || "50");
+    const type = searchParams.get("type") || "all"; // 'all', 'popular', 'categories'
 
-    const filters: any = {};
+    let tags: string[] = [];
 
-    if (activeOnly) {
-      filters.isActive = true;
+    if (type === "popular" || type === "all") {
+      // Get most used tags from providers
+      try {
+        const providers = await prisma.provider.findMany({
+          where: { isPublished: true },
+          select: {
+            tags: true,
+            categories: true,
+            subcategories: true,
+            cultureTraditionTags: true,
+          },
+        });
+
+        const tagCounts = new Map<string, number>();
+
+        providers.forEach((provider) => {
+          // Count tags (if field exists)
+          if (provider.tags) {
+            provider.tags.forEach((tag) => {
+              if (tag) {
+                const normalizedTag = tag.toLowerCase().trim();
+                tagCounts.set(
+                  normalizedTag,
+                  (tagCounts.get(normalizedTag) || 0) + 1
+                );
+              }
+            });
+          }
+
+          // Count categories as tags
+          provider.categories?.forEach((cat) => {
+            if (cat) {
+              const normalizedTag = cat.toLowerCase().trim();
+              tagCounts.set(
+                normalizedTag,
+                (tagCounts.get(normalizedTag) || 0) + 1
+              );
+            }
+          });
+
+          // Count subcategories as tags
+          provider.subcategories?.forEach((subcat) => {
+            if (subcat) {
+              const normalizedTag = subcat.toLowerCase().trim();
+              tagCounts.set(
+                normalizedTag,
+                (tagCounts.get(normalizedTag) || 0) + 1
+              );
+            }
+          });
+
+          // Count cultural tradition tags
+          provider.cultureTraditionTags?.forEach((cultTag) => {
+            if (cultTag) {
+              const normalizedTag = cultTag.toLowerCase().trim();
+              tagCounts.set(
+                normalizedTag,
+                (tagCounts.get(normalizedTag) || 0) + 1
+              );
+            }
+          });
+        });
+
+        // Sort by popularity and filter by query
+        tags = Array.from(tagCounts.entries())
+          .sort((a, b) => b[1] - a[1]) // Sort by count (descending)
+          .map(([tag]) => tag)
+          .filter((tag) => !query || tag.includes(query.toLowerCase()))
+          .slice(0, limit);
+      } catch (dbError: any) {
+        console.error("Database error in tags API:", dbError);
+        // Fallback: return common tags if database query fails
+        const commonTags = [
+          "wedding",
+          "photography",
+          "catering",
+          "venue",
+          "music",
+          "flowers",
+          "planning",
+          "decoration",
+          "professional",
+          "service",
+          "event",
+          "celebration",
+          "party",
+          "corporate",
+          "birthday",
+          "anniversary",
+        ];
+        tags = commonTags
+          .filter((tag) => !query || tag.includes(query.toLowerCase()))
+          .slice(0, limit);
+      }
     }
 
-    if (search) {
-      filters.name = { contains: search, mode: "insensitive" };
+    if (type === "categories") {
+      // Get unique categories and subcategories
+      const providers = await prisma.provider.findMany({
+        where: { isPublished: true },
+        select: {
+          categories: true,
+          subcategories: true,
+        },
+      });
+
+      const categorySet = new Set<string>();
+      providers.forEach((provider) => {
+        provider.categories?.forEach((cat) => {
+          if (cat) categorySet.add(cat.toLowerCase().trim());
+        });
+        provider.subcategories?.forEach((subcat) => {
+          if (subcat) categorySet.add(subcat.toLowerCase().trim());
+        });
+      });
+
+      tags = Array.from(categorySet)
+        .filter((tag) => !query || tag.includes(query.toLowerCase()))
+        .sort()
+        .slice(0, limit);
     }
 
-    const tags = await prisma.cultureTraditionTag.findMany({
-      where: filters,
-      orderBy: [{ displayOrder: "asc" }, { name: "asc" }],
+    return NextResponse.json({
+      tags,
+      query,
+      type,
+      count: tags.length,
     });
-
-    return NextResponse.json(tags);
   } catch (error: any) {
     console.error("Error fetching tags:", error);
     return NextResponse.json(
