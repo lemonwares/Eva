@@ -506,12 +506,10 @@ export default function QuotesPage() {
               </div>
 
               {/* Description */}
-              {selectedQuote.description && (
+              {selectedQuote.notes && (
                 <div>
-                  <h3 className={`font-medium ${textPrimary} mb-2`}>
-                    Description
-                  </h3>
-                  <p className={textSecondary}>{selectedQuote.description}</p>
+                  <h3 className={`font-medium ${textPrimary} mb-2`}>Notes</h3>
+                  <p className={textSecondary}>{selectedQuote.notes}</p>
                 </div>
               )}
 
@@ -555,12 +553,12 @@ export default function QuotesPage() {
                         {selectedQuote.items.map((item, index) => (
                           <tr key={index}>
                             <td className={`px-4 py-3 ${textPrimary}`}>
-                              {item.description}
+                              {item.name}
                             </td>
                             <td
                               className={`px-4 py-3 text-right ${textSecondary}`}
                             >
-                              {item.quantity}
+                              {item.qty}
                             </td>
                             <td
                               className={`px-4 py-3 text-right ${textSecondary}`}
@@ -570,7 +568,7 @@ export default function QuotesPage() {
                             <td
                               className={`px-4 py-3 text-right font-medium ${textPrimary}`}
                             >
-                              {formatCurrency(item.total)}
+                              {formatCurrency(item.totalPrice)}
                             </td>
                           </tr>
                         ))}

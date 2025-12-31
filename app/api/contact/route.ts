@@ -1,100 +1,103 @@
 import { NextRequest, NextResponse } from "next/server";
-import { z } from "zod";
 import { sendEmail } from "@/lib/mail";
 import { emailTemplates } from "@/templates/templateLoader";
 
-const contactSchema = z.object({
-  name: z.string().min(1).max(100).optional(),
-  email: z.string().email(),
-  subject: z.string().min(1).max(200).optional(),
-  message: z.string().min(10).max(5000),
-  type: z
-    .enum(["general", "support", "vendor", "partnership"])
-    .default("general"),
-});
+interface ContactFormData {
+  name: string;
+  email: string;
+  message: string;
+}
 
-// POST /api/contact - Submit a contact form
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json();
-    const validation = contactSchema.safeParse(body);
+    const body: ContactFormData = await request.json();
+    const { name, email, message } = body;
 
-    if (!validation.success) {
+    // Validate required fields
+    if (!name || !email || !message) {
       return NextResponse.json(
-        { message: "Invalid request", errors: validation.error.issues },
+        { error: "All fields are required" },
         { status: 400 }
       );
     }
 
-    const {
-      name = "Guest",
-      email,
-      subject = "Support Request",
-      message,
-      type,
-    } = validation.data;
-
-    const referenceId = `EVA-${Date.now().toString(36).toUpperCase()}`;
-
-    // Send confirmation email to user with branded template
-    try {
-      const userEmailHtml = emailTemplates.contactSupport(
-        name,
-        message,
-        referenceId
-      );
-      await sendEmail({
-        to: email,
-        subject: "We've received your message - EVA Support",
-        html: userEmailHtml,
-      });
-    } catch (emailError) {
-      console.error("Failed to send confirmation email:", emailError);
-      // Don't fail the request if confirmation email fails
-    }
+    // Generate reference ID for tracking
+    const referenceId = `EVA-${Date.now()}-${Math.random()
+      .toString(36)
+      .substr(2, 9)
+      .toUpperCase()}`;
 
     // Send notification email to support team
-    try {
-      await sendEmail({
-        to: process.env.SUPPORT_EMAIL || "hello@eva.com",
-        subject: `[${type.toUpperCase()}] ${subject} - ${referenceId}`,
-        html: `
-          <h2>New Contact Form Submission</h2>
+    const supportEmailHtml = `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+        <h2 style="color: #333;">New Contact Form Submission</h2>
+        <div style="background: #f9f9f9; padding: 20px; border-radius: 8px; margin: 20px 0;">
           <p><strong>Reference ID:</strong> ${referenceId}</p>
-          <p><strong>Type:</strong> ${type}</p>
-          <p><strong>From:</strong> ${name} (${email})</p>
-          <p><strong>Subject:</strong> ${subject}</p>
+          <p><strong>Name:</strong> ${name}</p>
+          <p><strong>Email:</strong> ${email}</p>
           <p><strong>Message:</strong></p>
-          <p>${message.replace(/\n/g, "<br />")}</p>
-          <hr />
-          <p><small>Submitted at: ${new Date().toISOString()}</small></p>
-        `,
+          <div style="background: white; padding: 15px; border-left: 4px solid #6366f1; margin: 10px 0;">
+            ${message.replace(/\n/g, "<br>")}
+          </div>
+        </div>
+        <p style="color: #666; font-size: 14px;">
+          Please respond to this inquiry within 24 hours.
+        </p>
+      </div>
+    `;
+
+    // Send confirmation email to user using the template
+    const confirmationEmailHtml = emailTemplates.contactSupport(
+      name,
+      message,
+      referenceId,
+      `${process.env.AUTH_URL}/dashboard`,
+      `${process.env.AUTH_URL}/faq`,
+      `${process.env.AUTH_URL}/terms`,
+      `${process.env.AUTH_URL}/privacy`
+    );
+
+    // Send both emails
+    const [supportEmailResult, confirmationEmailResult] = await Promise.all([
+      sendEmail({
+        to: process.env.ZEPTOMAIL_SUPPORT_EMAIL || "support@evalocal.com",
+        subject: `New Contact Form Submission - ${referenceId}`,
+        html: supportEmailHtml,
+      }),
+      sendEmail({
+        to: email,
+        subject: "We've received your message - EVA Support",
+        html: confirmationEmailHtml,
+      }),
+    ]);
+
+    // Check if emails were sent successfully
+    if (!supportEmailResult.success || !confirmationEmailResult.success) {
+      console.error("Email sending failed:", {
+        support: supportEmailResult,
+        confirmation: confirmationEmailResult,
       });
-    } catch (emailError) {
-      console.error("Failed to send support notification:", emailError);
-      // Don't fail the request if support email fails
+
+      return NextResponse.json(
+        {
+          error:
+            "Failed to send emails. Please try again or contact us directly.",
+          referenceId,
+        },
+        { status: 500 }
+      );
     }
 
-    console.log("Contact form submission processed:", {
-      name,
-      email,
-      subject,
-      type,
-      submittedAt: new Date().toISOString(),
-    });
-
     return NextResponse.json({
-      message: "Thank you for your message. We'll get back to you shortly.",
+      success: true,
+      message: "Your message has been sent successfully!",
       referenceId,
     });
-  } catch (error: any) {
-    console.error("Error processing contact form:", error);
+  } catch (error) {
+    console.error("Contact form error:", error);
     return NextResponse.json(
-      { message: "Internal server error" },
+      { error: "Internal server error. Please try again later." },
       { status: 500 }
     );
   }
 }
-
-export const runtime = "nodejs";
-export const dynamic = "force-dynamic";
