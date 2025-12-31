@@ -1351,33 +1351,25 @@ export default function VendorDetailPage() {
                       className="p-6 rounded-2xl border border-border"
                     >
                       <div className="flex items-center gap-4 mb-4">
-                        <div className="flex h-12 w-12 items-center justify-center rounded-full bg-muted border overflow-hidden">
-                          {review.author?.avatar ? (
-                            <Image
-                              src={review.author.avatar}
-                              alt={review.authorName}
-                              width={48}
-                              height={48}
-                              unoptimized={true}
-                              className="object-cover w-full h-full"
-                              onError={(e) => {
-                                // Fallback to default avatar if user avatar fails to load
-                                const target = e.target as HTMLImageElement;
+                        <div className="relative w-12 h-12 rounded-full overflow-hidden bg-muted border">
+                          <Image
+                            src={
+                              review.author?.avatar ||
+                              "/images/default-avatar.svg"
+                            }
+                            alt={`${review.authorName} profile`}
+                            width={48}
+                            height={48}
+                            unoptimized={true}
+                            className="object-cover w-full h-full"
+                            onError={(e) => {
+                              // Fallback to default avatar if user avatar fails to load
+                              const target = e.target as HTMLImageElement;
+                              if (target.src !== "/images/default-avatar.svg") {
                                 target.src = "/images/default-avatar.svg";
-                                target.onerror = null; // Prevent infinite loop
-                              }}
-                            />
-                          ) : (
-                            // Default dummy profile image
-                            <Image
-                              src="/images/default-avatar.svg"
-                              alt="Default profile"
-                              width={48}
-                              height={48}
-                              unoptimized={true}
-                              className="object-cover w-full h-full"
-                            />
-                          )}
+                              }
+                            }}
+                          />
                         </div>
                         <div>
                           <p className="font-semibold">{review.authorName}</p>
