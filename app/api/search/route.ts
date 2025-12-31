@@ -163,17 +163,45 @@ export async function GET(request: NextRequest) {
     const take = Number(limit);
     const skip = (Number(page) - 1) * take;
 
-    // Query providers
-    let providers = await prisma.provider.findMany({
-      where: filters,
-      take: 1000, // Get more for filtering by distance
-      orderBy:
-        sort === "rating"
-          ? { averageRating: "desc" }
-          : sort === "price"
-          ? { priceFrom: "asc" }
-          : { createdAt: "desc" },
-    });
+    // Query providers with error handling for new fields
+    let providers;
+    try {
+      providers = await prisma.provider.findMany({
+        where: filters,
+        take: 1000, // Get more for filtering by distance
+        orderBy:
+          sort === "rating"
+            ? { averageRating: "desc" }
+            : sort === "price"
+            ? { priceFrom: "asc" }
+            : { createdAt: "desc" },
+      });
+    } catch (dbError: any) {
+      console.error("Database error in search API:", dbError);
+
+      // Fallback: try without the new fields if they don't exist
+      const fallbackFilters: any = { ...filters };
+
+      // Remove potentially problematic fields
+      if (fallbackFilters.slug) delete fallbackFilters.slug;
+      if (fallbackFilters.OR) {
+        fallbackFilters.OR = fallbackFilters.OR.filter(
+          (condition: any) => !condition.tags && !condition.slug
+        );
+        if (fallbackFilters.OR.length === 0) delete fallbackFilters.OR;
+      }
+
+      providers = await prisma.provider.findMany({
+        where: fallbackFilters,
+        take: 1000,
+        orderBy:
+          sort === "rating"
+            ? { averageRating: "desc" }
+            : sort === "price"
+            ? { priceFrom: "asc" }
+            : { createdAt: "desc" },
+      });
+    }
 
     // Apply distance filtering based on search mode
     if (searchLat !== null && searchLng !== null) {

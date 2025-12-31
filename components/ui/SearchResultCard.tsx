@@ -28,6 +28,7 @@ interface SearchResultCardProps {
   onToggleFavorite: () => void;
   favoriteLoading: boolean;
   searchType?: string;
+  showFavoriteButton?: boolean; // New prop to control favorite button visibility
 }
 
 export default function SearchResultCard({
@@ -37,6 +38,7 @@ export default function SearchResultCard({
   onToggleFavorite,
   favoriteLoading,
   searchType,
+  showFavoriteButton = true, // Default to true for backward compatibility
 }: SearchResultCardProps) {
   const handleFavoriteClick = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -92,24 +94,26 @@ export default function SearchResultCard({
           )}
 
           {/* Favorite button */}
-          <button
-            onClick={handleFavoriteClick}
-            className="absolute top-3 right-3 p-2 bg-white/90 backdrop-blur-sm rounded-full hover:bg-white transition"
-            aria-label={
-              isFavorite ? "Remove from favorites" : "Add to favorites"
-            }
-            disabled={favoriteLoading}
-          >
-            {favoriteLoading ? (
-              <Loader2 className="w-4 h-4 animate-spin text-accent" />
-            ) : (
-              <Heart
-                className={`w-4 h-4 ${
-                  isFavorite ? "fill-red-500 text-red-500" : "text-gray-600"
-                }`}
-              />
-            )}
-          </button>
+          {showFavoriteButton && (
+            <button
+              onClick={handleFavoriteClick}
+              className="absolute top-3 right-3 p-2 bg-white/90 backdrop-blur-sm rounded-full hover:bg-white transition"
+              aria-label={
+                isFavorite ? "Remove from favorites" : "Add to favorites"
+              }
+              disabled={favoriteLoading}
+            >
+              {favoriteLoading ? (
+                <Loader2 className="w-4 h-4 animate-spin text-accent" />
+              ) : (
+                <Heart
+                  className={`w-4 h-4 ${
+                    isFavorite ? "fill-red-500 text-red-500" : "text-gray-600"
+                  }`}
+                />
+              )}
+            </button>
+          )}
         </div>
 
         {/* Content */}
@@ -208,24 +212,26 @@ export default function SearchResultCard({
             </div>
 
             {/* Favorite button */}
-            <button
-              onClick={handleFavoriteClick}
-              className="p-2 bg-white/90 backdrop-blur-sm rounded-full hover:bg-white transition"
-              aria-label={
-                isFavorite ? "Remove from favorites" : "Add to favorites"
-              }
-              disabled={favoriteLoading}
-            >
-              {favoriteLoading ? (
-                <Loader2 className="w-4 h-4 animate-spin text-accent" />
-              ) : (
-                <Heart
-                  className={`w-4 h-4 ${
-                    isFavorite ? "fill-red-500 text-red-500" : "text-gray-600"
-                  }`}
-                />
-              )}
-            </button>
+            {showFavoriteButton && (
+              <button
+                onClick={handleFavoriteClick}
+                className="p-2 bg-white/90 backdrop-blur-sm rounded-full hover:bg-white transition"
+                aria-label={
+                  isFavorite ? "Remove from favorites" : "Add to favorites"
+                }
+                disabled={favoriteLoading}
+              >
+                {favoriteLoading ? (
+                  <Loader2 className="w-4 h-4 animate-spin text-accent" />
+                ) : (
+                  <Heart
+                    className={`w-4 h-4 ${
+                      isFavorite ? "fill-red-500 text-red-500" : "text-gray-600"
+                    }`}
+                  />
+                )}
+              </button>
+            )}
           </div>
         </div>
 

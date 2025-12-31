@@ -13,70 +13,98 @@ export async function GET(request: NextRequest) {
 
     if (type === "popular" || type === "all") {
       // Get most used tags from providers
-      const providers = await prisma.provider.findMany({
-        where: { isPublished: true },
-        select: {
-          tags: true,
-          categories: true,
-          subcategories: true,
-          cultureTraditionTags: true,
-        },
-      });
-
-      const tagCounts = new Map<string, number>();
-
-      providers.forEach((provider) => {
-        // Count tags
-        provider.tags?.forEach((tag) => {
-          if (tag) {
-            const normalizedTag = tag.toLowerCase().trim();
-            tagCounts.set(
-              normalizedTag,
-              (tagCounts.get(normalizedTag) || 0) + 1
-            );
-          }
+      try {
+        const providers = await prisma.provider.findMany({
+          where: { isPublished: true },
+          select: {
+            tags: true,
+            categories: true,
+            subcategories: true,
+            cultureTraditionTags: true,
+          },
         });
 
-        // Count categories as tags
-        provider.categories?.forEach((cat) => {
-          if (cat) {
-            const normalizedTag = cat.toLowerCase().trim();
-            tagCounts.set(
-              normalizedTag,
-              (tagCounts.get(normalizedTag) || 0) + 1
-            );
+        const tagCounts = new Map<string, number>();
+
+        providers.forEach((provider) => {
+          // Count tags (if field exists)
+          if (provider.tags) {
+            provider.tags.forEach((tag) => {
+              if (tag) {
+                const normalizedTag = tag.toLowerCase().trim();
+                tagCounts.set(
+                  normalizedTag,
+                  (tagCounts.get(normalizedTag) || 0) + 1
+                );
+              }
+            });
           }
+
+          // Count categories as tags
+          provider.categories?.forEach((cat) => {
+            if (cat) {
+              const normalizedTag = cat.toLowerCase().trim();
+              tagCounts.set(
+                normalizedTag,
+                (tagCounts.get(normalizedTag) || 0) + 1
+              );
+            }
+          });
+
+          // Count subcategories as tags
+          provider.subcategories?.forEach((subcat) => {
+            if (subcat) {
+              const normalizedTag = subcat.toLowerCase().trim();
+              tagCounts.set(
+                normalizedTag,
+                (tagCounts.get(normalizedTag) || 0) + 1
+              );
+            }
+          });
+
+          // Count cultural tradition tags
+          provider.cultureTraditionTags?.forEach((cultTag) => {
+            if (cultTag) {
+              const normalizedTag = cultTag.toLowerCase().trim();
+              tagCounts.set(
+                normalizedTag,
+                (tagCounts.get(normalizedTag) || 0) + 1
+              );
+            }
+          });
         });
 
-        // Count subcategories as tags
-        provider.subcategories?.forEach((subcat) => {
-          if (subcat) {
-            const normalizedTag = subcat.toLowerCase().trim();
-            tagCounts.set(
-              normalizedTag,
-              (tagCounts.get(normalizedTag) || 0) + 1
-            );
-          }
-        });
-
-        // Count cultural tradition tags
-        provider.cultureTraditionTags?.forEach((cultTag) => {
-          if (cultTag) {
-            const normalizedTag = cultTag.toLowerCase().trim();
-            tagCounts.set(
-              normalizedTag,
-              (tagCounts.get(normalizedTag) || 0) + 1
-            );
-          }
-        });
-      });
-
-      // Sort by popularity and filter by query
-      tags = Array.from(tagCounts.entries())
-        .sort((a, b) => b[1] - a[1]) // Sort by count (descending)
-        .map(([tag]) => tag)
-        .filter((tag) => !query || tag.includes(query.toLowerCase()))
-        .slice(0, limit);
+        // Sort by popularity and filter by query
+        tags = Array.from(tagCounts.entries())
+          .sort((a, b) => b[1] - a[1]) // Sort by count (descending)
+          .map(([tag]) => tag)
+          .filter((tag) => !query || tag.includes(query.toLowerCase()))
+          .slice(0, limit);
+      } catch (dbError: any) {
+        console.error("Database error in tags API:", dbError);
+        // Fallback: return common tags if database query fails
+        const commonTags = [
+          "wedding",
+          "photography",
+          "catering",
+          "venue",
+          "music",
+          "flowers",
+          "planning",
+          "decoration",
+          "professional",
+          "service",
+          "event",
+          "celebration",
+          "party",
+          "corporate",
+          "birthday",
+          "anniversary",
+        ];
+        tags = commonTags
+          .filter((tag) => !query || tag.includes(query.toLowerCase()))
+          .slice(0, limit);
+      }
     }
 
     if (type === "categories") {

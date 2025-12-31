@@ -4,6 +4,7 @@
 
 import { useState, useEffect, useCallback, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
+import { useSession } from "next-auth/react";
 import Header from "@/components/common/Header";
 import Footer from "@/components/common/Footer";
 import Link from "next/link";
@@ -71,6 +72,7 @@ interface SearchFilters {
 function SearchPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { data: session, status } = useSession();
 
   const [providers, setProviders] = useState<Provider[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
@@ -135,6 +137,11 @@ function SearchPageContent() {
 
   useEffect(() => {
     async function fetchFavorites() {
+      // Only fetch favorites if user is authenticated
+      if (status !== "authenticated") {
+        return;
+      }
+
       try {
         const res = await fetch("/api/favorites");
         if (res.ok) {
@@ -143,11 +150,11 @@ function SearchPageContent() {
           setFavoriteIds(new Set(ids));
         }
       } catch (err) {
-        // Ignore errors (user may be unauthenticated)
+        console.error("Error fetching favorites:", err);
       }
     }
     fetchFavorites();
-  }, []);
+  }, [status]);
 
   // Fetch available tags for autocomplete
   useEffect(() => {
@@ -687,6 +694,7 @@ function SearchPageContent() {
                         }}
                         favoriteLoading={favoriteLoading[provider.id] || false}
                         searchType={filters.searchType}
+                        showFavoriteButton={status === "authenticated"}
                         // searchQuery={filters.query}
                       />
                     ))}
@@ -768,6 +776,7 @@ function SearchPageContent() {
                         }}
                         favoriteLoading={favoriteLoading[provider.id] || false}
                         searchType={filters.searchType}
+                        showFavoriteButton={status === "authenticated"}
                         // searchQuery={filters.query}
                       />
                     ))}

@@ -16,6 +16,7 @@ This guide explains how to safely migrate your database to support the new tag a
 
 ### Frontend Updates
 - **Search interface**: Enhanced to support multiple search modes
+- **Authentication-aware UI**: Favorite buttons only show for logged-in users
 - **Backward compatibility**: Existing search functionality unchanged
 
 ## 🔧 Migration Steps
@@ -80,6 +81,7 @@ After migration, test these scenarios:
 3. **Slug search**: Direct vendor lookup by slug
 4. **Autocomplete**: Check tag suggestions work
 5. **Performance**: Ensure search is still fast
+6. **Authentication**: Verify favorite buttons only show when logged in
 
 ## 🚨 Rollback Plan
 
