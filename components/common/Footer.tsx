@@ -72,10 +72,10 @@ export default function Footer() {
               <div className="flex items-center gap-2">
                 <Mail size={16} />
                 <a
-                  href="mailto:hello@evalocal.com"
+                  href="mailto:support@evalocal.com"
                   className="hover:text-background"
                 >
-                  hello@evalocal.com
+                  support@evalocal.com
                 </a>
               </div>
               <div className="flex items-center gap-2">

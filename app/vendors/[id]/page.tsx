@@ -109,6 +109,11 @@ interface Review {
   authorName: string;
   createdAt: string;
   providerReply: string | null;
+  author?: {
+    id: string;
+    name: string;
+    avatar: string | null;
+  };
 }
 
 interface ScheduleDisplayProps {
@@ -384,8 +389,31 @@ export default function VendorDetailPage() {
   // Handler for booking button
   async function handleMultiListingBooking(e: React.FormEvent) {
     e.preventDefault();
-    // Replace this with your booking/payment logic
-    alert(`Proceeding to book: ${selectedListings.join(", ")}`);
+
+    if (selectedListings.length === 0) {
+      alert("Please select at least one service to book.");
+      return;
+    }
+
+    // Check if user is authenticated
+    if (!session?.user) {
+      saveBookingProgress();
+      setShowAuthModal(true);
+      return;
+    }
+
+    // Show the booking form
+    setShowBookingForm(true);
+
+    // Scroll to booking form on mobile
+    if (window.innerWidth <= 768 && bookingRef.current) {
+      setTimeout(() => {
+        bookingRef.current?.scrollIntoView({
+          behavior: "smooth",
+          block: "start",
+        });
+      }, 100);
+    }
   }
 
   // Submit booking form
@@ -456,7 +484,6 @@ export default function VendorDetailPage() {
   useEffect(() => {
     if (params.id) {
       fetchVendor();
-      fetchReviews();
       fetchTeamMembers();
       fetchListings();
     }
@@ -496,7 +523,13 @@ export default function VendorDetailPage() {
       if (!response.ok) throw new Error("Failed to fetch vendor");
       const data = await response.json();
       // API returns { provider: {...} }
-      setVendor(data.provider || data);
+      const providerData = data.provider || data;
+      setVendor(providerData);
+
+      // Set reviews from provider data (includes author information)
+      if (providerData.reviews) {
+        setReviews(providerData.reviews);
+      }
 
       // console.log(`Data`, data);
       // console.log(`Vendor:`, vendor);
@@ -513,19 +546,6 @@ export default function VendorDetailPage() {
       setWeeklySchedule([]);
     } finally {
       setIsLoading(false);
-    }
-  }
-
-  async function fetchReviews() {
-    try {
-      const response = await fetch(
-        `/api/reviews?providerId=${params.id}&approved=true&limit=5`
-      );
-      if (!response.ok) throw new Error("Failed to fetch reviews");
-      const data = await response.json();
-      setReviews(data.reviews || []);
-    } catch (err) {
-      console.error("Error fetching reviews:", err);
     }
   }
 
@@ -633,23 +653,39 @@ export default function VendorDetailPage() {
 
   useEffect(() => {
     restoreBookingProgress();
-    if (vendor?.geoLat && vendor?.geoLng) {
+    // Fetch recommendations if we have geocodes OR address information
+    if (
+      vendor &&
+      ((vendor.geoLat && vendor.geoLng) || vendor.city || vendor.address)
+    ) {
       fetchRecommendations();
     }
     // eslint-disable-next-line
   }, [vendor?.id]);
 
   async function fetchRecommendations() {
-    if (!vendor?.geoLat || !vendor?.geoLng) return;
+    if (!vendor) return;
 
     setIsRecommendationsLoading(true);
     try {
       const params = new URLSearchParams({
-        lat: vendor.geoLat.toString(),
-        lng: vendor.geoLng.toString(),
         excludeId: vendor.id,
         limit: "4",
       });
+
+      // Try geocode-based recommendations first
+      if (vendor.geoLat && vendor.geoLng) {
+        params.set("lat", vendor.geoLat.toString());
+        params.set("lng", vendor.geoLng.toString());
+      } else {
+        // Fallback to address-based recommendations
+        if (vendor.city) {
+          params.set("city", vendor.city);
+        }
+        if (vendor.address) {
+          params.set("address", vendor.address);
+        }
+      }
 
       const res = await fetch(
         `/api/providers/recommendations?${params.toString()}`
@@ -1085,7 +1121,7 @@ export default function VendorDetailPage() {
           {/* Main Content */}
           <div className="flex-1">
             {/* Services */}
-            {vendor.subcategories.length > 0 && (
+            {vendor.subcategories && vendor.subcategories.length > 0 && (
               <div className="mb-12">
                 <h2 className="text-xl font-semibold mb-4">Services</h2>
                 <div className="flex flex-wrap gap-2">
@@ -1256,6 +1292,28 @@ export default function VendorDetailPage() {
                           );
                         })}
                       </ul>
+
+                      {/* Show booking button when listings are selected */}
+                      {selectedListings.length > 0 && (
+                        <div className="mt-6 p-4 border rounded-lg bg-accent/5">
+                          <div className="flex justify-between items-center mb-4">
+                            <span className="font-semibold">
+                              {selectedListings.length} service
+                              {selectedListings.length > 1 ? "s" : ""} selected
+                            </span>
+                            <span className="font-bold text-lg">
+                              Total: {formatCurrency(totalSelectedPrice)}
+                            </span>
+                          </div>
+                          <button
+                            type="submit"
+                            className="w-full py-3 rounded-full bg-accent text-accent-foreground font-semibold hover:opacity-90 transition flex items-center justify-center gap-2"
+                          >
+                            <Calendar size={18} />
+                            Book Selected Services
+                          </button>
+                        </div>
+                      )}
                     </form>
                   )}
                 </div>
@@ -1293,8 +1351,33 @@ export default function VendorDetailPage() {
                       className="p-6 rounded-2xl border border-border"
                     >
                       <div className="flex items-center gap-4 mb-4">
-                        <div className="flex h-12 w-12 items-center justify-center rounded-full bg-accent text-accent-foreground font-semibold">
-                          {review.authorName.charAt(0).toUpperCase()}
+                        <div className="flex h-12 w-12 items-center justify-center rounded-full bg-muted border overflow-hidden">
+                          {review.author?.avatar ? (
+                            <Image
+                              src={review.author.avatar}
+                              alt={review.authorName}
+                              width={48}
+                              height={48}
+                              unoptimized={true}
+                              className="object-cover w-full h-full"
+                              onError={(e) => {
+                                // Fallback to default avatar if user avatar fails to load
+                                const target = e.target as HTMLImageElement;
+                                target.src = "/images/default-avatar.svg";
+                                target.onerror = null; // Prevent infinite loop
+                              }}
+                            />
+                          ) : (
+                            // Default dummy profile image
+                            <Image
+                              src="/images/default-avatar.svg"
+                              alt="Default profile"
+                              width={48}
+                              height={48}
+                              unoptimized={true}
+                              className="object-cover w-full h-full"
+                            />
+                          )}
                         </div>
                         <div>
                           <p className="font-semibold">{review.authorName}</p>
@@ -1942,7 +2025,7 @@ export default function VendorDetailPage() {
       {recommendations.length > 0 && (
         <section className="bg-muted/30 py-16 border-t border-border">
           <div className="max-w-7xl mx-auto px-4">
-            <h2 className="text-2xl font-bold mb-8">Nearby Vendors</h2>
+            <h2 className="text-2xl font-bold mb-8">Similar Vendors</h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
               {recommendations.map((rec) => (
                 <VendorCard key={rec.id} vendor={rec} />

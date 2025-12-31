@@ -1,224 +1,261 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Welcome to EVA!</title>
-  <style>
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-      background: #fff;
-      margin: 0;
-      padding: 0;
-    }
-    .container {
-      max-width: 600px;
-      margin: 40px auto;
-      background: #fff;
-      border-radius: 12px;
-      box-shadow: 0 2px 8px rgba(99,102,241,0.08);
-      overflow: hidden;
-    }
-    .header {
-      background: #fff;
-      color: #222;
-      padding: 32px 24px 24px 24px;
-      text-align: left;
-      position: relative;
-      border-bottom: 2px solid #f3f4f6;
-    }
-    .logo {
-      font-size: 32px;
-      font-weight: 900;
-      letter-spacing: 2px;
-      text-transform: uppercase;
-      margin-bottom: 0;
-      margin-left: 2px;
-      margin-top: 0;
-      display: inline-block;
-      color: #111;
-    }
-    .header-content {
-      margin-top: 28px;
-      text-align: left;
-    }
-    .header-title {
-      font-size: 22px;
-      font-weight: 600;
-      margin-bottom: 6px;
-      margin-top: 0;
-      color: #222;
-    }
-    .header-desc {
-      font-size: 15px;
-      color: #6366f1;
-      margin-bottom: 0;
-    }
-    .body {
-      padding: 36px 32px 24px 32px;
-    }
-    .greeting {
-      font-size: 16px;
-      color: #111;
-      margin-bottom: 18px;
-      font-weight: 600;
-    }
-    .main-message {
-      font-size: 15px;
-      color: #222;
-      margin-bottom: 18px;
-    }
-    .section-title {
-      font-size: 16px;
-      color: #6366f1;
-      font-weight: 700;
-      margin: 24px 0 10px 0;
-    }
-    .steps {
-      margin-bottom: 24px;
-    }
-    .step {
-      background: #fff;
-      border-left: 4px solid #6366f1;
-      padding: 16px 18px;
-      border-radius: 6px;
-      margin-bottom: 12px;
-      box-shadow: 0 1px 2px rgba(0,0,0,0.03);
-    }
-    .step-title {
-      color: #6366f1;
-      font-weight: 600;
-      font-size: 15px;
-      margin-bottom: 4px;
-    }
-    .step-desc {
-      color: #222;
-      font-size: 13px;
-    }
-    .info-box {
-      background: #fff;
-      color: #6366f1;
-      border-radius: 6px;
-      border: 1px solid #e5e7eb;
-      padding: 16px;
-      margin: 24px 0 18px 0;
-      font-size: 14px;
-      text-align: center;
-      font-weight: 500;
-    }
-    .button-container {
-      text-align: center;
-      margin: 28px 0 18px 0;
-    }
-    .button {
-      display: inline-block;
-      padding: 13px 38px;
-      background: #6366f1;
-      color: #fff;
-      border-radius: 6px;
-      text-decoration: none;
-      font-weight: 700;
-      font-size: 16px;
-      transition: background 0.2s;
-      border: none;
-    }
-    .button:hover {
-      background: #4f46e5;
-    }
-    .share-section {
-      background: #fff;
-      border-left: 4px solid #6366f1;
-      border-radius: 6px;
-      padding: 16px 18px;
-      margin: 18px 0 18px 0;
-      font-size: 14px;
-      color: #222;
-      box-shadow: 0 1px 2px rgba(0,0,0,0.03);
-    }
-    .share-link {
-      color: #6366f1;
-      text-decoration: underline;
-      font-weight: 600;
-    }
-    .footer {
-      background: #fff;
-      padding: 24px 32px;
-      text-align: center;
-      border-top: 1px solid #e5e7eb;
-    }
-    .footer-brand {
-      font-weight: 700;
-      color: #6366f1;
-      font-size: 15px;
-      margin-bottom: 4px;
-      letter-spacing: 1px;
-    }
-    .footer-text {
-      color: #222;
-      font-size: 13px;
-      margin-bottom: 6px;
-    }
-    .footer-note {
-      color: #a1a1aa;
-      font-size: 12px;
-      margin-top: 10px;
-    }
-  </style>
-</head>
-<body>
-  <div class="container">
-    <div class="header">
-      <div class="logo">EVA</div>
-      <div class="header-content">
-        <div class="header-title">Welcome to EVA Marketplace!</div>
-        <div class="header-desc">Thank you for joining the EVA community. Your email has been verified successfully! 🎉</div>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Welcome to EVA!</title>
+    <style>
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+          "Helvetica Neue", Arial, sans-serif;
+        background: #fff;
+        margin: 0;
+        padding: 0;
+      }
+      .container {
+        max-width: 600px;
+        margin: 40px auto;
+        background: #fff;
+        border-radius: 12px;
+        box-shadow: 0 2px 8px rgba(99, 102, 241, 0.08);
+        overflow: hidden;
+      }
+      .header {
+        background: #fff;
+        color: #222;
+        padding: 32px 24px 24px 24px;
+        text-align: left;
+        position: relative;
+        border-bottom: 2px solid #f3f4f6;
+      }
+      .logo {
+        font-size: 32px;
+        font-weight: 900;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+        margin-bottom: 0;
+        margin-left: 2px;
+        margin-top: 0;
+        display: inline-block;
+        color: #111;
+      }
+      .header-content {
+        margin-top: 28px;
+        text-align: left;
+      }
+      .header-title {
+        font-size: 22px;
+        font-weight: 600;
+        margin-bottom: 6px;
+        margin-top: 0;
+        color: #222;
+      }
+      .header-desc {
+        font-size: 15px;
+        color: #6366f1;
+        margin-bottom: 0;
+      }
+      .body {
+        padding: 36px 32px 24px 32px;
+      }
+      .greeting {
+        font-size: 16px;
+        color: #111;
+        margin-bottom: 18px;
+        font-weight: 600;
+      }
+      .main-message {
+        font-size: 15px;
+        color: #222;
+        margin-bottom: 18px;
+      }
+      .section-title {
+        font-size: 16px;
+        color: #6366f1;
+        font-weight: 700;
+        margin: 24px 0 10px 0;
+      }
+      .steps {
+        margin-bottom: 24px;
+      }
+      .step {
+        background: #fff;
+        border-left: 4px solid #6366f1;
+        padding: 16px 18px;
+        border-radius: 6px;
+        margin-bottom: 12px;
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
+      }
+      .step-title {
+        color: #6366f1;
+        font-weight: 600;
+        font-size: 15px;
+        margin-bottom: 4px;
+      }
+      .step-desc {
+        color: #222;
+        font-size: 13px;
+      }
+      .info-box {
+        background: #fff;
+        color: #6366f1;
+        border-radius: 6px;
+        border: 1px solid #e5e7eb;
+        padding: 16px;
+        margin: 24px 0 18px 0;
+        font-size: 14px;
+        text-align: center;
+        font-weight: 500;
+      }
+      .button-container {
+        text-align: center;
+        margin: 28px 0 18px 0;
+      }
+      .button {
+        display: inline-block;
+        padding: 13px 38px;
+        background: #6366f1;
+        color: #fff;
+        border-radius: 6px;
+        text-decoration: none;
+        font-weight: 700;
+        font-size: 16px;
+        transition: background 0.2s;
+        border: none;
+      }
+      .button:hover {
+        background: #4f46e5;
+      }
+      .share-section {
+        background: #fff;
+        border-left: 4px solid #6366f1;
+        border-radius: 6px;
+        padding: 16px 18px;
+        margin: 18px 0 18px 0;
+        font-size: 14px;
+        color: #222;
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
+      }
+      .share-link {
+        color: #6366f1;
+        text-decoration: underline;
+        font-weight: 600;
+      }
+      .footer {
+        background: #fff;
+        padding: 24px 32px;
+        text-align: center;
+        border-top: 1px solid #e5e7eb;
+      }
+      .footer-brand {
+        font-weight: 700;
+        color: #6366f1;
+        font-size: 15px;
+        margin-bottom: 4px;
+        letter-spacing: 1px;
+      }
+      .footer-text {
+        color: #222;
+        font-size: 13px;
+        margin-bottom: 6px;
+      }
+      .footer-note {
+        color: #a1a1aa;
+        font-size: 12px;
+        margin-top: 10px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="header">
+        <div class="logo">EVA</div>
+        <div class="header-content">
+          <div class="header-title">Welcome to EVA Marketplace!</div>
+          <div class="header-desc">
+            Thank you for joining the EVA community. Your email has been
+            verified successfully! 🎉
+          </div>
+        </div>
+      </div>
+      <div class="body">
+        <div class="greeting">Hi {{name}},</div>
+        <div class="main-message">
+          We're excited to have you on board! You now have access to discover
+          and book the best event service providers for your special moments.
+        </div>
+        <div class="info-box">
+          <strong>What happens next?</strong><br />
+          Explore, connect, and book trusted vendors. We'll keep you updated
+          with tips and exclusive offers. Be sure to check your email regularly
+          so you don't miss out!
+        </div>
+        <div class="section-title">Here's what you can do on EVA:</div>
+        <div class="steps">
+          <div class="step">
+            <div class="step-title">Discover Providers</div>
+            <div class="step-desc">
+              Browse hundreds of verified event service providers in your
+              area—photographers, caterers, decorators, venues, and more.
+            </div>
+          </div>
+          <div class="step">
+            <div class="step-title">Get Quotes</div>
+            <div class="step-desc">
+              Send inquiries and receive custom quotes tailored to your needs
+              and budget.
+            </div>
+          </div>
+          <div class="step">
+            <div class="step-title">Book Services</div>
+            <div class="step-desc">
+              Secure your bookings, manage payments, and keep track of your
+              event schedule in one place.
+            </div>
+          </div>
+          <div class="step">
+            <div class="step-title">Leave Reviews</div>
+            <div class="step-desc">
+              Share your experience to help others and grow the EVA community.
+            </div>
+          </div>
+        </div>
+        <div class="button-container">
+          <a href="{{dashboardUrl}}" class="button">Go to My Dashboard</a>
+        </div>
+        <div class="share-section">
+          <strong>Know someone who'd love EVA?</strong><br />
+          <span
+            >Share this opportunity with friends, family, or colleagues who
+            could benefit from our platform.
+            <a href="{{shareUrl}}" class="share-link"
+              >Share the news 💜</a
+            ></span
+          >
+        </div>
+        <div class="info-box">
+          💡 <strong>Need help?</strong> Visit our
+          <a
+            href="{{helpUrl}}"
+            style="color: #4f46e5; text-decoration: underline"
+            >Help Center</a
+          >
+          or contact
+          <a
+            href="mailto:support@evalocal.com"
+            style="color: #4f46e5; text-decoration: underline"
+            >support@evalocal.com</a
+          >
+        </div>
+      </div>
+      <div class="footer">
+        <div class="footer-brand">EVA Marketplace</div>
+        <div class="footer-text">
+          Connecting you with the best event service providers
+        </div>
+        <div class="footer-text">support@evalocal.com | 🌐 evalocal.com</div>
+        <div class="footer-note">With 💜 from the EVA Team</div>
       </div>
     </div>
-    <div class="body">
-      <div class="greeting">Hi {{name}},</div>
-      <div class="main-message">
-        We're excited to have you on board! You now have access to discover and book the best event service providers for your special moments.
-      </div>
-      <div class="info-box">
-        <strong>What happens next?</strong><br>
-        Explore, connect, and book trusted vendors. We'll keep you updated with tips and exclusive offers. Be sure to check your email regularly so you don't miss out!
-      </div>
-      <div class="section-title">Here's what you can do on EVA:</div>
-      <div class="steps">
-        <div class="step">
-          <div class="step-title">Discover Providers</div>
-          <div class="step-desc">Browse hundreds of verified event service providers in your area—photographers, caterers, decorators, venues, and more.</div>
-        </div>
-        <div class="step">
-          <div class="step-title">Get Quotes</div>
-          <div class="step-desc">Send inquiries and receive custom quotes tailored to your needs and budget.</div>
-        </div>
-        <div class="step">
-          <div class="step-title">Book Services</div>
-          <div class="step-desc">Secure your bookings, manage payments, and keep track of your event schedule in one place.</div>
-        </div>
-        <div class="step">
-          <div class="step-title">Leave Reviews</div>
-          <div class="step-desc">Share your experience to help others and grow the EVA community.</div>
-        </div>
-      </div>
-      <div class="button-container">
-        <a href="{{dashboardUrl}}" class="button">Go to My Dashboard</a>
-      </div>
-      <div class="share-section">
-        <strong>Know someone who'd love EVA?</strong><br>
-        <span>Share this opportunity with friends, family, or colleagues who could benefit from our platform. <a href="{{shareUrl}}" class="share-link">Share the news 💜</a></span>
-      </div>
-      <div class="info-box">
-        💡 <strong>Need help?</strong> Visit our <a href="{{helpUrl}}" style="color:#4f46e5; text-decoration:underline;">Help Center</a> or contact <a href="mailto:hello@evalocal.com" style="color:#4f46e5; text-decoration:underline;">hello@evalocal.com</a>
-      </div>
-    </div>
-    <div class="footer">
-      <div class="footer-brand">EVA Marketplace</div>
-      <div class="footer-text">Connecting you with the best event service providers</div>
-      <div class="footer-text">📧 hello@evalocal.com | 🌐 eva.com</div>
-      <div class="footer-note">With 💜 from the EVA Team</div>
-    </div>
-  </div>
-</body>
+  </body>
 </html>
