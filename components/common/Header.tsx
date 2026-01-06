@@ -827,10 +827,10 @@ export default function Header() {
                         )}
                       </div>
                       <div className="flex-1">
-                        <p className="text-sm font-semibold text-foreground">
+                        <p className="text-sm font-semibold text-white">
                           {session.user.name || "User"}
                         </p>
-                        <p className="text-xs text-muted-foreground truncate">
+                        <p className="text-xs text-white truncate">
                           {session.user.email}
                         </p>
                       </div>
