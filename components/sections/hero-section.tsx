@@ -33,7 +33,7 @@ export default function HeroSection() {
         <div className="space-y-8 text-left">
           <div className="inline-flex items-center gap-2 rounded-full border border-border/60 bg-card/70 px-4 py-2 text-xs font-semibold uppercase tracking-[0.4em] text-muted-foreground">
             <Sparkles size={16} className="text-accent" />
-            Verified vendors only
+            Vendors Only
           </div>
           <div className="space-y-6">
             <h1 className="text-balance text-4xl font-semibold text-foreground sm:text-5xl lg:text-6xl">

@@ -183,10 +183,10 @@ export default function TermsPage() {
               If you have any questions about these Terms of Service, please
               contact us at{" "}
               <a
-                href="mailto:legal@eva.events"
+                href="mailto:support@evalocal.com"
                 className="text-accent hover:underline"
               >
-                legal@eva.events
+                support@evalocal.com
               </a>
             </p>
           </section>
