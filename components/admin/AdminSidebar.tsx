@@ -67,7 +67,7 @@ export default function AdminSidebar({
   const { data: session } = useSession();
 
   const adminName = session?.user?.name || "Admin User";
-  const adminEmail = session?.user?.email || "admin@eva.com";
+  const adminEmail = session?.user?.email || "admin@evalocal.com";
   const adminInitial = adminName?.charAt(0).toUpperCase() || "A";
 
   const isActive = (href: string) => {
