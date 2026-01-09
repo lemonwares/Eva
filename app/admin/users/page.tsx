@@ -1,12 +1,30 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import {
+  Search,
+  Plus,
+  Edit2,
+  Trash2,
+  Eye,
+  MoreVertical,
+  CheckCircle,
+  Ban,
+  ChevronLeft,
+  ChevronRight,
+  User as UserIcon,
+  Phone,
+  Mail,
+  Calendar,
+  Shield,
+  Activity,
+  Filter
+} from "lucide-react";
 import AdminLayout from "@/components/admin/AdminLayout";
 import Modal from "@/components/admin/Modal";
 import ConfirmDialog from "@/components/admin/ConfirmDialog";
 import { useAdminTheme } from "@/components/admin/AdminThemeContext";
 import { Toast, ToastType } from "@/components/admin/Toast";
-// import Toast, { ToastType } from "@/components/admin/Toast";
 
 interface User {
   id: string;
@@ -51,52 +69,43 @@ function ViewUserModal({
               darkMode ? "bg-gray-700" : "bg-gray-200"
             } flex items-center justify-center overflow-hidden`}
           >
-            {user.image ? (
+             {user.image ? (
               <img
                 src={user.image}
                 alt={user.name}
                 className="w-full h-full object-cover"
               />
             ) : (
-              <span className={`text-3xl font-bold ${textSecondary}`}>
-                {user.name.charAt(0).toUpperCase()}
-              </span>
+                <UserIcon size={32} className={textSecondary} />
             )}
           </div>
           <div>
             <h3 className={`text-xl font-bold ${textPrimary}`}>{user.name}</h3>
             <p className={textSecondary}>{user.email}</p>
-            <div className="flex items-center gap-2 mt-1">
+            <div className="flex items-center gap-2 mt-2">
               <span
-                className={`px-2 py-1 text-xs rounded-full ${
+                className={`px-2 py-0.5 text-xs rounded-full font-medium ${
                   user.role === "ADMINISTRATOR"
-                    ? "bg-purple-100 text-purple-700"
+                    ? "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300"
                     : user.role === "PROFESSIONAL"
-                    ? "bg-blue-100 text-blue-700"
+                    ? "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300"
                     : user.role === "CLIENT"
-                    ? "bg-green-100 text-green-700"
-                    : "bg-gray-100 text-gray-700"
+                    ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300"
+                    : "bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300"
                 }`}
               >
                 {user.role === "PROFESSIONAL"
-                  ? "Professional/Vendor"
-                  : user.role}
+                  ? "Professional"
+                  : user.role.charAt(0) + user.role.slice(1).toLowerCase()}
               </span>
               <span
-                className={`px-2 py-1 text-xs rounded-full cursor-help ${
+                className={`px-2 py-0.5 text-xs rounded-full font-medium ${
                   user.status === "ACTIVE"
-                    ? "bg-green-100 text-green-700"
+                    ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300"
                     : user.status === "SUSPENDED"
-                    ? "bg-red-100 text-red-700"
-                    : "bg-yellow-100 text-yellow-700"
+                    ? "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300"
+                    : "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-300"
                 }`}
-                title={
-                  user.status === "ACTIVE"
-                    ? "Email verified - user has full access"
-                    : user.status === "SUSPENDED"
-                    ? "Account suspended by administrator"
-                    : "Email not verified - user needs to verify their email"
-                }
               >
                 {user.status}
               </span>
@@ -106,35 +115,45 @@ function ViewUserModal({
 
         {/* User Info Grid */}
         <div
-          className={`grid grid-cols-1 md:grid-cols-2 gap-4 p-4 rounded-lg ${
-            darkMode ? "bg-gray-800" : "bg-gray-50"
-          }`}
+          className={`grid grid-cols-1 md:grid-cols-2 gap-4 p-4 rounded-lg border ${darkMode ? "bg-white/5 border-gray-700" : "bg-gray-50 border-gray-200"}`}
         >
-          <div>
-            <p className={`text-xs ${textMuted}`}>Phone</p>
-            <p className={`font-medium ${textPrimary}`}>
-              {user.phone || "Not provided"}
-            </p>
+          <div className="flex items-start gap-3">
+             <Phone size={16} className={`mt-0.5 ${textMuted}`} />
+             <div>
+                <p className={`text-xs ${textMuted}`}>Phone</p>
+                <p className={`font-medium ${textPrimary}`}>
+                {user.phone || "Not provided"}
+                </p>
+             </div>
           </div>
-          <div>
-            <p className={`text-xs ${textMuted}`}>Email Verified</p>
-            <p className={`font-medium ${textPrimary}`}>
-              {user.emailVerified
-                ? new Date(user.emailVerified).toLocaleDateString()
-                : "Not verified"}
-            </p>
+          <div className="flex items-start gap-3">
+             <Shield size={16} className={`mt-0.5 ${textMuted}`} />
+             <div>
+                <p className={`text-xs ${textMuted}`}>Email Verified</p>
+                <p className={`font-medium ${textPrimary}`}>
+                {user.emailVerified
+                    ? new Date(user.emailVerified).toLocaleDateString()
+                    : "Not verified"}
+                </p>
+             </div>
           </div>
-          <div>
-            <p className={`text-xs ${textMuted}`}>Joined</p>
-            <p className={`font-medium ${textPrimary}`}>
-              {new Date(user.createdAt).toLocaleDateString()}
-            </p>
+          <div className="flex items-start gap-3">
+             <Calendar size={16} className={`mt-0.5 ${textMuted}`} />
+             <div>
+                <p className={`text-xs ${textMuted}`}>Joined</p>
+                <p className={`font-medium ${textPrimary}`}>
+                {new Date(user.createdAt).toLocaleDateString()}
+                </p>
+             </div>
           </div>
-          <div>
-            <p className={`text-xs ${textMuted}`}>Last Updated</p>
-            <p className={`font-medium ${textPrimary}`}>
-              {new Date(user.updatedAt).toLocaleDateString()}
-            </p>
+          <div className="flex items-start gap-3">
+             <Activity size={16} className={`mt-0.5 ${textMuted}`} />
+             <div>
+                <p className={`text-xs ${textMuted}`}>Last Updated</p>
+                <p className={`font-medium ${textPrimary}`}>
+                {new Date(user.updatedAt).toLocaleDateString()}
+                </p>
+             </div>
           </div>
         </div>
 
@@ -142,9 +161,7 @@ function ViewUserModal({
         {user._count && (
           <div className="grid grid-cols-3 gap-4">
             <div
-              className={`p-4 rounded-lg text-center ${
-                darkMode ? "bg-gray-800" : "bg-gray-50"
-              }`}
+              className={`p-4 rounded-lg text-center border ${darkMode ? "bg-white/5 border-gray-700" : "bg-gray-50 border-gray-200"}`}
             >
               <p className={`text-2xl font-bold ${textPrimary}`}>
                 {user._count.bookings}
@@ -152,9 +169,7 @@ function ViewUserModal({
               <p className={`text-sm ${textMuted}`}>Bookings</p>
             </div>
             <div
-              className={`p-4 rounded-lg text-center ${
-                darkMode ? "bg-gray-800" : "bg-gray-50"
-              }`}
+              className={`p-4 rounded-lg text-center border ${darkMode ? "bg-white/5 border-gray-700" : "bg-gray-50 border-gray-200"}`}
             >
               <p className={`text-2xl font-bold ${textPrimary}`}>
                 {user._count.reviews}
@@ -162,9 +177,7 @@ function ViewUserModal({
               <p className={`text-sm ${textMuted}`}>Reviews</p>
             </div>
             <div
-              className={`p-4 rounded-lg text-center ${
-                darkMode ? "bg-gray-800" : "bg-gray-50"
-              }`}
+              className={`p-4 rounded-lg text-center border ${darkMode ? "bg-white/5 border-gray-700" : "bg-gray-50 border-gray-200"}`}
             >
               <p className={`text-2xl font-bold ${textPrimary}`}>
                 {user._count.inquiries}
@@ -178,11 +191,7 @@ function ViewUserModal({
         <div className="flex justify-end gap-2 pt-4 border-t border-gray-200 dark:border-gray-700">
           <button
             onClick={onClose}
-            className={`px-4 py-2 rounded-lg ${
-              darkMode
-                ? "bg-gray-700 hover:bg-gray-600"
-                : "bg-gray-100 hover:bg-gray-200"
-            } ${textPrimary}`}
+            className={`px-4 py-2 rounded-lg border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-white/5 ${textPrimary}`}
           >
             Close
           </button>
@@ -204,7 +213,7 @@ function EditUserModal({
   onClose: () => void;
   onSave: (data: Partial<User>) => void;
 }) {
-  const { darkMode, textPrimary, inputBg, inputBorder } = useAdminTheme();
+  const { darkMode, textPrimary, textSecondary, inputBg, inputBorder } = useAdminTheme();
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -238,12 +247,12 @@ function EditUserModal({
 
   if (!user) return null;
 
-  const inputClass = `w-full px-3 py-2 rounded-lg ${inputBg} ${inputBorder} ${textPrimary} focus:outline-none focus:ring-2 focus:ring-rose-500`;
-  const labelClass = `block text-sm font-medium ${textPrimary} mb-1`;
+  const inputClass = `w-full px-4 py-2.5 rounded-lg border ${inputBg} ${inputBorder} ${textPrimary} text-sm focus:outline-none focus:ring-2 focus:ring-accent/50`;
+  const labelClass = `block text-sm font-medium ${textSecondary} mb-1.5`;
 
   return (
     <Modal isOpen={isOpen} onClose={onClose} title="Edit User" size="md">
-      <form onSubmit={handleSubmit} className="space-y-4">
+      <form onSubmit={handleSubmit} className="space-y-4 pt-2">
         <div>
           <label className={labelClass}>Full Name</label>
           <input
@@ -284,51 +293,57 @@ function EditUserModal({
         <div className="grid grid-cols-2 gap-4">
           <div>
             <label className={labelClass}>Role</label>
-            <select
-              value={formData.role}
-              onChange={(e) =>
-                setFormData({ ...formData, role: e.target.value })
-              }
-              className={inputClass}
-            >
-              <option value="CLIENT">Client</option>
-              <option value="PROFESSIONAL">Professional/Vendor</option>
-              <option value="ADMINISTRATOR">Administrator</option>
-            </select>
+            <div className="relative">
+                <select
+                value={formData.role}
+                onChange={(e) =>
+                    setFormData({ ...formData, role: e.target.value })
+                }
+                className={`${inputClass} appearance-none`}
+                >
+                <option value="CLIENT">Client</option>
+                <option value="PROFESSIONAL">Professional</option>
+                <option value="ADMINISTRATOR">Administrator</option>
+                </select>
+                <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-500">
+                    <svg className="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/></svg>
+                </div>
+            </div>
           </div>
 
           <div>
             <label className={labelClass}>Status</label>
-            <select
-              value={formData.status}
-              onChange={(e) =>
-                setFormData({ ...formData, status: e.target.value })
-              }
-              className={inputClass}
-            >
-              <option value="ACTIVE">Active</option>
-              <option value="INACTIVE">Inactive</option>
-              <option value="SUSPENDED">Suspended</option>
-            </select>
+            <div className="relative">
+                <select
+                value={formData.status}
+                onChange={(e) =>
+                    setFormData({ ...formData, status: e.target.value })
+                }
+                className={`${inputClass} appearance-none`}
+                >
+                <option value="ACTIVE">Active</option>
+                <option value="INACTIVE">Inactive</option>
+                <option value="SUSPENDED">Suspended</option>
+                </select>
+                 <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-500">
+                    <svg className="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/></svg>
+                </div>
+            </div>
           </div>
         </div>
 
-        <div className="flex justify-end gap-2 pt-4 border-t border-gray-200 dark:border-gray-700">
+        <div className="flex justify-end gap-3 mt-6 pt-4 border-t border-gray-200 dark:border-gray-700">
           <button
             type="button"
             onClick={onClose}
-            className={`px-4 py-2 rounded-lg ${
-              darkMode
-                ? "bg-gray-700 hover:bg-gray-600"
-                : "bg-gray-100 hover:bg-gray-200"
-            } ${textPrimary}`}
+            className={`px-4 py-2.5 rounded-lg border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-white/5 transition-colors ${textSecondary}`}
             disabled={saving}
           >
             Cancel
           </button>
           <button
             type="submit"
-            className="px-4 py-2 bg-rose-600 text-white rounded-lg hover:bg-rose-700 disabled:opacity-50"
+            className="px-4 py-2.5 bg-accent text-white rounded-lg hover:bg-accent/90 transition-colors disabled:opacity-50 font-medium"
             disabled={saving}
           >
             {saving ? "Saving..." : "Save Changes"}
@@ -349,7 +364,7 @@ function AddUserModal({
   onClose: () => void;
   onSave: (data: Partial<User>) => void;
 }) {
-  const { darkMode, textPrimary, inputBg, inputBorder } = useAdminTheme();
+  const { darkMode, textPrimary, textSecondary, inputBg, inputBorder } = useAdminTheme();
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -376,12 +391,12 @@ function AddUserModal({
     }
   };
 
-  const inputClass = `w-full px-3 py-2 rounded-lg ${inputBg} ${inputBorder} ${textPrimary} focus:outline-none focus:ring-2 focus:ring-rose-500`;
-  const labelClass = `block text-sm font-medium ${textPrimary} mb-1`;
+  const inputClass = `w-full px-4 py-2.5 rounded-lg border ${inputBg} ${inputBorder} ${textPrimary} text-sm focus:outline-none focus:ring-2 focus:ring-accent/50`;
+  const labelClass = `block text-sm font-medium ${textSecondary} mb-1.5`;
 
   return (
     <Modal isOpen={isOpen} onClose={onClose} title="Add New User" size="md">
-      <form onSubmit={handleSubmit} className="space-y-4">
+      <form onSubmit={handleSubmit} className="space-y-4 pt-2">
         <div>
           <label className={labelClass}>Full Name *</label>
           <input
@@ -390,6 +405,7 @@ function AddUserModal({
             onChange={(e) => setFormData({ ...formData, name: e.target.value })}
             className={inputClass}
             required
+            placeholder="John Doe"
           />
         </div>
 
@@ -403,6 +419,7 @@ function AddUserModal({
             }
             className={inputClass}
             required
+            placeholder="john@example.com"
           />
         </div>
 
@@ -436,33 +453,34 @@ function AddUserModal({
 
         <div>
           <label className={labelClass}>Role</label>
-          <select
-            value={formData.role}
-            onChange={(e) => setFormData({ ...formData, role: e.target.value })}
-            className={inputClass}
-          >
-            <option value="CLIENT">Client</option>
-            <option value="PROFESSIONAL">Professional/Vendor</option>
-            <option value="ADMINISTRATOR">Administrator</option>
-          </select>
+           <div className="relative">
+                <select
+                    value={formData.role}
+                    onChange={(e) => setFormData({ ...formData, role: e.target.value })}
+                    className={`${inputClass} appearance-none`}
+                >
+                    <option value="CLIENT">Client</option>
+                    <option value="PROFESSIONAL">Professional</option>
+                    <option value="ADMINISTRATOR">Administrator</option>
+                </select>
+                <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-500">
+                    <svg className="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/></svg>
+                </div>
+           </div>
         </div>
 
-        <div className="flex justify-end gap-2 pt-4 border-t border-gray-200 dark:border-gray-700">
+        <div className="flex justify-end gap-3 mt-6 pt-4 border-t border-gray-200 dark:border-gray-700">
           <button
             type="button"
             onClick={onClose}
-            className={`px-4 py-2 rounded-lg ${
-              darkMode
-                ? "bg-gray-700 hover:bg-gray-600"
-                : "bg-gray-100 hover:bg-gray-200"
-            } ${textPrimary}`}
+            className={`px-4 py-2.5 rounded-lg border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-white/5 transition-colors ${textSecondary}`}
             disabled={saving}
           >
             Cancel
           </button>
           <button
             type="submit"
-            className="px-4 py-2 bg-rose-600 text-white rounded-lg hover:bg-rose-700 disabled:opacity-50"
+            className="px-4 py-2.5 bg-accent text-white rounded-lg hover:bg-accent/90 transition-colors disabled:opacity-50 font-medium"
             disabled={saving}
           >
             {saving ? "Creating..." : "Create User"}
@@ -689,175 +707,117 @@ export default function UsersPage() {
     }
   };
 
-  // Format role for display
-  const formatRole = (role: string) => {
-    switch (role) {
-      case "ADMINISTRATOR":
-        return "Administrator";
-      case "PROFESSIONAL":
-        return "Professional/Vendor";
-      case "CLIENT":
-        return "Client";
-      default:
-        return role;
-    }
-  };
-
-  // Role badge colors
   const getRoleBadgeClass = (role: string) => {
     switch (role) {
       case "ADMINISTRATOR":
-        return "bg-purple-100 text-purple-700";
+        return "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300";
       case "PROFESSIONAL":
-        return "bg-blue-100 text-blue-700";
+        return "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300";
       case "CLIENT":
-        return "bg-green-100 text-green-700";
+        return "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300";
       default:
-        return "bg-gray-100 text-gray-700";
+        return "bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300";
     }
   };
 
-  // Status badge colors
   const getStatusBadgeClass = (status: string) => {
     switch (status) {
       case "ACTIVE":
-        return "bg-green-100 text-green-700";
+        return "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300";
       case "SUSPENDED":
-        return "bg-red-100 text-red-700";
+        return "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300";
       case "INACTIVE":
-        return "bg-yellow-100 text-yellow-700";
+        return "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-300";
       default:
-        return "bg-gray-100 text-gray-700";
+        return "bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300";
     }
   };
-
-  // Get status explanation for tooltip
-  const getStatusExplanation = (status: string) => {
-    switch (status) {
-      case "ACTIVE":
-        return "Email verified - user has full access";
-      case "SUSPENDED":
-        return "Account suspended by administrator";
-      case "INACTIVE":
-        return "Email not verified - user needs to verify their email";
-      default:
-        return "";
-    }
-  };
-
-  const inputClass = `px-3 py-2 rounded-lg ${inputBg} ${inputBorder} ${textPrimary} focus:outline-none focus:ring-2 focus:ring-rose-500`;
 
   return (
-    <AdminLayout title="Users">
+    <AdminLayout
+      title="Users"
+      actionButton={{
+        label: "Add User",
+        onClick: () => setAddModalOpen(true),
+        icon: <Plus size={18} />,
+      }}
+    >
       <div className="space-y-6">
-        {/* Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <div>
-            <p className={textSecondary}>
-              Manage registered users and their roles
-            </p>
-          </div>
-          <button
-            onClick={() => setAddModalOpen(true)}
-            className="px-4 py-2 bg-rose-600 text-white rounded-lg hover:bg-rose-700 flex items-center gap-2"
-          >
-            <svg
-              className="w-5 h-5"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M12 4v16m8-8H4"
-              />
-            </svg>
-            <span>Add User</span>
-          </button>
-        </div>
-
         {/* Filters */}
-        <div className={`${cardBg} ${cardBorder} rounded-xl p-4`}>
-          <div className="flex flex-col md:flex-row gap-4">
-            <div className="flex-1">
-              <div className="relative">
-                <svg
-                  className={`absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 ${textMuted}`}
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-                  />
-                </svg>
-                <input
-                  type="text"
-                  placeholder="Search users..."
-                  value={searchQuery}
-                  onChange={(e) => {
-                    setSearchQuery(e.target.value);
-                    setCurrentPage(1);
-                  }}
-                  className={`w-full pl-10 ${inputClass}`}
+        <div className="flex flex-col sm:flex-row gap-4 mb-6">
+            <div className="relative flex-1">
+                <Search
+                    size={18}
+                    className={`absolute left-3 top-1/2 -translate-y-1/2 ${textMuted}`}
                 />
-              </div>
+                 <input
+                    type="text"
+                    placeholder="Search users..."
+                    value={searchQuery}
+                    onChange={(e) => {
+                        setSearchQuery(e.target.value);
+                        setCurrentPage(1);
+                    }}
+                    className={`w-full pl-10 pr-4 py-2.5 rounded-lg border ${inputBg} ${inputBorder} ${textPrimary} text-sm focus:outline-none focus:ring-2 focus:ring-accent/50`}
+                />
             </div>
-            <div className="flex flex-wrap gap-2">
-              <select
-                value={roleFilter}
-                onChange={(e) => {
-                  setRoleFilter(e.target.value);
-                  setCurrentPage(1);
-                }}
-                className={inputClass}
-              >
-                <option value="all">All Roles</option>
-                <option value="CLIENT">Client</option>
-                <option value="PROFESSIONAL">Professional/Vendor</option>
-                <option value="ADMINISTRATOR">Administrator</option>
-              </select>
-              <select
-                value={statusFilter}
-                onChange={(e) => {
-                  setStatusFilter(e.target.value);
-                  setCurrentPage(1);
-                }}
-                className={inputClass}
-              >
-                <option value="all">All Status</option>
-                <option value="ACTIVE">Active</option>
-                <option value="INACTIVE">Inactive</option>
-                <option value="SUSPENDED">Suspended</option>
-              </select>
+            
+            <div className="flex gap-2">
+                <div className="relative">
+                    <select
+                        value={roleFilter}
+                        onChange={(e) => {
+                        setRoleFilter(e.target.value);
+                        setCurrentPage(1);
+                        }}
+                        className={`appearance-none px-4 py-2.5 pr-8 rounded-lg border ${inputBg} ${inputBorder} ${textSecondary} text-sm focus:outline-none focus:ring-2 focus:ring-accent/50 min-w-[140px]`}
+                    >
+                        <option value="all">All Roles</option>
+                        <option value="CLIENT">Client</option>
+                        <option value="PROFESSIONAL">Professional</option>
+                        <option value="ADMINISTRATOR">Administrator</option>
+                    </select>
+                     <ChevronRight size={16} className={`absolute right-3 top-1/2 -translate-y-1/2 rotate-90 ${textMuted} pointer-events-none`} />
+                </div>
+                
+                 <div className="relative">
+                    <select
+                        value={statusFilter}
+                        onChange={(e) => {
+                        setStatusFilter(e.target.value);
+                        setCurrentPage(1);
+                        }}
+                         className={`appearance-none px-4 py-2.5 pr-8 rounded-lg border ${inputBg} ${inputBorder} ${textSecondary} text-sm focus:outline-none focus:ring-2 focus:ring-accent/50 min-w-[140px]`}
+                    >
+                        <option value="all">All Status</option>
+                        <option value="ACTIVE">Active</option>
+                        <option value="INACTIVE">Inactive</option>
+                         <option value="SUSPENDED">Suspended</option>
+                    </select>
+                    <ChevronRight size={16} className={`absolute right-3 top-1/2 -translate-y-1/2 rotate-90 ${textMuted} pointer-events-none`} />
+                 </div>
             </div>
-          </div>
         </div>
 
         {/* Stats */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <div className={`${cardBg} ${cardBorder} rounded-xl p-4`}>
+          <div className={`${cardBg} border ${cardBorder} rounded-xl p-4`}>
             <p className={`text-2xl font-bold ${textPrimary}`}>{totalUsers}</p>
             <p className={textMuted}>Total Users</p>
           </div>
-          <div className={`${cardBg} ${cardBorder} rounded-xl p-4`}>
+          <div className={`${cardBg} border ${cardBorder} rounded-xl p-4`}>
             <p className={`text-2xl font-bold text-green-500`}>
               {users.filter((u) => u.status === "ACTIVE").length}
             </p>
             <p className={textMuted}>Active</p>
           </div>
-          <div className={`${cardBg} ${cardBorder} rounded-xl p-4`}>
+          <div className={`${cardBg} border ${cardBorder} rounded-xl p-4`}>
             <p className={`text-2xl font-bold text-blue-500`}>
               {users.filter((u) => u.role === "PROFESSIONAL").length}
             </p>
             <p className={textMuted}>Vendors</p>
           </div>
-          <div className={`${cardBg} ${cardBorder} rounded-xl p-4`}>
+          <div className={`${cardBg} border ${cardBorder} rounded-xl p-4`}>
             <p className={`text-2xl font-bold text-purple-500`}>
               {users.filter((u) => u.role === "ADMINISTRATOR").length}
             </p>
@@ -866,63 +826,51 @@ export default function UsersPage() {
         </div>
 
         {/* Users Table */}
-        <div className={`${cardBg} ${cardBorder} rounded-xl overflow-hidden`}>
+        <div className={`${cardBg} border ${cardBorder} rounded-xl overflow-hidden`}>
           {loading ? (
-            <div className="p-8 text-center">
-              <div className="animate-spin w-8 h-8 border-2 border-rose-500 border-t-transparent rounded-full mx-auto"></div>
+            <div className="p-12 text-center">
+              <div className="animate-spin w-8 h-8 border-2 border-accent border-t-transparent rounded-full mx-auto"></div>
               <p className={`mt-4 ${textMuted}`}>Loading users...</p>
             </div>
           ) : users.length === 0 ? (
-            <div className="p-8 text-center">
-              <svg
-                className={`w-16 h-16 mx-auto ${textMuted}`}
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"
-                />
-              </svg>
-              <p className={`mt-4 ${textMuted}`}>No users found</p>
+            <div className="p-12 text-center">
+              <UserIcon className={`w-12 h-12 mx-auto mb-4 ${textMuted}`} />
+              <p className={`text-lg font-medium ${textPrimary}`}>No users found</p>
             </div>
           ) : (
             <>
               {/* Desktop Table */}
               <div className="hidden md:block overflow-x-auto">
                 <table className="w-full">
-                  <thead className={darkMode ? "bg-gray-800" : "bg-gray-50"}>
+                  <thead className={darkMode ? "bg-white/5" : "bg-gray-50"}>
                     <tr>
                       <th
-                        className={`px-6 py-3 text-left text-xs font-medium ${textMuted} uppercase tracking-wider`}
+                        className={`px-6 py-4 text-left text-xs font-medium ${textMuted} uppercase tracking-wider`}
                       >
                         User
                       </th>
                       <th
-                        className={`px-6 py-3 text-left text-xs font-medium ${textMuted} uppercase tracking-wider`}
+                        className={`px-6 py-4 text-left text-xs font-medium ${textMuted} uppercase tracking-wider`}
                       >
                         Role
                       </th>
                       <th
-                        className={`px-6 py-3 text-left text-xs font-medium ${textMuted} uppercase tracking-wider`}
+                        className={`px-6 py-4 text-left text-xs font-medium ${textMuted} uppercase tracking-wider`}
                       >
                         Status
                       </th>
                       <th
-                        className={`px-6 py-3 text-left text-xs font-medium ${textMuted} uppercase tracking-wider`}
+                        className={`px-6 py-4 text-left text-xs font-medium ${textMuted} uppercase tracking-wider`}
                       >
                         Activity
                       </th>
                       <th
-                        className={`px-6 py-3 text-left text-xs font-medium ${textMuted} uppercase tracking-wider`}
+                        className={`px-6 py-4 text-left text-xs font-medium ${textMuted} uppercase tracking-wider`}
                       >
                         Joined
                       </th>
                       <th
-                        className={`px-6 py-3 text-right text-xs font-medium ${textMuted} uppercase tracking-wider`}
+                        className={`px-6 py-4 text-right text-xs font-medium ${textMuted} uppercase tracking-wider`}
                       >
                         Actions
                       </th>
@@ -930,21 +878,21 @@ export default function UsersPage() {
                   </thead>
                   <tbody
                     className={`divide-y ${
-                      darkMode ? "divide-gray-700" : "divide-gray-200"
+                      darkMode ? "divide-white/5" : "divide-gray-100"
                     }`}
                   >
                     {users.map((user) => (
                       <tr
                         key={user.id}
                         className={
-                          darkMode ? "hover:bg-gray-800" : "hover:bg-gray-50"
+                          darkMode ? "hover:bg-white/5" : "hover:bg-gray-50 bg-white"
                         }
                       >
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className="flex items-center">
                             <div
                               className={`w-10 h-10 rounded-full ${
-                                darkMode ? "bg-gray-700" : "bg-gray-200"
+                                darkMode ? "bg-white/10" : "bg-gray-100"
                               } flex items-center justify-center overflow-hidden`}
                             >
                               {user.image ? (
@@ -954,11 +902,7 @@ export default function UsersPage() {
                                   className="w-full h-full object-cover"
                                 />
                               ) : (
-                                <span
-                                  className={`font-medium ${textSecondary}`}
-                                >
-                                  {user.name.charAt(0).toUpperCase()}
-                                </span>
+                                <UserIcon size={18} className={textSecondary} />
                               )}
                             </div>
                             <div className="ml-4">
@@ -973,19 +917,20 @@ export default function UsersPage() {
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <span
-                            className={`px-2 py-1 text-xs rounded-full ${getRoleBadgeClass(
+                            className={`px-2 py-1 text-xs rounded-full font-medium ${getRoleBadgeClass(
                               user.role
                             )}`}
                           >
-                            {formatRole(user.role)}
+                             {user.role === "PROFESSIONAL"
+                                ? "Professional"
+                                : user.role.charAt(0) + user.role.slice(1).toLowerCase()}
                           </span>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <span
-                            className={`px-2 py-1 text-xs rounded-full cursor-help ${getStatusBadgeClass(
+                            className={`px-2 py-1 text-xs rounded-full font-medium ${getStatusBadgeClass(
                               user.status
                             )}`}
-                            title={getStatusExplanation(user.status)}
                           >
                             {user.status}
                           </span>
@@ -1008,125 +953,59 @@ export default function UsersPage() {
                               onClick={() => handleView(user)}
                               className={`p-2 rounded-lg ${
                                 darkMode
-                                  ? "hover:bg-gray-700"
+                                  ? "hover:bg-white/10"
                                   : "hover:bg-gray-100"
-                              }`}
+                              } transition-colors`}
                               title="View Details"
                             >
-                              <svg
-                                className={`w-5 h-5 ${textSecondary}`}
-                                fill="none"
-                                stroke="currentColor"
-                                viewBox="0 0 24 24"
-                              >
-                                <path
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                  strokeWidth={2}
-                                  d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
-                                />
-                                <path
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                  strokeWidth={2}
-                                  d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
-                                />
-                              </svg>
+                               <Eye size={16} className={textMuted} />
                             </button>
                             <button
                               onClick={() => handleEdit(user)}
                               className={`p-2 rounded-lg ${
                                 darkMode
-                                  ? "hover:bg-gray-700"
+                                  ? "hover:bg-white/10"
                                   : "hover:bg-gray-100"
-                              }`}
+                              } transition-colors`}
                               title="Edit User"
                             >
-                              <svg
-                                className="w-5 h-5 text-blue-500"
-                                fill="none"
-                                stroke="currentColor"
-                                viewBox="0 0 24 24"
-                              >
-                                <path
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                  strokeWidth={2}
-                                  d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
-                                />
-                              </svg>
+                               <Edit2 size={16} className="text-blue-500" />
                             </button>
                             {user.status === "SUSPENDED" ? (
                               <button
                                 onClick={() => handleActivate(user)}
                                 className={`p-2 rounded-lg ${
                                   darkMode
-                                    ? "hover:bg-gray-700"
+                                    ? "hover:bg-white/10"
                                     : "hover:bg-gray-100"
-                                }`}
+                                } transition-colors`}
                                 title="Activate User"
                               >
-                                <svg
-                                  className="w-5 h-5 text-green-500"
-                                  fill="none"
-                                  stroke="currentColor"
-                                  viewBox="0 0 24 24"
-                                >
-                                  <path
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                    strokeWidth={2}
-                                    d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
-                                  />
-                                </svg>
+                                <CheckCircle size={16} className="text-green-500" />
                               </button>
                             ) : (
                               <button
                                 onClick={() => handleSuspend(user)}
                                 className={`p-2 rounded-lg ${
                                   darkMode
-                                    ? "hover:bg-gray-700"
+                                    ? "hover:bg-white/10"
                                     : "hover:bg-gray-100"
-                                }`}
+                                } transition-colors`}
                                 title="Suspend User"
                               >
-                                <svg
-                                  className="w-5 h-5 text-yellow-500"
-                                  fill="none"
-                                  stroke="currentColor"
-                                  viewBox="0 0 24 24"
-                                >
-                                  <path
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                    strokeWidth={2}
-                                    d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"
-                                  />
-                                </svg>
+                                <Ban size={16} className="text-amber-500" />
                               </button>
                             )}
                             <button
                               onClick={() => handleDelete(user)}
                               className={`p-2 rounded-lg ${
                                 darkMode
-                                  ? "hover:bg-gray-700"
+                                  ? "hover:bg-white/10"
                                   : "hover:bg-gray-100"
-                              }`}
+                              } transition-colors`}
                               title="Delete User"
                             >
-                              <svg
-                                className="w-5 h-5 text-red-500"
-                                fill="none"
-                                stroke="currentColor"
-                                viewBox="0 0 24 24"
-                              >
-                                <path
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                  strokeWidth={2}
-                                  d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-                                />
-                              </svg>
+                               <Trash2 size={16} className="text-red-500" />
                             </button>
                           </div>
                         </td>
@@ -1135,116 +1014,6 @@ export default function UsersPage() {
                   </tbody>
                 </table>
               </div>
-
-              {/* Mobile Cards */}
-              <div className="md:hidden divide-y divide-gray-200 dark:divide-gray-700">
-                {users.map((user) => (
-                  <div key={user.id} className="p-4">
-                    <div className="flex items-start justify-between">
-                      <div className="flex items-center gap-3">
-                        <div
-                          className={`w-12 h-12 rounded-full ${
-                            darkMode ? "bg-gray-700" : "bg-gray-200"
-                          } flex items-center justify-center overflow-hidden`}
-                        >
-                          {user.image ? (
-                            <img
-                              src={user.image}
-                              alt={user.name}
-                              className="w-full h-full object-cover"
-                            />
-                          ) : (
-                            <span
-                              className={`text-lg font-medium ${textSecondary}`}
-                            >
-                              {user.name.charAt(0).toUpperCase()}
-                            </span>
-                          )}
-                        </div>
-                        <div>
-                          <p className={`font-medium ${textPrimary}`}>
-                            {user.name}
-                          </p>
-                          <p className={`text-sm ${textMuted}`}>{user.email}</p>
-                          <div className="flex items-center gap-2 mt-1">
-                            <span
-                              className={`px-2 py-0.5 text-xs rounded-full ${getRoleBadgeClass(
-                                user.role
-                              )}`}
-                            >
-                              {formatRole(user.role)}
-                            </span>
-                            <span
-                              className={`px-2 py-0.5 text-xs rounded-full cursor-help ${getStatusBadgeClass(
-                                user.status
-                              )}`}
-                              title={getStatusExplanation(user.status)}
-                            >
-                              {user.status}
-                            </span>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                    <div className={`mt-3 text-sm ${textMuted}`}>
-                      <span>{user._count?.bookings || 0} bookings</span>
-                      <span className="mx-1">•</span>
-                      <span>{user._count?.reviews || 0} reviews</span>
-                      <span className="mx-1">•</span>
-                      <span>
-                        Joined {new Date(user.createdAt).toLocaleDateString()}
-                      </span>
-                    </div>
-                    <div className="mt-3 flex items-center gap-2">
-                      <button
-                        onClick={() => handleView(user)}
-                        className="flex-1 px-3 py-2 text-sm bg-gray-100 dark:bg-gray-700 rounded-lg"
-                      >
-                        View
-                      </button>
-                      <button
-                        onClick={() => handleEdit(user)}
-                        className="flex-1 px-3 py-2 text-sm bg-blue-100 text-blue-700 rounded-lg"
-                      >
-                        Edit
-                      </button>
-                      {user.status === "SUSPENDED" ? (
-                        <button
-                          onClick={() => handleActivate(user)}
-                          className="flex-1 px-3 py-2 text-sm bg-green-100 text-green-700 rounded-lg"
-                        >
-                          Activate
-                        </button>
-                      ) : (
-                        <button
-                          onClick={() => handleSuspend(user)}
-                          className="flex-1 px-3 py-2 text-sm bg-yellow-100 text-yellow-700 rounded-lg"
-                        >
-                          Suspend
-                        </button>
-                      )}
-                      <button
-                        onClick={() => handleDelete(user)}
-                        className="p-2 text-red-500 rounded-lg"
-                      >
-                        <svg
-                          className="w-5 h-5"
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-                          />
-                        </svg>
-                      </button>
-                    </div>
-                  </div>
-                ))}
-              </div>
             </>
           )}
 
@@ -1252,23 +1021,21 @@ export default function UsersPage() {
           {!loading && totalPages > 1 && (
             <div
               className={`px-6 py-4 flex flex-col sm:flex-row items-center justify-between gap-4 border-t ${
-                darkMode ? "border-gray-700" : "border-gray-200"
+                darkMode ? "border-white/10" : "border-gray-200"
               }`}
             >
               <p className={`text-sm ${textMuted}`}>
                 Showing page {currentPage} of {totalPages} ({totalUsers} users)
               </p>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1">
                 <button
                   onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
                   disabled={currentPage === 1}
-                  className={`px-3 py-1 rounded-lg ${
-                    darkMode
-                      ? "bg-gray-700 hover:bg-gray-600"
-                      : "bg-gray-100 hover:bg-gray-200"
-                  } ${textPrimary} disabled:opacity-50 disabled:cursor-not-allowed`}
+                  className={`p-2 rounded ${
+                    darkMode ? "hover:bg-white/10" : "hover:bg-gray-100"
+                  } transition-colors disabled:opacity-50`}
                 >
-                  Previous
+                  <ChevronLeft size={18} className={textMuted} />
                 </button>
                 <div className="flex items-center gap-1">
                   {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
@@ -1287,13 +1054,11 @@ export default function UsersPage() {
                       <button
                         key={pageNum}
                         onClick={() => setCurrentPage(pageNum)}
-                        className={`w-8 h-8 rounded-lg ${
+                        className={`w-9 h-9 rounded flex items-center justify-center text-sm transition-colors ${
                           currentPage === pageNum
-                            ? "bg-rose-600 text-white"
-                            : darkMode
-                            ? "bg-gray-700 hover:bg-gray-600"
-                            : "bg-gray-100 hover:bg-gray-200"
-                        } ${currentPage !== pageNum ? textPrimary : ""}`}
+                            ? "bg-accent text-white"
+                            : `${textSecondary} ${darkMode ? "hover:bg-white/10" : "hover:bg-gray-100"}`
+                        }`}
                       >
                         {pageNum}
                       </button>
@@ -1305,13 +1070,11 @@ export default function UsersPage() {
                     setCurrentPage((p) => Math.min(totalPages, p + 1))
                   }
                   disabled={currentPage === totalPages}
-                  className={`px-3 py-1 rounded-lg ${
-                    darkMode
-                      ? "bg-gray-700 hover:bg-gray-600"
-                      : "bg-gray-100 hover:bg-gray-200"
-                  } ${textPrimary} disabled:opacity-50 disabled:cursor-not-allowed`}
+                  className={`p-2 rounded ${
+                    darkMode ? "hover:bg-white/10" : "hover:bg-gray-100"
+                  } transition-colors disabled:opacity-50`}
                 >
-                  Next
+                   <ChevronRight size={18} className={textMuted} />
                 </button>
               </div>
             </div>

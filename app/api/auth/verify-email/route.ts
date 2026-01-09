@@ -214,7 +214,7 @@ async function handleVerification(token: string) {
         <a href="${dashboardUrl}" class="button">Start Exploring Now</a>
       </div>
       <div class="support-section">
-        💡 <strong>Need help getting started?</strong> Check out our <a href="${helpUrl}">Help Center</a> or reach out to our support team at support@evalocal.com
+        💡 <strong>Need help getting started?</strong> Check out our <a href="${helpUrl}">Help Center</a> or reach out to our support team at hello@evalocal.com
       </div>
       <div class="divider"></div>
       <div class="content-text">
@@ -225,7 +225,7 @@ async function handleVerification(token: string) {
     <div class="footer">
       <div class="footer-brand">Eva Marketplace</div>
       <div class="footer-text">Connecting you with the best event service providers</div>
-      <div class="footer-text">📧 support@evalocal.com | 🌐 evalocal.com</div>
+      <div class="footer-text">📧 hello@evalocal.com | 🌐 evalocal.com</div>
     </div>
   </div>
 </body>

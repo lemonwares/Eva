@@ -61,10 +61,10 @@ export default function ContactPage() {
           Have a question, feedback, or need support? Fill out the form below or
           email us at{" "}
           <a
-            href="mailto:support@evalocal.com"
+            href="mailto:hello@evalocal.com"
             className="text-accent hover:underline"
           >
-            support@evalocal.com
+            hello@evalocal.com
           </a>
           .
         </p>

@@ -34,6 +34,56 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
+
+    // Handle Bulk Creation
+    if (Array.isArray(body)) {
+      const results = {
+        created: [] as any[],
+        errors: [] as any[],
+      };
+
+      for (const item of body) {
+        const validation = createCitySchema.safeParse(item);
+        if (!validation.success) {
+          results.errors.push({
+            name: item.name || "Unknown",
+            error: validation.error.issues,
+          });
+          continue;
+        }
+
+        const data = validation.data;
+        
+        try {
+          const existing = await prisma.city.findUnique({
+             where: { slug: data.slug },
+          });
+
+          if (existing) {
+             results.errors.push({
+               name: data.name,
+               error: "City slug already exists",
+             });
+             continue;
+          }
+
+          const city = await prisma.city.create({ data });
+          results.created.push(city);
+        } catch (dbError: any) {
+           results.errors.push({
+             name: data.name,
+             error: dbError.message,
+           });
+        }
+      }
+
+      return NextResponse.json({
+        message: `Processed ${body.length} items. Created: ${results.created.length}, Failed: ${results.errors.length}`,
+        results
+      }, { status: 201 });
+    }
+
+    // Handle Single Creation (Existing Logic)
     const validation = createCitySchema.safeParse(body);
 
     if (!validation.success) {

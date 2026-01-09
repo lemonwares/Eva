@@ -101,7 +101,7 @@ export default function AdminTagsPage() {
       const params = new URLSearchParams();
       if (searchQuery) params.append("search", searchQuery);
 
-      const res = await fetch(`/api/tags?${params}`);
+      const res = await fetch(`/api/admin/tags?${params}`);
       if (res.ok) {
         const data = await res.json();
         setTags(data);
@@ -182,13 +182,13 @@ export default function AdminTagsPage() {
 
       let res: Response;
       if (editingTag) {
-        res = await fetch(`/api/tags/${editingTag.id}`, {
+        res = await fetch(`/api/admin/tags/${editingTag.id}`, {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(payload),
         });
       } else {
-        res = await fetch("/api/tags", {
+        res = await fetch("/api/admin/tags", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(payload),
@@ -224,7 +224,7 @@ export default function AdminTagsPage() {
 
     setIsDeleting(true);
     try {
-      const res = await fetch(`/api/tags/${confirmDelete.id}`, {
+      const res = await fetch(`/api/admin/tags/${confirmDelete.id}`, {
         method: "DELETE",
       });
 

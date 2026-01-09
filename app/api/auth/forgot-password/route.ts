@@ -109,7 +109,7 @@ export async function POST(request: NextRequest) {
       </div>
       <div class="divider"></div>
       <div class="security-box">
-        🛡️ <strong>Security Notice:</strong> If you didn't request a password reset, please ignore this email immediately. Your password will remain unchanged and your account is secure. If you believe your account is compromised, contact us at support@evalocal.com
+        🛡️ <strong>Security Notice:</strong> If you didn't request a password reset, please ignore this email immediately. Your password will remain unchanged and your account is secure. If you believe your account is compromised, contact us at hello@evalocal.com
       </div>
       <div class="recommendations">
         <h4>🔒 Security Recommendations:</h4>
@@ -125,7 +125,7 @@ export async function POST(request: NextRequest) {
     <div class="footer">
       <div class="footer-brand">Eva Marketplace</div>
       <div class="footer-text">Connecting you with the best event service providers</div>
-      <div class="footer-text">📧 support@evalocal.com</div>
+      <div class="footer-text">📧 hello@evalocal.com</div>
     </div>
   </div>
 </body>

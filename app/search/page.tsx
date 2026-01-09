@@ -1,5 +1,3 @@
-// Fetch user favorites on mount
-
 "use client";
 
 import { useState, useEffect, useCallback, Suspense } from "react";
@@ -7,13 +5,8 @@ import { useSearchParams, useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import Header from "@/components/common/Header";
 import Footer from "@/components/common/Footer";
-import Link from "next/link";
 import {
   Search,
-  MapPin,
-  Star,
-  Filter,
-  X,
   Grid,
   List,
   Loader2,
@@ -21,11 +14,11 @@ import {
   Hash,
   Link2,
 } from "lucide-react";
-import { formatCurrency } from "@/lib/formatters";
 import TagInput from "@/components/ui/TagInput";
 import SearchModeToggle from "@/components/ui/SearchModeToggle";
 import EnhancedSearchInput from "@/components/ui/EnhancedSearchInput";
 import SearchResultCard from "@/components/ui/SearchResultCard";
+import SearchFilters from "@/components/ui/SearchFilters";
 
 interface Provider {
   id: string;
@@ -55,7 +48,7 @@ interface City {
   slug: string;
 }
 
-interface SearchFilters {
+interface SearchFiltersState {
   query: string;
   category: string;
   city: string;
@@ -63,7 +56,6 @@ interface SearchFilters {
   maxPrice: string;
   minRating: string;
   sortBy: string;
-  // Enhanced search fields
   tags: string[];
   slug: string;
   searchType: "text" | "tags" | "slug" | "all";
@@ -84,9 +76,8 @@ function SearchPageContent() {
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [showFilters, setShowFilters] = useState(false);
 
-  // Favorites state: Set of provider IDs
+  // Favorites state
   const [favoriteIds, setFavoriteIds] = useState<Set<string>>(new Set());
-  // Loading state for favorite actions (providerId -> boolean)
   const [favoriteLoading, setFavoriteLoading] = useState<{
     [id: string]: boolean;
   }>({});
@@ -94,7 +85,7 @@ function SearchPageContent() {
   // Enhanced search state
   const [availableTags, setAvailableTags] = useState<string[]>([]);
 
-  const [filters, setFilters] = useState<SearchFilters>({
+  const [filters, setFilters] = useState<SearchFiltersState>({
     query: searchParams.get("q") || "",
     category: searchParams.get("category") || "",
     city: searchParams.get("city") || "",
@@ -102,7 +93,6 @@ function SearchPageContent() {
     maxPrice: searchParams.get("maxPrice") || "",
     minRating: searchParams.get("minRating") || "",
     sortBy: searchParams.get("sortBy") || "relevance",
-    // Enhanced search fields
     tags: searchParams.get("tags")?.split(",").filter(Boolean) || [],
     slug: searchParams.get("slug") || "",
     searchType: (searchParams.get("searchType") as any) || "all",
@@ -124,7 +114,6 @@ function SearchPageContent() {
 
         if (cityRes.ok) {
           const cityData = await cityRes.json();
-          // API returns array of city objects directly
           setCities(Array.isArray(cityData) ? cityData : cityData.cities || []);
         }
       } catch (error) {
@@ -135,9 +124,9 @@ function SearchPageContent() {
     fetchFilterOptions();
   }, []);
 
+  // Fetch favorites on mount
   useEffect(() => {
     async function fetchFavorites() {
-      // Only fetch favorites if user is authenticated
       if (status !== "authenticated") {
         return;
       }
@@ -181,14 +170,11 @@ function SearchPageContent() {
       try {
         const params = new URLSearchParams();
 
-        // Enhanced search parameters
         if (filters.query) params.set("q", filters.query);
         if (filters.tags.length > 0) params.set("tags", filters.tags.join(","));
         if (filters.slug) params.set("slug", filters.slug);
         if (filters.searchType !== "all")
           params.set("searchType", filters.searchType);
-
-        // Existing parameters
         if (filters.category) params.set("category", filters.category);
         if (filters.city) params.set("city", filters.city);
         if (filters.minPrice) params.set("minPrice", filters.minPrice);
@@ -284,6 +270,39 @@ function SearchPageContent() {
   const loadMore = () => {
     setPage((prev) => prev + 1);
     searchProviders(false);
+  };
+
+  // Toggle favorite handler
+  const handleToggleFavorite = async (providerId: string) => {
+    setFavoriteLoading((prev) => ({ ...prev, [providerId]: true }));
+
+    try {
+      if (!favoriteIds.has(providerId)) {
+        const res = await fetch("/api/favorites", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ providerId }),
+        });
+        if (res.ok) {
+          setFavoriteIds((prev) => new Set(prev).add(providerId));
+        }
+      } else {
+        const res = await fetch(`/api/favorites/${providerId}`, {
+          method: "DELETE",
+        });
+        if (res.ok) {
+          setFavoriteIds((prev) => {
+            const newSet = new Set(prev);
+            newSet.delete(providerId);
+            return newSet;
+          });
+        }
+      }
+    } catch (error) {
+      console.error("Error toggling favorite:", error);
+    } finally {
+      setFavoriteLoading((prev) => ({ ...prev, [providerId]: false }));
+    }
   };
 
   return (
@@ -403,7 +422,7 @@ function SearchPageContent() {
               )}
             </form>
 
-            {/* Enhanced Results count and view toggle */}
+            {/* Results count and view toggle */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
               <div className="flex flex-col sm:flex-row sm:items-center gap-2">
                 <p className="text-muted-foreground">
@@ -480,136 +499,18 @@ function SearchPageContent() {
           </div>
 
           <div className="flex gap-8">
-            {/* Filters Sidebar - Desktop */}
-            {/* Sidebar stays hidden on mobile; we use the modal for mobile filters. */}
-            <aside className="hidden md:block w-72 shrink-0">
-              <div className="sticky top-28 p-4 border border-border rounded-xl bg-card">
-                <div className="flex items-center justify-between mb-4">
-                  <h2 className="font-semibold text-foreground flex items-center gap-2">
-                    <Filter className="w-4 h-4" />
-                    Filters
-                  </h2>
-                  {hasActiveFilters && (
-                    <button
-                      onClick={clearFilters}
-                      className="text-sm text-accent hover:underline"
-                    >
-                      Clear all
-                    </button>
-                  )}
-                </div>
-
-                {/* Category Filter */}
-                <div className="mb-6">
-                  <label className="block text-sm font-medium text-foreground mb-2">
-                    Category
-                  </label>
-                  <select
-                    value={filters.category}
-                    onChange={(e) =>
-                      setFilters((prev) => ({
-                        ...prev,
-                        category: e.target.value,
-                      }))
-                    }
-                    className="w-full px-3 py-2 border border-border rounded-lg bg-background text-foreground text-sm"
-                  >
-                    <option value="">All Categories</option>
-                    {categories.map((cat) => (
-                      <option key={cat.id} value={cat.id}>
-                        {cat.name}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                {/* City Filter */}
-                <div className="mb-6">
-                  <label className="block text-sm font-medium text-foreground mb-2">
-                    Location
-                  </label>
-                  <select
-                    value={filters.city}
-                    onChange={(e) =>
-                      setFilters((prev) => ({ ...prev, city: e.target.value }))
-                    }
-                    className="w-full px-3 py-2 border border-border rounded-lg bg-background text-foreground text-sm"
-                  >
-                    <option value="">All Locations</option>
-                    {cities.map((city) => (
-                      <option key={city.id} value={city.name}>
-                        {city.name}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                {/* Price Range */}
-                <div className="mb-6">
-                  <label className="block text-sm font-medium text-foreground mb-2">
-                    Price Range
-                  </label>
-                  <div className="flex items-center gap-2">
-                    <input
-                      type="number"
-                      placeholder="Min"
-                      value={filters.minPrice}
-                      onChange={(e) =>
-                        setFilters((prev) => ({
-                          ...prev,
-                          minPrice: e.target.value,
-                        }))
-                      }
-                      className="w-full px-3 py-2 border border-border rounded-lg bg-background text-foreground text-sm"
-                    />
-                    <span className="text-muted-foreground">-</span>
-                    <input
-                      type="number"
-                      placeholder="Max"
-                      value={filters.maxPrice}
-                      onChange={(e) =>
-                        setFilters((prev) => ({
-                          ...prev,
-                          maxPrice: e.target.value,
-                        }))
-                      }
-                      className="w-full px-3 py-2 border border-border rounded-lg bg-background text-foreground text-sm"
-                    />
-                  </div>
-                </div>
-
-                {/* Minimum Rating */}
-                <div className="mb-6">
-                  <label className="block text-sm font-medium text-foreground mb-2">
-                    Minimum Rating
-                  </label>
-                  <div className="flex gap-2">
-                    {[4, 3, 2, 1].map((rating) => (
-                      <button
-                        key={rating}
-                        onClick={() =>
-                          setFilters((prev) => ({
-                            ...prev,
-                            minRating:
-                              prev.minRating === rating.toString()
-                                ? ""
-                                : rating.toString(),
-                          }))
-                        }
-                        className={`flex items-center gap-1 px-3 py-1.5 rounded-lg border text-sm ${
-                          filters.minRating === rating.toString()
-                            ? "border-accent bg-accent/10 text-accent"
-                            : "border-border hover:border-accent/50"
-                        }`}
-                      >
-                        <Star className="w-3.5 h-3.5 fill-current" />
-                        {rating}+
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            </aside>
+            {/* Filters Sidebar */}
+            <SearchFilters
+              filters={filters}
+              categories={categories}
+              cities={cities}
+              setFilters={setFilters}
+              clearFilters={clearFilters}
+              showFilters={showFilters}
+              setShowFilters={setShowFilters}
+              hasActiveFilters={!!hasActiveFilters}
+              className="hidden md:block"
+            />
 
             {/* Results */}
             <div className="flex-1">
@@ -644,58 +545,12 @@ function SearchPageContent() {
                         provider={provider}
                         viewMode="grid"
                         isFavorite={favoriteIds.has(provider.id)}
-                        onToggleFavorite={async () => {
-                          setFavoriteLoading((prev) => ({
-                            ...prev,
-                            [provider.id]: true,
-                          }));
-
-                          try {
-                            if (!favoriteIds.has(provider.id)) {
-                              // Add to favorites
-                              const res = await fetch("/api/favorites", {
-                                method: "POST",
-                                headers: {
-                                  "Content-Type": "application/json",
-                                },
-                                body: JSON.stringify({
-                                  providerId: provider.id,
-                                }),
-                              });
-                              if (res.ok) {
-                                setFavoriteIds((prev) =>
-                                  new Set(prev).add(provider.id)
-                                );
-                              }
-                            } else {
-                              // Remove from favorites
-                              const res = await fetch(
-                                `/api/favorites/${provider.id}`,
-                                {
-                                  method: "DELETE",
-                                }
-                              );
-                              if (res.ok) {
-                                setFavoriteIds((prev) => {
-                                  const newSet = new Set(prev);
-                                  newSet.delete(provider.id);
-                                  return newSet;
-                                });
-                              }
-                            }
-                          } catch (error) {
-                            console.error("Error toggling favorite:", error);
-                          } finally {
-                            setFavoriteLoading((prev) => ({
-                              ...prev,
-                              [provider.id]: false,
-                            }));
-                          }
-                        }}
+                        onToggleFavorite={() =>
+                          handleToggleFavorite(provider.id)
+                        }
                         favoriteLoading={favoriteLoading[provider.id] || false}
                         searchType={filters.searchType}
                         showFavoriteButton={status === "authenticated"}
-                        // searchQuery={filters.query}
                       />
                     ))}
                   </div>
@@ -726,58 +581,12 @@ function SearchPageContent() {
                         provider={provider}
                         viewMode="list"
                         isFavorite={favoriteIds.has(provider.id)}
-                        onToggleFavorite={async () => {
-                          setFavoriteLoading((prev) => ({
-                            ...prev,
-                            [provider.id]: true,
-                          }));
-
-                          try {
-                            if (!favoriteIds.has(provider.id)) {
-                              // Add to favorites
-                              const res = await fetch("/api/favorites", {
-                                method: "POST",
-                                headers: {
-                                  "Content-Type": "application/json",
-                                },
-                                body: JSON.stringify({
-                                  providerId: provider.id,
-                                }),
-                              });
-                              if (res.ok) {
-                                setFavoriteIds((prev) =>
-                                  new Set(prev).add(provider.id)
-                                );
-                              }
-                            } else {
-                              // Remove from favorites
-                              const res = await fetch(
-                                `/api/favorites/${provider.id}`,
-                                {
-                                  method: "DELETE",
-                                }
-                              );
-                              if (res.ok) {
-                                setFavoriteIds((prev) => {
-                                  const newSet = new Set(prev);
-                                  newSet.delete(provider.id);
-                                  return newSet;
-                                });
-                              }
-                            }
-                          } catch (error) {
-                            console.error("Error toggling favorite:", error);
-                          } finally {
-                            setFavoriteLoading((prev) => ({
-                              ...prev,
-                              [provider.id]: false,
-                            }));
-                          }
-                        }}
+                        onToggleFavorite={() =>
+                          handleToggleFavorite(provider.id)
+                        }
                         favoriteLoading={favoriteLoading[provider.id] || false}
                         searchType={filters.searchType}
                         showFavoriteButton={status === "authenticated"}
-                        // searchQuery={filters.query}
                       />
                     ))}
                   </div>
@@ -806,156 +615,6 @@ function SearchPageContent() {
       </main>
 
       <Footer />
-
-      {/* Mobile Filters Overlay */}
-      {showFilters && (
-        <div className="fixed inset-0 z-50 md:hidden">
-          <div
-            className="absolute inset-0 bg-black/50"
-            onClick={() => setShowFilters(false)}
-          />
-          <div className="absolute bottom-0 left-0 right-0 max-h-[80vh] bg-background rounded-t-2xl p-4 overflow-y-auto">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="font-semibold text-lg text-foreground">Filters</h2>
-              <button
-                onClick={() => setShowFilters(false)}
-                className="p-2 hover:bg-muted rounded-full"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-
-            {/* Mobile filter content - same as sidebar */}
-            <div className="space-y-6">
-              {/* Category */}
-              <div>
-                <label className="block text-sm font-medium text-foreground mb-2">
-                  Category
-                </label>
-                <select
-                  value={filters.category}
-                  onChange={(e) =>
-                    setFilters((prev) => ({
-                      ...prev,
-                      category: e.target.value,
-                    }))
-                  }
-                  className="w-full px-3 py-2 border border-border rounded-lg bg-background text-foreground"
-                >
-                  <option value="">All Categories</option>
-                  {categories.map((cat) => (
-                    <option key={cat.id} value={cat.id}>
-                      {cat.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              {/* City */}
-              <div>
-                <label className="block text-sm font-medium text-foreground mb-2">
-                  Location
-                </label>
-                <select
-                  value={filters.city}
-                  onChange={(e) =>
-                    setFilters((prev) => ({ ...prev, city: e.target.value }))
-                  }
-                  className="w-full px-3 py-2 border border-border rounded-lg bg-background text-foreground"
-                >
-                  <option value="">All Locations</option>
-                  {cities.map((city) => (
-                    <option key={city.id} value={city.name}>
-                      {city.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              {/* Price Range */}
-              <div>
-                <label className="block text-sm font-medium text-foreground mb-2">
-                  Price Range
-                </label>
-                <div className="flex items-center gap-2">
-                  <input
-                    type="number"
-                    placeholder="Min"
-                    value={filters.minPrice}
-                    onChange={(e) =>
-                      setFilters((prev) => ({
-                        ...prev,
-                        minPrice: e.target.value,
-                      }))
-                    }
-                    className="w-full px-3 py-2 border border-border rounded-lg bg-background text-foreground"
-                  />
-                  <span className="text-muted-foreground">-</span>
-                  <input
-                    type="number"
-                    placeholder="Max"
-                    value={filters.maxPrice}
-                    onChange={(e) =>
-                      setFilters((prev) => ({
-                        ...prev,
-                        maxPrice: e.target.value,
-                      }))
-                    }
-                    className="w-full px-3 py-2 border border-border rounded-lg bg-background text-foreground"
-                  />
-                </div>
-              </div>
-
-              {/* Rating */}
-              <div>
-                <label className="block text-sm font-medium text-foreground mb-2">
-                  Minimum Rating
-                </label>
-                <div className="flex gap-2 flex-wrap">
-                  {[4, 3, 2, 1].map((rating) => (
-                    <button
-                      key={rating}
-                      onClick={() =>
-                        setFilters((prev) => ({
-                          ...prev,
-                          minRating:
-                            prev.minRating === rating.toString()
-                              ? ""
-                              : rating.toString(),
-                        }))
-                      }
-                      className={`flex items-center gap-1 px-3 py-1.5 rounded-lg border text-sm ${
-                        filters.minRating === rating.toString()
-                          ? "border-accent bg-accent/10 text-accent"
-                          : "border-border"
-                      }`}
-                    >
-                      <Star className="w-3.5 h-3.5 fill-current" />
-                      {rating}+
-                    </button>
-                  ))}
-                </div>
-              </div>
-            </div>
-
-            {/* Apply button */}
-            <div className="mt-6 flex gap-3">
-              <button
-                onClick={clearFilters}
-                className="flex-1 py-3 border border-border rounded-xl font-medium"
-              >
-                Clear
-              </button>
-              <button
-                onClick={() => setShowFilters(false)}
-                className="flex-1 py-3 bg-accent text-accent-foreground rounded-xl font-medium"
-              >
-                Apply Filters
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

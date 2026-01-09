@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import ImageUpload, { MultiImageUpload } from "@/components/ui/ImageUpload";
 import { formatCurrency } from "@/lib/formatters";
+import { CitySelect, type City } from "@/components/ui/CitySelect";
 import Image from "next/image";
 
 // Step types
@@ -161,6 +162,23 @@ export default function VendorOnboardingPage() {
   const [currentStep, setCurrentStep] = useState<OnboardingStep>("basics");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [availableCities, setAvailableCities] = useState<City[]>([]);
+
+  // Fetch cities on mount
+  useEffect(() => {
+    async function fetchCities() {
+      try {
+        const res = await fetch("/api/cities");
+        if (res.ok) {
+          const data = await res.json();
+          setAvailableCities(data);
+        }
+      } catch (err) {
+        console.error("Failed to fetch cities:", err);
+      }
+    }
+    fetchCities();
+  }, []);
 
   // Local draft state for a new listing
   const [listingDraft, setListingDraft] = useState<ListingDraft>({
@@ -738,15 +756,12 @@ export default function VendorOnboardingPage() {
 
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  City *
-                </label>
-                <input
-                  type="text"
+                <CitySelect
+                  label="City *"
                   value={formData.city}
-                  onChange={(e) => updateFormData({ city: e.target.value })}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-accent focus:border-transparent"
-                  placeholder="London"
+                  onChange={(val) => updateFormData({ city: val })}
+                  cities={availableCities}
+                  placeholder="Search or enter your city"
                 />
               </div>
               <div>
