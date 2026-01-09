@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { LoaderCircle, Mail, MapPin } from "lucide-react";
+import { LoaderCircle, Mail, MapPin, Facebook, Instagram, Twitter } from "lucide-react";
 import { IoToggle } from "react-icons/io5";
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
@@ -39,62 +39,28 @@ export default function Footer() {
     }
   };
   return (
-    <footer
-      id="contact"
-      className="bg-linear-to-b from-foreground to-foreground/95 text-background"
-    >
-      <div className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
-        <div className="grid gap-12 md:grid-cols-[1.5fr_1fr_1fr]">
+    <footer className="bg-black text-white px-4 py-16 sm:px-6 lg:px-8">
+      <div className="mx-auto max-w-7xl">
+        <div className="grid gap-12 lg:grid-cols-4 md:grid-cols-2 grid-cols-1">
           {/* Brand Section */}
-          <div>
-            {/* <div className="flex items-center gap-3">
-              <Image
-                src="/logo.png"
-                alt="EVA Logo"
-                width={48}
-                height={48}
-                className="h-12 w-12 rounded-2xl object-contain bg-white"
-                priority
-              />
-              <div>
-                <p className="text-xs uppercase tracking-[0.3em] text-background/70">
-                  Event Vendor Atlas
-                </p>
-                <p className="text-base font-semibold">Book with confidence</p>
-              </div>
-            </div> */}
-            <div className="font-bold text-2xl tracking-wide">EVA</div>
-            <p className="mt-6 max-w-sm text-sm text-background/70">
-              Connecting you with culturally-aware vendors, organisers, and
-              spaces so every celebration feels authentically yours.
+          <div className="space-y-6">
+            <div className="font-bold text-3xl tracking-wide">EVA</div>
+            <p className="text-gray-400 text-sm leading-relaxed max-w-xs">
+              Connecting you with real people & trusted vendors to make
+              unforgettable moments
             </p>
-            <div className="mt-6 space-y-3 text-sm text-background/80">
-              <div className="flex items-center gap-2">
-                <Mail size={16} />
-                <a
-                  href="mailto:support@evalocal.com"
-                  className="hover:text-background"
-                >
-                  support@evalocal.com
-                </a>
-              </div>
-              <div className="flex items-center gap-2">
-                <MapPin size={16} />
-                <span>London • Remote worldwide</span>
-              </div>
-            </div>
-
-            {/* Download knob section */}
-            <div
-              className="border border-gray-500 bg-gray-700 mt-5 rounded-md w-[300px] h-[50px] flex items-center py-1 px-2 gap-3"
-              style={{ cursor: "pointer" }}
+            
+            <button
               onClick={handleInstallClick}
+              className="group flex items-center gap-3 rounded-full border border-white/10 bg-white/5 px-1 py-1 pr-6 hover:bg-white/10 transition-colors w-fit"
             >
-              <IoToggle size={30} className="rotate-180 hover:cursor-pointer" />
-              <span>Install EVA</span>
-            </div>
+              <div className="relative h-8 w-14 rounded-full bg-white transition-colors">
+                 <div className="absolute top-1 left-1 h-6 w-6 rounded-full bg-black shadow-sm" />
+              </div>
+              <span className="font-medium text-sm">Install EVA</span>
+            </button>
 
-            {/* Install Modal */}
+             {/* Install Modal */}
             {showInstallModal && (
               <div
                 className="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
@@ -116,7 +82,7 @@ export default function Footer() {
                       Cancel
                     </button>
                     <button
-                      className="px-4 py-2 rounded bg-accent text-white flex items-center gap-2"
+                      className="px-4 py-2 rounded bg-black text-white flex items-center gap-2"
                       onClick={handleContinue}
                       disabled={isInstalling}
                     >
@@ -124,10 +90,10 @@ export default function Footer() {
                         <motion.span
                           animate={{ rotate: 360 }}
                           transition={{ repeat: Infinity, duration: 1 }}
-                          className="loader mr-2 text-white text-2xl"
+                          className="loader mr-2 text-white text-xl"
                         >
-                          <LoaderCircle className="" />
-                        </motion.span> // Or use a spinner icon here
+                          <LoaderCircle size={20} />
+                        </motion.span>
                       ) : null}
                       {isInstalling ? "Installing..." : "Continue"}
                     </button>
@@ -137,102 +103,93 @@ export default function Footer() {
             )}
           </div>
 
-          {/* Company Section */}
+          {/* Quick Links */}
           <div>
-            <h3 className="text-sm font-semibold uppercase tracking-[0.3em] text-background/70">
-              Company
-            </h3>
-            <ul className="mt-4 space-y-3 text-sm">
+            <h3 className="font-semibold text-lg mb-6">Quick Links</h3>
+            <ul className="space-y-4 text-gray-400 text-sm">
               <li>
-                <Link
-                  href="/#about"
-                  className="text-background/80 transition hover:text-background"
-                >
-                  About EVA
+                <Link href="/vendors" className="hover:text-white transition-colors">
+                  Find Vendors
                 </Link>
               </li>
               <li>
-                <Link
-                  href="/vendors"
-                  className="text-background/80 transition hover:text-background"
-                >
-                  For vendors
+                <Link href="/vendor/onboarding" className="hover:text-white transition-colors">
+                  Become a Vendor
                 </Link>
               </li>
               <li>
-                <Link
-                  href="/faq"
-                  className="text-background/80 transition hover:text-background"
-                >
-                  Help centre
+                <Link href="/about" className="hover:text-white transition-colors">
+                  About
                 </Link>
               </li>
               <li>
-                <Link
-                  href="/contact"
-                  className="text-background/80 transition hover:text-background"
-                >
+                <Link href="/contact" className="hover:text-white transition-colors">
                   Contact
                 </Link>
               </li>
             </ul>
           </div>
 
-          {/* Legal Section */}
+          {/* For You */}
           <div>
-            <h3 className="text-sm font-semibold uppercase tracking-[0.3em] text-background/70">
-              Legal
-            </h3>
-            <ul className="mt-4 space-y-3 text-sm">
+            <h3 className="font-semibold text-lg mb-6">For You</h3>
+            <ul className="space-y-4 text-gray-400 text-sm">
               <li>
-                <Link
-                  href="/privacy"
-                  className="text-background/80 transition hover:text-background"
-                >
-                  Privacy policy
+                <Link href="/vendor" className="hover:text-white transition-colors">
+                  Vendor Dashboard
                 </Link>
               </li>
               <li>
-                <Link
-                  href="/terms"
-                  className="text-background/80 transition hover:text-background"
-                >
-                  Terms of service
+                <Link href="/dashboard/quotes" className="hover:text-white transition-colors">
+                  My Quotes
                 </Link>
               </li>
               <li>
-                <Link
-                  href="/cookies"
-                  className="text-background/80 transition hover:text-background"
-                >
-                  Cookies policy
+                <Link href="/dashboard/bookings" className="hover:text-white transition-colors">
+                  My Bookings
+                </Link>
+              </li>
+              <li>
+                <Link href="/how-it-works" className="hover:text-white transition-colors">
+                  How It Works
                 </Link>
               </li>
             </ul>
           </div>
+
+          {/* Connect With Us */}
+          <div>
+            <h3 className="font-semibold text-lg mb-6">Connect With Us</h3>
+            <div className="flex items-center gap-4 mb-6">
+              <a href="#" className="text-gray-400 hover:text-white transition-colors">
+                <Facebook size={20} />
+              </a>
+               <a href="#" className="text-gray-400 hover:text-white transition-colors">
+                <Instagram size={20} />
+              </a>
+               <a href="#" className="text-gray-400 hover:text-white transition-colors">
+                <Twitter size={20} />
+              </a>
+               <a href="mailto:hello@evalocal.com" className="text-gray-400 hover:text-white transition-colors">
+                <Mail size={20} />
+              </a>
+            </div>
+            <a href="mailto:hello@evalocal.com" className="text-gray-400 hover:text-white transition-colors text-sm">
+              hello@evalocal.com
+            </a>
+          </div>
         </div>
 
-        <div className="mt-12 border-t border-background/20 pt-8 text-sm text-background/70">
-          <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+        <div className="mt-16 pt-8 border-t border-white/10 flex flex-col md:flex-row justify-between items-center gap-4 text-sm text-gray-400">
             <p>© {new Date().getFullYear()} EVA. All rights reserved.</p>
-            <div className="flex items-center gap-6">
-              <Link
-                href="/privacy"
-                className="hover:text-background transition"
-              >
-                Privacy
+            <div className="flex gap-6">
+              <Link href="/privacy" className="hover:text-white transition-colors">
+                Privacy Policy
               </Link>
-              <Link href="/terms" className="hover:text-background transition">
-                Terms
-              </Link>
-              <Link
-                href="/cookies"
-                className="hover:text-background transition"
-              >
-                Cookies
+              <Link href="/terms" className="hover:text-white transition-colors">
+                Terms of Service
               </Link>
             </div>
-          </div>
         </div>
       </div>
     </footer>
