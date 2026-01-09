@@ -1,7 +1,14 @@
 "use client";
 
 import Link from "next/link";
-import { LoaderCircle, Mail, MapPin, Facebook, Instagram, Twitter } from "lucide-react";
+import {
+  LoaderCircle,
+  Mail,
+  MapPin,
+  Facebook,
+  Instagram,
+  Twitter,
+} from "lucide-react";
 import { IoToggle } from "react-icons/io5";
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
@@ -49,18 +56,18 @@ export default function Footer() {
               Connecting you with real people & trusted vendors to make
               unforgettable moments
             </p>
-            
+
             <button
               onClick={handleInstallClick}
               className="group flex items-center gap-3 rounded-full border border-white/10 bg-white/5 px-1 py-1 pr-6 hover:bg-white/10 transition-colors w-fit"
             >
               <div className="relative h-8 w-14 rounded-full bg-white transition-colors">
-                 <div className="absolute top-1 left-1 h-6 w-6 rounded-full bg-black shadow-sm" />
+                <div className="absolute top-1 left-1 h-6 w-6 rounded-full bg-black shadow-sm" />
               </div>
               <span className="font-medium text-sm">Install EVA</span>
             </button>
 
-             {/* Install Modal */}
+            {/* Install Modal */}
             {showInstallModal && (
               <div
                 className="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
@@ -108,22 +115,34 @@ export default function Footer() {
             <h3 className="font-semibold text-lg mb-6">Quick Links</h3>
             <ul className="space-y-4 text-gray-400 text-sm">
               <li>
-                <Link href="/vendors" className="hover:text-white transition-colors">
+                <Link
+                  href="/vendors"
+                  className="hover:text-white transition-colors"
+                >
                   Find Vendors
                 </Link>
               </li>
               <li>
-                <Link href="/vendor/onboarding" className="hover:text-white transition-colors">
+                <Link
+                  href="/vendor/onboarding"
+                  className="hover:text-white transition-colors"
+                >
                   Become a Vendor
                 </Link>
               </li>
               <li>
-                <Link href="/about" className="hover:text-white transition-colors">
+                <Link
+                  href="/about"
+                  className="hover:text-white transition-colors"
+                >
                   About
                 </Link>
               </li>
               <li>
-                <Link href="/contact" className="hover:text-white transition-colors">
+                <Link
+                  href="/contact"
+                  className="hover:text-white transition-colors"
+                >
                   Contact
                 </Link>
               </li>
@@ -135,22 +154,34 @@ export default function Footer() {
             <h3 className="font-semibold text-lg mb-6">For You</h3>
             <ul className="space-y-4 text-gray-400 text-sm">
               <li>
-                <Link href="/vendor" className="hover:text-white transition-colors">
+                <Link
+                  href="/vendor"
+                  className="hover:text-white transition-colors"
+                >
                   Vendor Dashboard
                 </Link>
               </li>
               <li>
-                <Link href="/dashboard/quotes" className="hover:text-white transition-colors">
+                <Link
+                  href="/dashboard/quotes"
+                  className="hover:text-white transition-colors"
+                >
                   My Quotes
                 </Link>
               </li>
               <li>
-                <Link href="/dashboard/bookings" className="hover:text-white transition-colors">
+                <Link
+                  href="/dashboard/bookings"
+                  className="hover:text-white transition-colors"
+                >
                   My Bookings
                 </Link>
               </li>
               <li>
-                <Link href="/how-it-works" className="hover:text-white transition-colors">
+                <Link
+                  href="/how-it-works"
+                  className="hover:text-white transition-colors"
+                >
                   How It Works
                 </Link>
               </li>
@@ -161,35 +192,53 @@ export default function Footer() {
           <div>
             <h3 className="font-semibold text-lg mb-6">Connect With Us</h3>
             <div className="flex items-center gap-4 mb-6">
-              <a href="#" className="text-gray-400 hover:text-white transition-colors">
+              <a
+                href="#"
+                className="text-gray-400 hover:text-white transition-colors"
+              >
                 <Facebook size={20} />
               </a>
-               <a href="#" className="text-gray-400 hover:text-white transition-colors">
+              <a
+                href="#"
+                className="text-gray-400 hover:text-white transition-colors"
+              >
                 <Instagram size={20} />
               </a>
-               <a href="#" className="text-gray-400 hover:text-white transition-colors">
+              <a
+                href="#"
+                className="text-gray-400 hover:text-white transition-colors"
+              >
                 <Twitter size={20} />
               </a>
-               <a href="mailto:hello@evalocal.com" className="text-gray-400 hover:text-white transition-colors">
+              <a
+                href="mailto:support@evalocal.com"
+                className="text-gray-400 hover:text-white transition-colors"
+              >
                 <Mail size={20} />
               </a>
             </div>
-            <a href="mailto:hello@evalocal.com" className="text-gray-400 hover:text-white transition-colors text-sm">
-              hello@evalocal.com
+            <a
+              href="mailto:support@evalocal.com"
+              className="text-gray-400 hover:text-white transition-colors text-sm"
+            >
+              support@evalocal.com
             </a>
           </div>
         </div>
 
         <div className="mt-16 pt-8 border-t border-white/10 flex flex-col md:flex-row justify-between items-center gap-4 text-sm text-gray-400">
-            <p>© {new Date().getFullYear()} EVA. All rights reserved.</p>
-            <div className="flex gap-6">
-              <Link href="/privacy" className="hover:text-white transition-colors">
-                Privacy Policy
-              </Link>
-              <Link href="/terms" className="hover:text-white transition-colors">
-                Terms of Service
-              </Link>
-            </div>
+          <p>© {new Date().getFullYear()} EVA. All rights reserved.</p>
+          <div className="flex gap-6">
+            <Link
+              href="/privacy"
+              className="hover:text-white transition-colors"
+            >
+              Privacy Policy
+            </Link>
+            <Link href="/terms" className="hover:text-white transition-colors">
+              Terms of Service
+            </Link>
+          </div>
         </div>
       </div>
     </footer>
