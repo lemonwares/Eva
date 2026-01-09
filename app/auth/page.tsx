@@ -64,7 +64,7 @@ export default function AuthPage() {
 
             <div className="relative z-10 grid gap-4 text-sm text-muted-foreground sm:grid-cols-2">
               {[
-                { stat: "1,200+", label: "Verified vendors" },
+                { stat: "100+", label: "Verified vendors" },
                 { stat: "4.9/5", label: "Average review rating" },
                 { stat: "24 hrs", label: "Quote turnaround" },
                 { stat: "99%", label: "Client satisfaction" },

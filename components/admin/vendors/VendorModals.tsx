@@ -1,10 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import { Mail, Phone, MapPin } from "lucide-react";
+import { Mail, Phone, MapPin, Globe, Loader2, CheckCircle, XCircle } from "lucide-react";
 import Modal from "@/components/admin/Modal";
 import { useAdminTheme } from "@/components/admin/AdminThemeContext";
 import { formatCurrency } from "@/lib/formatters";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/Tabs";
 
 interface Provider {
   id: string;
@@ -95,6 +96,7 @@ interface ViewVendorModalProps {
   provider: Provider | null;
   onAction: (provider: Provider, action: string) => void;
   onEdit: (provider: Provider) => void;
+  categories?: Category[];
 }
 
 export function ViewVendorModal({
@@ -104,7 +106,7 @@ export function ViewVendorModal({
   onAction,
   onEdit,
   categories = [],
-}: ViewVendorModalProps & { categories?: Category[] }) {
+}: ViewVendorModalProps) {
   const { darkMode, textPrimary, textSecondary, textMuted } = useAdminTheme();
 
   if (!provider) return null;
@@ -133,13 +135,13 @@ export function ViewVendorModal({
                 {provider.status}
               </span>
               {provider.isVerified && (
-                <span className="px-2.5 py-1 rounded-full text-xs font-medium bg-blue-500/10 text-blue-500">
-                  Verified
+                <span className="px-2.5 py-1 rounded-full text-xs font-medium bg-blue-500/10 text-blue-500 flex items-center gap-1">
+                  <CheckCircle size={12} /> Verified
                 </span>
               )}
               {provider.isFeatured && (
-                <span className="px-2.5 py-1 rounded-full text-xs font-medium bg-amber-500/10 text-amber-500">
-                  Featured
+                <span className="px-2.5 py-1 rounded-full text-xs font-medium bg-amber-500/10 text-amber-500 flex items-center gap-1">
+                  <CheckCircle size={12} /> Featured
                 </span>
               )}
             </div>
@@ -213,6 +215,14 @@ export function ViewVendorModal({
                 >
                   <MapPin size={16} className={textMuted} />
                   {provider.address}
+                </p>
+              )}
+              {provider.website && (
+                 <p
+                  className={`flex items-center gap-2 text-sm ${textSecondary}`}
+                >
+                  <Globe size={16} className={textMuted} />
+                  {provider.website}
                 </p>
               )}
             </div>
@@ -382,215 +392,219 @@ export function EditVendorModal({
   onSave,
   isSubmitting,
 }: EditVendorModalProps) {
-  const { darkMode, textPrimary, inputBg, inputBorder } = useAdminTheme();
+  const { darkMode, textPrimary, textSecondary, inputBg, inputBorder } = useAdminTheme();
+
+  const inputClass = `w-full px-4 py-2.5 rounded-lg border ${inputBg} ${inputBorder} ${textPrimary} text-sm focus:outline-none focus:ring-2 focus:ring-accent/50`;
+  const labelClass = `block text-sm font-medium ${textPrimary} mb-1`;
+
+  // Render method to handle checkbox change carefully
+  const handleCheckboxChange = (field: string, checked: boolean) => {
+    setEditForm({ ...editForm, [field]: checked });
+  };
 
   return (
     <Modal isOpen={isOpen} onClose={onClose} title="Edit Vendor" size="xl">
-      <div className="space-y-4">
-        <div className="grid sm:grid-cols-2 gap-4">
-          <div>
-            <label className={`block text-sm font-medium ${textPrimary} mb-1`}>
-              Business Name
-            </label>
-            <input
-              type="text"
-              value={editForm.businessName}
-              onChange={(e) =>
-                setEditForm({ ...editForm, businessName: e.target.value })
-              }
-              className={`w-full px-4 py-2.5 rounded-lg border ${inputBg} ${inputBorder} ${textPrimary} text-sm focus:outline-none focus:ring-2 focus:ring-accent/50`}
-            />
-          </div>
-        </div>
+        <Tabs defaultValue="general" className="mt-2">
+            <TabsList className="mb-6 w-full grid grid-cols-3">
+                <TabsTrigger value="general">General</TabsTrigger>
+                <TabsTrigger value="contact">Contact & Location</TabsTrigger>
+                <TabsTrigger value="settings">Settings</TabsTrigger>
+            </TabsList>
 
-        <div className="grid sm:grid-cols-2 gap-4">
-          <div>
-            <label className={`block text-sm font-medium ${textPrimary} mb-1`}>
-              Phone
-            </label>
-            <input
-              type="tel"
-              value={editForm.phone}
-              onChange={(e) =>
-                setEditForm({ ...editForm, phone: e.target.value })
-              }
-              className={`w-full px-4 py-2.5 rounded-lg border ${inputBg} ${inputBorder} ${textPrimary} text-sm focus:outline-none focus:ring-2 focus:ring-accent/50`}
-            />
-          </div>
-          <div>
-            <label className={`block text-sm font-medium ${textPrimary} mb-1`}>
-              Website
-            </label>
-            <input
-              type="url"
-              value={editForm.website}
-              onChange={(e) =>
-                setEditForm({ ...editForm, website: e.target.value })
-              }
-              className={`w-full px-4 py-2.5 rounded-lg border ${inputBg} ${inputBorder} ${textPrimary} text-sm focus:outline-none focus:ring-2 focus:ring-accent/50`}
-            />
-          </div>
-        </div>
+            <TabsContent value="general" className="space-y-4">
+                 <div>
+                    <label className={labelClass}>Business Name</label>
+                    <input
+                        type="text"
+                        value={editForm.businessName}
+                        onChange={(e) =>
+                            setEditForm({ ...editForm, businessName: e.target.value })
+                        }
+                        className={inputClass}
+                    />
+                </div>
+                 <div>
+                    <label className={labelClass}>Categories</label>
+                    <div className="relative">
+                        <select
+                            multiple
+                            value={editForm.categories}
+                            onChange={(e) => {
+                            const selected = Array.from(
+                                e.target.selectedOptions,
+                                (option) => option.value
+                            );
+                            setEditForm({ ...editForm, categories: selected });
+                            }}
+                            className={`${inputClass} min-h-[100px]`}
+                        >
+                            {categories.map((cat) => (
+                            <option
+                                key={cat.slug}
+                                value={cat.slug}
+                            >
+                                {cat.name}
+                            </option>
+                            ))}
+                        </select>
+                         <p className={`text-xs ${textSecondary} mt-1`}>Hold Ctrl/Cmd to select multiple</p>
+                    </div>
+                </div>
+                 <div>
+                    <label className={labelClass}>Description</label>
+                    <textarea
+                        value={editForm.description}
+                        onChange={(e) =>
+                        setEditForm({ ...editForm, description: e.target.value })
+                        }
+                        rows={5}
+                        className={`${inputClass} resize-none`}
+                    />
+                </div>
+            </TabsContent>
 
-        <div>
-          <label className={`block text-sm font-medium ${textPrimary} mb-1`}>
-            Address
-          </label>
-          <input
-            type="text"
-            value={editForm.address}
-            onChange={(e) =>
-              setEditForm({ ...editForm, address: e.target.value })
-            }
-            className={`w-full px-4 py-2.5 rounded-lg border ${inputBg} ${inputBorder} ${textPrimary} text-sm focus:outline-none focus:ring-2 focus:ring-accent/50`}
-          />
-        </div>
+            <TabsContent value="contact" className="space-y-4">
+                 <div className="grid sm:grid-cols-2 gap-4">
+                    <div>
+                        <label className={labelClass}>Phone</label>
+                        <input
+                            type="tel"
+                            value={editForm.phone}
+                            onChange={(e) =>
+                                setEditForm({ ...editForm, phone: e.target.value })
+                            }
+                            className={inputClass}
+                        />
+                    </div>
+                    <div>
+                        <label className={labelClass}>Website</label>
+                        <input
+                            type="url"
+                            value={editForm.website}
+                            onChange={(e) =>
+                                setEditForm({ ...editForm, website: e.target.value })
+                            }
+                            className={inputClass}
+                        />
+                    </div>
+                </div>
+                <div>
+                   <label className={labelClass}>Address</label>
+                    <input
+                        type="text"
+                        value={editForm.address}
+                        onChange={(e) =>
+                        setEditForm({ ...editForm, address: e.target.value })
+                        }
+                        className={inputClass}
+                    /> 
+                </div>
+                <div>
+                    <label className={labelClass}>Postcode</label>
+                    <input
+                    type="text"
+                    value={editForm.postcode}
+                    onChange={(e) =>
+                        setEditForm({ ...editForm, postcode: e.target.value })
+                    }
+                    className={inputClass}
+                    />
+                </div>
+            </TabsContent>
 
-        <div className="grid sm:grid-cols-3 gap-4">
-          <div>
-            <label className={`block text-sm font-medium ${textPrimary} mb-1`}>
-              Postcode
-            </label>
-            <input
-              type="text"
-              value={editForm.postcode}
-              onChange={(e) =>
-                setEditForm({ ...editForm, postcode: e.target.value })
-              }
-              className={`w-full px-4 py-2.5 rounded-lg border ${inputBg} ${inputBorder} ${textPrimary} text-sm focus:outline-none focus:ring-2 focus:ring-accent/50`}
-            />
-          </div>
-          <div>
-            <label className={`block text-sm font-medium ${textPrimary} mb-1`}>
-              Starting Price (€)
-            </label>
-            <input
-              type="number"
-              value={editForm.priceFrom}
-              onChange={(e) =>
-                setEditForm({ ...editForm, priceFrom: e.target.value })
-              }
-              className={`w-full px-4 py-2.5 rounded-lg border ${inputBg} ${inputBorder} ${textPrimary} text-sm focus:outline-none focus:ring-2 focus:ring-accent/50`}
-            />
-          </div>
-          <div>
-            <label className={`block text-sm font-medium ${textPrimary} mb-1`}>
-              Service Radius (miles)
-            </label>
-            <input
-              type="number"
-              value={editForm.serviceRadius}
-              onChange={(e) =>
-                setEditForm({ ...editForm, serviceRadius: e.target.value })
-              }
-              className={`w-full px-4 py-2.5 rounded-lg border ${inputBg} ${inputBorder} ${textPrimary} text-sm focus:outline-none focus:ring-2 focus:ring-accent/50`}
-            />
-          </div>
-        </div>
+            <TabsContent value="settings" className="space-y-4">
+                <div className="grid sm:grid-cols-2 gap-4">
+                    <div>
+                        <label className={labelClass}>Starting Price (€)</label>
+                        <input
+                        type="number"
+                        value={editForm.priceFrom}
+                        onChange={(e) =>
+                            setEditForm({ ...editForm, priceFrom: e.target.value })
+                        }
+                        className={inputClass}
+                        />
+                    </div>
+                    <div>
+                        <label className={labelClass}>Service Radius (miles)</label>
+                        <input
+                        type="number"
+                        value={editForm.serviceRadius}
+                        onChange={(e) =>
+                            setEditForm({ ...editForm, serviceRadius: e.target.value })
+                        }
+                        className={inputClass}
+                        />
+                    </div>
+                </div>
+                 <div className="flex flex-col gap-3 p-4 rounded-lg border border-gray-200 dark:border-white/10 mt-4">
+                    <label className="flex items-center gap-3 cursor-pointer">
+                        <input
+                        type="checkbox"
+                        checked={editForm.isVerified}
+                        onChange={(e) => handleCheckboxChange("isVerified", e.target.checked)}
+                        className="w-5 h-5 rounded accent-accent"
+                        />
+                         <div>
+                            <span className={`block text-sm font-medium ${textPrimary}`}>Verified Vendor</span>
+                            <span className={`block text-xs ${textSecondary}`}>Display verified badge on profile</span>
+                        </div>
+                    </label>
+                    <label className="flex items-center gap-3 cursor-pointer">
+                        <input
+                        type="checkbox"
+                        checked={editForm.isFeatured}
+                        onChange={(e) => handleCheckboxChange("isFeatured", e.target.checked)}
+                        className="w-5 h-5 rounded accent-accent"
+                        />
+                         <div>
+                            <span className={`block text-sm font-medium ${textPrimary}`}>Featured Vendor</span>
+                            <span className={`block text-xs ${textSecondary}`}>Boost visibility in search results</span>
+                        </div>
+                    </label>
+                    <label className="flex items-center gap-3 cursor-pointer">
+                        <input
+                        type="checkbox"
+                        checked={editForm.isPublished}
+                        onChange={(e) => handleCheckboxChange("isPublished", e.target.checked)}
+                        className="w-5 h-5 rounded accent-accent"
+                        />
+                         <div>
+                            <span className={`block text-sm font-medium ${textPrimary}`}>Published</span>
+                            <span className={`block text-xs ${textSecondary}`}>Visible to the public</span>
+                        </div>
+                    </label>
+                 </div>
+            </TabsContent>
+        </Tabs>
 
-        <div>
-          <label className={`block text-sm font-medium ${textPrimary} mb-1`}>
-            Categories
-          </label>
-          <select
-            multiple
-            value={editForm.categories}
-            onChange={(e) => {
-              const selected = Array.from(
-                e.target.selectedOptions,
-                (option) => option.value
-              );
-              setEditForm({ ...editForm, categories: selected });
-            }}
-            className={`w-full px-4 py-2.5 rounded-lg border ${inputBg} ${inputBorder} ${textPrimary} text-sm focus:outline-none focus:ring-2 focus:ring-accent/50`}
-          >
-            {categories.map((cat) => (
-              <option
-                key={cat.slug}
-                value={cat.slug}
-                selected={editForm.categories.includes(cat.slug)}
-              >
-                {cat.name}
-              </option>
-            ))}
-          </select>
-        </div>
-
-        <div>
-          <label className={`block text-sm font-medium ${textPrimary} mb-1`}>
-            Description
-          </label>
-          <textarea
-            value={editForm.description}
-            onChange={(e) =>
-              setEditForm({ ...editForm, description: e.target.value })
-            }
-            rows={4}
-            className={`w-full px-4 py-2.5 rounded-lg border ${inputBg} ${inputBorder} ${textPrimary} text-sm focus:outline-none focus:ring-2 focus:ring-accent/50 resize-none`}
-          />
-        </div>
-
-        <div className="flex flex-wrap gap-6 py-4">
-          <label className="flex items-center gap-2 cursor-pointer">
-            <input
-              type="checkbox"
-              checked={editForm.isVerified}
-              onChange={(e) =>
-                setEditForm({ ...editForm, isVerified: e.target.checked })
-              }
-              className="w-4 h-4 rounded accent-accent"
-            />
-            <span className={`text-sm ${textPrimary}`}>Verified</span>
-          </label>
-          <label className="flex items-center gap-2 cursor-pointer">
-            <input
-              type="checkbox"
-              checked={editForm.isFeatured}
-              onChange={(e) =>
-                setEditForm({ ...editForm, isFeatured: e.target.checked })
-              }
-              className="w-4 h-4 rounded accent-accent"
-            />
-            <span className={`text-sm ${textPrimary}`}>Featured</span>
-          </label>
-          <label className="flex items-center gap-2 cursor-pointer">
-            <input
-              type="checkbox"
-              checked={editForm.isPublished}
-              onChange={(e) =>
-                setEditForm({ ...editForm, isPublished: e.target.checked })
-              }
-              className="w-4 h-4 rounded accent-accent"
-            />
-            <span className={`text-sm ${textPrimary}`}>Published</span>
-          </label>
-        </div>
-
-        <div className="flex justify-end gap-3 pt-4 border-t border-gray-200 dark:border-white/10">
-          <button
-            onClick={onClose}
-            className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-              darkMode
-                ? "bg-white/10 hover:bg-white/20 text-white"
-                : "bg-gray-100 hover:bg-gray-200 text-gray-900"
-            }`}
-          >
-            Cancel
-          </button>
-          <button
-            onClick={onSave}
-            disabled={isSubmitting}
-            className="px-4 py-2 rounded-lg bg-accent text-white font-medium hover:bg-accent/90 transition-colors disabled:opacity-50"
-          >
-            {isSubmitting ? "Saving..." : "Save Changes"}
-          </button>
-        </div>
+      <div className="flex justify-end gap-3 pt-4 border-t border-gray-200 dark:border-white/10 mt-6">
+        <button
+          onClick={onClose}
+          className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+            darkMode
+              ? "bg-white/10 hover:bg-white/20 text-white"
+              : "bg-gray-100 hover:bg-gray-200 text-gray-900"
+          }`}
+          disabled={isSubmitting}
+        >
+          Cancel
+        </button>
+        <button
+          onClick={onSave}
+          disabled={isSubmitting}
+          className="flex items-center gap-2 px-4 py-2 rounded-lg bg-accent text-white font-medium hover:bg-accent/90 transition-colors disabled:opacity-50"
+        >
+          {isSubmitting && <Loader2 size={16} className="animate-spin" />}
+          {isSubmitting ? "Saving..." : "Save Changes"}
+        </button>
       </div>
     </Modal>
   );
 }
 
 // Add Vendor Modal
+// Keeping Add Vendor simple for now as it's a first step registration
 interface AddVendorModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -654,6 +668,9 @@ export function AddVendorModal({
     });
   };
 
+  const inputClass = `w-full px-4 py-2.5 rounded-lg border ${inputBg} ${inputBorder} ${textPrimary} text-sm focus:outline-none focus:ring-2 focus:ring-accent/50`;
+  const labelClass = `block text-sm font-medium ${textPrimary} mb-1`;
+
   return (
     <Modal
       isOpen={isOpen}
@@ -666,13 +683,12 @@ export function AddVendorModal({
     >
       <div className="space-y-4">
         <p className={`text-sm ${textSecondary} -mt-2 mb-4`}>
-          Create a new vendor account. An invitation email will be sent to the
-          owner.
+          Create a new vendor account. An invitation email will be sent to the owner.
         </p>
 
         <div className="grid sm:grid-cols-2 gap-4">
           <div>
-            <label className={`block text-sm font-medium ${textPrimary} mb-1`}>
+            <label className={labelClass}>
               Business Name <span className="text-red-500">*</span>
             </label>
             <input
@@ -681,18 +697,18 @@ export function AddVendorModal({
               onChange={(e) =>
                 setForm({ ...form, businessName: e.target.value })
               }
-              className={`w-full px-4 py-2.5 rounded-lg border ${inputBg} ${inputBorder} ${textPrimary} text-sm focus:outline-none focus:ring-2 focus:ring-accent/50`}
+              className={inputClass}
               placeholder="e.g., Elite Photography"
             />
           </div>
           <div>
-            <label className={`block text-sm font-medium ${textPrimary} mb-1`}>
+            <label className={labelClass}>
               Category <span className="text-red-500">*</span>
             </label>
             <select
               value={form.categoryId}
               onChange={(e) => setForm({ ...form, categoryId: e.target.value })}
-              className={`w-full px-4 py-2.5 rounded-lg border ${inputBg} ${inputBorder} ${textPrimary} text-sm focus:outline-none focus:ring-2 focus:ring-accent/50`}
+              className={inputClass}
             >
               <option value="">Select Category</option>
               {categories.map((cat) => (
@@ -706,26 +722,26 @@ export function AddVendorModal({
 
         <div className="grid sm:grid-cols-2 gap-4">
           <div>
-            <label className={`block text-sm font-medium ${textPrimary} mb-1`}>
+            <label className={labelClass}>
               Owner Email <span className="text-red-500">*</span>
             </label>
             <input
               type="email"
               value={form.ownerEmail}
               onChange={(e) => setForm({ ...form, ownerEmail: e.target.value })}
-              className={`w-full px-4 py-2.5 rounded-lg border ${inputBg} ${inputBorder} ${textPrimary} text-sm focus:outline-none focus:ring-2 focus:ring-accent/50`}
+              className={inputClass}
               placeholder="owner@example.com"
             />
           </div>
           <div>
-            <label className={`block text-sm font-medium ${textPrimary} mb-1`}>
+            <label className={labelClass}>
               Owner Name
             </label>
             <input
               type="text"
               value={form.ownerName}
               onChange={(e) => setForm({ ...form, ownerName: e.target.value })}
-              className={`w-full px-4 py-2.5 rounded-lg border ${inputBg} ${inputBorder} ${textPrimary} text-sm focus:outline-none focus:ring-2 focus:ring-accent/50`}
+              className={inputClass}
               placeholder="John Doe"
             />
           </div>
@@ -733,26 +749,22 @@ export function AddVendorModal({
 
         <div className="grid sm:grid-cols-2 gap-4">
           <div>
-            <label className={`block text-sm font-medium ${textPrimary} mb-1`}>
-              Phone
-            </label>
+            <label className={labelClass}>Phone</label>
             <input
               type="tel"
               value={form.phone}
               onChange={(e) => setForm({ ...form, phone: e.target.value })}
-              className={`w-full px-4 py-2.5 rounded-lg border ${inputBg} ${inputBorder} ${textPrimary} text-sm focus:outline-none focus:ring-2 focus:ring-accent/50`}
+              className={inputClass}
               placeholder="+44 7XXX XXX XXX"
             />
           </div>
           <div>
-            <label className={`block text-sm font-medium ${textPrimary} mb-1`}>
-              Starting Price (€)
-            </label>
+            <label className={labelClass}>Starting Price (€)</label>
             <input
               type="number"
               value={form.priceFrom}
               onChange={(e) => setForm({ ...form, priceFrom: e.target.value })}
-              className={`w-full px-4 py-2.5 rounded-lg border ${inputBg} ${inputBorder} ${textPrimary} text-sm focus:outline-none focus:ring-2 focus:ring-accent/50`}
+              className={inputClass}
               placeholder="500"
             />
           </div>
@@ -760,69 +772,60 @@ export function AddVendorModal({
 
         <div className="grid sm:grid-cols-2 gap-4">
           <div>
-            <label className={`block text-sm font-medium ${textPrimary} mb-1`}>
-              Address
-            </label>
+            <label className={labelClass}>Address</label>
             <input
               type="text"
               value={form.address}
               onChange={(e) => setForm({ ...form, address: e.target.value })}
-              className={`w-full px-4 py-2.5 rounded-lg border ${inputBg} ${inputBorder} ${textPrimary} text-sm focus:outline-none focus:ring-2 focus:ring-accent/50`}
+              className={inputClass}
               placeholder="123 High Street"
             />
           </div>
           <div>
-            <label className={`block text-sm font-medium ${textPrimary} mb-1`}>
-              Postcode
-            </label>
+            <label className={labelClass}>Postcode</label>
             <input
               type="text"
               value={form.postcode}
               onChange={(e) => setForm({ ...form, postcode: e.target.value })}
-              className={`w-full px-4 py-2.5 rounded-lg border ${inputBg} ${inputBorder} ${textPrimary} text-sm focus:outline-none focus:ring-2 focus:ring-accent/50`}
+              className={inputClass}
               placeholder="SW1A 1AA"
             />
           </div>
         </div>
 
         <div>
-          <label className={`block text-sm font-medium ${textPrimary} mb-1`}>
-            Description
-          </label>
+          <label className={labelClass}>Description</label>
           <textarea
             value={form.description}
             onChange={(e) => setForm({ ...form, description: e.target.value })}
             rows={3}
-            className={`w-full px-4 py-2.5 rounded-lg border ${inputBg} ${inputBorder} ${textPrimary} text-sm focus:outline-none focus:ring-2 focus:ring-accent/50 resize-none`}
-            placeholder="Brief description of the vendor's services..."
+            className={`${inputClass} resize-none`}
+            placeholder="Brief description..."
           />
         </div>
 
-        <div className="flex justify-end gap-3 pt-4 border-t border-gray-200 dark:border-white/10">
+        <div className="flex justify-end gap-3 mt-6 pt-4 border-t border-gray-200 dark:border-white/10">
           <button
-            onClick={() => {
+              onClick={() => {
               resetForm();
               onClose();
-            }}
-            className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+              }}
+              className={`px-4 py-2 rounded-lg font-medium transition-colors ${
               darkMode
-                ? "bg-white/10 hover:bg-white/20 text-white"
-                : "bg-gray-100 hover:bg-gray-200 text-gray-900"
-            }`}
+                  ? "bg-white/10 hover:bg-white/20 text-white"
+                  : "bg-gray-100 hover:bg-gray-200 text-gray-900"
+              }`}
+              disabled={isSubmitting}
           >
-            Cancel
+              Cancel
           </button>
           <button
-            onClick={handleSubmit}
-            disabled={
-              isSubmitting ||
-              !form.businessName ||
-              !form.ownerEmail ||
-              !form.categoryId
-            }
-            className="px-4 py-2 rounded-lg bg-accent text-white font-medium hover:bg-accent/90 transition-colors disabled:opacity-50"
+              onClick={handleSubmit}
+              disabled={isSubmitting}
+              className="flex items-center gap-2 px-4 py-2 rounded-lg bg-accent text-white font-medium hover:bg-accent/90 transition-colors disabled:opacity-50"
           >
-            {isSubmitting ? "Creating..." : "Create Vendor"}
+              {isSubmitting && <Loader2 size={16} className="animate-spin" />}
+              {isSubmitting ? "Creating..." : "Create Vendor"}
           </button>
         </div>
       </div>

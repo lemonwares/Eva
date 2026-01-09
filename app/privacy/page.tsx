@@ -166,10 +166,10 @@ export default function PrivacyPage() {
             <p className="text-muted-foreground leading-relaxed mt-4">
               To exercise these rights, please contact us at{" "}
               <a
-                href="mailto:support@evalocal.com"
+                href="mailto:hello@evalocal.com"
                 className="text-accent hover:underline"
               >
-                support@evalocal.com
+                hello@evalocal.com
               </a>
             </p>
           </section>
@@ -247,10 +247,10 @@ export default function PrivacyPage() {
               <p className="text-muted-foreground mt-2">
                 Email:{" "}
                 <a
-                  href="mailto:support@evalocal.com"
+                  href="mailto:hello@evalocal.com"
                   className="text-accent hover:underline"
                 >
-                  support@evalocal.com
+                  hello@evalocal.com
                 </a>
               </p>
             </div>

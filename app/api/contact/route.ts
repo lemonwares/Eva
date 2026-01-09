@@ -60,7 +60,7 @@ export async function POST(request: NextRequest) {
     // Send both emails
     const [supportEmailResult, confirmationEmailResult] = await Promise.all([
       sendEmail({
-        to: process.env.ZEPTOMAIL_SUPPORT_EMAIL || "support@evalocal.com",
+        to: process.env.ZEPTOMAIL_SUPPORT_EMAIL || "hello@evalocal.com",
         subject: `New Contact Form Submission - ${referenceId}`,
         html: supportEmailHtml,
       }),

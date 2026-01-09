@@ -17,9 +17,11 @@ import {
   Loader2,
   Star,
   Globe,
+  ExternalLink,
 } from "lucide-react";
 import { useState, useEffect, useCallback } from "react";
 import { Toast } from "@/components/admin/Toast";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/Tabs";
 
 interface City {
   id: string;
@@ -57,7 +59,7 @@ const emptyFormData: CityFormData = {
   slug: "",
   county: "",
   region: "",
-  country: "London",
+  country: "United Kingdom",
   latitude: "",
   longitude: "",
   displayOrder: "0",
@@ -267,6 +269,34 @@ export default function AdminCitiesPage() {
     }
   };
 
+
+
+
+
+  const toggleFeatured = async (city: City, e: React.MouseEvent) => {
+    e.stopPropagation();
+    const newStatus = !city.isFeatured;
+    
+    // Optimistic update
+    setCities(cities.map(c => c.id === city.id ? { ...c, isFeatured: newStatus } : c));
+
+    try {
+      const res = await fetch(`/api/cities/${city.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ isFeatured: newStatus }),
+      });
+
+      if (!res.ok) {
+        throw new Error("Failed to update");
+      }
+    } catch (err) {
+      // Revert on failure
+      setCities(cities.map(c => c.id === city.id ? { ...c, isFeatured: !newStatus } : c));
+      setToast({ show: true, message: "Failed to update status", type: "error" });
+    }
+  };
+
   const formatDate = (dateStr: string) => {
     return new Date(dateStr).toLocaleDateString("en-US", {
       year: "numeric",
@@ -395,7 +425,12 @@ export default function AdminCitiesPage() {
                     <th
                       className={`text-left text-xs font-medium uppercase ${textMuted} px-6 py-4`}
                     >
-                      Region/County
+                      Region
+                    </th>
+                    <th
+                      className={`text-left text-xs font-medium uppercase ${textMuted} px-6 py-4`}
+                    >
+                      County
                     </th>
                     <th
                       className={`text-left text-xs font-medium uppercase ${textMuted} px-6 py-4`}
@@ -456,19 +491,33 @@ export default function AdminCitiesPage() {
                         </div>
                       </td>
                       <td className={`px-6 py-4 text-sm ${textSecondary}`}>
-                        {city.region || city.county || "-"}
+                        {city.region || "-"}
+                      </td>
+                      <td className={`px-6 py-4 text-sm ${textSecondary}`}>
+                        {city.county || "-"}
                       </td>
                       <td className={`px-6 py-4 text-sm ${textSecondary}`}>
                         {city.country}
                       </td>
                       <td className="px-6 py-4">
                         {city.isFeatured ? (
-                          <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-amber-500/10 text-amber-500">
+                          <button 
+                            onClick={(e) => toggleFeatured(city, e)}
+                            className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-amber-500/10 text-amber-500 hover:bg-amber-500/20 transition-colors"
+                          >
                             <Star size={12} className="fill-current" />
                             Featured
-                          </span>
+                          </button>
                         ) : (
-                          <span className={`text-sm ${textMuted}`}>-</span>
+                          <button
+                            onClick={(e) => toggleFeatured(city, e)}
+                            className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium transition-colors ${
+                              textMuted
+                            } hover:bg-gray-100 dark:hover:bg-white/5 border border-transparent hover:border-gray-200 dark:hover:border-white/10`}
+                          >
+                            <Star size={12} />
+                            Standard
+                          </button>
                         )}
                       </td>
                       <td className={`px-6 py-4 text-sm ${textMuted}`}>
@@ -490,6 +539,19 @@ export default function AdminCitiesPage() {
                           >
                             <Edit2 size={16} className={textMuted} />
                           </button>
+                          <a
+                            href={`/locations/${city.slug}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className={`p-2 rounded-lg ${
+                              darkMode
+                                ? "hover:bg-white/10"
+                                : "hover:bg-gray-100"
+                            } transition-colors`}
+                            title="View Live"
+                          >
+                            <ExternalLink size={16} className={textMuted} />
+                          </a>
                           <button
                             onClick={() => setConfirmDelete(city)}
                             className={`p-2 rounded-lg ${
@@ -576,208 +638,267 @@ export default function AdminCitiesPage() {
         title={editingCity ? "Edit City" : "Add City"}
         size="lg"
       >
-        <div className="space-y-4">
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label
-                className={`block text-sm font-medium ${textSecondary} mb-1.5`}
-              >
-                City Name *
-              </label>
-              <input
-                type="text"
-                value={formData.name}
-                onChange={(e) => {
-                  const name = e.target.value;
-                  setFormData({
-                    ...formData,
-                    name,
-                    slug: editingCity ? formData.slug : generateSlug(name),
-                  });
-                }}
-                className={`w-full px-4 py-2.5 rounded-lg border ${inputBg} ${inputBorder} ${textPrimary} text-sm focus:outline-none focus:ring-2 focus:ring-accent/50`}
-                placeholder="e.g., London"
-              />
-            </div>
-            <div>
-              <label
-                className={`block text-sm font-medium ${textSecondary} mb-1.5`}
-              >
-                Slug *
-              </label>
-              <input
-                type="text"
-                value={formData.slug}
-                onChange={(e) =>
-                  setFormData({ ...formData, slug: e.target.value })
-                }
-                className={`w-full px-4 py-2.5 rounded-lg border ${inputBg} ${inputBorder} ${textPrimary} text-sm focus:outline-none focus:ring-2 focus:ring-accent/50`}
-                placeholder="e.g., london"
-              />
-            </div>
-          </div>
+        <div className="mt-2">
+          <Tabs defaultValue="general">
+            <TabsList className="mb-6 w-full grid grid-cols-3">
+              <TabsTrigger value="general">General Info</TabsTrigger>
+              <TabsTrigger value="location">Location Data</TabsTrigger>
+              <TabsTrigger value="seo">SEO Settings</TabsTrigger>
+            </TabsList>
 
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label
-                className={`block text-sm font-medium ${textSecondary} mb-1.5`}
-              >
-                Region
-              </label>
-              <input
-                type="text"
-                value={formData.region}
-                onChange={(e) =>
-                  setFormData({ ...formData, region: e.target.value })
-                }
-                className={`w-full px-4 py-2.5 rounded-lg border ${inputBg} ${inputBorder} ${textPrimary} text-sm focus:outline-none focus:ring-2 focus:ring-accent/50`}
-                placeholder="e.g., Greater London"
-              />
-            </div>
-            <div>
-              <label
-                className={`block text-sm font-medium ${textSecondary} mb-1.5`}
-              >
-                County/State
-              </label>
-              <input
-                type="text"
-                value={formData.county}
-                onChange={(e) =>
-                  setFormData({ ...formData, county: e.target.value })
-                }
-                className={`w-full px-4 py-2.5 rounded-lg border ${inputBg} ${inputBorder} ${textPrimary} text-sm focus:outline-none focus:ring-2 focus:ring-accent/50`}
-                placeholder="e.g., England"
-              />
-            </div>
-          </div>
+            <TabsContent value="general" className="space-y-5">
+              <div className="grid grid-cols-2 gap-5">
+                <div>
+                  <label
+                    className={`block text-sm font-medium ${textSecondary} mb-1.5`}
+                  >
+                    City Name *
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.name}
+                    onChange={(e) => {
+                      const name = e.target.value;
+                      setFormData({
+                        ...formData,
+                        name,
+                        slug: editingCity ? formData.slug : generateSlug(name),
+                      });
+                    }}
+                    className={`w-full px-4 py-2.5 rounded-lg border ${inputBg} ${inputBorder} ${textPrimary} text-sm focus:outline-none focus:ring-2 focus:ring-accent/50`}
+                    placeholder="e.g., London"
+                  />
+                </div>
+                <div>
+                  <label
+                    className={`block text-sm font-medium ${textSecondary} mb-1.5`}
+                  >
+                    Slug *
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.slug}
+                    onChange={(e) =>
+                      setFormData({ ...formData, slug: e.target.value })
+                    }
+                    className={`w-full px-4 py-2.5 rounded-lg border ${inputBg} ${inputBorder} ${textPrimary} text-sm focus:outline-none focus:ring-2 focus:ring-accent/50`}
+                    placeholder="e.g., london"
+                  />
+                </div>
+              </div>
 
-          <div className="grid grid-cols-3 gap-4">
-            <div>
-              <label
-                className={`block text-sm font-medium ${textSecondary} mb-1.5`}
-              >
-                Country
-              </label>
-              <input
-                type="text"
-                value={formData.country}
-                onChange={(e) =>
-                  setFormData({ ...formData, country: e.target.value })
-                }
-                className={`w-full px-4 py-2.5 rounded-lg border ${inputBg} ${inputBorder} ${textPrimary} text-sm focus:outline-none focus:ring-2 focus:ring-accent/50`}
-                placeholder="United Kingdom"
-              />
-            </div>
-            <div>
-              <label
-                className={`block text-sm font-medium ${textSecondary} mb-1.5`}
-              >
-                Latitude
-              </label>
-              <input
-                type="text"
-                value={formData.latitude}
-                onChange={(e) =>
-                  setFormData({ ...formData, latitude: e.target.value })
-                }
-                className={`w-full px-4 py-2.5 rounded-lg border ${inputBg} ${inputBorder} ${textPrimary} text-sm focus:outline-none focus:ring-2 focus:ring-accent/50`}
-                placeholder="51.5074"
-              />
-            </div>
-            <div>
-              <label
-                className={`block text-sm font-medium ${textSecondary} mb-1.5`}
-              >
-                Longitude
-              </label>
-              <input
-                type="text"
-                value={formData.longitude}
-                onChange={(e) =>
-                  setFormData({ ...formData, longitude: e.target.value })
-                }
-                className={`w-full px-4 py-2.5 rounded-lg border ${inputBg} ${inputBorder} ${textPrimary} text-sm focus:outline-none focus:ring-2 focus:ring-accent/50`}
-                placeholder="-0.1278"
-              />
-            </div>
-          </div>
+              <div className="grid grid-cols-2 gap-5">
+                <div>
+                  <label
+                    className={`block text-sm font-medium ${textSecondary} mb-1.5`}
+                  >
+                    Display Order
+                  </label>
+                  <input
+                    type="number"
+                    value={formData.displayOrder}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        displayOrder: e.target.value,
+                      })
+                    }
+                    className={`w-full px-4 py-2.5 rounded-lg border ${inputBg} ${inputBorder} ${textPrimary} text-sm focus:outline-none focus:ring-2 focus:ring-accent/50`}
+                    placeholder="0"
+                  />
+                </div>
+                <div className="flex items-end pb-2.5">
+                  <label className="flex items-center gap-3 cursor-pointer p-3 border border-dashed border-gray-300 dark:border-gray-700 rounded-lg w-full hover:bg-gray-50 dark:hover:bg-white/5 transition-colors">
+                    <div className="relative inline-flex items-center cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={formData.isFeatured}
+                        onChange={(e) =>
+                          setFormData({
+                            ...formData,
+                            isFeatured: e.target.checked,
+                          })
+                        }
+                        className="sr-only peer"
+                      />
+                      <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-accent/20 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-accent"></div>
+                    </div>
+                    <span className={`text-sm font-medium ${textPrimary}`}>
+                      Featured City
+                    </span>
+                  </label>
+                </div>
+              </div>
+            </TabsContent>
 
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label
-                className={`block text-sm font-medium ${textSecondary} mb-1.5`}
-              >
-                Display Order
-              </label>
-              <input
-                type="number"
-                value={formData.displayOrder}
-                onChange={(e) =>
-                  setFormData({ ...formData, displayOrder: e.target.value })
-                }
-                className={`w-full px-4 py-2.5 rounded-lg border ${inputBg} ${inputBorder} ${textPrimary} text-sm focus:outline-none focus:ring-2 focus:ring-accent/50`}
-                placeholder="0"
-              />
-            </div>
-            <div className="flex items-center pt-6">
-              <label className="flex items-center gap-2 cursor-pointer">
+            <TabsContent value="location" className="space-y-5">
+              <div className="grid grid-cols-2 gap-5">
+                <div>
+                  <label
+                    className={`block text-sm font-medium ${textSecondary} mb-1.5`}
+                  >
+                    Region
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.region}
+                    onChange={(e) =>
+                      setFormData({ ...formData, region: e.target.value })
+                    }
+                    className={`w-full px-4 py-2.5 rounded-lg border ${inputBg} ${inputBorder} ${textPrimary} text-sm focus:outline-none focus:ring-2 focus:ring-accent/50`}
+                    placeholder="e.g., Greater London"
+                  />
+                </div>
+                <div>
+                  <label
+                    className={`block text-sm font-medium ${textSecondary} mb-1.5`}
+                  >
+                    County/State
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.county}
+                    onChange={(e) =>
+                      setFormData({ ...formData, county: e.target.value })
+                    }
+                    className={`w-full px-4 py-2.5 rounded-lg border ${inputBg} ${inputBorder} ${textPrimary} text-sm focus:outline-none focus:ring-2 focus:ring-accent/50`}
+                    placeholder="e.g., England"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-3 gap-5">
+                <div className="col-span-3 sm:col-span-1">
+                  <label
+                    className={`block text-sm font-medium ${textSecondary} mb-1.5`}
+                  >
+                    Country
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.country}
+                    onChange={(e) =>
+                      setFormData({ ...formData, country: e.target.value })
+                    }
+                    className={`w-full px-4 py-2.5 rounded-lg border ${inputBg} ${inputBorder} ${textPrimary} text-sm focus:outline-none focus:ring-2 focus:ring-accent/50`}
+                    placeholder="United Kingdom"
+                  />
+                </div>
+                <div>
+                  <label
+                    className={`block text-sm font-medium ${textSecondary} mb-1.5`}
+                  >
+                    Latitude
+                  </label>
+                  <input
+                    type="number"
+                    step="any"
+                    value={formData.latitude}
+                    onChange={(e) =>
+                      setFormData({ ...formData, latitude: e.target.value })
+                    }
+                    className={`w-full px-4 py-2.5 rounded-lg border ${inputBg} ${inputBorder} ${textPrimary} text-sm focus:outline-none focus:ring-2 focus:ring-accent/50`}
+                    placeholder="51.5074"
+                  />
+                </div>
+                <div>
+                  <label
+                    className={`block text-sm font-medium ${textSecondary} mb-1.5`}
+                  >
+                    Longitude
+                  </label>
+                  <input
+                    type="number"
+                    step="any"
+                    value={formData.longitude}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        longitude: e.target.value,
+                      })
+                    }
+                    className={`w-full px-4 py-2.5 rounded-lg border ${inputBg} ${inputBorder} ${textPrimary} text-sm focus:outline-none focus:ring-2 focus:ring-accent/50`}
+                    placeholder="-0.1278"
+                  />
+                </div>
+              </div>
+            </TabsContent>
+
+            <TabsContent value="seo" className="space-y-5">
+              <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg mb-4">
+                <p className="text-sm text-blue-700 dark:text-blue-300">
+                  <span className="font-semibold">Pro Tip:</span> Good SEO titles and descriptions help your city pages appear in Google search results.
+                </p>
+              </div>
+              
+              <div>
+                <label
+                  className={`block text-sm font-medium ${textSecondary} mb-1.5`}
+                >
+                  Meta Title (SEO)
+                </label>
                 <input
-                  type="checkbox"
-                  checked={formData.isFeatured}
+                  type="text"
+                  value={formData.metaTitle}
                   onChange={(e) =>
-                    setFormData({ ...formData, isFeatured: e.target.checked })
+                    setFormData({ ...formData, metaTitle: e.target.value })
                   }
-                  className="w-4 h-4 rounded border-gray-300 text-accent focus:ring-accent"
+                  className={`w-full px-4 py-2.5 rounded-lg border ${inputBg} ${inputBorder} ${textPrimary} text-sm focus:outline-none focus:ring-2 focus:ring-accent/50`}
+                  placeholder="Event vendors in London - Eva Marketplace"
+                  maxLength={60}
                 />
-                <span className={`text-sm ${textSecondary}`}>
-                  Featured City
-                </span>
-              </label>
-            </div>
-          </div>
+                <div className="flex justify-between mt-1">
+                  <p className={`text-xs ${textMuted}`}>
+                    Recommended: 50-60 chars
+                  </p>
+                  <p
+                    className={`text-xs ${
+                      formData.metaTitle.length > 60
+                        ? "text-red-500"
+                        : textMuted
+                    }`}
+                  >
+                    {formData.metaTitle.length}/60
+                  </p>
+                </div>
+              </div>
 
-          <div>
-            <label
-              className={`block text-sm font-medium ${textSecondary} mb-1.5`}
-            >
-              Meta Title (SEO)
-            </label>
-            <input
-              type="text"
-              value={formData.metaTitle}
-              onChange={(e) =>
-                setFormData({ ...formData, metaTitle: e.target.value })
-              }
-              className={`w-full px-4 py-2.5 rounded-lg border ${inputBg} ${inputBorder} ${textPrimary} text-sm focus:outline-none focus:ring-2 focus:ring-accent/50`}
-              placeholder="Event vendors in London"
-              maxLength={60}
-            />
-            <p className={`text-xs ${textMuted} mt-1`}>
-              {formData.metaTitle.length}/60 characters
-            </p>
-          </div>
-
-          <div>
-            <label
-              className={`block text-sm font-medium ${textSecondary} mb-1.5`}
-            >
-              Meta Description (SEO)
-            </label>
-            <textarea
-              value={formData.metaDescription}
-              onChange={(e) =>
-                setFormData({ ...formData, metaDescription: e.target.value })
-              }
-              rows={3}
-              className={`w-full px-4 py-2.5 rounded-lg border ${inputBg} ${inputBorder} ${textPrimary} text-sm focus:outline-none focus:ring-2 focus:ring-accent/50 resize-none`}
-              placeholder="Find the best event vendors in London..."
-              maxLength={160}
-            />
-            <p className={`text-xs ${textMuted} mt-1`}>
-              {formData.metaDescription.length}/160 characters
-            </p>
-          </div>
+              <div>
+                <label
+                  className={`block text-sm font-medium ${textSecondary} mb-1.5`}
+                >
+                  Meta Description (SEO)
+                </label>
+                <textarea
+                  value={formData.metaDescription}
+                  onChange={(e) =>
+                    setFormData({
+                      ...formData,
+                      metaDescription: e.target.value,
+                    })
+                  }
+                  rows={4}
+                  className={`w-full px-4 py-2.5 rounded-lg border ${inputBg} ${inputBorder} ${textPrimary} text-sm focus:outline-none focus:ring-2 focus:ring-accent/50 resize-none`}
+                  placeholder="Find the best event vendors in London. Compare prices, read reviews, and book top-rated photographers, caterers, and venues..."
+                  maxLength={180}
+                />
+                <div className="flex justify-between mt-1">
+                  <p className={`text-xs ${textMuted}`}>
+                    Recommended: 150-160 chars
+                  </p>
+                  <p
+                    className={`text-xs ${
+                      formData.metaDescription.length > 160
+                        ? "text-red-500"
+                        : textMuted
+                    }`}
+                  >
+                    {formData.metaDescription.length}/160
+                  </p>
+                </div>
+              </div>
+            </TabsContent>
+          </Tabs>
         </div>
 
         <div className="flex justify-end gap-3 mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">
