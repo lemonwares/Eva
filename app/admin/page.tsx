@@ -14,6 +14,11 @@ import {
   Loader2,
   Store,
   MessageSquare,
+  Star,
+  UserPlus,
+  ShoppingBag,
+  Clock,
+  Bell,
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import Link from "next/link";
@@ -50,12 +55,23 @@ interface Booking {
   eventDate: string;
   status: string;
   totalPrice: number;
+  createdAt: string;
   provider: {
     id: string;
     businessName: string;
     owner: { id: string; name: string; email: string };
   };
   quote: { id: string; totalPrice: number } | null;
+}
+
+interface ActivityItem {
+  id: string;
+  type: "booking" | "user" | "vendor" | "review";
+  title: string;
+  description: string;
+  time: string;
+  icon: typeof Calendar;
+  color: string;
 }
 
 export default function AdminOverviewPage() {
@@ -71,6 +87,7 @@ export default function AdminOverviewPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [analytics, setAnalytics] = useState<AnalyticsData | null>(null);
   const [recentBookings, setRecentBookings] = useState<Booking[]>([]);
+  const [activityFeed, setActivityFeed] = useState<ActivityItem[]>([]);
 
   useEffect(() => {
     fetchData();
@@ -81,7 +98,7 @@ export default function AdminOverviewPage() {
     try {
       const [analyticsRes, bookingsRes] = await Promise.all([
         fetch("/api/admin/analytics?period=30d"),
-        fetch("/api/admin/bookings?limit=5"),
+        fetch("/api/admin/bookings?limit=10"),
       ]);
 
       if (analyticsRes.ok) {
@@ -91,7 +108,20 @@ export default function AdminOverviewPage() {
 
       if (bookingsRes.ok) {
         const data = await bookingsRes.json();
-        setRecentBookings(data.bookings || []);
+        const bookings = data.bookings || [];
+        setRecentBookings(bookings.slice(0, 5));
+
+        // Generate activity feed from bookings
+        const activities: ActivityItem[] = bookings.slice(0, 8).map((b: Booking) => ({
+          id: b.id,
+          type: "booking" as const,
+          title: "New Booking",
+          description: `${b.provider.businessName} received a booking`,
+          time: formatRelativeTime(b.createdAt || b.eventDate),
+          icon: ShoppingBag,
+          color: "text-purple-500",
+        }));
+        setActivityFeed(activities);
       }
     } catch (err) {
       console.error("Error fetching admin data:", err);
@@ -99,6 +129,21 @@ export default function AdminOverviewPage() {
       setIsLoading(false);
     }
   }
+
+  const formatRelativeTime = (dateString: string) => {
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffMs = now.getTime() - date.getTime();
+    const diffMins = Math.floor(diffMs / 60000);
+    const diffHours = Math.floor(diffMs / 3600000);
+    const diffDays = Math.floor(diffMs / 86400000);
+
+    if (diffMins < 1) return "Just now";
+    if (diffMins < 60) return `${diffMins}m ago`;
+    if (diffHours < 24) return `${diffHours}h ago`;
+    if (diffDays < 7) return `${diffDays}d ago`;
+    return date.toLocaleDateString("en-NG", { day: "numeric", month: "short" });
+  };
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -142,6 +187,7 @@ export default function AdminOverviewPage() {
       trend: (analytics?.overview.bookings.growth || 0) >= 0 ? "up" : "down",
       period: "last 30 days",
       icon: Calendar,
+      href: "/admin/bookings",
     },
     {
       label: "New Inquiries",
@@ -152,6 +198,7 @@ export default function AdminOverviewPage() {
       trend: (analytics?.overview.inquiries.growth || 0) >= 0 ? "up" : "down",
       period: "last 30 days",
       icon: MessageSquare,
+      href: "/admin/quotes",
     },
     {
       label: "New User Signups",
@@ -162,6 +209,7 @@ export default function AdminOverviewPage() {
       trend: (analytics?.overview.users.growth || 0) >= 0 ? "up" : "down",
       period: "last 30 days",
       icon: Users,
+      href: "/admin/users",
     },
     {
       label: "Pending Vendor Approvals",
@@ -205,9 +253,10 @@ export default function AdminOverviewPage() {
       {/* Stats Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
         {stats.map((stat, idx) => (
-          <div
+          <Link
             key={idx}
-            className={`${cardBg} border ${cardBorder} rounded-xl p-5 transition-all hover:shadow-md`}
+            href={stat.href || "#"}
+            className={`${cardBg} border ${cardBorder} rounded-xl p-5 transition-all hover:shadow-md hover:border-accent/30 group`}
           >
             <div className="flex items-start justify-between mb-2">
               <p className={`text-sm ${textMuted}`}>{stat.label}</p>
@@ -233,15 +282,12 @@ export default function AdminOverviewPage() {
                 <span className={`text-sm ${textMuted}`}>{stat.period}</span>
               </div>
             ) : stat.isAction ? (
-              <Link
-                href={stat.href || "#"}
-                className="flex items-center gap-1.5"
-              >
-                <ArrowRight size={14} className="text-accent" />
+              <div className="flex items-center gap-1.5">
+                <ArrowRight size={14} className="text-accent group-hover:translate-x-1 transition-transform" />
                 <span className="text-sm text-accent">{stat.subtext}</span>
-              </Link>
+              </div>
             ) : null}
-          </div>
+          </Link>
         ))}
       </div>
 
@@ -336,9 +382,59 @@ export default function AdminOverviewPage() {
 
       {/* Bottom Row */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Activity Feed */}
+        <div className={`${cardBg} border ${cardBorder} rounded-xl p-5`}>
+          <div className="flex items-center justify-between mb-4">
+            <h3 className={`font-semibold ${textPrimary} flex items-center gap-2`}>
+              <Bell size={18} className="text-accent" />
+              Recent Activity
+            </h3>
+          </div>
+          {activityFeed.length === 0 ? (
+            <div className={`text-center py-8 ${textMuted}`}>
+              <Clock size={24} className="mx-auto mb-2 opacity-50" />
+              <p>No recent activity</p>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {activityFeed.slice(0, 5).map((activity) => (
+                <div
+                  key={activity.id}
+                  className={`flex items-start gap-3 p-3 rounded-lg ${
+                    darkMode ? "bg-white/5" : "bg-gray-50"
+                  }`}
+                >
+                  <div className={`p-2 rounded-lg ${darkMode ? "bg-white/5" : "bg-white"}`}>
+                    <activity.icon size={14} className={activity.color} />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className={`text-sm font-medium ${textPrimary} truncate`}>
+                      {activity.title}
+                    </p>
+                    <p className={`text-xs ${textMuted} truncate`}>
+                      {activity.description}
+                    </p>
+                  </div>
+                  <span className={`text-xs ${textMuted} shrink-0`}>
+                    {activity.time}
+                  </span>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
         {/* Top Providers */}
         <div className={`${cardBg} border ${cardBorder} rounded-xl p-5`}>
-          <h3 className={`font-semibold ${textPrimary} mb-4`}>Top Vendors</h3>
+          <div className="flex items-center justify-between mb-4">
+            <h3 className={`font-semibold ${textPrimary}`}>Top Vendors</h3>
+            <Link
+              href="/admin/vendors"
+              className="text-accent text-sm font-medium flex items-center gap-1 hover:underline"
+            >
+              View All <ChevronRight size={16} />
+            </Link>
+          </div>
           {analytics?.breakdown.topProviders.length === 0 ? (
             <div className={`text-center py-8 ${textMuted}`}>
               <Store size={24} className="mx-auto mb-2 opacity-50" />
@@ -368,7 +464,8 @@ export default function AdminOverviewPage() {
                         </p>
                       </div>
                     </div>
-                    <div className="text-right">
+                    <div className="text-right flex items-center gap-1">
+                      <Star size={14} className="text-yellow-500 fill-yellow-500" />
                       <p className="text-accent font-medium">
                         {provider.averageRating?.toFixed(1) || "N/A"}
                       </p>
@@ -381,7 +478,7 @@ export default function AdminOverviewPage() {
 
         {/* Recent Bookings */}
         <div
-          className={`lg:col-span-2 ${cardBg} border ${cardBorder} rounded-xl p-5`}
+          className={`${cardBg} border ${cardBorder} rounded-xl p-5`}
         >
           <div className="flex items-center justify-between mb-4">
             <h3 className={`font-semibold ${textPrimary}`}>Recent Bookings</h3>
@@ -399,56 +496,41 @@ export default function AdminOverviewPage() {
               <p>No bookings yet</p>
             </div>
           ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead>
-                  <tr className={`text-left text-xs uppercase ${textMuted}`}>
-                    <th className="pb-3 font-medium">Booking ID</th>
-                    <th className="pb-3 font-medium">Vendor</th>
-                    <th className="pb-3 font-medium">Date</th>
-                    <th className="pb-3 font-medium">Amount</th>
-                    <th className="pb-3 font-medium">Status</th>
-                  </tr>
-                </thead>
-                <tbody
-                  className={`divide-y ${
-                    darkMode ? "divide-white/5" : "divide-gray-100"
+            <div className="space-y-3">
+              {recentBookings.map((booking) => (
+                <div
+                  key={booking.id}
+                  className={`p-3 rounded-lg ${
+                    darkMode ? "bg-white/5" : "bg-gray-50"
                   }`}
                 >
-                  {recentBookings.map((booking) => (
-                    <tr
-                      key={booking.id}
-                      className={`${
-                        darkMode ? "hover:bg-white/5" : "hover:bg-gray-50"
-                      } transition-colors`}
+                  <div className="flex items-center justify-between mb-1">
+                    <p className={`text-sm font-medium ${textPrimary}`}>
+                      #{booking.id.slice(-6).toUpperCase()}
+                    </p>
+                    <span
+                      className={`px-2 py-0.5 rounded-full text-xs font-medium text-white ${getStatusColor(
+                        booking.status
+                      )}`}
                     >
-                      <td className={`py-3 text-sm font-medium ${textPrimary}`}>
-                        #{booking.id.slice(-6).toUpperCase()}
-                      </td>
-                      <td className={`py-3 text-sm ${textSecondary}`}>
-                        {booking.provider.businessName}
-                      </td>
-                      <td className={`py-3 text-sm ${textMuted}`}>
-                        {formatDate(booking.eventDate)}
-                      </td>
-                      <td className={`py-3 text-sm ${textPrimary}`}>
-                        {formatCurrency(
-                          booking.totalPrice ?? booking.quote?.totalPrice ?? 0
-                        )}
-                      </td>
-                      <td className="py-3">
-                        <span
-                          className={`inline-flex px-2.5 py-1 rounded-full text-xs font-medium text-white ${getStatusColor(
-                            booking.status
-                          )}`}
-                        >
-                          {booking.status}
-                        </span>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+                      {booking.status}
+                    </span>
+                  </div>
+                  <p className={`text-xs ${textSecondary} truncate`}>
+                    {booking.provider.businessName}
+                  </p>
+                  <div className="flex items-center justify-between mt-1">
+                    <span className={`text-xs ${textMuted}`}>
+                      {formatDate(booking.eventDate)}
+                    </span>
+                    <span className={`text-sm font-medium ${textPrimary}`}>
+                      {formatCurrency(
+                        booking.totalPrice ?? booking.quote?.totalPrice ?? 0
+                      )}
+                    </span>
+                  </div>
+                </div>
+              ))}
             </div>
           )}
         </div>
