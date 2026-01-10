@@ -4,6 +4,7 @@ import React, { useState, useEffect } from "react";
 import { Heart, Loader2 } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
+import { motion, AnimatePresence } from "framer-motion";
 
 interface FavoriteButtonProps {
   providerId: string;
@@ -25,18 +26,6 @@ export default function FavoriteButton({
   const { data: session, status } = useSession();
   const router = useRouter();
 
-  // Simple dark mode detection based on system preference
-  const [darkMode, setDarkMode] = useState(false);
-
-  useEffect(() => {
-    const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
-    setDarkMode(mediaQuery.matches);
-
-    const handler = (e: MediaQueryListEvent) => setDarkMode(e.matches);
-    mediaQuery.addEventListener("change", handler);
-    return () => mediaQuery.removeEventListener("change", handler);
-  }, []);
-
   const [isFavorited, setIsFavorited] = useState(initialFavorited);
   const [isLoading, setIsLoading] = useState(false);
   const [isChecking, setIsChecking] = useState(true);
@@ -53,7 +42,6 @@ export default function FavoriteButton({
         const response = await fetch(`/api/favorites`);
         if (response.ok) {
           const data = await response.json();
-          // API returns { favorites: [...], pagination: {...} }
           const favorites = data.favorites || data;
           if (Array.isArray(favorites)) {
             const found = favorites.some(
@@ -79,22 +67,21 @@ export default function FavoriteButton({
     }
   }, [providerId, status, initialFavorited]);
 
-  const handleToggle = async () => {
+  const handleToggle = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+
     // Redirect to login if not authenticated
     if (status !== "authenticated") {
-      router.push(
-        `/auth/signin?callbackUrl=${encodeURIComponent(
-          window.location.pathname
-        )}`
-      );
+      router.push(`/auth/signin?callbackUrl=${encodeURIComponent(window.location.pathname)}`);
       return;
     }
 
+    if (isLoading) return;
     setIsLoading(true);
 
     try {
       if (isFavorited) {
-        // Remove from favorites
         const response = await fetch(`/api/favorites/${providerId}`, {
           method: "DELETE",
         });
@@ -104,7 +91,6 @@ export default function FavoriteButton({
           onToggle?.(false);
         }
       } else {
-        // Add to favorites
         const response = await fetch("/api/favorites", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -123,62 +109,84 @@ export default function FavoriteButton({
     }
   };
 
-  const getButtonClasses = () => {
-    const base = "transition-all";
-    switch (variant) {
-      case "outline":
-        return `${base} p-3 rounded-full border bg-white ${
-          isFavorited
-            ? "border-red-500 bg-red-50 dark:bg-red-500/10 hover:scale-[1.1] transition-all duration-200 ease-in-out"
-            : darkMode
-            ? "border-gray-600 hover:bg-gray-700"
-            : "border-gray-300 hover:bg-gray-100"
-        }`;
-      case "ghost":
-        return `${base} p-2 rounded-lg ${
-          isFavorited
-            ? "text-red-500"
-            : darkMode
-            ? "hover:bg-gray-700"
-            : "hover:bg-gray-100"
-        }`;
-      default:
-        return `${base} p-3 rounded-full ${
-          isFavorited
-            ? "bg-red-500 text-white"
-            : "bg-pink-500 text-white hover:bg-pink-600"
-        }`;
-    }
+  const colors = {
+    heart: isFavorited ? "text-red-500" : "text-slate-400 group-hover:text-red-400",
+    bg: isFavorited 
+      ? "bg-red-50 dark:bg-red-500/10 border-red-200 dark:border-red-500/30" 
+      : "bg-white dark:bg-gray-800 border-slate-200 dark:border-gray-700 hover:border-red-200 dark:hover:border-red-500/30",
+    text: isFavorited ? "text-red-600 dark:text-red-400" : "text-slate-600 dark:text-slate-400"
   };
 
-  const getIconColor = () => {
-    if (isLoading || isChecking)
-      return darkMode ? "text-accent" : "text-accent";
-    if (isFavorited) return "text-red-500";
-    return darkMode ? "text-accent" : "text-accent";
+  const variants = {
+    outline: `${colors.bg} border shadow-sm`,
+    ghost: "hover:bg-slate-100 dark:hover:bg-gray-800",
+    default: "bg-accent text-white hover:bg-accent/90 shadow-md"
   };
 
   return (
-    <button
+    <motion.button
+      whileHover={{ scale: 1.05 }}
+      whileTap={{ scale: 0.9 }}
       onClick={handleToggle}
-      disabled={isLoading || isChecking}
-      className={`${getButtonClasses()} ${className} disabled:opacity-50`}
+      disabled={isChecking}
+      className={`group relative flex items-center justify-center transition-all duration-300 ${
+        iconOnly ? "rounded-full p-2.5" : "rounded-xl px-4 py-2"
+      } ${variants[variant]} ${className} disabled:opacity-50`}
       aria-label={isFavorited ? "Remove from favorites" : "Add to favorites"}
     >
-      {isLoading || isChecking ? (
-        <Loader2 size={20} className="animate-spin" />
-      ) : (
-        <>
-          <Heart
-            size={20}
-            className={getIconColor()}
-            fill={isFavorited ? "currentColor" : "none"}
-          />
-          {!iconOnly && (
-            <span className="ml-2">{isFavorited ? "Saved" : "Save"}</span>
-          )}
-        </>
+      <AnimatePresence mode="wait">
+        {isLoading || isChecking ? (
+          <motion.div
+            key="loading"
+            initial={{ opacity: 0, rotate: 0 }}
+            animate={{ opacity: 1, rotate: 360 }}
+            exit={{ opacity: 0 }}
+            transition={{ repeat: Infinity, duration: 1, ease: "linear" }}
+          >
+            <Loader2 size={iconOnly ? 20 : 18} />
+          </motion.div>
+        ) : (
+          <motion.div
+            key="heart"
+            className="flex items-center gap-2"
+            initial={{ scale: 0.8, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            exit={{ scale: 0.8, opacity: 0 }}
+          >
+            <motion.div
+              animate={isFavorited ? {
+                scale: [1, 1.4, 1],
+                transition: { duration: 0.45, ease: "easeOut" }
+              } : {}}
+            >
+              <Heart
+                size={iconOnly ? 20 : 18}
+                className={`${colors.heart} transition-colors duration-300`}
+                fill={isFavorited ? "currentColor" : "none"}
+                strokeWidth={isFavorited ? 0 : 2}
+              />
+            </motion.div>
+            
+            {!iconOnly && (
+              <span className={`text-sm font-semibold ${colors.text}`}>
+                {isFavorited ? "Saved" : "Save"}
+              </span>
+            )}
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Subtle feedback ring on active */}
+      {isFavorited && !isLoading && (
+        <motion.div
+          layoutId="favorite-ring"
+          className="absolute inset-0 rounded-full border-2 border-red-400/50"
+          initial={{ scale: 1, opacity: 0 }}
+          animate={{ scale: 1.5, opacity: 0 }}
+          transition={{ duration: 0.5 }}
+        />
       )}
-    </button>
+    </motion.button>
   );
 }
+

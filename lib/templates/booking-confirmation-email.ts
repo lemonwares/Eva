@@ -19,6 +19,47 @@ export interface BookingConfirmationEmailData {
   vendorWebsite?: string;
 }
 
+const EMAIL_STYLE = `
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'Red Hat Display', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #fafafa; color: #0f172a; margin: 0; padding: 0; line-height: 1.6; -webkit-font-smoothing: antialiased; }
+  .email-wrapper { background: #fafafa; padding: 40px 20px; }
+  .container { max-width: 650px; margin: 0 auto; background: #ffffff; border-radius: 20px; box-shadow: 0 4px 24px rgba(124, 58, 237, 0.08); overflow: hidden; }
+  .header { padding: 48px 32px; text-align: center; background: linear-gradient(135deg, #7c3aed 0%, #a855f7 100%); }
+  .header-green { background: linear-gradient(135deg, #059669 0%, #10b981 100%); }
+  .header-icon { font-size: 56px; margin-bottom: 16px; }
+  .logo { font-size: 28px; font-weight: 900; letter-spacing: 4px; color: #ffffff; margin-bottom: 16px; }
+  .header-title { font-size: 26px; font-weight: 700; color: #ffffff; margin-bottom: 0; line-height: 1.3; }
+  .body { padding: 40px 32px; }
+  .greeting { font-size: 18px; color: #0f172a; margin-bottom: 20px; font-weight: 600; }
+  .content-text { color: #475569; margin-bottom: 24px; font-size: 15px; line-height: 1.8; }
+  .section-title { font-size: 14px; font-weight: 800; color: #7c3aed; margin-bottom: 16px; text-transform: uppercase; letter-spacing: 1px; }
+  .details-box { background: #f8fafc; border: 1px solid #e2e8f0; padding: 24px; border-radius: 16px; margin: 24px 0; }
+  .details-box-green { background: #ecfdf5; border-color: #a7f3d0; }
+  .detail-row { display: flex; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid #e2e8f0; }
+  .detail-row:last-child { border-bottom: none; }
+  .detail-label { font-size: 13px; color: #64748b; font-weight: 500; }
+  .detail-value { font-size: 14px; color: #0f172a; font-weight: 700; }
+  .vendor-card { background: linear-gradient(135deg, #f5f3ff 0%, #ede9fe 100%); border: 1px solid #c4b5fd; border-radius: 16px; padding: 24px; margin: 24px 0; }
+  .vendor-name { font-size: 18px; font-weight: 800; color: #5b21b6; margin-bottom: 12px; }
+  .vendor-info { font-size: 14px; color: #6d28d9; line-height: 1.8; }
+  .pricing-box { background: #ffffff; border: 1px solid #e2e8f0; padding: 24px; border-radius: 16px; margin: 24px 0; }
+  .price-row { display: flex; justify-content: space-between; padding: 10px 0; font-size: 14px; color: #475569; }
+  .price-row-total { padding-top: 16px; margin-top: 16px; border-top: 2px solid #e2e8f0; font-size: 20px; font-weight: 800; color: #0f172a; }
+  .price-row-success { color: #059669; }
+  .button-container { text-align: center; margin: 36px 0; }
+  .button { display: inline-block; padding: 16px 48px; background: linear-gradient(135deg, #7c3aed 0%, #a855f7 100%); color: #ffffff !important; text-decoration: none; border-radius: 12px; font-weight: 700; font-size: 16px; box-shadow: 0 4px 16px rgba(124, 58, 237, 0.35); }
+  .button-green { background: linear-gradient(135deg, #059669 0%, #10b981 100%); box-shadow: 0 4px 16px rgba(16, 185, 129, 0.35); }
+  .checklist { list-style: none; background: #f8fafc; padding: 24px; border-radius: 16px; border: 1px solid #e2e8f0; }
+  .checklist-item { padding: 10px 0 10px 32px; position: relative; font-size: 14px; color: #475569; }
+  .checklist-item::before { content: "✓"; position: absolute; left: 0; color: #7c3aed; font-weight: 900; font-size: 18px; }
+  .footer { background: #f8fafc; padding: 32px; text-align: center; border-top: 1px solid #e2e8f0; }
+  .footer-logo { font-weight: 800; color: #7c3aed; font-size: 18px; letter-spacing: 2px; margin-bottom: 8px; }
+  .footer-tagline { color: #64748b; font-size: 13px; margin-bottom: 12px; }
+  .footer-contact { color: #94a3b8; font-size: 12px; margin-top: 16px; }
+  .footer-links { margin-top: 16px; }
+  .footer-links a { color: #7c3aed; text-decoration: none; font-size: 12px; margin: 0 12px; }
+`;
+
 export function generateBookingConfirmationHTMLClient(
   data: BookingConfirmationEmailData
 ): string {
@@ -38,368 +79,162 @@ export function generateBookingConfirmationHTMLClient(
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <style>
-    body {
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      line-height: 1.6;
-      color: #333;
-      background-color: #f8f9fa;
-      margin: 0;
-      padding: 0;
-    }
-    .container {
-      max-width: 650px;
-      margin: 0 auto;
-      background-color: white;
-      border-radius: 12px;
-      overflow: hidden;
-      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-    }
-    .header {
-      background: linear-gradient(135deg, #059669 0%, #10b981 100%);
-      color: white;
-      padding: 40px 30px;
-      text-align: center;
-    }
-    .header h1 {
-      margin: 0;
-      font-size: 32px;
-      font-weight: 700;
-    }
-    .header-subtitle {
-      margin: 8px 0 0 0;
-      font-size: 16px;
-      opacity: 0.95;
-    }
-    .content {
-      padding: 40px 30px;
-    }
-    .greeting {
-      font-size: 18px;
-      margin-bottom: 24px;
-      color: #1f2937;
-    }
-    .success-message {
-      background-color: #ecfdf5;
-      border-left: 4px solid #059669;
-      padding: 16px;
-      margin: 24px 0;
-      border-radius: 6px;
-    }
-    .section {
-      margin: 30px 0;
-    }
-    .section-title {
-      font-size: 16px;
-      font-weight: 600;
-      color: #1f2937;
-      margin-bottom: 16px;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-    }
-    .details-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 20px;
-      background-color: #f9fafb;
-      padding: 20px;
-      border-radius: 8px;
-      margin-bottom: 24px;
-    }
-    .detail-item {
-      padding: 12px 0;
-      border-bottom: 1px solid #e5e7eb;
-    }
-    .detail-item:last-child {
-      border-bottom: none;
-    }
-    .detail-label {
-      font-size: 12px;
-      color: #6b7280;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-      margin-bottom: 4px;
-    }
-    .detail-value {
-      font-size: 16px;
-      font-weight: 600;
-      color: #1f2937;
-    }
-    .vendor-card {
-      background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
-      border: 1px solid #bae6fd;
-      border-radius: 8px;
-      padding: 20px;
-      margin: 24px 0;
-    }
-    .vendor-name {
-      font-size: 18px;
-      font-weight: 700;
-      color: #0369a1;
-      margin: 0 0 12px 0;
-    }
-    .vendor-info {
-      font-size: 14px;
-      color: #475569;
-      line-height: 1.8;
-    }
-    .vendor-info a {
-      color: #0369a1;
-      text-decoration: none;
-    }
-    .vendor-info a:hover {
-      text-decoration: underline;
-    }
-    .pricing-section {
-      background-color: #f9fafb;
-      padding: 20px;
-      border-radius: 8px;
-      margin: 24px 0;
-    }
-    .price-row {
-      display: flex;
-      justify-content: space-between;
-      margin: 12px 0;
-      font-size: 15px;
-    }
-    .price-row.total {
-      font-size: 18px;
-      font-weight: 700;
-      color: #059669;
-      border-top: 2px solid #e5e7eb;
-      padding-top: 12px;
-      margin-top: 16px;
-    }
-    .button-container {
-      text-align: center;
-      margin: 32px 0;
-    }
-    .button {
-      display: inline-block;
-      background: linear-gradient(135deg, #059669 0%, #10b981 100%);
-      color: white;
-      padding: 16px 40px;
-      text-decoration: none;
-      border-radius: 8px;
-      font-weight: 600;
-      font-size: 16px;
-      transition: all 0.3s ease;
-    }
-    .button:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 8px 16px rgba(5, 150, 105, 0.3);
-    }
-    .checklist {
-      list-style: none;
-      padding: 0;
-      margin: 20px 0;
-    }
-    .checklist-item {
-      padding: 12px 0;
-      padding-left: 32px;
-      position: relative;
-      color: #4b5563;
-    }
-    .checklist-item:before {
-      content: "✓";
-      position: absolute;
-      left: 0;
-      color: #059669;
-      font-weight: bold;
-      font-size: 18px;
-    }
-    .footer {
-      background-color: #f9fafb;
-      padding: 24px 30px;
-      text-align: center;
-      border-top: 1px solid #e5e7eb;
-    }
-    .footer-text {
-      font-size: 13px;
-      color: #6b7280;
-      margin: 8px 0;
-    }
-    .footer-links a {
-      color: #059669;
-      text-decoration: none;
-      margin: 0 12px;
-      font-size: 12px;
-    }
-    @media (max-width: 600px) {
-      .container {
-        border-radius: 0;
-      }
-      .content {
-        padding: 24px 20px;
-      }
-      .details-grid {
-        grid-template-columns: 1fr;
-        gap: 0;
-      }
-      .header {
-        padding: 30px 20px;
-      }
-      .header h1 {
-        font-size: 24px;
-      }
-    }
-  </style>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Red+Hat+Display:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <style>${EMAIL_STYLE}</style>
 </head>
 <body>
-  <div class="container">
-    <div class="header">
-      <h1>✅ Booking Confirmed!</h1>
-      <p class="header-subtitle">Your payment has been processed successfully</p>
-    </div>
-
-    <div class="content">
-      <p class="greeting">Hi ${data.clientName},</p>
-
-      <div class="success-message">
-        <strong>Great news!</strong> Your booking with <strong>${
-          data.vendorName
-        }</strong> is now confirmed. We're thrilled to help make your event unforgettable!
+  <div class="email-wrapper">
+    <div class="container">
+      <div class="header header-green">
+        <div class="header-icon">✅</div>
+        <div class="logo">EVA</div>
+        <div class="header-title">Booking Confirmed!</div>
       </div>
 
-      <div class="section">
-        <h3 class="section-title">Booking Details</h3>
-        <div class="details-grid">
-          <div class="detail-item">
-            <div class="detail-label">Booking ID</div>
-            <div class="detail-value">#${data.bookingId
+      <div class="body">
+        <p class="greeting">Hi ${data.clientName},</p>
+        
+        <p class="content-text">
+          <strong>Great news!</strong> Your booking with <strong>${
+            data.vendorName
+          }</strong> is now confirmed. Your payment has been processed successfully.
+        </p>
+
+        <div class="section-title">Booking Details</div>
+        <div class="details-box">
+          <div class="detail-row">
+            <span class="detail-label">Booking ID</span>
+            <span class="detail-value">#${data.bookingId
               .slice(0, 8)
-              .toUpperCase()}</div>
+              .toUpperCase()}</span>
           </div>
-          <div class="detail-item">
-            <div class="detail-label">Event Type</div>
-            <div class="detail-value">${data.eventType}</div>
+          <div class="detail-row">
+            <span class="detail-label">Event Type</span>
+            <span class="detail-value">${data.eventType}</span>
           </div>
-          <div class="detail-item">
-            <div class="detail-label">Event Date</div>
-            <div class="detail-value">${data.eventDate}</div>
+          <div class="detail-row">
+            <span class="detail-label">Event Date</span>
+            <span class="detail-value">${data.eventDate}</span>
           </div>
           ${
             data.eventLocation
               ? `
-          <div class="detail-item">
-            <div class="detail-label">Location</div>
-            <div class="detail-value">${data.eventLocation}</div>
+          <div class="detail-row">
+            <span class="detail-label">Location</span>
+            <span class="detail-value">${data.eventLocation}</span>
           </div>`
               : ""
           }
           ${
             data.guestsCount
               ? `
-          <div class="detail-item">
-            <div class="detail-label">Guest Count</div>
-            <div class="detail-value">${data.guestsCount} Guests</div>
+          <div class="detail-row">
+            <span class="detail-label">Guest Count</span>
+            <span class="detail-value">${data.guestsCount} Guests</span>
           </div>`
               : ""
           }
-          <div class="detail-item">
-            <div class="detail-label">Payment Mode</div>
-            <div class="detail-value">${paymentModeText}</div>
+           <div class="detail-row">
+            <span class="detail-label">Payment Mode</span>
+            <span class="detail-value">${paymentModeText}</span>
           </div>
         </div>
-      </div>
 
-      <div class="vendor-card">
-        <h4 class="vendor-name">${data.vendorName}</h4>
-        <div class="vendor-info">
+        <div class="section-title">Vendor Information</div>
+        <div class="vendor-card">
+          <div class="vendor-name">${data.vendorName}</div>
+          <div class="vendor-info">
+            ${
+              data.vendorEmail
+                ? `<div>📧 <a href="mailto:${data.vendorEmail}" style="color: #6d28d9; text-decoration: none;">${data.vendorEmail}</a></div>`
+                : ""
+            }
+            ${
+              data.vendorPhone
+                ? `<div>📱 <span style="color: #6d28d9;">${data.vendorPhone}</span></div>`
+                : ""
+            }
+          </div>
+        </div>
+
+        <div class="section-title">Payment Summary</div>
+        <div class="pricing-box">
           ${
-            data.vendorEmail
-              ? `<div>📧 <a href="mailto:${data.vendorEmail}">${data.vendorEmail}</a></div>`
-              : ""
-          }
-          ${data.vendorPhone ? `<div>📱 ${data.vendorPhone}</div>` : ""}
-          ${
-            data.vendorWebsite
-              ? `<div>🌐 <a href="${data.vendorWebsite}" target="_blank">Visit Website</a></div>`
-              : ""
+            data.paymentMode === "FULL_PAYMENT"
+              ? `
+            <div class="price-row">
+              <span>Full Amount Paid</span>
+              <span>${formattedTotal}</span>
+            </div>
+            <div class="price-row-total price-row-success">
+              <span>Secured ✓</span>
+              <span>${formattedTotal}</span>
+            </div>`
+              : data.paymentMode === "DEPOSIT_BALANCE"
+              ? `
+            <div class="price-row">
+              <span>Deposit Paid</span>
+              <span>${depositFormatted}</span>
+            </div>
+            <div class="price-row">
+              <span>Remaining Balance</span>
+              <span>${balanceFormatted}</span>
+            </div>
+            ${
+              data.balanceDueDate
+                ? `<div class="price-row">
+              <span>Due Date</span>
+              <span>${data.balanceDueDate}</span>
+            </div>`
+                : ""
+            }
+            <div class="price-row-total">
+              <span>Total Value</span>
+              <span>${formattedTotal}</span>
+            </div>`
+              : `
+            <div class="price-row-total">
+              <span>Total Amount</span>
+              <span>${formattedTotal}</span>
+            </div>`
           }
         </div>
-      </div>
 
-      <div class="pricing-section">
-        <h3 class="section-title">Payment Summary</h3>
-        ${
-          data.paymentMode === "FULL_PAYMENT"
-            ? `
-          <div class="price-row">
-            <span>Total Amount Paid</span>
-            <span>${formattedTotal}</span>
-          </div>
-          <div class="price-row total">
-            <span>Booking Secured ✓</span>
-            <span>${formattedTotal}</span>
-          </div>`
-            : data.paymentMode === "DEPOSIT_BALANCE"
-            ? `
-          <div class="price-row">
-            <span>Deposit Paid</span>
-            <span>${depositFormatted}</span>
-          </div>
-          <div class="price-row">
-            <span>Balance Due</span>
-            <span>${balanceFormatted}</span>
-          </div>
-          ${
-            data.balanceDueDate
-              ? `<div class="price-row">
-            <span>Balance Due Date</span>
-            <span>${data.balanceDueDate}</span>
-          </div>`
-              : ""
-          }
-          <div class="price-row total">
-            <span>Total Amount</span>
-            <span>${formattedTotal}</span>
-          </div>`
-            : `
-          <div class="price-row total">
-            <span>Total Amount</span>
-            <span>${formattedTotal}</span>
-          </div>`
-        }
-      </div>
+        <div class="button-container">
+          <a href="${data.bookingUrl}" class="button button-green">View My Booking</a>
+        </div>
 
-      <div class="button-container">
-        <a href="${data.bookingUrl}" class="button">View Booking</a>
-      </div>
-
-      <div class="section">
-        <h3 class="section-title">What's Next?</h3>
+        <div class="section-title">Next Steps</div>
         <ul class="checklist">
-          <li class="checklist-item">Review your booking details and event information</li>
-          <li class="checklist-item">Connect with your vendor to discuss final arrangements</li>
+          <li class="checklist-item">Reach out to ${data.vendorName} to finalise event details</li>
+          <li class="checklist-item">Review any specific instructions on your dashboard</li>
           ${
             data.paymentMode === "DEPOSIT_BALANCE"
-              ? `<li class="checklist-item">Note the balance due date: ${data.balanceDueDate}</li>`
+              ? `<li class="checklist-item">Note your balance due date: ${data.balanceDueDate}</li>`
               : ""
           }
-          <li class="checklist-item">Check your email for updates and reminders</li>
+          <li class="checklist-item">Keep an eye on your dashboard for updates</li>
         </ul>
+
+        <p class="content-text" style="margin-top: 32px; font-size: 14px; text-align: center; color: #94a3b8;">
+          Find vendors who get your traditions
+        </p>
       </div>
 
-      <p style="color: #6b7280; line-height: 1.8;">
-        If you have any questions or need to make changes to your booking, please don't hesitate to contact ${
-          data.vendorName
-        } directly.
-        <br><br>
-        Thank you for choosing EVA to find your perfect vendor! We can't wait to hear how your event goes.
-      </p>
-    </div>
-
-    <div class="footer">
-      <p class="footer-text">© ${new Date().getFullYear()} EVA. All rights reserved.</p>
-      <p class="footer-text">This is an automated email. Please do not reply to this message.</p>
-      <div class="footer-links">
-        <a href="${
-          process.env.NEXTAUTH_URL || "https://eva.events"
-        }/bookings">My Bookings</a>
-        <a href="${
-          process.env.NEXTAUTH_URL || "https://eva.events"
-        }/help">Help Center</a>
+      <div class="footer">
+        <div class="footer-logo">EVA</div>
+        <div class="footer-tagline">Connecting you with the best event service providers</div>
+        <div class="footer-links">
+          <a href="${
+            process.env.NEXTAUTH_URL || "https://eva.events"
+          }/bookings">Bookings</a>
+          <a href="${
+            process.env.NEXTAUTH_URL || "https://eva.events"
+          }/help">Help Center</a>
+        </div>
+        <p class="footer-contact">© ${new Date().getFullYear()} EVA. All rights reserved.</p>
       </div>
     </div>
   </div>
@@ -497,326 +332,142 @@ export function generateBookingConfirmationHTMLVendor(
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <style>
-    body {
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      line-height: 1.6;
-      color: #333;
-      background-color: #f8f9fa;
-      margin: 0;
-      padding: 0;
-    }
-    .container {
-      max-width: 650px;
-      margin: 0 auto;
-      background-color: white;
-      border-radius: 12px;
-      overflow: hidden;
-      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-    }
-    .header {
-      background: linear-gradient(135deg, #7c3aed 0%, #a855f7 100%);
-      color: white;
-      padding: 40px 30px;
-      text-align: center;
-    }
-    .header h1 {
-      margin: 0;
-      font-size: 32px;
-      font-weight: 700;
-    }
-    .header-subtitle {
-      margin: 8px 0 0 0;
-      font-size: 16px;
-      opacity: 0.95;
-    }
-    .content {
-      padding: 40px 30px;
-    }
-    .greeting {
-      font-size: 18px;
-      margin-bottom: 24px;
-      color: #1f2937;
-    }
-    .success-message {
-      background-color: #faf5ff;
-      border-left: 4px solid #7c3aed;
-      padding: 16px;
-      margin: 24px 0;
-      border-radius: 6px;
-    }
-    .section {
-      margin: 30px 0;
-    }
-    .section-title {
-      font-size: 16px;
-      font-weight: 600;
-      color: #1f2937;
-      margin-bottom: 16px;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-    }
-    .client-card {
-      background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
-      border: 1px solid #bae6fd;
-      border-radius: 8px;
-      padding: 20px;
-      margin: 24px 0;
-    }
-    .client-name {
-      font-size: 18px;
-      font-weight: 700;
-      color: #0369a1;
-      margin: 0 0 12px 0;
-    }
-    .client-info {
-      font-size: 14px;
-      color: #475569;
-      line-height: 1.8;
-    }
-    .details-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 20px;
-      background-color: #f9fafb;
-      padding: 20px;
-      border-radius: 8px;
-      margin-bottom: 24px;
-    }
-    .detail-item {
-      padding: 12px 0;
-      border-bottom: 1px solid #e5e7eb;
-    }
-    .detail-item:last-child {
-      border-bottom: none;
-    }
-    .detail-label {
-      font-size: 12px;
-      color: #6b7280;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-      margin-bottom: 4px;
-    }
-    .detail-value {
-      font-size: 16px;
-      font-weight: 600;
-      color: #1f2937;
-    }
-    .pricing-section {
-      background-color: #f9fafb;
-      padding: 20px;
-      border-radius: 8px;
-      margin: 24px 0;
-    }
-    .price-row {
-      display: flex;
-      justify-content: space-between;
-      margin: 12px 0;
-      font-size: 15px;
-    }
-    .price-row.total {
-      font-size: 18px;
-      font-weight: 700;
-      color: #7c3aed;
-      border-top: 2px solid #e5e7eb;
-      padding-top: 12px;
-      margin-top: 16px;
-    }
-    .button-container {
-      text-align: center;
-      margin: 32px 0;
-    }
-    .button {
-      display: inline-block;
-      background: linear-gradient(135deg, #7c3aed 0%, #a855f7 100%);
-      color: white;
-      padding: 16px 40px;
-      text-decoration: none;
-      border-radius: 8px;
-      font-weight: 600;
-      font-size: 16px;
-      transition: all 0.3s ease;
-    }
-    .button:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 8px 16px rgba(124, 58, 237, 0.3);
-    }
-    .action-items {
-      background-color: #f9fafb;
-      padding: 20px;
-      border-radius: 8px;
-      margin: 24px 0;
-    }
-    .action-items h4 {
-      margin-top: 0;
-      color: #1f2937;
-    }
-    .action-items ul {
-      margin: 0;
-      padding-left: 20px;
-      color: #4b5563;
-    }
-    .action-items li {
-      margin: 8px 0;
-    }
-    .footer {
-      background-color: #f9fafb;
-      padding: 24px 30px;
-      text-align: center;
-      border-top: 1px solid #e5e7eb;
-    }
-    .footer-text {
-      font-size: 13px;
-      color: #6b7280;
-      margin: 8px 0;
-    }
-    @media (max-width: 600px) {
-      .container {
-        border-radius: 0;
-      }
-      .content {
-        padding: 24px 20px;
-      }
-      .details-grid {
-        grid-template-columns: 1fr;
-        gap: 0;
-      }
-      .header {
-        padding: 30px 20px;
-      }
-      .header h1 {
-        font-size: 24px;
-      }
-    }
-  </style>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Red+Hat+Display:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <style>${EMAIL_STYLE}</style>
 </head>
 <body>
-  <div class="container">
-    <div class="header">
-      <h1>🎉 New Booking Confirmed!</h1>
-      <p class="header-subtitle">Payment has been received</p>
-    </div>
-
-    <div class="content">
-      <p class="greeting">Hi ${data.vendorBusinessName},</p>
-
-      <div class="success-message">
-        <strong>Excellent news!</strong> You have a new confirmed booking from <strong>${
-          data.clientName
-        }</strong>. Payment has been successfully processed!
+  <div class="email-wrapper">
+    <div class="container">
+      <div class="header">
+        <div class="header-icon">🎉</div>
+        <div class="logo">EVA</div>
+        <div class="header-title">New Booking Confirmed!</div>
       </div>
 
-      <div class="client-card">
-        <h4 class="client-name">Client: ${data.clientName}</h4>
-        <div class="client-info">
-          ${
-            data.vendorEmail
-              ? `<div>📧 <a href="mailto:${data.vendorEmail}" style="color: #0369a1; text-decoration: none;">${data.vendorEmail}</a></div>`
-              : ""
-          }
-          ${data.vendorPhone ? `<div>📱 ${data.vendorPhone}</div>` : ""}
+      <div class="body">
+        <p class="greeting">Hi ${data.vendorBusinessName},</p>
+        
+        <p class="content-text">
+          <strong>Excellent news!</strong> You have a new confirmed booking from <strong>${
+            data.clientName
+          }</strong>. Payment has been processed successfully!
+        </p>
+
+        <div class="section-title">Client Information</div>
+        <div class="vendor-card">
+          <div class="vendor-name">${data.clientName}</div>
+          <div class="vendor-info">
+            ${
+              data.vendorEmail
+                ? `<div>📧 <a href="mailto:${data.vendorEmail}" style="color: #6d28d9; text-decoration: none;">${data.vendorEmail}</a></div>`
+                : ""
+            }
+            ${
+              data.vendorPhone
+                ? `<div>📱 <span style="color: #6d28d9;">${data.vendorPhone}</span></div>`
+                : ""
+            }
+          </div>
         </div>
-      </div>
 
-      <div class="section">
-        <h3 class="section-title">Event Details</h3>
-        <div class="details-grid">
-          <div class="detail-item">
-            <div class="detail-label">Booking ID</div>
-            <div class="detail-value">#${data.bookingId
+        <div class="section-title">Event Details</div>
+        <div class="details-box">
+          <div class="detail-row">
+            <span class="detail-label">Booking ID</span>
+            <span class="detail-value">#${data.bookingId
               .slice(0, 8)
-              .toUpperCase()}</div>
+              .toUpperCase()}</span>
           </div>
-          <div class="detail-item">
-            <div class="detail-label">Event Type</div>
-            <div class="detail-value">${data.eventType}</div>
+          <div class="detail-row">
+            <span class="detail-label">Event Type</span>
+            <span class="detail-value">${data.eventType}</span>
           </div>
-          <div class="detail-item">
-            <div class="detail-label">Event Date</div>
-            <div class="detail-value">${data.eventDate}</div>
+          <div class="detail-row">
+            <span class="detail-label">Event Date</span>
+            <span class="detail-value">${data.eventDate}</span>
           </div>
           ${
             data.eventLocation
               ? `
-          <div class="detail-item">
-            <div class="detail-label">Location</div>
-            <div class="detail-value">${data.eventLocation}</div>
+          <div class="detail-row">
+            <span class="detail-label">Location</span>
+            <span class="detail-value">${data.eventLocation}</span>
           </div>`
               : ""
           }
           ${
             data.guestsCount
               ? `
-          <div class="detail-item">
-            <div class="detail-label">Guest Count</div>
-            <div class="detail-value">${data.guestsCount} Guests</div>
+          <div class="detail-row">
+            <span class="detail-label">Guest Count</span>
+            <span class="detail-value">${data.guestsCount} Guests</span>
           </div>`
               : ""
           }
-          <div class="detail-item">
-            <div class="detail-label">Payment Mode</div>
-            <div class="detail-value">${paymentModeText}</div>
+          <div class="detail-row">
+            <span class="detail-label">Payment Mode</span>
+            <span class="detail-value">${paymentModeText}</span>
           </div>
         </div>
-      </div>
 
-      <div class="pricing-section">
-        <h3 class="section-title">Payment Summary</h3>
-        ${
-          data.paymentMode === "FULL_PAYMENT"
-            ? `<div class="price-row">
-            <span>Full Payment Received</span>
-            <span>${formattedTotal}</span>
-          </div>
-          <div class="price-row total">
-            <span>Total Booking Value</span>
-            <span>${formattedTotal}</span>
-          </div>`
-            : data.paymentMode === "DEPOSIT_BALANCE"
-            ? `<div class="price-row">
-            <span>Deposit Received</span>
-            <span>${depositFormatted}</span>
-          </div>
-          <div class="price-row total">
-            <span>Total Booking Value</span>
-            <span>${formattedTotal}</span>
-          </div>`
-            : `<div class="price-row total">
-            <span>Booking Value</span>
-            <span>${formattedTotal}</span>
-          </div>`
-        }
-      </div>
+        <div class="section-title">Booking Summary</div>
+        <div class="pricing-box">
+          ${
+            data.paymentMode === "FULL_PAYMENT"
+              ? `<div class="price-row">
+              <span>Full Amount Received</span>
+              <span>${formattedTotal}</span>
+            </div>
+            <div class="price-row-total">
+              <span>Total Value</span>
+              <span>${formattedTotal}</span>
+            </div>`
+              : data.paymentMode === "DEPOSIT_BALANCE"
+              ? `<div class="price-row">
+              <span>Deposit Received</span>
+              <span>${depositFormatted}</span>
+            </div>
+            <div class="price-row-total">
+              <span>Total Value</span>
+              <span>${formattedTotal}</span>
+            </div>`
+              : `<div class="price-row-total">
+              <span>Booking Value</span>
+              <span>${formattedTotal}</span>
+            </div>`
+          }
+        </div>
 
-      <div class="action-items">
-        <h4>Action Items for You</h4>
-        <ul>
-          <li>Reach out to ${data.clientName} to confirm event details</li>
-          <li>Discuss final arrangements and timeline</li>
+        <div class="button-container">
+          <a href="${data.bookingUrl}" class="button">View Booking Details</a>
+        </div>
+
+        <div class="section-title">Actions for You</div>
+        <ul class="checklist">
+          <li class="checklist-item">Reach out to ${
+            data.clientName
+          } to confirm final arrangements</li>
+          <li class="checklist-item">Update your schedule for ${data.eventDate}</li>
           ${
             data.paymentMode === "DEPOSIT_BALANCE"
-              ? `<li>Set a reminder for balance payment due date</li>`
+              ? `<li class="checklist-item">Set a reminder for the balance payment</li>`
               : ""
           }
-          <li>Share any additional requirements or next steps</li>
-          <li>Log in to your dashboard to manage this booking</li>
+          <li class="checklist-item">Mark this booking on your calendar</li>
         </ul>
+
+        <p class="content-text" style="margin-top: 32px; font-size: 14px; text-align: center; color: #94a3b8;">
+          Find vendors who get your traditions
+        </p>
       </div>
 
-      <div class="button-container">
-        <a href="${
-          process.env.NEXTAUTH_URL || "http://localhost:3000"
-        }/vendor/bookings" class="button">Manage Booking</a>
+      <div class="footer">
+        <div class="footer-logo">EVA</div>
+        <div class="footer-tagline">Connecting you with the best event service providers</div>
+        <p class="footer-contact">© ${new Date().getFullYear()} EVA. All rights reserved.</p>
       </div>
-
-      <p style="color: #6b7280; line-height: 1.8;">
-        Start the conversation with your client right away to ensure a smooth event experience. The more connected you are, the better the outcome!
-      </p>
-    </div>
-
-    <div class="footer">
-      <p class="footer-text">© ${new Date().getFullYear()} EVA. All rights reserved.</p>
-      <p class="footer-text">This is an automated email. Please do not reply to this message.</p>
     </div>
   </div>
 </body>

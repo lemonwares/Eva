@@ -3,7 +3,11 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <title>We've Received Your Message</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Red+Hat+Display:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
     <style>
       * {
         margin: 0;
@@ -11,211 +15,297 @@
         box-sizing: border-box;
       }
       body {
-        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
-          "Helvetica Neue", Arial, sans-serif;
-        background: #fff;
-        color: #111;
+        font-family: 'Red Hat Display', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        background: #fafafa;
+        color: #0f172a;
         margin: 0;
         padding: 0;
         line-height: 1.6;
+        -webkit-font-smoothing: antialiased;
       }
-      .email-container {
+      .email-wrapper {
+        background: #fafafa;
+        padding: 40px 20px;
+      }
+      .container {
         max-width: 600px;
-        margin: 40px auto;
-        background: #fff;
-        border-radius: 12px;
-        box-shadow: 0 2px 8px rgba(99, 102, 241, 0.08);
+        margin: 0 auto;
+        background: #ffffff;
+        border-radius: 20px;
+        box-shadow: 0 4px 24px rgba(124, 58, 237, 0.08);
         overflow: hidden;
       }
       .header {
-        background: #fff;
-        color: #222;
-        padding: 32px 24px 24px 24px;
-        text-align: left;
-        position: relative;
-        border-bottom: 2px solid #f3f4f6;
+        background: linear-gradient(135deg, #7c3aed 0%, #a855f7 100%);
+        padding: 48px 32px;
+        text-align: center;
+      }
+      .header-icon {
+        font-size: 56px;
+        margin-bottom: 16px;
       }
       .logo {
-        font-size: 32px;
+        font-size: 28px;
         font-weight: 900;
-        letter-spacing: 2px;
-        text-transform: uppercase;
-        margin-bottom: 0;
-        margin-left: 2px;
-        margin-top: 0;
-        display: inline-block;
-        color: #111;
-      }
-      .header-content {
-        margin-top: 28px;
-        text-align: left;
+        letter-spacing: 4px;
+        color: #ffffff;
+        margin-bottom: 16px;
       }
       .header-title {
-        font-size: 22px;
-        font-weight: 600;
-        margin-bottom: 6px;
-        margin-top: 0;
-        color: #222;
+        font-size: 24px;
+        font-weight: 700;
+        color: #ffffff;
+        margin-bottom: 8px;
+        line-height: 1.3;
       }
       .header-subtitle {
         font-size: 14px;
-        color: #6366f1;
-        font-weight: 500;
-        letter-spacing: 0.05em;
+        font-weight: 600;
+        color: rgba(255, 255, 255, 0.85);
         text-transform: uppercase;
+        letter-spacing: 1px;
       }
-
       .body {
-        padding: 40px;
+        padding: 40px 32px;
       }
       .greeting {
-        margin-bottom: 24px;
-        font-size: 16px;
-        color: #1f2937;
+        font-size: 18px;
+        color: #0f172a;
+        margin-bottom: 20px;
+        font-weight: 600;
       }
       .greeting strong {
-        color: #0f172a;
+        color: #7c3aed;
       }
-      .content {
-        margin-bottom: 28px;
+      .content-text {
+        color: #475569;
+        margin-bottom: 24px;
+        font-size: 15px;
         line-height: 1.8;
-        color: #4b5563;
       }
-      .message-box {
-        background: linear-gradient(
-          135deg,
-          rgba(236, 72, 153, 0.05) 0%,
-          rgba(15, 23, 42, 0.03) 100%
-        );
-        border-left: 4px solid #ec4899;
-        padding: 20px;
+      .reference-box {
+        background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+        border: 1px solid #93c5fd;
+        padding: 20px 24px;
+        border-radius: 12px;
         margin: 24px 0;
+        text-align: center;
+      }
+      .reference-label {
+        font-size: 12px;
+        font-weight: 600;
+        color: #1e40af;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        margin-bottom: 8px;
+      }
+      .reference-code {
+        font-family: 'SF Mono', 'Monaco', 'Inconsolata', 'Fira Code', monospace;
+        font-size: 18px;
+        font-weight: 700;
+        color: #1e40af;
+        background: #ffffff;
+        padding: 10px 20px;
         border-radius: 8px;
-        font-style: italic;
-        color: #4b5563;
-        line-height: 1.8;
+        display: inline-block;
+        border: 1px solid #bfdbfe;
       }
       .divider {
         height: 1px;
-        background: #e5e7eb;
+        background: linear-gradient(90deg, transparent, #e2e8f0, transparent);
         margin: 28px 0;
       }
-      .footer {
-        background: #f9fafb;
-        padding: 24px 40px;
-        border-top: 1px solid #e5e7eb;
-        text-align: center;
-      }
-      .footer-text {
+      .message-label {
+        color: #64748b;
         font-size: 13px;
-        color: #6b7280;
+        font-weight: 600;
         margin-bottom: 12px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+      }
+      .message-box {
+        background: linear-gradient(135deg, #fdf4ff 0%, #fae8ff 100%);
+        border-left: 4px solid #ec4899;
+        padding: 20px 24px;
+        margin: 0 0 24px 0;
+        border-radius: 12px;
+        font-style: italic;
+        color: #86198f;
+        line-height: 1.8;
+        font-size: 14px;
+      }
+      .next-steps {
+        background: #f8fafc;
+        border: 1px solid #e2e8f0;
+        padding: 20px 24px;
+        border-radius: 12px;
+        margin: 24px 0;
+      }
+      .next-steps-title {
+        font-size: 15px;
+        font-weight: 700;
+        color: #0f172a;
+        margin-bottom: 12px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+      .next-steps-text {
+        color: #64748b;
+        font-size: 14px;
+        line-height: 1.7;
+      }
+      .button-container {
+        text-align: center;
+        margin: 32px 0 8px 0;
+      }
+      .button {
+        display: inline-block;
+        padding: 14px 36px;
+        background: linear-gradient(135deg, #7c3aed 0%, #a855f7 100%);
+        color: #ffffff;
+        text-decoration: none;
+        border-radius: 12px;
+        font-weight: 700;
+        font-size: 15px;
+        box-shadow: 0 4px 16px rgba(124, 58, 237, 0.35);
+        transition: all 0.2s ease;
+      }
+      .button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 24px rgba(124, 58, 237, 0.45);
+      }
+      .footer {
+        background: #f8fafc;
+        padding: 28px 32px;
+        text-align: center;
+        border-top: 1px solid #e2e8f0;
+      }
+      .footer-logo {
+        font-weight: 800;
+        color: #7c3aed;
+        font-size: 18px;
+        letter-spacing: 2px;
+        margin-bottom: 8px;
+      }
+      .footer-tagline {
+        color: #64748b;
+        font-size: 13px;
+        margin-bottom: 12px;
+      }
+      .footer-contact {
+        color: #94a3b8;
+        font-size: 13px;
+        margin-bottom: 16px;
+      }
+      .footer-contact a {
+        color: #7c3aed;
+        text-decoration: none;
       }
       .footer-links {
         font-size: 13px;
-        color: #6b7280;
+        color: #94a3b8;
       }
       .footer-links a {
-        color: #ec4899;
+        color: #7c3aed;
         text-decoration: none;
-        margin: 0 8px;
+        margin: 0 12px;
       }
       .footer-links a:hover {
         text-decoration: underline;
       }
-      .cta-button {
-        display: inline-block;
-        background: #0f172a;
-        color: white;
-        padding: 12px 32px;
-        border-radius: 99px;
-        text-decoration: none;
-        font-weight: 600;
-        font-size: 14px;
-        margin-top: 20px;
-        transition: background 0.3s ease;
-      }
-      .cta-button:hover {
-        background: #1e293b;
-      }
-      .reference {
-        background: #f0f9ff;
-        border: 1px solid #bfdbfe;
-        padding: 16px;
-        border-radius: 8px;
-        margin: 24px 0;
-        font-size: 13px;
-        color: #1e40af;
-      }
-      .reference-label {
-        font-weight: 600;
-        margin-bottom: 4px;
-      }
-      .reference-code {
-        font-family: "Courier New", monospace;
-        font-weight: bold;
+      /* Mobile responsiveness */
+      @media (max-width: 600px) {
+        .email-wrapper {
+          padding: 20px 12px;
+        }
+        .container {
+          border-radius: 16px;
+        }
+        .header {
+          padding: 36px 24px;
+        }
+        .header-icon {
+          font-size: 48px;
+        }
+        .logo {
+          font-size: 24px;
+        }
+        .header-title {
+          font-size: 20px;
+        }
+        .body {
+          padding: 28px 24px;
+        }
+        .button {
+          display: block;
+          text-align: center;
+        }
       }
     </style>
   </head>
   <body>
-    <div class="email-container">
-      <!-- Header -->
-      <div class="header">
-        <div class="logo">EVA</div>
-        <div class="header-content">
+    <div class="email-wrapper">
+      <div class="container">
+        <!-- Header -->
+        <div class="header">
+          <div class="header-icon">💬</div>
+          <div class="logo">EVA</div>
           <div class="header-title">We've Received Your Message</div>
           <div class="header-subtitle">Support Team</div>
         </div>
-      </div>
 
-      <!-- Body -->
-      <div class="body">
-        <div class="greeting">Hi <strong>{{name}}</strong>,</div>
+        <!-- Body -->
+        <div class="body">
+          <div class="greeting">Hi <strong>{{name}}</strong>,</div>
 
-        <div class="content">
-          Thank you for reaching out to EVA! We've received your message and
-          appreciate you taking the time to contact us. Our support team will
-          review your request and get back to you within
-          <strong>24 hours</strong>.
+          <div class="content-text">
+            Thank you for reaching out to EVA! We've received your message and
+            appreciate you taking the time to contact us. Our support team will
+            review your request and get back to you within
+            <strong>24 hours</strong>.
+          </div>
+
+          <div class="reference-box">
+            <div class="reference-label">Your Reference ID</div>
+            <div class="reference-code">{{referenceId}}</div>
+          </div>
+
+          <div class="divider"></div>
+
+          <div class="message-label">Your message:</div>
+          <div class="message-box">{{message}}</div>
+
+          <div class="next-steps">
+            <div class="next-steps-title">
+              ✨ What happens next?
+            </div>
+            <div class="next-steps-text">
+              Our team will carefully review your inquiry and respond with a
+              solution or next steps. If you have any additional information to
+              share, feel free to reply to this email.
+            </div>
+          </div>
+
+          <div class="button-container">
+            <a href="{{dashboardUrl}}" class="button">Go to Your Account</a>
+          </div>
         </div>
 
-        <div class="reference">
-          <div class="reference-label">Your Reference ID</div>
-          <div class="reference-code">{{referenceId}}</div>
-        </div>
-
-        <div class="divider"></div>
-
-        <div
-          class="content"
-          style="margin-bottom: 12px; color: #6b7280; font-weight: 600"
-        >
-          Your message:
-        </div>
-        <div class="message-box">{{message}}</div>
-
-        <div class="divider"></div>
-
-        <div class="content">
-          <strong>What happens next?</strong><br />
-          Our team will carefully review your inquiry and respond with a
-          solution or next steps. If you have any additional information to
-          share, feel free to reply to this email.
-        </div>
-
-        <a href="{{dashboardUrl}}" class="cta-button">Go to your account</a>
-      </div>
-
-      <!-- Footer -->
-      <div class="footer">
-        <div class="footer-text">
-          © {{currentYear}} EVA. Find vendors who get your traditions.
-        </div>
-        <div class="footer-text">hello@evalocal.com</div>
-        <div class="footer-links">
-          <a href="{{helpUrl}}">Help Center</a>
-          <a href="{{termsUrl}}">Terms</a>
-          <a href="{{privacyUrl}}">Privacy</a>
+        <!-- Footer -->
+        <div class="footer">
+          <div class="footer-logo">EVA</div>
+          <div class="footer-tagline">
+            Find vendors who get your traditions
+          </div>
+          <div class="footer-contact">
+            <a href="mailto:hello@evalocal.com">hello@evalocal.com</a>
+          </div>
+          <div class="footer-links">
+            <a href="{{helpUrl}}">Help Center</a>
+            <a href="{{termsUrl}}">Terms</a>
+            <a href="{{privacyUrl}}">Privacy</a>
+          </div>
         </div>
       </div>
     </div>
