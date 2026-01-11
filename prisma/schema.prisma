@@ -738,6 +738,10 @@ model Category {
   seoIntro        String? @map("seo_intro") @db.Text
   faqs            Json[] // Array of {question, answer}
 
+  // Taxonomy Extensions
+  aliases  String[] @default([]) // Synonyms and alternative names for search/SEO
+  subTags  String[] @default([]) // Sub-tags used for filtering and SEO
+
   // Display
   isFeatured   Boolean @default(false) @map("is_featured")
   displayOrder Int     @default(0) @map("display_order")
@@ -749,6 +753,8 @@ model Category {
   updatedAt DateTime @updatedAt @map("updated_at")
 
   @@index([slug])
+  @@index([aliases])
+  @@index([subTags])
   @@index([isFeatured])
   @@index([displayOrder])
   @@map("categories")

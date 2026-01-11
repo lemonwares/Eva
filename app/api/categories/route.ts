@@ -16,6 +16,8 @@ const createCategorySchema = z.object({
   isFeatured: z.boolean().optional().default(false),
   metaTitle: z.string().max(60).optional(),
   metaDescription: z.string().max(160).optional(),
+  aliases: z.array(z.string().min(1).max(50)).optional().default([]),
+  subTags: z.array(z.string().min(1).max(50)).optional().default([]),
 });
 
 // POST /api/categories - Create a new category (admin only)

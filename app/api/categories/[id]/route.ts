@@ -17,6 +17,8 @@ const updateCategorySchema = z.object({
   isFeatured: z.boolean().optional(),
   metaTitle: z.string().max(60).optional(),
   metaDescription: z.string().max(160).optional(),
+  aliases: z.array(z.string().min(1).max(50)).optional(),
+  subTags: z.array(z.string().min(1).max(50)).optional(),
 });
 
 // GET /api/categories/:id - Get single category

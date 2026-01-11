@@ -58,12 +58,60 @@ const categoryImages: Record<string, string> = {
     "https://images.unsplash.com/photo-1519167758481-83f550bb49b3?w=1600&h=600&fit=crop",
   Photographers:
     "https://images.unsplash.com/photo-1606800052052-a08af7148866?w=1600&h=600&fit=crop",
+  Videographers:
+    "https://images.unsplash.com/photo-1492691527719-9d1e07e534b4?w=1600&h=600&fit=crop",
   Photography:
     "https://images.unsplash.com/photo-1606800052052-a08af7148866?w=1600&h=600&fit=crop",
   Caterers:
     "https://images.unsplash.com/photo-1555244162-803834f70033?w=1600&h=600&fit=crop",
   Catering:
     "https://images.unsplash.com/photo-1555244162-803834f70033?w=1600&h=600&fit=crop",
+  "Music & DJs":
+    "https://images.unsplash.com/photo-1470229722913-7c0e2dbbafd3?w=1600&h=600&fit=crop",
+  Music:
+    "https://images.unsplash.com/photo-1470229722913-7c0e2dbbafd3?w=1600&h=600&fit=crop",
+  DJs: "https://images.unsplash.com/photo-1470229722913-7c0e2dbbafd3?w=1600&h=600&fit=crop",
+  MCs: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=1600&h=600&fit=crop",
+  Musicians:
+    "https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=1600&h=600&fit=crop",
+  Florists:
+    "https://images.unsplash.com/photo-1490750967868-88aa4486c946?w=1600&h=600&fit=crop",
+  Flowers:
+    "https://images.unsplash.com/photo-1490750967868-88aa4486c946?w=1600&h=600&fit=crop",
+  "Event Planners":
+    "https://images.unsplash.com/photo-1511578314322-379afb476865?w=1600&h=600&fit=crop",
+  Planning:
+    "https://images.unsplash.com/photo-1511578314322-379afb476865?w=1600&h=600&fit=crop",
+  "Wedding Planners":
+    "https://images.unsplash.com/photo-1511578314322-379afb476865?w=1600&h=600&fit=crop",
+  Bakers:
+    "https://images.unsplash.com/photo-1464349095431-e9a21285b5f3?w=1600&h=600&fit=crop",
+  Baking:
+    "https://images.unsplash.com/photo-1464349095431-e9a21285b5f3?w=1600&h=600&fit=crop",
+  Decorators:
+    "https://images.unsplash.com/photo-1478146896981-b80fe463b330?w=1600&h=600&fit=crop",
+  Decoration:
+    "https://images.unsplash.com/photo-1478146896981-b80fe463b330?w=1600&h=600&fit=crop",
+  Makeup:
+    "https://images.unsplash.com/photo-1487412947147-5cebf100ffc2?w=1600&h=600&fit=crop",
+  "Makeup Artists":
+    "https://images.unsplash.com/photo-1487412947147-5cebf100ffc2?w=1600&h=600&fit=crop",
+  "Hair Stylists":
+    "https://images.unsplash.com/photo-1560066984-138dadb4c035?w=1600&h=600&fit=crop",
+  Mixologists:
+    "https://images.unsplash.com/photo-1514362545857-3bc16c4c7d1b?w=1600&h=600&fit=crop",
+  "Waiters & Servers":
+    "https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=1600&h=600&fit=crop",
+  "Gele Stylists":
+    "https://images.unsplash.com/photo-1594736797933-d0401ba2fe65?w=1600&h=600&fit=crop",
+  "Fashion Designers":
+    "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=1600&h=600&fit=crop",
+  "Souvenir Vendors":
+    "https://images.unsplash.com/photo-1513475382585-d06e58bcb0e0?w=1600&h=600&fit=crop",
+  Entertainment:
+    "https://images.unsplash.com/photo-1516450360452-9312f5e86fc7?w=1600&h=600&fit=crop",
+  "Ice Sculptors":
+    "https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=1600&h=600&fit=crop",
   default:
     "https://images.unsplash.com/photo-1492684223066-81342ee5ff30?w=1600&h=600&fit=crop",
 };
@@ -124,6 +172,10 @@ export default function CategoryDetailPage() {
 
       if (verifiedOnly) {
         queryParams.append("verified", "true");
+      }
+
+      if (selectedSubcategory) {
+        queryParams.append("subcategory", selectedSubcategory);
       }
 
       const response = await fetch(`/api/providers?${queryParams.toString()}`);

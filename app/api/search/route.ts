@@ -26,12 +26,49 @@ function milesToKm(miles: number): number {
   return miles * 1.60934;
 }
 
+// Helper: Resolve category aliases/sub-tags to actual category slugs
+async function resolveCategoryAliases(
+  searchTerms: string[]
+): Promise<{ categoryMatch: string; relevanceBoost: number }[]> {
+  if (searchTerms.length === 0) return [];
+
+  const categories = await prisma.category.findMany({
+    select: { slug: true, aliases: true, subTags: true, name: true },
+  });
+
+  const matches: { categoryMatch: string; relevanceBoost: number }[] = [];
+
+  for (const term of searchTerms) {
+    const lowerTerm = term.toLowerCase();
+    for (const cat of categories) {
+      // Exact slug match (highest relevance)
+      if (cat.slug === lowerTerm) {
+        matches.push({ categoryMatch: cat.slug, relevanceBoost: 3 });
+        break;
+      }
+      // Alias match
+      if (cat.aliases.some((a) => a.toLowerCase() === lowerTerm)) {
+        matches.push({ categoryMatch: cat.slug, relevanceBoost: 2 });
+        break;
+      }
+      // Sub-tag match
+      if (cat.subTags.some((s) => s.toLowerCase() === lowerTerm)) {
+        matches.push({ categoryMatch: cat.slug, relevanceBoost: 1.5 });
+        break;
+      }
+    }
+  }
+
+  return matches;
+}
+
 // GET /api/search
 // Enhanced search supporting multiple modes:
 // - Text search (existing)
 // - Tag-based search (new)
 // - Slug search (new)
 // - Combined search (new)
+// - Category alias/sub-tag resolution (new)
 export async function GET(request: NextRequest) {
   try {
     const searchParams = request.nextUrl.searchParams;
@@ -113,8 +150,27 @@ export async function GET(request: NextRequest) {
       isPublished: true, // Only show published providers
     };
 
+    // Resolve category aliases and sub-tags to actual category slugs
+    let expandedCategoryMatches: {
+      categoryMatch: string;
+      relevanceBoost: number;
+    }[] = [];
+
+    if (category) {
+      // If a category is specified, expand it via aliases/sub-tags
+      const catMatches = await resolveCategoryAliases([category]);
+      if (catMatches.length > 0) {
+        expandedCategoryMatches = catMatches;
+        filters.categories = {
+          hasSome: catMatches.map((m) => m.categoryMatch),
+        };
+      } else {
+        // Fallback: use the category as-is
+        filters.categories = { has: category };
+      }
+    }
+
     // Existing filters (maintain backward compatibility)
-    if (category) filters.categories = { has: category };
     if (priceFrom) filters.priceFrom = { gte: Number(priceFrom) };
     if (priceTo) filters.priceFrom = { lte: Number(priceTo) };
     if (rating) filters.averageRating = { gte: Number(rating) };
@@ -131,29 +187,40 @@ export async function GET(request: NextRequest) {
       // Direct slug search (highest priority)
       filters.slug = slug;
     } else if (searchType === "tags" && tags) {
-      // Tag-based search
+      // Tag-based search with alias/sub-tag expansion
       const tagArray = tags
         .split(",")
         .map((t) => t.trim().toLowerCase())
         .filter(Boolean);
+
       if (tagArray.length > 0) {
+        // Resolve aliases and sub-tags
+        const resolvedMatches = await resolveCategoryAliases(tagArray);
+        const resolvedSlugs = resolvedMatches.map((m) => m.categoryMatch);
+
+        const expandedTags = [...tagArray, ...resolvedSlugs];
         filters.OR = [
-          { tags: { hasSome: tagArray } },
-          { categories: { hasSome: tagArray } },
-          { subcategories: { hasSome: tagArray } },
-          { cultureTraditionTags: { hasSome: tagArray } },
+          { tags: { hasSome: expandedTags } },
+          { categories: { hasSome: expandedTags } },
+          { subcategories: { hasSome: expandedTags } },
+          { cultureTraditionTags: { hasSome: expandedTags } },
         ];
       }
     } else if ((searchType === "text" || searchType === "all") && q) {
-      // Text search in multiple fields
+      // Text search in multiple fields with alias/sub-tag expansion
       const searchTerms = q.toLowerCase().split(" ").filter(Boolean);
       if (searchTerms.length > 0) {
+        // Resolve aliases and sub-tags for each search term
+        const resolvedMatches = await resolveCategoryAliases(searchTerms);
+        const resolvedSlugs = resolvedMatches.map((m) => m.categoryMatch);
+
+        const expandedTerms = [...searchTerms, ...resolvedSlugs];
         filters.OR = [
           { businessName: { contains: q, mode: "insensitive" } },
           { description: { contains: q, mode: "insensitive" } },
-          { tags: { hasSome: searchTerms } },
-          { categories: { hasSome: searchTerms } },
-          { subcategories: { hasSome: searchTerms } },
+          { tags: { hasSome: expandedTerms } },
+          { categories: { hasSome: expandedTerms } },
+          { subcategories: { hasSome: expandedTerms } },
           { city: { contains: q, mode: "insensitive" } },
         ];
       }
@@ -165,6 +232,7 @@ export async function GET(request: NextRequest) {
 
     // Query providers with error handling for new fields
     let providers;
+    let categories: any[] = []; // Store for relevance boost calculation
     try {
       providers = await prisma.provider.findMany({
         where: filters,
@@ -175,6 +243,11 @@ export async function GET(request: NextRequest) {
             : sort === "price"
             ? { priceFrom: "asc" }
             : { createdAt: "desc" },
+      });
+
+      // Fetch categories for relevance boosting
+      categories = await prisma.category.findMany({
+        select: { slug: true, subTags: true },
       });
     } catch (dbError: any) {
       console.error("Database error in search API:", dbError);
@@ -242,6 +315,32 @@ export async function GET(request: NextRequest) {
 
           if (!isMatch) return null;
 
+          // Calculate relevance boost based on category sub-tag intersection
+          let relevanceBoost = 1;
+          if (
+            categories.length > 0 &&
+            p.categories &&
+            p.categories.length > 0
+          ) {
+            for (const providerCat of p.categories) {
+              const categoryData = categories.find(
+                (c) => c.slug === providerCat
+              );
+              if (categoryData && p.tags && p.tags.length > 0) {
+                // Check if any provider tag matches category sub-tag
+                const matchingSubTags = p.tags.filter((tag: string) =>
+                  categoryData.subTags.some(
+                    (subTag: string) =>
+                      subTag.toLowerCase() === tag.toLowerCase()
+                  )
+                );
+                if (matchingSubTags.length > 0) {
+                  relevanceBoost += matchingSubTags.length * 0.5; // +0.5 per matching sub-tag
+                }
+              }
+            }
+          }
+
           return {
             ...p,
             distance: Math.round(distanceMiles * 10) / 10, // Round to 1 decimal
@@ -252,10 +351,22 @@ export async function GET(request: NextRequest) {
                 : modeAMatch
                 ? "modeA"
                 : "modeB",
+            relevanceBoost,
           };
         })
         .filter((p): p is NonNullable<typeof p> => p !== null)
-        .sort((a, b) => a.distance - b.distance);
+        .sort((a, b) => {
+          // Sort by relevance boost if sort=relevance
+          if (sort === "relevance") {
+            if (b.relevanceBoost !== a.relevanceBoost) {
+              return b.relevanceBoost - a.relevanceBoost;
+            }
+            // If relevance is equal, sort by distance
+            return a.distance - b.distance;
+          }
+          // Default: sort by distance
+          return a.distance - b.distance;
+        });
     }
 
     // Log search for analytics (only if 8+ results for liquidity tracking)
