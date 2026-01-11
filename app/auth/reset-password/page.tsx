@@ -8,6 +8,7 @@ import {
   ArrowLeft,
   CheckCircle,
   XCircle,
+  Home,
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -77,6 +78,17 @@ function ResetPasswordContent() {
 
   return (
     <main className="relative min-h-screen overflow-hidden bg-background text-foreground">
+      {/* Home navigation link */}
+      <div className="absolute top-6 left-6 z-20">
+        <Link
+          href="/"
+          className="inline-flex items-center gap-2 rounded-xl border border-border bg-card/80 px-4 py-2 text-sm font-medium text-muted-foreground backdrop-blur-sm transition-all hover:bg-card hover:text-foreground hover:border-accent/50"
+        >
+          <Home className="h-4 w-4" />
+          Back to Home
+        </Link>
+      </div>
+
       {/* Background effects */}
       <div className="pointer-events-none absolute inset-0">
         <div className="absolute -top-24 left-16 h-72 w-72 rounded-full bg-accent/20 blur-[140px]" />

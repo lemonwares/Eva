@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, Suspense } from "react";
-import { Loader2, CheckCircle, XCircle, Mail, ArrowLeft } from "lucide-react";
+import { Loader2, CheckCircle, XCircle, Mail, ArrowLeft, Home } from "lucide-react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { verifyEmail, resendVerification } from "@/lib/auth-client";
@@ -93,6 +93,16 @@ function VerifyEmailContent() {
   if (loading) {
     return (
       <main className="relative min-h-screen overflow-hidden bg-background text-foreground">
+        {/* Home navigation link */}
+        <div className="absolute top-6 left-6 z-20">
+          <Link
+            href="/"
+            className="inline-flex items-center gap-2 rounded-xl border border-border bg-card/80 px-4 py-2 text-sm font-medium text-muted-foreground backdrop-blur-sm transition-all hover:bg-card hover:text-foreground hover:border-accent/50"
+          >
+            <Home className="h-4 w-4" />
+            Back to Home
+          </Link>
+        </div>
         <div className="relative z-10 flex min-h-screen items-center justify-center px-4 py-16">
           <div className="text-center">
             <Loader2 className="mx-auto h-12 w-12 animate-spin text-accent mb-4" />
@@ -110,6 +120,17 @@ function VerifyEmailContent() {
 
   return (
     <main className="relative min-h-screen overflow-hidden bg-background text-foreground">
+      {/* Home navigation link */}
+      <div className="absolute top-6 left-6 z-20">
+        <Link
+          href="/"
+          className="inline-flex items-center gap-2 rounded-xl border border-border bg-card/80 px-4 py-2 text-sm font-medium text-muted-foreground backdrop-blur-sm transition-all hover:bg-card hover:text-foreground hover:border-accent/50"
+        >
+          <Home className="h-4 w-4" />
+          Back to Home
+        </Link>
+      </div>
+
       {/* Background effects */}
       <div className="pointer-events-none absolute inset-0">
         <div className="absolute -top-24 left-16 h-72 w-72 rounded-full bg-accent/20 blur-[140px]" />

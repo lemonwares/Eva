@@ -211,17 +211,17 @@ export default function Footer() {
                 <Twitter size={20} />
               </a>
               <a
-                href="mailto:support@evalocal.com"
+                href="mailto:hello@evalocal.com"
                 className="text-gray-400 hover:text-white transition-colors"
               >
                 <Mail size={20} />
               </a>
             </div>
             <a
-              href="mailto:support@evalocal.com"
+              href="mailto:hello@evalocal.com"
               className="text-gray-400 hover:text-white transition-colors text-sm"
             >
-              support@evalocal.com
+              hello@evalocal.com
             </a>
           </div>
         </div>

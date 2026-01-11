@@ -2,7 +2,7 @@
 
 import LoginForm from "@/components/auth/login-form";
 import SignUpForm from "@/components/auth/signup-form";
-import { Sparkles } from "lucide-react";
+import { Sparkles, Home } from "lucide-react";
 import { useState, Suspense } from "react";
 import Link from "next/link";
 
@@ -21,6 +21,17 @@ export default function AuthPage() {
         <div className="absolute -top-24 left-16 h-72 w-72 rounded-full bg-accent/20 blur-[140px]" />
         <div className="absolute bottom-0 right-0 h-80 w-80 rounded-full bg-primary/15 blur-[140px]" />
         <div className="absolute inset-x-0 bottom-0 h-1/2 bg-linear-to-t from-secondary/80 to-transparent" />
+      </div>
+
+      {/* Home navigation link */}
+      <div className="absolute top-6 left-6 z-20">
+        <Link
+          href="/"
+          className="inline-flex items-center gap-2 rounded-xl border border-border bg-card/80 px-4 py-2 text-sm font-medium text-muted-foreground backdrop-blur-sm transition-all hover:bg-card hover:text-foreground hover:border-accent/50"
+        >
+          <Home className="h-4 w-4" />
+          Back to Home
+        </Link>
       </div>
 
       <div className="relative z-10 flex min-h-screen items-center justify-center px-4 py-16">

@@ -46,86 +46,94 @@ export async function POST(request: NextRequest) {
       process.env.AUTH_URL
     }/auth/reset-password?token=${token}&email=${encodeURIComponent(email)}`;
 
-    // Inline the HTML template directly
+    // Inline the HTML template directly with modern design
     const htmlContent = `<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <title>Reset Your Password</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Red+Hat+Display:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
-    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; line-height: 1.6; color: #333; background-color: #f4f4f4; }
-    .email-container { max-width: 600px; margin: 0 auto; background: white; border-radius: 10px; overflow: hidden; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
-    .header { background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); color: white; padding: 40px 20px; text-align: center; }
-    .logo { font-size: 32px; font-weight: bold; margin-bottom: 10px; }
-    .header-title { font-size: 24px; font-weight: 600; margin-bottom: 5px; }
-    .body { padding: 40px; }
-    .greeting { margin-bottom: 20px; color: #1f2937; font-size: 16px; }
-    .content-text { color: #4b5563; margin-bottom: 20px; font-size: 14px; line-height: 1.8; }
-    .button-container { text-align: center; margin: 30px 0; }
-    .button { display: inline-block; padding: 14px 40px; background-color: #ef4444; color: white; text-decoration: none; border-radius: 6px; font-weight: 600; font-size: 16px; transition: background-color 0.3s ease; }
-    .button:hover { background-color: #dc2626; }
-    .warning-box { background-color: #fef3c7; border-left: 4px solid #f59e0b; padding: 15px; margin: 20px 0; border-radius: 4px; font-size: 14px; color: #92400e; }
-    .security-box { background-color: #dbeafe; border-left: 4px solid #3b82f6; padding: 15px; margin: 20px 0; border-radius: 4px; font-size: 14px; color: #1e40af; }
-    .link-section { margin: 25px 0; padding: 15px; background-color: #f9fafb; border-radius: 4px; }
-    .link-section p { color: #6b7280; font-size: 13px; margin-bottom: 8px; }
-    .link-text { color: #ef4444; word-break: break-all; font-size: 12px; font-family: monospace; }
-    .recommendations { background-color: #f0fdf4; border-left: 4px solid #22c55e; padding: 15px; margin: 20px 0; border-radius: 4px; }
-    .recommendations h4 { color: #166534; font-size: 14px; margin-bottom: 10px; }
-    .recommendations ul { list-style-position: inside; color: #166534; font-size: 13px; }
-    .recommendations li { margin-bottom: 5px; }
-    .footer { background-color: #f9fafb; padding: 30px 40px; text-align: center; border-top: 1px solid #e5e7eb; }
-    .footer-text { color: #6b7280; font-size: 13px; margin-bottom: 8px; }
-    .footer-brand { font-weight: 600; color: #1f2937; font-size: 14px; }
-    .divider { height: 1px; background-color: #e5e7eb; margin: 20px 0; }
+    body { font-family: 'Red Hat Display', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #fafafa; color: #0f172a; margin: 0; padding: 0; line-height: 1.6; -webkit-font-smoothing: antialiased; }
+    .email-wrapper { background: #fafafa; padding: 40px 20px; }
+    .container { max-width: 600px; margin: 0 auto; background: #ffffff; border-radius: 20px; box-shadow: 0 4px 24px rgba(124, 58, 237, 0.08); overflow: hidden; }
+    .header { background: linear-gradient(135deg, #7c3aed 0%, #a855f7 100%); padding: 48px 32px; text-align: center; }
+    .header-icon { font-size: 56px; margin-bottom: 16px; }
+    .logo { font-size: 28px; font-weight: 900; letter-spacing: 4px; color: #ffffff; margin-bottom: 16px; }
+    .header-title { font-size: 26px; font-weight: 700; color: #ffffff; margin-bottom: 0; line-height: 1.3; }
+    .body { padding: 40px 32px; }
+    .greeting { font-size: 18px; color: #0f172a; margin-bottom: 20px; font-weight: 600; }
+    .content-text { color: #475569; margin-bottom: 24px; font-size: 15px; line-height: 1.8; }
+    .button-container { text-align: center; margin: 36px 0; }
+    .button { display: inline-block; padding: 16px 48px; background: linear-gradient(135deg, #7c3aed 0%, #a855f7 100%); color: #ffffff; text-decoration: none; border-radius: 12px; font-weight: 700; font-size: 16px; box-shadow: 0 4px 16px rgba(124, 58, 237, 0.35); }
+    .warning-box { background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%); border-left: 4px solid #f59e0b; padding: 18px 24px; margin: 28px 0; border-radius: 12px; font-size: 14px; color: #92400e; line-height: 1.6; }
+    .security-box { background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%); border-left: 4px solid #3b82f6; padding: 18px 24px; margin: 28px 0; border-radius: 12px; font-size: 14px; color: #1e40af; line-height: 1.7; }
+    .link-section { margin: 28px 0; padding: 20px 24px; background: #f8fafc; border-radius: 12px; border: 1px solid #e2e8f0; }
+    .link-section-label { color: #64748b; font-size: 13px; font-weight: 600; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 0.5px; }
+    .link-text { color: #7c3aed; word-break: break-all; font-size: 13px; font-family: 'SF Mono', 'Monaco', monospace; background: #ffffff; padding: 12px 16px; border-radius: 8px; border: 1px solid #e2e8f0; display: block; }
+    .divider { height: 1px; background: linear-gradient(90deg, transparent, #e2e8f0, transparent); margin: 28px 0; }
+    .recommendations { background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%); border-left: 4px solid #10b981; padding: 20px 24px; margin: 28px 0; border-radius: 12px; }
+    .recommendations-title { color: #065f46; font-weight: 700; font-size: 15px; margin-bottom: 14px; }
+    .recommendations ul { list-style: none; padding: 0; margin: 0; color: #047857; font-size: 14px; }
+    .recommendations li { margin-bottom: 10px; padding-left: 24px; position: relative; line-height: 1.5; }
+    .recommendations li::before { content: "✓"; position: absolute; left: 0; color: #10b981; font-weight: 700; }
+    .footer { background: #f8fafc; padding: 32px; text-align: center; border-top: 1px solid #e2e8f0; }
+    .footer-logo { font-weight: 800; color: #7c3aed; font-size: 18px; letter-spacing: 2px; margin-bottom: 8px; }
+    .footer-tagline { color: #64748b; font-size: 13px; margin-bottom: 12px; }
+    .footer-contact { color: #94a3b8; font-size: 13px; }
+    .footer-contact a { color: #7c3aed; text-decoration: none; }
   </style>
 </head>
 <body>
-  <div class="email-container">
-    <!-- Header -->
-    <div class="header">
-      <div class="logo">🔐 Eva</div>
-      <div class="header-title">Reset Your Password</div>
-    </div>
-    <!-- Body -->
-    <div class="body">
-      <div class="greeting">Hi ${user?.name || "User"},</div>
-      <div class="content-text">
-        We received a request to reset your password for your Eva account. Click the button below to create a new password:
+  <div class="email-wrapper">
+    <div class="container">
+      <div class="header">
+        <div class="header-icon">🔐</div>
+        <div class="logo">EVA</div>
+        <div class="header-title">Reset Your Password</div>
       </div>
-      <div class="button-container">
-        <a href="${resetUrl}" class="button">Reset Password</a>
+      <div class="body">
+        <div class="greeting">Hi ${user?.name || "there"},</div>
+        <div class="content-text">
+          We received a request to reset your password for your EVA account. Click the button below to create a new password:
+        </div>
+        <div class="button-container">
+          <a href="${resetUrl}" class="button">Reset Password</a>
+        </div>
+        <div class="warning-box">
+          ⏰ <strong>Important:</strong> This password reset link will expire in <strong>30 minutes</strong> for security reasons.
+        </div>
+        <div class="content-text" style="margin-bottom: 12px;">
+          If the button doesn't work, copy and paste this link into your browser:
+        </div>
+        <div class="link-section">
+          <div class="link-section-label">Password Reset Link</div>
+          <div class="link-text">${resetUrl}</div>
+        </div>
+        <div class="divider"></div>
+        <div class="security-box">
+          🛡️ <strong>Security Notice:</strong> If you didn't request a password reset, please ignore this email. Your password will remain unchanged and your account is secure. If you believe your account is compromised, contact us at <a href="mailto:hello@evalocal.com" style="color: #1e40af; font-weight: 600;">hello@evalocal.com</a>
+        </div>
+        <div class="recommendations">
+          <div class="recommendations-title">🔒 Security Recommendations</div>
+          <ul>
+            <li>Use a strong, unique password with numbers and symbols</li>
+            <li>Don't share your password with anyone</li>
+            <li>Never click links from suspicious emails</li>
+            <li>Enable two-factor authentication when available</li>
+          </ul>
+        </div>
       </div>
-      <div class="warning-box">
-        ⏰ <strong>Important:</strong> This password reset link will expire in 1 hour for security reasons.
+      <div class="footer">
+        <div class="footer-logo">EVA</div>
+        <div class="footer-tagline">Connecting you with the best event service providers</div>
+        <div class="footer-contact"><a href="mailto:hello@evalocal.com">hello@evalocal.com</a></div>
       </div>
-      <div class="content-text">
-        If the button doesn't work, copy and paste this link into your browser:
-      </div>
-      <div class="link-section">
-        <p>Password Reset Link:</p>
-        <div class="link-text">${resetUrl}</div>
-      </div>
-      <div class="divider"></div>
-      <div class="security-box">
-        🛡️ <strong>Security Notice:</strong> If you didn't request a password reset, please ignore this email immediately. Your password will remain unchanged and your account is secure. If you believe your account is compromised, contact us at hello@evalocal.com
-      </div>
-      <div class="recommendations">
-        <h4>🔒 Security Recommendations:</h4>
-        <ul>
-          <li>Use a strong, unique password with numbers and symbols</li>
-          <li>Don't share your password with anyone</li>
-          <li>Never click links from suspicious emails</li>
-          <li>Enable two-factor authentication when available</li>
-        </ul>
-      </div>
-    </div>
-    <!-- Footer -->
-    <div class="footer">
-      <div class="footer-brand">Eva Marketplace</div>
-      <div class="footer-text">Connecting you with the best event service providers</div>
-      <div class="footer-text">📧 hello@evalocal.com</div>
     </div>
   </div>
 </body>
