@@ -12,10 +12,21 @@ const createCategorySchema = z.object({
     .regex(/^[a-z0-9-]+$/),
   description: z.string().max(500).optional(),
   icon: z.string().max(50).optional(),
+  coverImage: z.string().url().optional(),
   displayOrder: z.number().int().min(0).optional(),
   isFeatured: z.boolean().optional().default(false),
   metaTitle: z.string().max(60).optional(),
-  metaDescription: z.string().max(160).optional(),
+  metaDescription: z.string().optional(),
+  seoIntro: z.string().optional(),
+  faqs: z
+    .array(
+      z.object({
+        question: z.string(),
+        answer: z.string(),
+      })
+    )
+    .optional()
+    .default([]),
   aliases: z.array(z.string().min(1).max(50)).optional().default([]),
   subTags: z.array(z.string().min(1).max(50)).optional().default([]),
 });

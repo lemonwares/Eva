@@ -26,10 +26,13 @@ export interface Category {
   slug: string;
   description?: string;
   icon?: string;
+  coverImage?: string;
   displayOrder?: number;
   isFeatured: boolean;
   metaTitle?: string;
   metaDescription?: string;
+  seoIntro?: string;
+  faqs?: Array<{ question: string; answer: string }>;
   aliases?: string[];
   subTags?: string[];
   subcategories?: Subcategory[];
@@ -178,9 +181,8 @@ export default function CategoriesPage() {
           body: JSON.stringify(data),
         });
 
-        const result = await response.json();
-
         if (response.ok) {
+          const result = await response.json();
           setToast({
             message: "Category updated successfully",
             type: "success",
@@ -189,8 +191,16 @@ export default function CategoriesPage() {
           setSelectedCategory(null);
           fetchCategories();
         } else {
+          let errorMessage = "Failed to update category";
+          try {
+            const result = await response.json();
+            errorMessage = result.message || errorMessage;
+          } catch (e) {
+            // If JSON parsing fails, use the status text
+            errorMessage = `${response.status}: ${response.statusText}`;
+          }
           setToast({
-            message: result.message || "Failed to update category",
+            message: errorMessage,
             type: "error",
           });
         }
@@ -250,6 +260,9 @@ export default function CategoriesPage() {
       if (!response.ok) {
         throw new Error("Failed to update");
       }
+      
+      // Parse response to ensure it was successful
+      await response.json();
     } catch (error) {
       console.error("Error toggling featured:", error);
       // Revert optimistic update
