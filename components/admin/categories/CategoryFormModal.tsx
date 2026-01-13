@@ -12,10 +12,13 @@ interface Category {
   slug: string;
   description?: string;
   icon?: string;
+  coverImage?: string;
   displayOrder?: number;
   isFeatured: boolean;
   metaTitle?: string;
   metaDescription?: string;
+  seoIntro?: string;
+  faqs?: Array<{ question: string; answer: string }>;
   aliases?: string[];
   subTags?: string[];
 }

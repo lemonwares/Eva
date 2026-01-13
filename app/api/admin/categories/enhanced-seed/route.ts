@@ -669,8 +669,12 @@ export async function POST(request: NextRequest) {
     });
   } catch (error) {
     console.error("Error seeding enhanced categories:", error);
+    let errorMessage = "Unknown error";
+    if (error instanceof Error) {
+      errorMessage = error.message;
+    }
     return NextResponse.json(
-      { message: "Error seeding categories", error: error.message },
+      { message: "Error seeding categories", error: errorMessage },
       { status: 500 }
     );
   }
@@ -685,8 +689,12 @@ export async function DELETE(request: NextRequest) {
     });
   } catch (error) {
     console.error("Error deleting categories:", error);
+    let errorMessage = "Unknown error";
+    if (error instanceof Error) {
+      errorMessage = error.message;
+    }
     return NextResponse.json(
-      { message: "Error deleting categories", error: error.message },
+      { message: "Error deleting categories", error: errorMessage },
       { status: 500 }
     );
   }
