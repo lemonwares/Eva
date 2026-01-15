@@ -28,64 +28,60 @@ export default function FavoriteButton({
 
   const [isFavorited, setIsFavorited] = useState(initialFavorited);
   const [isLoading, setIsLoading] = useState(false);
-  const [isChecking, setIsChecking] = useState(true);
-  const hasCheckedRef = useRef(false);
+  const [isChecking, setIsChecking] = useState(false);
+  
+  // Track the last providerId we successfully checked to avoid duplicate calls
+  const lastCheckedIdRef = useRef<string | null>(null);
 
-  // Check if already favorited on mount
+  // Sync with initialFavorited prop
   useEffect(() => {
-    const checkFavoriteStatus = async () => {
-      // Avoid duplicate checks and wait for auth to resolve
-      if (hasCheckedRef.current) return;
+    setIsFavorited(initialFavorited);
+  }, [initialFavorited]);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    async function checkStatus() {
+      // Don't check while auth is loading
       if (status === "loading") return;
 
-      // Not logged in: nothing to fetch, just enable the button
+      // Only check if authenticated
       if (status !== "authenticated") {
-        setIsChecking(false);
-        hasCheckedRef.current = true;
+        if (isMounted) setIsChecking(false);
         return;
       }
 
-      const controller = new AbortController();
-      const timeoutId = window.setTimeout(() => controller.abort(), 8000);
+      // Skip if we already checked this specific provider or it's provided as true
+      if (lastCheckedIdRef.current === providerId) {
+        if (isMounted) setIsChecking(false);
+        return;
+      }
+
+      if (isMounted) setIsChecking(true);
 
       try {
-        const response = await fetch(`/api/favorites`, {
-          signal: controller.signal,
-        });
-
+        // Targeted API for single provider check
+        const response = await fetch(`/api/favorites/${providerId}`);
         if (response.ok) {
           const data = await response.json();
-          const favorites = data.favorites || data;
-          if (Array.isArray(favorites)) {
-            const found = favorites.some(
-              (fav: { provider: { id: string } }) =>
-                fav.provider?.id === providerId
-            );
-            setIsFavorited(found);
-          } else if (data.isFavorited !== undefined) {
-            setIsFavorited(data.isFavorited);
+          if (isMounted) {
+            setIsFavorited(!!data.isFavorited);
+            lastCheckedIdRef.current = providerId;
           }
         }
       } catch (error) {
-        // AbortError is expected on slow networks; just fall back to enabled state
-        if (!(error instanceof DOMException && error.name === "AbortError")) {
-          console.error("Error checking favorite status:", error);
-        }
+        console.error("Error checking favorite status:", error);
       } finally {
-        window.clearTimeout(timeoutId);
-        setIsChecking(false);
-        hasCheckedRef.current = true;
+        if (isMounted) setIsChecking(false);
       }
-    };
-
-    if (!initialFavorited) {
-      checkFavoriteStatus();
-    } else if (!hasCheckedRef.current && status !== "loading") {
-      // When we already know it's favorited, skip the fetch and unblock UI
-      setIsChecking(false);
-      hasCheckedRef.current = true;
     }
-  }, [providerId, status, initialFavorited]);
+
+    checkStatus();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [providerId, status]);
 
   const handleToggle = async (e: React.MouseEvent) => {
     e.preventDefault();
@@ -93,62 +89,51 @@ export default function FavoriteButton({
 
     // Redirect to login if not authenticated
     if (status !== "authenticated") {
-      router.push(
-        `/auth/signin?callbackUrl=${encodeURIComponent(
-          window.location.pathname
-        )}`
-      );
+      router.push(`/auth/signin?callbackUrl=${encodeURIComponent(window.location.pathname)}`);
       return;
     }
 
-    if (isLoading) return;
+    if (isLoading || isChecking) return;
 
     setIsLoading(true);
+    const wasFavorited = isFavorited;
+    
+    // Optimistic UI update
+    setIsFavorited(!wasFavorited);
 
     try {
-      if (isFavorited) {
-        const response = await fetch(`/api/favorites/${providerId}`, {
-          method: "DELETE",
-        });
-
-        if (response.ok) {
-          setIsFavorited(false);
-          onToggle?.(false);
-        } else {
-          console.error("Failed to remove favorite:", response.statusText);
-        }
-      } else {
-        const response = await fetch("/api/favorites", {
-          method: "POST",
+      const response = await fetch(
+        wasFavorited ? `/api/favorites/${providerId}` : "/api/favorites",
+        {
+          method: wasFavorited ? "DELETE" : "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ providerId }),
-        });
-
-        if (response.ok) {
-          setIsFavorited(true);
-          onToggle?.(true);
-        } else {
-          console.error("Failed to add favorite:", response.statusText);
+          body: wasFavorited ? undefined : JSON.stringify({ providerId }),
         }
+      );
+
+      if (!response.ok) {
+        // Revert on error
+        setIsFavorited(wasFavorited);
+        console.error("Failed to update favorite status");
+      } else {
+        onToggle?.(!wasFavorited);
       }
     } catch (error) {
+      setIsFavorited(wasFavorited);
       console.error("Error toggling favorite:", error);
     } finally {
-      // Ensure loading state is always reset
       setIsLoading(false);
     }
   };
 
   const colors = {
     heart: isFavorited
-      ? "text-red-500"
+      ? "text-red-500 fill-red-500"
       : "text-slate-400 group-hover:text-red-400",
     bg: isFavorited
       ? "bg-red-50 dark:bg-red-500/10 border-red-200 dark:border-red-500/30"
-      : "bg-white dark:bg-gray-800 border-slate-200 dark:border-gray-700 hover:border-red-200 dark:hover:border-red-500/30",
-    text: isFavorited
-      ? "text-red-600 dark:text-red-400"
-      : "text-slate-600 dark:text-slate-400",
+      : "bg-white dark:bg-gray-800 border-slate-200 dark:border-gray-700 hover:border-red-200",
+    text: isFavorited ? "text-red-600 dark:text-red-400" : "text-slate-600 dark:text-slate-400",
   };
 
   const variants = {
@@ -160,24 +145,24 @@ export default function FavoriteButton({
   return (
     <motion.button
       whileHover={{ scale: 1.05 }}
-      whileTap={{ scale: 0.9 }}
+      whileTap={{ scale: 0.95 }}
       onClick={handleToggle}
-      disabled={isChecking}
+      disabled={isChecking || isLoading}
       className={`group relative flex items-center justify-center transition-all duration-300 ${
-        iconOnly ? "rounded-full p-2.5" : "rounded-xl px-4 py-2"
-      } ${variants[variant]} ${className} disabled:opacity-50`}
+        iconOnly ? "h-10 w-10 min-w-10 rounded-full" : "rounded-xl px-4 py-2"
+      } ${variants[variant]} ${className} disabled:opacity-70`}
       aria-label={isFavorited ? "Remove from favorites" : "Add to favorites"}
     >
       <AnimatePresence mode="wait">
-        {isLoading || isChecking ? (
+        {isChecking || isLoading ? (
           <motion.div
             key="loading"
-            initial={{ opacity: 0, rotate: 0 }}
-            animate={{ opacity: 1, rotate: 360 }}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            transition={{ repeat: Infinity, duration: 1, ease: "linear" }}
+            className="flex items-center justify-center"
           >
-            <Loader2 size={iconOnly ? 20 : 18} />
+            <Loader2 className="h-5 w-5 animate-spin text-slate-400" />
           </motion.div>
         ) : (
           <motion.div
@@ -185,7 +170,6 @@ export default function FavoriteButton({
             className="flex items-center gap-2"
             initial={{ scale: 0.8, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
-            exit={{ scale: 0.8, opacity: 0 }}
           >
             <motion.div
               animate={
@@ -198,10 +182,10 @@ export default function FavoriteButton({
               }
             >
               <Heart
-                size={iconOnly ? 20 : 18}
-                className={`${colors.heart} transition-colors duration-300`}
-                fill={isFavorited ? "currentColor" : "none"}
+                size={iconOnly ? 22 : 18}
+                className={`${colors.heart} transition-all duration-300`}
                 strokeWidth={isFavorited ? 0 : 2}
+                fill={isFavorited ? "currentColor" : "none"}
               />
             </motion.div>
 
@@ -215,9 +199,8 @@ export default function FavoriteButton({
       </AnimatePresence>
 
       {/* Subtle feedback ring on active */}
-      {isFavorited && !isLoading && (
+      {isFavorited && !isLoading && !isChecking && (
         <motion.div
-          layoutId="favorite-ring"
           className="absolute inset-0 rounded-full border-2 border-red-400/50"
           initial={{ scale: 1, opacity: 0 }}
           animate={{ scale: 1.5, opacity: 0 }}
@@ -227,3 +210,4 @@ export default function FavoriteButton({
     </motion.button>
   );
 }
+
