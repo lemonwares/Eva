@@ -86,7 +86,7 @@ export default function ReviewsPage() {
     setEditForm({
       rating: review.rating,
       title: review.title || "",
-      content: review.content,
+      content: review.content || "",
     });
   };
 
@@ -563,7 +563,7 @@ export default function ReviewsPage() {
               </button>
               <button
                 onClick={saveReview}
-                disabled={!editForm.content.trim() || saving}
+                disabled={!editForm.content?.trim() || saving}
                 className="flex-1 py-3 px-4 rounded-lg bg-rose-500 text-white font-medium hover:bg-rose-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
                 {saving ? (
