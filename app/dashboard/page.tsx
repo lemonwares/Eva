@@ -441,13 +441,7 @@ export default function DashboardPage() {
           ) : (
             <div className="divide-y divide-inherit">
               {recentBookings.map((booking) => (
-                <Link
-                  key={booking.id}
-                  href={`/dashboard/bookings/${booking.id}`}
-                  className={`flex items-center gap-4 p-4 ${
-                    darkMode ? "hover:bg-gray-700/50" : "hover:bg-gray-50"
-                  }`}
-                >
+                <div key={booking.id} className={`flex items-center gap-4 p-4`}>
                   <div
                     className={`w-12 h-12 rounded-lg ${
                       darkMode ? "bg-gray-700" : "bg-gray-100"
@@ -495,7 +489,7 @@ export default function DashboardPage() {
                       {booking.status.replace("_", " ")}
                     </span>
                   </div>
-                </Link>
+                </div>
               ))}
             </div>
           )}

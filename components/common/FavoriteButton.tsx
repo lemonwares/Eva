@@ -73,11 +73,16 @@ export default function FavoriteButton({
 
     // Redirect to login if not authenticated
     if (status !== "authenticated") {
-      router.push(`/auth/signin?callbackUrl=${encodeURIComponent(window.location.pathname)}`);
+      router.push(
+        `/auth/signin?callbackUrl=${encodeURIComponent(
+          window.location.pathname
+        )}`
+      );
       return;
     }
 
     if (isLoading) return;
+
     setIsLoading(true);
 
     try {
@@ -89,6 +94,8 @@ export default function FavoriteButton({
         if (response.ok) {
           setIsFavorited(false);
           onToggle?.(false);
+        } else {
+          console.error("Failed to remove favorite:", response.statusText);
         }
       } else {
         const response = await fetch("/api/favorites", {
@@ -100,27 +107,34 @@ export default function FavoriteButton({
         if (response.ok) {
           setIsFavorited(true);
           onToggle?.(true);
+        } else {
+          console.error("Failed to add favorite:", response.statusText);
         }
       }
     } catch (error) {
       console.error("Error toggling favorite:", error);
     } finally {
+      // Ensure loading state is always reset
       setIsLoading(false);
     }
   };
 
   const colors = {
-    heart: isFavorited ? "text-red-500" : "text-slate-400 group-hover:text-red-400",
-    bg: isFavorited 
-      ? "bg-red-50 dark:bg-red-500/10 border-red-200 dark:border-red-500/30" 
+    heart: isFavorited
+      ? "text-red-500"
+      : "text-slate-400 group-hover:text-red-400",
+    bg: isFavorited
+      ? "bg-red-50 dark:bg-red-500/10 border-red-200 dark:border-red-500/30"
       : "bg-white dark:bg-gray-800 border-slate-200 dark:border-gray-700 hover:border-red-200 dark:hover:border-red-500/30",
-    text: isFavorited ? "text-red-600 dark:text-red-400" : "text-slate-600 dark:text-slate-400"
+    text: isFavorited
+      ? "text-red-600 dark:text-red-400"
+      : "text-slate-600 dark:text-slate-400",
   };
 
   const variants = {
     outline: `${colors.bg} border shadow-sm`,
     ghost: "hover:bg-slate-100 dark:hover:bg-gray-800",
-    default: "bg-accent text-white hover:bg-accent/90 shadow-md"
+    default: "bg-accent text-white hover:bg-accent/90 shadow-md",
   };
 
   return (
@@ -154,10 +168,14 @@ export default function FavoriteButton({
             exit={{ scale: 0.8, opacity: 0 }}
           >
             <motion.div
-              animate={isFavorited ? {
-                scale: [1, 1.4, 1],
-                transition: { duration: 0.45, ease: "easeOut" }
-              } : {}}
+              animate={
+                isFavorited
+                  ? {
+                      scale: [1, 1.4, 1],
+                      transition: { duration: 0.45, ease: "easeOut" },
+                    }
+                  : {}
+              }
             >
               <Heart
                 size={iconOnly ? 20 : 18}
@@ -166,7 +184,7 @@ export default function FavoriteButton({
                 strokeWidth={isFavorited ? 0 : 2}
               />
             </motion.div>
-            
+
             {!iconOnly && (
               <span className={`text-sm font-semibold ${colors.text}`}>
                 {isFavorited ? "Saved" : "Save"}
@@ -189,4 +207,3 @@ export default function FavoriteButton({
     </motion.button>
   );
 }
-

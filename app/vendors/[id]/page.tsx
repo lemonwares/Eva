@@ -24,6 +24,7 @@ import {
   Send,
   Clock,
   Currency,
+  BadgeEuro,
 } from "lucide-react";
 import Header from "@/components/common/Header";
 import { motion, AnimatePresence } from "framer-motion";
@@ -1204,7 +1205,7 @@ export default function VendorDetailPage() {
                                   <span className="flex items-center gap-1">
                                     <span className="inline-flex items-center gap-1 font-medium text-accent">
                                       {/* Lucide DollarSign icon for price */}
-                                      <Currency
+                                      <BadgeEuro
                                         size={16}
                                         className="inline-block align-middle"
                                       />
