@@ -52,6 +52,7 @@ export default function CategoryFormModal({
     slug: "",
     description: "",
     icon: "",
+    coverImage: "",
     displayOrder: 0,
     isFeatured: false,
     metaTitle: "",
@@ -68,6 +69,7 @@ export default function CategoryFormModal({
         slug: category.slug || "",
         description: category.description || "",
         icon: category.icon || "",
+        coverImage: category.coverImage || "",
         displayOrder: category.displayOrder || 0,
         isFeatured: category.isFeatured || false,
         metaTitle: category.metaTitle || "",
@@ -81,6 +83,7 @@ export default function CategoryFormModal({
         slug: "",
         description: "",
         icon: "",
+        coverImage: "",
         displayOrder: 0,
         isFeatured: false,
         metaTitle: "",
@@ -110,6 +113,7 @@ export default function CategoryFormModal({
       slug: formData.slug,
       description: formData.description,
       icon: formData.icon,
+      coverImage: formData.coverImage,
       displayOrder: formData.displayOrder,
       isFeatured: formData.isFeatured,
       metaTitle: formData.metaTitle,
@@ -191,6 +195,34 @@ export default function CategoryFormModal({
                 className={`${inputClass} min-h-[100px] resize-y`}
                 placeholder="Brief description of this category"
               />
+            </div>
+
+            <div>
+              <label className={labelClass}>Cover Image URL</label>
+              <input
+                type="url"
+                value={formData.coverImage}
+                onChange={(e) =>
+                  setFormData({ ...formData, coverImage: e.target.value })
+                }
+                className={inputClass}
+                placeholder="e.g., https://images.unsplash.com/photo-..."
+              />
+              <p className={`text-xs ${textMuted} mt-1`}>
+                URL of the cover image for this category
+              </p>
+              {formData.coverImage && (
+                <div className="mt-3 rounded-lg overflow-hidden h-48 bg-gray-200 dark:bg-gray-700">
+                  <img
+                    src={formData.coverImage}
+                    alt={formData.name}
+                    className="w-full h-full object-cover"
+                    onError={(e) => {
+                      (e.target as HTMLImageElement).style.display = "none";
+                    }}
+                  />
+                </div>
+              )}
             </div>
 
             <div className="grid grid-cols-2 gap-4">
