@@ -34,18 +34,25 @@ export default function FavoriteButton({
   // Check if already favorited on mount
   useEffect(() => {
     const checkFavoriteStatus = async () => {
-      if (status === "loading" || hasCheckedRef.current) {
-        return;
-      }
+      // Avoid duplicate checks and wait for auth to resolve
+      if (hasCheckedRef.current) return;
+      if (status === "loading") return;
 
+      // Not logged in: nothing to fetch, just enable the button
       if (status !== "authenticated") {
         setIsChecking(false);
         hasCheckedRef.current = true;
         return;
       }
 
+      const controller = new AbortController();
+      const timeoutId = window.setTimeout(() => controller.abort(), 8000);
+
       try {
-        const response = await fetch(`/api/favorites`);
+        const response = await fetch(`/api/favorites`, {
+          signal: controller.signal,
+        });
+
         if (response.ok) {
           const data = await response.json();
           const favorites = data.favorites || data;
@@ -60,16 +67,21 @@ export default function FavoriteButton({
           }
         }
       } catch (error) {
-        console.error("Error checking favorite status:", error);
+        // AbortError is expected on slow networks; just fall back to enabled state
+        if (!(error instanceof DOMException && error.name === "AbortError")) {
+          console.error("Error checking favorite status:", error);
+        }
       } finally {
+        window.clearTimeout(timeoutId);
         setIsChecking(false);
         hasCheckedRef.current = true;
       }
     };
 
-    if (!initialFavorited && !hasCheckedRef.current) {
+    if (!initialFavorited) {
       checkFavoriteStatus();
-    } else if (!hasCheckedRef.current) {
+    } else if (!hasCheckedRef.current && status !== "loading") {
+      // When we already know it's favorited, skip the fetch and unblock UI
       setIsChecking(false);
       hasCheckedRef.current = true;
     }
