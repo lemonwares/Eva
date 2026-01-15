@@ -109,15 +109,37 @@ export async function GET(request: NextRequest) {
 
     const filters: any = {};
 
-    // Only show approved reviews to non-admins
+    const mine = searchParams.get("mine") === "true";
+
+    // Only show approved reviews to non-admins by default
     const isAdmin = session?.user?.role === "ADMINISTRATOR";
 
-    if (isAdmin && approved === "false") {
-      filters.isApproved = false;
-    } else if (!isAdmin) {
-      filters.isApproved = true;
-    } else if (approved === "true") {
-      filters.isApproved = true;
+    if (!isAdmin) {
+      if (mine) {
+        // Strictly limit to own reviews if requesting own
+        if (!session?.user?.id) {
+          return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
+        }
+        filters.authorUserId = session.user.id;
+      } else if (providerId) {
+        // Viewing specific provider's reviews - only approved ones
+        filters.isApproved = true;
+      } else {
+        // Trying to list all reviews - for non-admins this is not allowed or limited to their own
+        if (!session?.user?.id) {
+          filters.isApproved = true; // Public view
+        } else {
+          // If logged in but not admin, default to their own if no providerId
+          filters.authorUserId = session.user.id;
+        }
+      }
+    } else {
+      // Admin filters
+      if (approved === "false") {
+        filters.isApproved = false;
+      } else if (approved === "true") {
+        filters.isApproved = true;
+      }
     }
 
     if (providerId) {

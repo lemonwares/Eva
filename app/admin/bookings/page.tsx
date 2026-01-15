@@ -1052,7 +1052,7 @@ export default function AdminBookingsPage() {
       {/* Toast Notification */}
       {toast.show && (
         <div
-          className={`fixed bottom-4 right-4 px-6 py-3 rounded-lg shadow-lg z-50 flex items-center gap-2 ${
+          className={`fixed top-4 right-4 px-6 py-3 rounded-lg shadow-lg z-50 flex items-center gap-2 ${
             toast.type === "success"
               ? "bg-green-500 text-white"
               : "bg-red-500 text-white"

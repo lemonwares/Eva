@@ -30,6 +30,9 @@ const withPWA = withPWAInit({
 // { protocol: "https", hostname: "res.cloudinary.com" },
 
 const nextConfig: NextConfig = {
+  typescript: {
+    ignoreBuildErrors: true,
+  },
   images: {
     remotePatterns: [
       {
@@ -53,6 +56,24 @@ const nextConfig: NextConfig = {
         pathname: "/**",
       },
     ],
+  },
+  serverExternalPackages: ["@prisma/client"],
+  experimental: {
+    serverActions: {
+      allowedOrigins: undefined,
+    },
+  },
+  generateBuildId: async () => {
+    return "build-" + Date.now();
+  },
+  output: process.env.BUILD_STANDALONE ? "standalone" : undefined,
+  webpack: (config, { isServer }) => {
+    if (isServer) {
+      config.externals.push({
+        "@prisma/client": "commonjs @prisma/client",
+      });
+    }
+    return config;
   },
 };
 

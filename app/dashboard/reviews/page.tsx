@@ -634,7 +634,7 @@ export default function ReviewsPage() {
 
       {/* Toast Notification */}
       {toast.show && (
-        <div className="fixed bottom-4 right-4 z-50 animate-in slide-in-from-bottom">
+        <div className="fixed top-24 right-4 z-50 animate-in slide-in-from-right">
           <div
             className={`px-6 py-4 rounded-lg shadow-lg flex items-center gap-3 ${
               toast.type === "success"

@@ -30,10 +30,10 @@ export const metadata: Metadata = {
   manifest: "/manifest.json",
   icons: {
     icon: [
-      { url: "/pwa-icon.svg", type: "image/svg+xml" },
-      { url: "/pwa-icon.svg", rel: "mask-icon", color: "#0f172a" },
+      { url: "/logo.png", type: "image/png" },
     ],
-    apple: [{ url: "/pwa-icon.svg" }],
+    shortcut: "/logo.png",
+    apple: "/logo.png",
   },
   appleWebApp: {
     capable: true,
