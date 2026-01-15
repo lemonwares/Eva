@@ -114,6 +114,7 @@ export function TabsTrigger({
 
   return (
     <button
+      type="button"
       role="tab"
       aria-selected={isActive}
       disabled={disabled}
