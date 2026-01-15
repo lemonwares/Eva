@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Session } from "next-auth";
+import { signOut } from "next-auth/react";
 
 interface DashboardSidebarProps {
   session: Session;
@@ -152,7 +153,7 @@ export default function DashboardSidebar({
           darkMode ? "border-gray-700" : "border-gray-200"
         }`}
       >
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 mb-3">
           <div
             className={`w-10 h-10 rounded-full ${
               darkMode ? "bg-gray-700" : "bg-gray-200"
@@ -181,6 +182,29 @@ export default function DashboardSidebar({
             </p>
           </div>
         </div>
+
+        {/* Logout Button */}
+        <button
+          onClick={() => signOut({ callbackUrl: "/", redirect: true })}
+          className={`flex items-center gap-3 px-3 py-2.5 rounded-lg w-full ${
+            darkMode ? "text-gray-400" : "text-gray-600"
+          } hover:bg-red-500/10 hover:text-red-400 transition-colors`}
+        >
+          <svg
+            className="w-5 h-5"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
+            />
+          </svg>
+          <span className="text-sm font-medium">Log Out</span>
+        </button>
       </div>
     </aside>
   );
