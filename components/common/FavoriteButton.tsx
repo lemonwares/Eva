@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Heart, Loader2 } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
@@ -29,12 +29,18 @@ export default function FavoriteButton({
   const [isFavorited, setIsFavorited] = useState(initialFavorited);
   const [isLoading, setIsLoading] = useState(false);
   const [isChecking, setIsChecking] = useState(true);
+  const hasCheckedRef = useRef(false);
 
   // Check if already favorited on mount
   useEffect(() => {
     const checkFavoriteStatus = async () => {
+      if (status === "loading" || hasCheckedRef.current) {
+        return;
+      }
+
       if (status !== "authenticated") {
         setIsChecking(false);
+        hasCheckedRef.current = true;
         return;
       }
 
@@ -57,13 +63,15 @@ export default function FavoriteButton({
         console.error("Error checking favorite status:", error);
       } finally {
         setIsChecking(false);
+        hasCheckedRef.current = true;
       }
     };
 
-    if (!initialFavorited) {
+    if (!initialFavorited && !hasCheckedRef.current) {
       checkFavoriteStatus();
-    } else {
+    } else if (!hasCheckedRef.current) {
       setIsChecking(false);
+      hasCheckedRef.current = true;
     }
   }, [providerId, status, initialFavorited]);
 
