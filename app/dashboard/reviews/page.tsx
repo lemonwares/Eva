@@ -46,6 +46,14 @@ export default function ReviewsPage() {
     content: "",
   });
   const [saving, setSaving] = useState(false);
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+  const [reviewToDelete, setReviewToDelete] = useState<Review | null>(null);
+  const [deleting, setDeleting] = useState(false);
+  const [toast, setToast] = useState<{
+    show: boolean;
+    message: string;
+    type: "success" | "error";
+  }>({ show: false, message: "", type: "success" });
 
   const fetchReviews = useCallback(async () => {
     try {
@@ -64,6 +72,15 @@ export default function ReviewsPage() {
     fetchReviews();
   }, [fetchReviews]);
 
+  useEffect(() => {
+    if (toast.show) {
+      const timer = setTimeout(() => {
+        setToast({ show: false, message: "", type: "success" });
+      }, 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [toast.show]);
+
   const openEditModal = (review: Review) => {
     setEditingReview(review);
     setEditForm({
@@ -75,6 +92,14 @@ export default function ReviewsPage() {
 
   const saveReview = async () => {
     if (!editingReview) return;
+    if (!editForm.content.trim()) {
+      setToast({
+        show: true,
+        message: "Please write a review before saving.",
+        type: "error",
+      });
+      return;
+    }
 
     try {
       setSaving(true);
@@ -87,27 +112,70 @@ export default function ReviewsPage() {
       if (response.ok) {
         fetchReviews();
         setEditingReview(null);
+        setToast({
+          show: true,
+          message: "Review updated successfully!",
+          type: "success",
+        });
+      } else {
+        const data = await response.json().catch(() => ({}));
+        setToast({
+          show: true,
+          message: data.message || "Failed to save review. Please try again.",
+          type: "error",
+        });
       }
     } catch (error) {
       console.error("Error saving review:", error);
+      setToast({
+        show: true,
+        message: "An error occurred while saving the review.",
+        type: "error",
+      });
     } finally {
       setSaving(false);
     }
   };
 
-  const deleteReview = async (reviewId: string) => {
-    if (!confirm("Are you sure you want to delete this review?")) return;
+  const openDeleteConfirm = (review: Review) => {
+    setReviewToDelete(review);
+    setDeleteConfirmOpen(true);
+  };
+
+  const deleteReview = async () => {
+    if (!reviewToDelete) return;
 
     try {
-      const response = await fetch(`/api/reviews/${reviewId}`, {
+      setDeleting(true);
+      const response = await fetch(`/api/reviews/${reviewToDelete.id}`, {
         method: "DELETE",
       });
 
       if (response.ok) {
-        setReviews((prev) => prev.filter((r) => r.id !== reviewId));
+        setReviews((prev) => prev.filter((r) => r.id !== reviewToDelete.id));
+        setToast({
+          show: true,
+          message: "Review deleted successfully!",
+          type: "success",
+        });
+        setDeleteConfirmOpen(false);
+        setReviewToDelete(null);
+      } else {
+        setToast({
+          show: true,
+          message: "Failed to delete review. Please try again.",
+          type: "error",
+        });
       }
     } catch (error) {
       console.error("Error deleting review:", error);
+      setToast({
+        show: true,
+        message: "An error occurred while deleting the review.",
+        type: "error",
+      });
+    } finally {
+      setDeleting(false);
     }
   };
 
@@ -179,8 +247,9 @@ export default function ReviewsPage() {
 
       {/* Content */}
       {loading ? (
-        <div className="flex items-center justify-center py-12">
+        <div className="flex flex-col items-center justify-center py-12">
           <div className="animate-spin w-8 h-8 border-3 border-rose-500 border-t-transparent rounded-full"></div>
+          <p className={`mt-4 text-sm ${textMuted}`}>Loading your reviews...</p>
         </div>
       ) : reviews.length === 0 ? (
         <div
@@ -287,7 +356,7 @@ export default function ReviewsPage() {
                       </svg>
                     </button>
                     <button
-                      onClick={() => deleteReview(review.id)}
+                      onClick={() => openDeleteConfirm(review)}
                       className={`p-2 rounded-lg hover:bg-red-50 text-red-500`}
                       title="Delete review"
                     >
@@ -485,14 +554,17 @@ export default function ReviewsPage() {
             <div className={`p-6 border-t ${cardBorder} flex gap-3`}>
               <button
                 onClick={() => setEditingReview(null)}
-                className={`flex-1 py-3 px-4 rounded-lg border ${cardBorder} ${textPrimary} font-medium hover:bg-gray-100`}
+                disabled={saving}
+                className={`flex-1 py-3 px-4 rounded-lg border ${cardBorder} ${textPrimary} font-medium ${
+                  darkMode ? "hover:bg-gray-700" : "hover:bg-gray-100"
+                } disabled:opacity-50 disabled:cursor-not-allowed`}
               >
                 Cancel
               </button>
               <button
                 onClick={saveReview}
                 disabled={!editForm.content.trim() || saving}
-                className="flex-1 py-3 px-4 rounded-lg bg-rose-500 text-white font-medium hover:bg-rose-600 disabled:opacity-50"
+                className="flex-1 py-3 px-4 rounded-lg bg-rose-500 text-white font-medium hover:bg-rose-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
                 {saving ? (
                   <span className="flex items-center justify-center">
@@ -504,6 +576,122 @@ export default function ReviewsPage() {
                 )}
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {deleteConfirmOpen && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className={`${cardBg} rounded-xl w-full max-w-md`}>
+            <div className={`p-6 border-b ${cardBorder}`}>
+              <h2 className={`text-xl font-bold ${textPrimary}`}>
+                Delete Review?
+              </h2>
+            </div>
+
+            <div className="p-6">
+              <p className={textSecondary}>
+                Are you sure you want to delete your review for{" "}
+                <span className="font-semibold">
+                  {reviewToDelete?.provider.businessName}
+                </span>
+                ? This action cannot be undone.
+              </p>
+            </div>
+
+            <div className={`p-6 border-t ${cardBorder} flex gap-3`}>
+              <button
+                onClick={() => {
+                  setDeleteConfirmOpen(false);
+                  setReviewToDelete(null);
+                }}
+                disabled={deleting}
+                className={`flex-1 py-3 px-4 rounded-lg border ${cardBorder} ${textPrimary} font-medium ${
+                  darkMode ? "hover:bg-gray-700" : "hover:bg-gray-100"
+                } disabled:opacity-50 disabled:cursor-not-allowed`}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={deleteReview}
+                disabled={deleting}
+                className="flex-1 py-3 px-4 rounded-lg bg-red-500 text-white font-medium hover:bg-red-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              >
+                {deleting ? (
+                  <span className="flex items-center justify-center">
+                    <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
+                    Deleting...
+                  </span>
+                ) : (
+                  "Delete Review"
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Toast Notification */}
+      {toast.show && (
+        <div className="fixed bottom-4 right-4 z-50 animate-in slide-in-from-bottom">
+          <div
+            className={`px-6 py-4 rounded-lg shadow-lg flex items-center gap-3 ${
+              toast.type === "success"
+                ? "bg-green-500 text-white"
+                : "bg-red-500 text-white"
+            }`}
+          >
+            {toast.type === "success" ? (
+              <svg
+                className="w-5 h-5"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M5 13l4 4L19 7"
+                />
+              </svg>
+            ) : (
+              <svg
+                className="w-5 h-5"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M6 18L18 6M6 6l12 12"
+                />
+              </svg>
+            )}
+            <p className="font-medium">{toast.message}</p>
+            <button
+              onClick={() =>
+                setToast({ show: false, message: "", type: "success" })
+              }
+              className="ml-4 hover:bg-white/20 rounded p-1"
+            >
+              <svg
+                className="w-4 h-4"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M6 18L18 6M6 6l12 12"
+                />
+              </svg>
+            </button>
           </div>
         </div>
       )}

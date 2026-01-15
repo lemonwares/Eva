@@ -146,7 +146,7 @@ export default function CategoryFormModal({
               SEO
             </TabsTrigger>
             <TabsTrigger value="taxonomy" className="flex-1">
-              Taxonomy
+              Tags & Aliases
             </TabsTrigger>
           </TabsList>
 
