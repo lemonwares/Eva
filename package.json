@@ -4,7 +4,8 @@
   "private": true,
   "scripts": {
     "dev": "next dev --webpack",
-    "build": "prisma generate && node scripts/build.js",
+    "build": "prisma generate && prisma migrate deploy && tsx prisma/seed.ts && node scripts/build.js",
+    "seed": "tsx prisma/seed.ts",
     "build:debug": "node scripts/build.js --debug",
     "build:original": "next build --webpack",
     "build:fallback": "next build --webpack || echo Build completed with warnings",
