@@ -1,4 +1,6 @@
 import { prisma } from "../lib/prisma";
+import { PlanTier, UserRole } from "@prisma/client";
+import bcrypt from "bcryptjs";
 
 const categories = [
   {
@@ -82,6 +84,15 @@ const categories = [
       "https://images.unsplash.com/photo-1487412947147-5cebf100ffc2?w=800&h=600&fit=crop",
     isFeatured: true,
   },
+  {
+    name: "Videographers",
+    slug: "videographers",
+    description: "Cinematic storytellers for your special day",
+    icon: "Video",
+    coverImage:
+      "https://images.unsplash.com/photo-1533174072545-7a4b6ad7a6c3?w=800&h=600&fit=crop",
+    isFeatured: true,
+  },
 ];
 
 const cities = [
@@ -96,8 +107,10 @@ const cities = [
     isFeatured: true,
     displayOrder: 1,
     metaTitle: "Event Vendors & Services in London | EVA Marketplace",
-    metaDescription: "Find top-rated event vendors in London. Compare venues, photographers, caterers, and more. Trusted professionals for your perfect event in London.",
-    seoIntro: "Discover the best event services in London. From stunning venues to expert planners, explore our curated list of London's top event professionals."
+    metaDescription:
+      "Find top-rated event vendors in London. Compare venues, photographers, caterers, and more. Trusted professionals for your perfect event in London.",
+    seoIntro:
+      "Discover the best event services in London. From stunning venues to expert planners, explore our curated list of London's top event professionals.",
   },
   {
     name: "Birmingham",
@@ -110,8 +123,10 @@ const cities = [
     isFeatured: true,
     displayOrder: 2,
     metaTitle: "Event Vendors & Services in Birmingham | EVA Marketplace",
-    metaDescription: "Find top-rated event vendors in Birmingham. Compare venues, photographers, caterers, and more. Trusted professionals for your perfect event in Birmingham.",
-    seoIntro: "Discover the best event services in Birmingham. From stunning venues to expert planners, explore our curated list of Birmingham's top event professionals."
+    metaDescription:
+      "Find top-rated event vendors in Birmingham. Compare venues, photographers, caterers, and more. Trusted professionals for your perfect event in Birmingham.",
+    seoIntro:
+      "Discover the best event services in Birmingham. From stunning venues to expert planners, explore our curated list of Birmingham's top event professionals.",
   },
   {
     name: "Manchester",
@@ -124,8 +139,10 @@ const cities = [
     isFeatured: true,
     displayOrder: 3,
     metaTitle: "Event Vendors & Services in Manchester | EVA Marketplace",
-    metaDescription: "Find top-rated event vendors in Manchester. Compare venues, photographers, caterers, and more. Trusted professionals for your perfect event in Manchester.",
-    seoIntro: "Discover the best event services in Manchester. From stunning venues to expert planners, explore our curated list of Manchester's top event professionals."
+    metaDescription:
+      "Find top-rated event vendors in Manchester. Compare venues, photographers, caterers, and more. Trusted professionals for your perfect event in Manchester.",
+    seoIntro:
+      "Discover the best event services in Manchester. From stunning venues to expert planners, explore our curated list of Manchester's top event professionals.",
   },
   {
     name: "Leeds",
@@ -138,8 +155,10 @@ const cities = [
     isFeatured: true,
     displayOrder: 4,
     metaTitle: "Event Vendors & Services in Leeds | EVA Marketplace",
-    metaDescription: "Find top-rated event vendors in Leeds. Compare venues, photographers, caterers, and more. Trusted professionals for your perfect event in Leeds.",
-    seoIntro: "Discover the best event services in Leeds. From stunning venues to expert planners, explore our curated list of Leeds' top event professionals."
+    metaDescription:
+      "Find top-rated event vendors in Leeds. Compare venues, photographers, caterers, and more. Trusted professionals for your perfect event in Leeds.",
+    seoIntro:
+      "Discover the best event services in Leeds. From stunning venues to expert planners, explore our curated list of Leeds' top event professionals.",
   },
   {
     name: "Bristol",
@@ -152,8 +171,10 @@ const cities = [
     isFeatured: true,
     displayOrder: 5,
     metaTitle: "Event Vendors & Services in Bristol | EVA Marketplace",
-    metaDescription: "Find top-rated event vendors in Bristol. Compare venues, photographers, caterers, and more. Trusted professionals for your perfect event in Bristol.",
-    seoIntro: "Discover the best event services in Bristol. From stunning venues to expert planners, explore our curated list of Bristol's top event professionals."
+    metaDescription:
+      "Find top-rated event vendors in Bristol. Compare venues, photographers, caterers, and more. Trusted professionals for your perfect event in Bristol.",
+    seoIntro:
+      "Discover the best event services in Bristol. From stunning venues to expert planners, explore our curated list of Bristol's top event professionals.",
   },
   {
     name: "Nottingham",
@@ -166,8 +187,10 @@ const cities = [
     isFeatured: true,
     displayOrder: 6,
     metaTitle: "Event Vendors & Services in Nottingham | EVA Marketplace",
-    metaDescription: "Find top-rated event vendors in Nottingham. Compare venues, photographers, caterers, and more. Trusted professionals for your perfect event in Nottingham.",
-    seoIntro: "Discover the best event services in Nottingham. From stunning venues to expert planners, explore our curated list of Nottingham's top event professionals."
+    metaDescription:
+      "Find top-rated event vendors in Nottingham. Compare venues, photographers, caterers, and more. Trusted professionals for your perfect event in Nottingham.",
+    seoIntro:
+      "Discover the best event services in Nottingham. From stunning venues to expert planners, explore our curated list of Nottingham's top event professionals.",
   },
   {
     name: "Sheffield",
@@ -180,8 +203,10 @@ const cities = [
     isFeatured: true,
     displayOrder: 7,
     metaTitle: "Event Vendors & Services in Sheffield | EVA Marketplace",
-    metaDescription: "Find top-rated event vendors in Sheffield. Compare venues, photographers, caterers, and more. Trusted professionals for your perfect event in Sheffield.",
-    seoIntro: "Discover the best event services in Sheffield. From stunning venues to expert planners, explore our curated list of Sheffield's top event professionals."
+    metaDescription:
+      "Find top-rated event vendors in Sheffield. Compare venues, photographers, caterers, and more. Trusted professionals for your perfect event in Sheffield.",
+    seoIntro:
+      "Discover the best event services in Sheffield. From stunning venues to expert planners, explore our curated list of Sheffield's top event professionals.",
   },
   {
     name: "Leicester",
@@ -194,8 +219,10 @@ const cities = [
     isFeatured: true,
     displayOrder: 8,
     metaTitle: "Event Vendors & Services in Leicester | EVA Marketplace",
-    metaDescription: "Find top-rated event vendors in Leicester. Compare venues, photographers, caterers, and more. Trusted professionals for your perfect event in Leicester.",
-    seoIntro: "Discover the best event services in Leicester. From stunning venues to expert planners, explore our curated list of Leicester's top event professionals."
+    metaDescription:
+      "Find top-rated event vendors in Leicester. Compare venues, photographers, caterers, and more. Trusted professionals for your perfect event in Leicester.",
+    seoIntro:
+      "Discover the best event services in Leicester. From stunning venues to expert planners, explore our curated list of Leicester's top event professionals.",
   },
   {
     name: "Coventry",
@@ -208,8 +235,10 @@ const cities = [
     isFeatured: true,
     displayOrder: 9,
     metaTitle: "Event Vendors & Services in Coventry | EVA Marketplace",
-    metaDescription: "Find top-rated event vendors in Coventry. Compare venues, photographers, caterers, and more. Trusted professionals for your perfect event in Coventry.",
-    seoIntro: "Discover the best event services in Coventry. From stunning venues to expert planners, explore our curated list of Coventry's top event professionals."
+    metaDescription:
+      "Find top-rated event vendors in Coventry. Compare venues, photographers, caterers, and more. Trusted professionals for your perfect event in Coventry.",
+    seoIntro:
+      "Discover the best event services in Coventry. From stunning venues to expert planners, explore our curated list of Coventry's top event professionals.",
   },
   {
     name: "Luton",
@@ -222,8 +251,10 @@ const cities = [
     isFeatured: true,
     displayOrder: 10,
     metaTitle: "Event Vendors & Services in Luton | EVA Marketplace",
-    metaDescription: "Find top-rated event vendors in Luton. Compare venues, photographers, caterers, and more. Trusted professionals for your perfect event in Luton.",
-    seoIntro: "Discover the best event services in Luton. From stunning venues to expert planners, explore our curated list of Luton's top event professionals."
+    metaDescription:
+      "Find top-rated event vendors in Luton. Compare venues, photographers, caterers, and more. Trusted professionals for your perfect event in Luton.",
+    seoIntro:
+      "Discover the best event services in Luton. From stunning venues to expert planners, explore our curated list of Luton's top event professionals.",
   },
   {
     name: "Milton Keynes",
@@ -236,8 +267,10 @@ const cities = [
     isFeatured: true,
     displayOrder: 11,
     metaTitle: "Event Vendors & Services in Milton Keynes | EVA Marketplace",
-    metaDescription: "Find top-rated event vendors in Milton Keynes. Compare venues, photographers, caterers, and more. Trusted professionals for your perfect event in Milton Keynes.",
-    seoIntro: "Discover the best event services in Milton Keynes. From stunning venues to expert planners, explore our curated list of Milton Keynes' top event professionals."
+    metaDescription:
+      "Find top-rated event vendors in Milton Keynes. Compare venues, photographers, caterers, and more. Trusted professionals for your perfect event in Milton Keynes.",
+    seoIntro:
+      "Discover the best event services in Milton Keynes. From stunning venues to expert planners, explore our curated list of Milton Keynes' top event professionals.",
   },
   {
     name: "Reading",
@@ -250,8 +283,10 @@ const cities = [
     isFeatured: true,
     displayOrder: 12,
     metaTitle: "Event Vendors & Services in Reading | EVA Marketplace",
-    metaDescription: "Find top-rated event vendors in Reading. Compare venues, photographers, caterers, and more. Trusted professionals for your perfect event in Reading.",
-    seoIntro: "Discover the best event services in Reading. From stunning venues to expert planners, explore our curated list of Reading's top event professionals."
+    metaDescription:
+      "Find top-rated event vendors in Reading. Compare venues, photographers, caterers, and more. Trusted professionals for your perfect event in Reading.",
+    seoIntro:
+      "Discover the best event services in Reading. From stunning venues to expert planners, explore our curated list of Reading's top event professionals.",
   },
   {
     name: "Brighton",
@@ -264,8 +299,10 @@ const cities = [
     isFeatured: true,
     displayOrder: 13,
     metaTitle: "Event Vendors & Services in Brighton | EVA Marketplace",
-    metaDescription: "Find top-rated event vendors in Brighton. Compare venues, photographers, caterers, and more. Trusted professionals for your perfect event in Brighton.",
-    seoIntro: "Discover the best event services in Brighton. From stunning venues to expert planners, explore our curated list of Brighton's top event professionals."
+    metaDescription:
+      "Find top-rated event vendors in Brighton. Compare venues, photographers, caterers, and more. Trusted professionals for your perfect event in Brighton.",
+    seoIntro:
+      "Discover the best event services in Brighton. From stunning venues to expert planners, explore our curated list of Brighton's top event professionals.",
   },
   {
     name: "Oxford",
@@ -273,13 +310,15 @@ const cities = [
     country: "UK",
     county: "Oxfordshire",
     region: "South East",
-    latitude: 51.7520,
+    latitude: 51.752,
     longitude: -1.2577,
     isFeatured: true,
     displayOrder: 14,
     metaTitle: "Event Vendors & Services in Oxford | EVA Marketplace",
-    metaDescription: "Find top-rated event vendors in Oxford. Compare venues, photographers, caterers, and more. Trusted professionals for your perfect event in Oxford.",
-    seoIntro: "Discover the best event services in Oxford. From stunning venues to expert planners, explore our curated list of Oxford's top event professionals."
+    metaDescription:
+      "Find top-rated event vendors in Oxford. Compare venues, photographers, caterers, and more. Trusted professionals for your perfect event in Oxford.",
+    seoIntro:
+      "Discover the best event services in Oxford. From stunning venues to expert planners, explore our curated list of Oxford's top event professionals.",
   },
   {
     name: "Cambridge",
@@ -292,8 +331,10 @@ const cities = [
     isFeatured: true,
     displayOrder: 15,
     metaTitle: "Event Vendors & Services in Cambridge | EVA Marketplace",
-    metaDescription: "Find top-rated event vendors in Cambridge. Compare venues, photographers, caterers, and more. Trusted professionals for your perfect event in Cambridge.",
-    seoIntro: "Discover the best event services in Cambridge. From stunning venues to expert planners, explore our curated list of Cambridge's top event professionals."
+    metaDescription:
+      "Find top-rated event vendors in Cambridge. Compare venues, photographers, caterers, and more. Trusted professionals for your perfect event in Cambridge.",
+    seoIntro:
+      "Discover the best event services in Cambridge. From stunning venues to expert planners, explore our curated list of Cambridge's top event professionals.",
   },
   {
     name: "Liverpool",
@@ -306,8 +347,10 @@ const cities = [
     isFeatured: true,
     displayOrder: 16,
     metaTitle: "Event Vendors & Services in Liverpool | EVA Marketplace",
-    metaDescription: "Find top-rated event vendors in Liverpool. Compare venues, photographers, caterers, and more. Trusted professionals for your perfect event in Liverpool.",
-    seoIntro: "Discover the best event services in Liverpool. From stunning venues to expert planners, explore our curated list of Liverpool's top event professionals."
+    metaDescription:
+      "Find top-rated event vendors in Liverpool. Compare venues, photographers, caterers, and more. Trusted professionals for your perfect event in Liverpool.",
+    seoIntro:
+      "Discover the best event services in Liverpool. From stunning venues to expert planners, explore our curated list of Liverpool's top event professionals.",
   },
   {
     name: "Newcastle upon Tyne",
@@ -320,8 +363,10 @@ const cities = [
     isFeatured: true,
     displayOrder: 17,
     metaTitle: "Event Vendors & Services in Newcastle | EVA Marketplace",
-    metaDescription: "Find top-rated event vendors in Newcastle upon Tyne. Compare venues, photographers, caterers, and more. Trusted professionals for your perfect event in Newcastle upon Tyne.",
-    seoIntro: "Discover the best event services in Newcastle upon Tyne. From stunning venues to expert planners, explore our curated list of Newcastle upon Tyne's top event professionals."
+    metaDescription:
+      "Find top-rated event vendors in Newcastle upon Tyne. Compare venues, photographers, caterers, and more. Trusted professionals for your perfect event in Newcastle upon Tyne.",
+    seoIntro:
+      "Discover the best event services in Newcastle upon Tyne. From stunning venues to expert planners, explore our curated list of Newcastle upon Tyne's top event professionals.",
   },
   {
     name: "Cardiff",
@@ -334,8 +379,10 @@ const cities = [
     isFeatured: true,
     displayOrder: 18,
     metaTitle: "Event Vendors & Services in Cardiff | EVA Marketplace",
-    metaDescription: "Find top-rated event vendors in Cardiff. Compare venues, photographers, caterers, and more. Trusted professionals for your perfect event in Cardiff.",
-    seoIntro: "Discover the best event services in Cardiff. From stunning venues to expert planners, explore our curated list of Cardiff's top event professionals."
+    metaDescription:
+      "Find top-rated event vendors in Cardiff. Compare venues, photographers, caterers, and more. Trusted professionals for your perfect event in Cardiff.",
+    seoIntro:
+      "Discover the best event services in Cardiff. From stunning venues to expert planners, explore our curated list of Cardiff's top event professionals.",
   },
   {
     name: "Edinburgh",
@@ -348,8 +395,10 @@ const cities = [
     isFeatured: true,
     displayOrder: 19,
     metaTitle: "Event Vendors & Services in Edinburgh | EVA Marketplace",
-    metaDescription: "Find top-rated event vendors in Edinburgh. Compare venues, photographers, caterers, and more. Trusted professionals for your perfect event in Edinburgh.",
-    seoIntro: "Discover the best event services in Edinburgh. From stunning venues to expert planners, explore our curated list of Edinburgh's top event professionals."
+    metaDescription:
+      "Find top-rated event vendors in Edinburgh. Compare venues, photographers, caterers, and more. Trusted professionals for your perfect event in Edinburgh.",
+    seoIntro:
+      "Discover the best event services in Edinburgh. From stunning venues to expert planners, explore our curated list of Edinburgh's top event professionals.",
   },
   {
     name: "Glasgow",
@@ -362,27 +411,273 @@ const cities = [
     isFeatured: true,
     displayOrder: 20,
     metaTitle: "Event Vendors & Services in Glasgow | EVA Marketplace",
-    metaDescription: "Find top-rated event vendors in Glasgow. Compare venues, photographers, caterers, and more. Trusted professionals for your perfect event in Glasgow.",
-    seoIntro: "Discover the best event services in Glasgow. From stunning venues to expert planners, explore our curated list of Glasgow's top event professionals."
+    metaDescription:
+      "Find top-rated event vendors in Glasgow. Compare venues, photographers, caterers, and more. Trusted professionals for your perfect event in Glasgow.",
+    seoIntro:
+      "Discover the best event services in Glasgow. From stunning venues to expert planners, explore our curated list of Glasgow's top event professionals.",
   },
 ];
 
+// ─── Vendor seed data ───────────────────────────────────────────
+const SEED_OWNER_EMAIL = "seed-vendor@evalocal.com";
+
+const vendorNames = [
+  "Golden Touch",
+  "Majestic Moments",
+  "Urban Chic",
+  "Evergreen Events",
+  "Royal Jubilee",
+  "Crystal Clear",
+  "Sapphire Skies",
+  "Velvet Rose",
+  "Diamond Decor",
+  "Elite Harmony",
+  "Simply Sweet",
+  "Grand Gala",
+  "Heritage Halls",
+  "The Secret Garden",
+  "Luxe Life",
+  "Pure Elegance",
+  "Vivid Visions",
+  "Starlight Studios",
+  "Midnight Magic",
+  "Golden Hour",
+  "Creative Concepts",
+  "Dream Designs",
+  "Urban Oasis",
+  "Silver Lining",
+  "The Grand Venue",
+  "The Party Pro",
+  "Elegant Events",
+  "Modern Muse",
+];
+
+const vendorPhotos = [
+  "https://images.unsplash.com/photo-1519741497674-611481863552?w=800&q=80",
+  "https://images.unsplash.com/photo-1519225421980-715cb0215aed?w=800&q=80",
+  "https://images.unsplash.com/photo-1511795409834-ef04bbd61622?w=800&q=80",
+];
+
+// Postcodes mapped to seed cities for realism
+const cityPostcodes: Record<string, string[]> = {
+  london: ["E1 6AN", "SW1A 1AA", "WC2N 5DU", "N1 9GU", "SE1 7PB"],
+  birmingham: ["B1 1BB", "B2 4QA", "B5 4BU"],
+  manchester: ["M1 1AD", "M2 3NW", "M4 1HQ"],
+  leeds: ["LS1 1UR", "LS2 7EW"],
+  bristol: ["BS1 3XD", "BS2 0JA"],
+};
+
+// ─── Seed function ──────────────────────────────────────────────
+
 export default async function seed() {
+  console.log("🌱 Running seed (idempotent — upsert, no duplicates)...\n");
+
+  // ── 1. Categories ─────────────────────────────────────────────
+  let catCreated = 0;
+  let catUpdated = 0;
+
   for (const cat of categories) {
+    const existing = await prisma.category.findUnique({
+      where: { slug: cat.slug },
+    });
     await prisma.category.upsert({
       where: { slug: cat.slug },
       update: cat,
       create: cat,
     });
+    if (existing) catUpdated++;
+    else catCreated++;
   }
-  console.log("Categories seeded!");
+  console.log(
+    `✅ Categories — ${catCreated} created, ${catUpdated} already existed (updated)`,
+  );
+
+  // ── 2. Cities ─────────────────────────────────────────────────
+  let cityCreated = 0;
+  let cityUpdated = 0;
 
   for (const city of cities) {
+    const existing = await prisma.city.findUnique({
+      where: { slug: city.slug },
+    });
     await prisma.city.upsert({
       where: { slug: city.slug },
       update: city,
-      create: city, // Removed duplicate 'city' and fixed property access
+      create: city,
     });
+    if (existing) cityUpdated++;
+    else cityCreated++;
   }
-  console.log("Cities seeded!");
+  console.log(
+    `✅ Cities    — ${cityCreated} created, ${cityUpdated} already existed (updated)`,
+  );
+
+  // ── 3. Seed owner + test vendors ─────────────────────────────
+  const hashedPassword = await bcrypt.hash("SeedVendor2026!", 10);
+
+  const seedOwner = await prisma.user.upsert({
+    where: { email: SEED_OWNER_EMAIL },
+    update: {},
+    create: {
+      email: SEED_OWNER_EMAIL,
+      name: "Eva Seed Vendor",
+      password: hashedPassword,
+      role: UserRole.PROFESSIONAL,
+    },
+  });
+
+  // Check if vendors already exist for this seed owner
+  const existingVendorCount = await prisma.provider.count({
+    where: { ownerUserId: seedOwner.id },
+  });
+
+  if (existingVendorCount > 0) {
+    console.log(
+      `✅ Vendors   — skipped (${existingVendorCount} seed vendors already exist)`,
+    );
+  } else {
+    // Get all categories from DB (includes any admin-added ones)
+    const allCategories = await prisma.category.findMany();
+    // Use the first 5 seeded cities for vendor locations
+    const seedCities = await prisma.city.findMany({
+      where: {
+        slug: {
+          in: ["london", "birmingham", "manchester", "leeds", "bristol"],
+        },
+      },
+    });
+
+    let vendorCount = 0;
+
+    for (const cat of allCategories) {
+      // 8 vendors per category
+      for (let i = 0; i < 8; i++) {
+        const city = seedCities[i % seedCities.length];
+        const nameBase = vendorNames[(vendorCount + i) % vendorNames.length];
+        const bName = `${nameBase} ${cat.name.replace(/s$/, "")}`;
+        const slug = `${bName.toLowerCase().replace(/[^a-z0-9]+/g, "-")}-${String(vendorCount).padStart(3, "0")}`;
+
+        const postcodes = cityPostcodes[city.slug] ?? ["SW1A 1AA"];
+        const postcode = postcodes[i % postcodes.length];
+
+        // Small random offset so map pins don't stack
+        const geoLat = (city.latitude ?? 51.5) + (Math.random() - 0.5) * 0.08;
+        const geoLng = (city.longitude ?? -0.12) + (Math.random() - 0.5) * 0.08;
+
+        await prisma.provider.create({
+          data: {
+            ownerUserId: seedOwner.id,
+            businessName: bName,
+            slug,
+            description: `We are ${bName}, a premier ${cat.name.toLowerCase()} service based in ${city.name}. We specialise in providing high-quality experiences for weddings, corporate events, and private parties. With over 10 years of experience, our team is dedicated to excellence and making your special day unforgettable.`,
+            categories: [cat.slug],
+            city: city.name,
+            address: `${10 + vendorCount} High Street`,
+            postcode,
+            geoLat,
+            geoLng,
+            serviceRadiusMiles: 25,
+            isPublished: true,
+            isVerified: true,
+            isFeatured: i < 2, // first 2 per category are featured
+            planTier: PlanTier.PREMIUM,
+            priceFrom: 200 + (vendorCount % 8) * 100,
+            averageRating: 4 + Math.random(),
+            reviewCount: 10 + (vendorCount % 50),
+            coverImage: cat.coverImage,
+            photos: vendorPhotos,
+
+            // Listings (services)
+            listings: {
+              create: [
+                {
+                  headline: "Standard Package",
+                  longDescription:
+                    "Our most popular package including all essentials for a perfect day.",
+                  price: 500 + (vendorCount % 5) * 100,
+                  timeEstimate: "Half Day",
+                },
+                {
+                  headline: "Premium Experience",
+                  longDescription:
+                    "A full-day immersive experience with all our premium features included.",
+                  price: 1500 + (vendorCount % 5) * 200,
+                  timeEstimate: "Full Day",
+                },
+              ],
+            },
+
+            // Weekly schedule (Mon-Sat open, Sun closed)
+            weeklySchedules: {
+              create: [
+                { dayOfWeek: 1, startTime: "09:00", endTime: "18:00" },
+                { dayOfWeek: 2, startTime: "09:00", endTime: "18:00" },
+                { dayOfWeek: 3, startTime: "09:00", endTime: "18:00" },
+                { dayOfWeek: 4, startTime: "09:00", endTime: "20:00" },
+                { dayOfWeek: 5, startTime: "09:00", endTime: "20:00" },
+                { dayOfWeek: 6, startTime: "10:00", endTime: "16:00" },
+                {
+                  dayOfWeek: 0,
+                  isClosed: true,
+                  startTime: "00:00",
+                  endTime: "00:00",
+                },
+              ],
+            },
+
+            // Reviews
+            reviews: {
+              create: [
+                {
+                  rating: 5,
+                  authorName: "Sarah Johnson",
+                  authorEmail: "sarah@example.com",
+                  body: "Absolutely wonderful service! They exceeded all our expectations.",
+                },
+                {
+                  rating: 4,
+                  authorName: "Mark Wilson",
+                  authorEmail: "mark@example.com",
+                  body: "Very professional and great quality. Highly recommended.",
+                },
+              ],
+            },
+
+            // Team members
+            teamMembers: {
+              create: [
+                {
+                  name: "Alex Smith",
+                  role: `Lead ${cat.name.replace(/s$/, "")}`,
+                  imageUrl:
+                    "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=400&h=400&fit=crop",
+                },
+                {
+                  name: "Maria Garcia",
+                  role: "Operations Manager",
+                  imageUrl:
+                    "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=400&h=400&fit=crop",
+                },
+              ],
+            },
+          },
+        });
+        vendorCount++;
+      }
+    }
+
+    console.log(
+      `✅ Vendors   — ${vendorCount} created across ${allCategories.length} categories`,
+    );
+  }
+
+  console.log("\n🌱 Seed complete!");
 }
+
+// Self-invoke when run as a standalone script (e.g. tsx prisma/seed.ts)
+seed()
+  .then(() => process.exit(0))
+  .catch((e) => {
+    console.error("❌ Seed failed:", e);
+    process.exit(1);
+  });
