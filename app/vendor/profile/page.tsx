@@ -42,6 +42,7 @@ import { useRouter } from "next/navigation";
 import SocialMediaModal, {
   type SocialMediaData,
 } from "@/components/vendor/modals/SocialMediaModal";
+import { logger } from "@/lib/logger";
 interface Provider {
   id: string;
   businessName: string;
@@ -117,7 +118,7 @@ export default function VendorProfilePage() {
         setProvider(data.provider || null);
       }
     } catch (err) {
-      console.error("Error fetching profile:", err);
+      logger.error("Error fetching profile:", err);
     } finally {
       setIsLoading(false);
     }
@@ -144,15 +145,13 @@ export default function VendorProfilePage() {
         headline: s.headline,
         minPrice: s.minPrice,
         maxPrice: s.maxPrice,
-      }))
+      })),
     );
     setBookingModalOpen(true);
   };
 
   const handleBookingSubmit = (selected: BookingService[]) => {
     // TODO: Implement booking logic (open booking flow, etc.)
-    // For now, just log
-    console.log("Booking these services:", selected);
   };
   const handleAddService = async (data: ServiceData) => {
     try {
@@ -168,7 +167,7 @@ export default function VendorProfilePage() {
       await fetchProfile();
     } catch (err) {
       throw new Error(
-        err instanceof Error ? err.message : "Failed to create service"
+        err instanceof Error ? err.message : "Failed to create service",
       );
     }
   };
@@ -189,7 +188,7 @@ export default function VendorProfilePage() {
       setEditingService(null);
     } catch (err) {
       throw new Error(
-        err instanceof Error ? err.message : "Failed to update service"
+        err instanceof Error ? err.message : "Failed to update service",
       );
     }
   };
@@ -218,7 +217,9 @@ export default function VendorProfilePage() {
       await fetchProfile();
     } catch (err) {
       throw new Error(
-        err instanceof Error ? err.message : "Failed to save social media links"
+        err instanceof Error
+          ? err.message
+          : "Failed to save social media links",
       );
     }
   };
@@ -252,7 +253,7 @@ export default function VendorProfilePage() {
       await fetchProfile();
     } catch (err) {
       throw new Error(
-        err instanceof Error ? err.message : "Failed to upload photo"
+        err instanceof Error ? err.message : "Failed to upload photo",
       );
     }
   };
@@ -273,7 +274,7 @@ export default function VendorProfilePage() {
       await fetchProfile();
     } catch (err) {
       throw new Error(
-        err instanceof Error ? err.message : "Failed to delete photo"
+        err instanceof Error ? err.message : "Failed to delete photo",
       );
     }
   };
@@ -293,7 +294,7 @@ export default function VendorProfilePage() {
       await fetchProfile();
     } catch (err) {
       throw new Error(
-        err instanceof Error ? err.message : "Failed to save description"
+        err instanceof Error ? err.message : "Failed to save description",
       );
     }
   };
@@ -318,7 +319,7 @@ export default function VendorProfilePage() {
       await fetchProfile();
     } catch (err) {
       throw new Error(
-        err instanceof Error ? err.message : "Failed to save information"
+        err instanceof Error ? err.message : "Failed to save information",
       );
     }
   };
@@ -357,7 +358,7 @@ export default function VendorProfilePage() {
         }
       }
     } catch (err) {
-      console.error("Upload failed:", err);
+      logger.error("Upload failed:", err);
     } finally {
       setIsUploading(null);
     }
@@ -445,6 +446,7 @@ export default function VendorProfilePage() {
               src={provider.coverImage}
               alt="Cover"
               fill
+              unoptimized
               className="object-cover"
             />
           )}
@@ -640,8 +642,8 @@ export default function VendorProfilePage() {
                     selectedCategory === "all"
                       ? "bg-accent text-white border-accent"
                       : darkMode
-                      ? "bg-white/5 border-white/10 text-white"
-                      : "bg-gray-50 border-gray-200 text-gray-700"
+                        ? "bg-white/5 border-white/10 text-white"
+                        : "bg-gray-50 border-gray-200 text-gray-700"
                   }`}
                   onClick={() => setSelectedCategory("all")}
                 >
@@ -654,8 +656,8 @@ export default function VendorProfilePage() {
                       selectedCategory === cat
                         ? "bg-accent text-white border-accent"
                         : darkMode
-                        ? "bg-white/5 border-white/10 text-white"
-                        : "bg-gray-50 border-gray-200 text-gray-700"
+                          ? "bg-white/5 border-white/10 text-white"
+                          : "bg-gray-50 border-gray-200 text-gray-700"
                     }`}
                     onClick={() => setSelectedCategory(cat)}
                   >
@@ -682,7 +684,7 @@ export default function VendorProfilePage() {
                   .filter((listing) =>
                     selectedCategory === "all"
                       ? true
-                      : provider.categories.includes(selectedCategory)
+                      : provider.categories.includes(selectedCategory),
                   )
                   .map((listing) => (
                     <div
@@ -694,12 +696,15 @@ export default function VendorProfilePage() {
                       } border transition-colors group`}
                     >
                       {/* Cover Image */}
-                      <div className="w-32 h-32 shrink-0 rounded-lg overflow-hidden bg-gray-200">
+                      <div className="relative w-20 h-20 sm:w-32 sm:h-32 shrink-0 rounded-lg overflow-hidden bg-gray-200">
                         {listing.coverImageUrl ? (
-                          <img
+                          <Image
                             src={listing.coverImageUrl}
                             alt={listing.headline}
-                            className="w-full h-full object-cover"
+                            fill
+                            className="object-cover"
+                            sizes="128px"
+                            unoptimized
                           />
                         ) : (
                           <div className="w-full h-full flex items-center justify-center text-gray-400">
@@ -814,7 +819,7 @@ export default function VendorProfilePage() {
                       loading="lazy"
                       className="object-cover"
                     />
-                    <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+                    <div className="absolute inset-0 bg-black/50 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
                       <button className="p-2 rounded-lg bg-white/20 hover:bg-white/30 transition-colors">
                         <Edit3 size={16} className="text-white" />
                       </button>
@@ -1036,7 +1041,7 @@ export default function VendorProfilePage() {
                       : "bg-gray-100 hover:bg-gray-200"
                   } transition-colors`}
                 >
-                  <Instagram size={20} className="text-pink-400" />
+                  <Instagram size={20} className="text-accent" />
                 </a>
               )}
               {provider.facebook && (

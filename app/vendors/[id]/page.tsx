@@ -36,6 +36,7 @@ import Image from "next/image";
 import { useState, useEffect, useRef } from "react";
 import Confetti from "react-confetti";
 import { useSearchParams, useRouter } from "next/navigation";
+import { logger } from "@/lib/logger";
 
 interface WeeklySchedule {
   id: string;
@@ -154,7 +155,7 @@ function ScheduleDisplay({
 
   // Find today's schedule
   const todaySched = weeklySchedule.find(
-    (s) => s.dayOfWeek === currentDay && !s.isClosed
+    (s) => s.dayOfWeek === currentDay && !s.isClosed,
   );
   const openUntil = todaySched ? todaySched.endTime.slice(0, 5) : null;
 
@@ -213,7 +214,7 @@ function ScheduleDisplay({
                 // Format the time display
                 timeDisplay = `${sched.startTime.slice(
                   0,
-                  5
+                  5,
                 )} - ${sched.endTime.slice(0, 5)}`;
 
                 if (d.idx === currentDay) {
@@ -344,19 +345,19 @@ export default function VendorDetailPage() {
     setSelectedListings((prev) =>
       prev.includes(listingId)
         ? prev.filter((id) => id !== listingId)
-        : [...prev, listingId]
+        : [...prev, listingId],
     );
   }
 
   // Helper to get selected listing objects
   const selectedListingObjects = listings.filter((l) =>
-    selectedListings.includes(l.id)
+    selectedListings.includes(l.id),
   );
 
   // Helper to get total price
   const totalSelectedPrice = selectedListingObjects.reduce(
     (sum, l) => sum + (l.price || 0),
-    0
+    0,
   );
 
   // Booking mobile scroll function
@@ -383,7 +384,7 @@ export default function VendorDetailPage() {
     setSelectedListings((prev) =>
       prev.includes(listingId)
         ? prev.filter((id) => id !== listingId)
-        : [...prev, listingId]
+        : [...prev, listingId],
     );
   }
 
@@ -508,7 +509,7 @@ export default function VendorDetailPage() {
   async function fetchTeamMembers() {
     try {
       const response = await fetch(
-        `/api/admin/team-members?providerId=${params.id}`
+        `/api/admin/team-members?providerId=${params.id}`,
       );
       if (!response.ok) throw new Error("Failed to fetch team members");
       const data = await response.json();
@@ -543,7 +544,7 @@ export default function VendorDetailPage() {
         setWeeklySchedule([]);
       }
     } catch (err) {
-      console.error("Error fetching vendor:", err);
+      logger.error("Error fetching vendor:", err);
       setWeeklySchedule([]);
     } finally {
       setIsLoading(false);
@@ -590,7 +591,7 @@ export default function VendorDetailPage() {
       });
     } catch (err) {
       setSubmitError(
-        err instanceof Error ? err.message : "Something went wrong"
+        err instanceof Error ? err.message : "Something went wrong",
       );
     } finally {
       setIsSubmitting(false);
@@ -642,7 +643,7 @@ export default function VendorDetailPage() {
                 guests: "",
                 eventLocation: "",
                 notes: "",
-              }
+              },
             );
             setShowBookingForm(true);
           }
@@ -689,14 +690,14 @@ export default function VendorDetailPage() {
       }
 
       const res = await fetch(
-        `/api/providers/recommendations?${params.toString()}`
+        `/api/providers/recommendations?${params.toString()}`,
       );
       if (res.ok) {
         const data = await res.json();
         setRecommendations(data.providers || []);
       }
     } catch (err) {
-      console.error("Failed to fetch recommendations", err);
+      logger.error("Failed to fetch recommendations", err);
     } finally {
       setIsRecommendationsLoading(false);
     }
@@ -744,13 +745,80 @@ export default function VendorDetailPage() {
     const address = addressParts.filter(Boolean).join(", ");
     if (!address) return;
     const mapsUrl = `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(
-      address
+      address,
     )}`;
     window.open(mapsUrl, "_blank");
   };
 
   return (
     <div className="min-h-screen bg-background">
+      {/* JSON-LD Structured Data for SEO */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "LocalBusiness",
+            name: vendor.businessName,
+            description: vendor.description || undefined,
+            image: vendor.coverImage || vendor.photos?.[0] || undefined,
+            address: {
+              "@type": "PostalAddress",
+              addressLocality: vendor.city || undefined,
+              streetAddress: vendor.address || undefined,
+              postalCode: vendor.postcode || undefined,
+              addressCountry: "GB",
+            },
+            ...(vendor.geoLat && vendor.geoLng
+              ? {
+                  geo: {
+                    "@type": "GeoCoordinates",
+                    latitude: vendor.geoLat,
+                    longitude: vendor.geoLng,
+                  },
+                }
+              : {}),
+            url: `${typeof window !== "undefined" ? window.location.origin : "https://evalocal.com"}/vendors/${vendor.id}`,
+            telephone: vendor.phonePublic || undefined,
+            ...(vendor.website ? { sameAs: [vendor.website] } : {}),
+            ...(vendor.averageRating && vendor.reviewCount > 0
+              ? {
+                  aggregateRating: {
+                    "@type": "AggregateRating",
+                    ratingValue: vendor.averageRating,
+                    reviewCount: vendor.reviewCount,
+                    bestRating: 5,
+                    worstRating: 1,
+                  },
+                }
+              : {}),
+            ...(vendor.priceFrom
+              ? {
+                  priceRange: "£" + (vendor.priceFrom / 100).toFixed(0) + "+",
+                }
+              : {}),
+            ...(reviews.length > 0
+              ? {
+                  review: reviews.slice(0, 5).map((r) => ({
+                    "@type": "Review",
+                    author: {
+                      "@type": "Person",
+                      name: r.authorName,
+                    },
+                    reviewRating: {
+                      "@type": "Rating",
+                      ratingValue: r.rating,
+                      bestRating: 5,
+                    },
+                    reviewBody: r.body,
+                    datePublished: r.createdAt,
+                  })),
+                }
+              : {}),
+          }),
+        }}
+      />
+
       {/* Booking Success Modal */}
       {showSuccessModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
@@ -767,18 +835,9 @@ export default function VendorDetailPage() {
               />
             </div>
             <div className="relative z-10 flex flex-col items-center">
-              <span className="text-green-600 mb-4">
-                <svg width="48" height="48" fill="none" viewBox="0 0 24 24">
-                  <circle cx="12" cy="12" r="12" fill="#D1FAE5" />
-                  <path
-                    d="M7 13l3 3 7-7"
-                    stroke="#059669"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-                </svg>
-              </span>
+              <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-green-100">
+                <CircleCheckBig className="h-7 w-7 text-green-600" />
+              </div>
               <h2 className="text-2xl font-bold mb-2">Booking Successful!</h2>
               <p className="mb-4 text-center">
                 Your payment was received and your booking is confirmed. Thank
@@ -794,7 +853,7 @@ export default function VendorDetailPage() {
                     window.history.replaceState(
                       {},
                       document.title,
-                      url.pathname + url.search
+                      url.pathname + url.search,
                     );
                   }
                 }}
@@ -809,18 +868,9 @@ export default function VendorDetailPage() {
       {showErrorModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
           <div className="relative bg-white rounded-2xl shadow-xl p-8 max-w-md w-full flex flex-col items-center">
-            <span className="text-red-600 mb-4">
-              <svg width="48" height="48" fill="none" viewBox="0 0 24 24">
-                <circle cx="12" cy="12" r="12" fill="#FEE2E2" />
-                <path
-                  d="M15 9l-6 6M9 9l6 6"
-                  stroke="#DC2626"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-              </svg>
-            </span>
+            <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-red-100">
+              <X className="h-7 w-7 text-red-600" />
+            </div>
             <h2 className="text-2xl font-bold mb-2">Payment Cancelled</h2>
             <p className="mb-4 text-center">
               Your payment was not completed. Please try again to confirm your
@@ -836,7 +886,7 @@ export default function VendorDetailPage() {
                   window.history.replaceState(
                     {},
                     document.title,
-                    url.pathname + url.search
+                    url.pathname + url.search,
                   );
                 }
               }}
@@ -864,9 +914,11 @@ export default function VendorDetailPage() {
             {/* Header */}
             <div className="flex flex-wrap items-start justify-between gap-4 mb-8">
               <div>
-                <div className="flex items-center gap-3 mb-2">
-                  <h1 className="text-3xl md:text-4xl font-bold flex items-center gap-3">
+                <div className="flex flex-wrap items-center gap-3 mb-2">
+                  <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold">
                     {vendor.businessName}
+                  </h1>
+                  <div className="flex items-center gap-2 shrink-0">
                     <FavoriteButton providerId={vendor.id} />
                     <ShareButton
                       title={vendor.businessName}
@@ -876,7 +928,7 @@ export default function VendorDetailPage() {
                           : ""
                       }/vendors/${vendor.id}`}
                     />
-                  </h1>
+                  </div>
                   {vendor.isVerified && (
                     <div className="flex items-center gap-1 text-accent">
                       <Award size={20} />
@@ -984,7 +1036,8 @@ export default function VendorDetailPage() {
             >
               <div
                 style={{
-                  width: "92vw",
+                  width: "calc(100vw - 2rem)",
+                  maxWidth: "100%",
                   aspectRatio: "16/9",
                   position: "relative",
                   overflow: "hidden",
@@ -1017,7 +1070,7 @@ export default function VendorDetailPage() {
                     <button
                       onClick={() =>
                         setActiveImageIndex((prev) =>
-                          prev === 0 ? images.length - 1 : prev - 1
+                          prev === 0 ? images.length - 1 : prev - 1,
                         )
                       }
                       className="absolute left-2 top-1/2 -translate-y-1/2 p-2 rounded-full bg-background/80 hover:bg-background transition z-10"
@@ -1027,7 +1080,7 @@ export default function VendorDetailPage() {
                     <button
                       onClick={() =>
                         setActiveImageIndex((prev) =>
-                          prev === images.length - 1 ? 0 : prev + 1
+                          prev === images.length - 1 ? 0 : prev + 1,
                         )
                       }
                       className="absolute right-2 top-1/2 -translate-y-1/2 p-2 rounded-full bg-background/80 hover:bg-background transition z-10"
@@ -1175,12 +1228,12 @@ export default function VendorDetailPage() {
                       <ul className="space-y-4">
                         {listings.map((listing) => {
                           const isSelected = selectedListings.includes(
-                            listing.id
+                            listing.id,
                           );
                           return (
                             <li
                               key={listing.id}
-                              className="border rounded-lg p-4 flex items-center gap-4 bg-white"
+                              className="border rounded-lg p-4 flex flex-col sm:flex-row items-start sm:items-center gap-4 bg-white dark:bg-card"
                             >
                               {listing.coverImageUrl && (
                                 <Image
@@ -1201,49 +1254,32 @@ export default function VendorDetailPage() {
                                 <div className="text-gray-700 mt-1 text-[14px]">
                                   {truncate(listing.longDescription, 150)}
                                 </div>
-                                <div className="text-gray-500 text-sm mt-2 flex gap-4">
-                                  <span className="flex items-center gap-1">
-                                    <span className="inline-flex items-center gap-1 font-medium text-accent">
-                                      {/* Lucide DollarSign icon for price */}
-                                      <BadgeEuro
-                                        size={16}
-                                        className="inline-block align-middle"
-                                      />
-                                      {listing.price ? (
-                                        formatCurrency(listing.price)
-                                      ) : (
-                                        <span className="text-gray-400">
-                                          Not listed
-                                        </span>
-                                      )}
-                                    </span>
+                                <div className="text-gray-500 dark:text-muted-foreground text-sm mt-2 flex flex-wrap gap-3 sm:gap-4">
+                                  <span className="inline-flex items-center gap-1 font-medium text-accent">
+                                    <BadgeEuro
+                                      size={16}
+                                      className="inline-block align-middle"
+                                    />
+                                    {listing.price ? (
+                                      formatCurrency(listing.price)
+                                    ) : (
+                                      <span className="text-gray-400">
+                                        Not listed
+                                      </span>
+                                    )}
                                   </span>
-                                  <span className="flex items-center gap-1">
-                                    <span className="inline-flex items-center gap-1 font-medium text-black">
-                                      {/* Time SVG icon */}
-                                      <svg
-                                        width="16"
-                                        height="16"
-                                        fill="none"
-                                        viewBox="0 0 24 24"
-                                        stroke="currentColor"
-                                        className="inline-block align-middle"
-                                      >
-                                        <path
-                                          strokeLinecap="round"
-                                          strokeLinejoin="round"
-                                          strokeWidth={2}
-                                          d="M12 8v4l3 1m6-1a9 9 0 11-18 0 9 9 0 0118 0z"
-                                        />
-                                      </svg>
-                                      {listing.timeEstimate ? (
-                                        listing.timeEstimate
-                                      ) : (
-                                        <span className="text-gray-400">
-                                          No estimate
-                                        </span>
-                                      )}
-                                    </span>
+                                  <span className="inline-flex items-center gap-1 font-medium text-foreground">
+                                    <Clock
+                                      size={16}
+                                      className="inline-block align-middle"
+                                    />
+                                    {listing.timeEstimate ? (
+                                      listing.timeEstimate
+                                    ) : (
+                                      <span className="text-gray-400">
+                                        No estimate
+                                      </span>
+                                    )}
                                   </span>
                                 </div>
                                 {listing.galleryUrls &&
@@ -1502,7 +1538,7 @@ export default function VendorDetailPage() {
                           borderRadius: "5px",
                         }}
                         src={`https://www.google.com/maps?q=${encodeURIComponent(
-                          mapQuery
+                          mapQuery,
                         )}&hl=en&z=15&output=embed`}
                         allowFullScreen
                         aria-hidden="false"
@@ -1916,21 +1952,21 @@ export default function VendorDetailPage() {
                         </option>
                         <option
                           value={`${formatCurrency(1000)} - ${formatCurrency(
-                            2500
+                            2500,
                           )}`}
                         >
                           {`${formatCurrency(1000)} - ${formatCurrency(2500)}`}
                         </option>
                         <option
                           value={`${formatCurrency(2500)} - ${formatCurrency(
-                            5000
+                            5000,
                           )}`}
                         >
                           {`${formatCurrency(2500)} - ${formatCurrency(5000)}`}
                         </option>
                         <option
                           value={`${formatCurrency(5000)} - ${formatCurrency(
-                            10000
+                            10000,
                           )}`}
                         >
                           {`${formatCurrency(5000)} - ${formatCurrency(10000)}`}
@@ -1998,7 +2034,7 @@ export default function VendorDetailPage() {
               className="w-full bg-accent text-white py-2 rounded hover:bg-accent-dark transition"
               onClick={() => {
                 window.location.href = `/auth/signin?callbackUrl=${encodeURIComponent(
-                  window.location.pathname
+                  window.location.pathname,
                 )}`;
               }}
             >

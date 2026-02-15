@@ -14,14 +14,14 @@ export const passwordSchema = z
   .max(100, "Password must be less than 100 characters")
   .regex(
     /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/,
-    "Password must contain at least one uppercase letter, one lowercase letter, and one number"
+    "Password must contain at least one uppercase letter, one lowercase letter, and one number",
   );
 
 export const phoneSchema = z
   .string()
   .regex(
     /^[\+]?[(]?[0-9]{3}[)]?[-\s\.]?[0-9]{3}[-\s\.]?[0-9]{4,6}$/,
-    "Invalid phone number"
+    "Invalid phone number",
   )
   .optional();
 
@@ -37,7 +37,7 @@ export const slugSchema = z
   .max(100, "Slug must be less than 100 characters")
   .regex(
     /^[a-z0-9]+(?:-[a-z0-9]+)*$/,
-    "Slug must contain only lowercase letters, numbers, and hyphens"
+    "Slug must contain only lowercase letters, numbers, and hyphens",
   );
 
 export const uuidSchema = z.string().uuid("Invalid ID format");
@@ -62,7 +62,7 @@ export const dateRangeSchema = z
       }
       return true;
     },
-    { message: "Start date must be before end date" }
+    { message: "Start date must be before end date" },
   );
 
 export const priceSchema = z.object({
@@ -118,7 +118,7 @@ export const reviewSchema = z.object({
   bookingId: uuidSchema.optional(),
 });
 
-// Booking schema
+// Booking schema (simple)
 export const bookingSchema = z.object({
   providerId: uuidSchema,
   eventDate: z.coerce.date().refine((date) => date > new Date(), {
@@ -128,6 +128,33 @@ export const bookingSchema = z.object({
   guestCount: z.coerce.number().min(1).max(10000),
   location: z.string().min(1),
   notes: z.string().max(2000).optional(),
+});
+
+// Booking create schema (full POST body)
+export const bookingCreateSchema = z.object({
+  providerId: z.string().min(1, "Provider ID is required"),
+  services: z
+    .array(
+      z.object({
+        id: z.string(),
+        headline: z.string(),
+        minPrice: z.number().optional(),
+        maxPrice: z.number().optional(),
+      }),
+    )
+    .min(1, "At least one service is required"),
+  clientName: z.string().min(1).max(200).optional(),
+  clientEmail: z.string().email().optional(),
+  clientPhone: z.string().max(30).optional(),
+  eventDate: z.string().min(1, "Event date is required"),
+  eventLocation: z.string().max(500).optional(),
+  guestsCount: z.coerce.number().min(0).max(10000).optional(),
+  specialRequests: z.string().max(2000).optional(),
+  paymentMode: z
+    .enum(["FULL_PAYMENT", "DEPOSIT_BALANCE", "CASH_ON_DELIVERY"])
+    .optional()
+    .default("FULL_PAYMENT"),
+  pricingTotal: z.number().min(0).optional(),
 });
 
 // Inquiry schema
@@ -164,7 +191,7 @@ export const quoteSchema = z.object({
 // Validation helper functions
 export function validateRequest<T>(
   schema: z.ZodSchema<T>,
-  data: unknown
+  data: unknown,
 ): { success: true; data: T } | { success: false; errors: z.ZodIssue[] } {
   const result = schema.safeParse(data);
 
@@ -175,8 +202,116 @@ export function validateRequest<T>(
   return { success: false, errors: result.error.issues };
 }
 
+// ---- Auth schemas ----
+export const loginSchema = z.object({
+  email: emailSchema,
+  password: z.string().min(1, "Password is required"),
+});
+
+export const registerSchema = z.object({
+  email: emailSchema,
+  name: z.string().min(1, "Name is required").max(100),
+  password: passwordSchema,
+  role: z.enum(["CLIENT", "PROFESSIONAL"]).default("CLIENT"),
+});
+
+export const resetPasswordSchema = z.object({
+  token: z.string().min(1, "Token is required"),
+  newPassword: passwordSchema,
+});
+
+export const verifyEmailSchema = z.object({
+  token: z.string().min(1, "Token is required"),
+});
+
+export const resendVerificationSchema = z.object({
+  email: emailSchema,
+});
+
+// ---- Contact schema ----
+export const contactSchema = z.object({
+  name: z.string().min(1, "Name is required").max(100),
+  email: emailSchema,
+  message: z
+    .string()
+    .min(10, "Message must be at least 10 characters")
+    .max(5000),
+});
+
+// ---- User profile update schema ----
+export const userProfileUpdateSchema = z.object({
+  name: z.string().min(1).max(100).optional(),
+  phone: phoneSchema,
+  image: z.string().url().optional().or(z.literal("")),
+  notificationPreferences: z.record(z.string(), z.boolean()).optional(),
+});
+
+// ---- Vendor listing schema ----
+export const listingCreateSchema = z.object({
+  headline: z.string().min(1, "Service name is required").max(200),
+  longDescription: z.string().max(5000).optional(),
+  price: z.coerce.number().min(0, "Price must be non-negative"),
+  timeEstimate: z.string().min(1, "Time estimate is required").max(100),
+  coverImageUrl: z.string().url().optional().or(z.literal("")),
+  galleryUrls: z.array(z.string().url()).max(20).optional(),
+});
+
+export const listingUpdateSchema = z.object({
+  headline: z.string().min(1).max(200).optional(),
+  longDescription: z.string().max(5000).optional(),
+  minPrice: z.coerce.number().min(0).optional(),
+  maxPrice: z.coerce.number().min(0).optional(),
+  coverImageUrl: z.string().url().optional().or(z.literal("")),
+});
+
+// ---- Vendor profile schema ----
+export const vendorProfileCreateSchema = z.object({
+  businessName: z.string().min(1, "Business name is required").max(200),
+  description: z.string().max(5000).optional(),
+  phonePublic: z.string().max(30).optional(),
+  website: z.string().url().optional().or(z.literal("")),
+  address: z.string().max(300).optional(),
+  city: z.string().max(100).optional(),
+  postcode: z.string().min(1, "Postcode is required").max(10),
+  serviceRadiusMiles: z.coerce
+    .number()
+    .min(1, "Service radius is required")
+    .max(500),
+  categories: z.array(z.string()).optional().default([]),
+  subcategories: z.array(z.string()).optional().default([]),
+  cultureTraditionTags: z.array(z.string()).optional().default([]),
+  instagram: z.string().max(200).optional(),
+  tiktok: z.string().max(200).optional(),
+  facebook: z.string().max(200).optional(),
+  coverImage: z.string().optional(),
+  photos: z.array(z.string()).max(20).optional().default([]),
+  priceFrom: z.coerce.number().min(0).optional(),
+  isPublished: z.boolean().optional().default(false),
+});
+
+export const vendorProfileUpdateSchema = z.object({
+  businessName: z.string().min(1).max(200).optional(),
+  description: z.string().max(5000).optional(),
+  phonePublic: z.string().max(30).optional(),
+  website: z.string().url().optional().or(z.literal("")),
+  address: z.string().max(300).optional(),
+  city: z.string().max(100).optional(),
+  postcode: z.string().max(10).optional(),
+  serviceRadiusMiles: z.coerce.number().min(1).max(500).optional(),
+  categories: z.array(z.string()).optional(),
+  subcategories: z.array(z.string()).optional(),
+  cultureTraditionTags: z.array(z.string()).optional(),
+  instagram: z.string().max(200).optional(),
+  tiktok: z.string().max(200).optional(),
+  facebook: z.string().max(200).optional(),
+  coverImage: z.string().optional(),
+  photos: z.array(z.string()).max(20).optional(),
+  priceFrom: z.coerce.number().min(0).optional().nullable(),
+  isPublished: z.boolean().optional(),
+});
+
 export function formatValidationErrors(
-  errors: z.ZodIssue[]
+  errors: z.ZodIssue[],
 ): Record<string, string> {
   const formatted: Record<string, string> = {};
 
@@ -201,7 +336,7 @@ export function safeJsonParse<T>(json: string, fallback: T): T {
 
 // Parse search params to object
 export function parseSearchParams(
-  searchParams: URLSearchParams
+  searchParams: URLSearchParams,
 ): Record<string, string | string[]> {
   const params: Record<string, string | string[]> = {};
 
@@ -232,7 +367,7 @@ export function sanitizeInput(input: string): string {
 // Validate file type
 export function isValidFileType(
   mimeType: string,
-  allowedTypes: string[]
+  allowedTypes: string[],
 ): boolean {
   return allowedTypes.some((type) => {
     if (type.endsWith("/*")) {
@@ -246,7 +381,7 @@ export function isValidFileType(
 // Validate file size
 export function isValidFileSize(
   sizeInBytes: number,
-  maxSizeInMB: number
+  maxSizeInMB: number,
 ): boolean {
   return sizeInBytes <= maxSizeInMB * 1024 * 1024;
 }

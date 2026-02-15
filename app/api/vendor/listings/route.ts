@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/auth";
+import { listingCreateSchema, formatValidationErrors } from "@/lib/validations";
+import { logger } from "@/lib/logger";
 
 // GET /api/vendor/listings - Get all listings for vendor
 export async function GET(request: NextRequest) {
@@ -17,7 +19,7 @@ export async function GET(request: NextRequest) {
     if (!provider) {
       return NextResponse.json(
         { message: "No provider found" },
-        { status: 404 }
+        { status: 404 },
       );
     }
 
@@ -28,10 +30,10 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({ listings });
   } catch (error: unknown) {
-    console.error("Error fetching listings:", error);
+    logger.error("Error fetching listings:", error);
     return NextResponse.json(
       { message: "Internal server error" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
@@ -51,11 +53,22 @@ export async function POST(request: NextRequest) {
     if (!provider) {
       return NextResponse.json(
         { message: "No provider found" },
-        { status: 404 }
+        { status: 404 },
       );
     }
 
     const body = await request.json();
+    const parsed = listingCreateSchema.safeParse(body);
+    if (!parsed.success) {
+      return NextResponse.json(
+        {
+          message: "Validation failed",
+          errors: formatValidationErrors(parsed.error.issues),
+        },
+        { status: 400 },
+      );
+    }
+
     const {
       headline,
       longDescription,
@@ -63,30 +76,7 @@ export async function POST(request: NextRequest) {
       timeEstimate,
       coverImageUrl,
       galleryUrls,
-    } = body;
-
-    if (!headline || typeof headline !== "string" || headline.trim() === "") {
-      return NextResponse.json(
-        { message: "Service name (headline) is required" },
-        { status: 400 }
-      );
-    }
-    if (typeof price !== "number" || price < 0) {
-      return NextResponse.json(
-        { message: "Price is required and must be a non-negative number" },
-        { status: 400 }
-      );
-    }
-    if (
-      !timeEstimate ||
-      typeof timeEstimate !== "string" ||
-      timeEstimate.trim() === ""
-    ) {
-      return NextResponse.json(
-        { message: "Time estimate is required" },
-        { status: 400 }
-      );
-    }
+    } = parsed.data;
 
     const listing = await prisma.listing.create({
       data: {
@@ -102,10 +92,10 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ listing }, { status: 201 });
   } catch (error: unknown) {
-    console.error("Error creating listing:", error);
+    logger.error("Error creating listing:", error);
     return NextResponse.json(
       { message: "Internal server error" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

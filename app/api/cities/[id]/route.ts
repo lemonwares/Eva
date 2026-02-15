@@ -47,7 +47,7 @@ export async function GET(
 
     return NextResponse.json(city);
   } catch (error: any) {
-    console.error("Error fetching city:", error);
+    logger.error("Error fetching city:", error);
     return NextResponse.json(
       { message: "Internal server error" },
       { status: 500 }
@@ -112,7 +112,7 @@ export async function PATCH(
 
     return NextResponse.json(updated);
   } catch (error: any) {
-    console.error("Error updating city:", error);
+    logger.error("Error updating city:", error);
     return NextResponse.json(
       { message: "Internal server error" },
       { status: 500 }
@@ -151,7 +151,7 @@ export async function DELETE(
 
     return NextResponse.json({ message: "City deleted successfully" });
   } catch (error: any) {
-    console.error("Error deleting city:", error);
+    logger.error("Error deleting city:", error);
     return NextResponse.json(
       { message: "Internal server error" },
       { status: 500 }

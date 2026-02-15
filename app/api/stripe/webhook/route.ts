@@ -3,6 +3,7 @@ import { headers } from "next/headers";
 import { getStripe, formatAmountFromStripe } from "@/lib/stripe";
 import { prisma } from "@/lib/prisma";
 import { sendEmail, emailTemplates } from "@/lib/email";
+import { logger } from "@/lib/logger";
 import Stripe from "stripe";
 import crypto from "crypto";
 
@@ -51,9 +52,9 @@ async function handleSuccessfulPayment(session: Stripe.Checkout.Session) {
       !contactEmail ||
       !listingIds.length
     ) {
-      console.error(
+      logger.error(
         "Missing required metadata for booking creation",
-        session.id
+        session.id,
       );
       return;
     }
@@ -178,7 +179,7 @@ async function handleSuccessfulPayment(session: Stripe.Checkout.Session) {
       include: { payments: true, provider: true },
     });
     if (!booking) {
-      console.error("Booking not found:", bookingId);
+      logger.error("Booking not found:", bookingId);
       return;
     }
 
@@ -250,8 +251,8 @@ async function handleSuccessfulPayment(session: Stripe.Checkout.Session) {
     });
   }
 
-  console.log(
-    `Payment successful for booking ${bookingId}, type: ${paymentType}`
+  logger.info(
+    `Payment successful for booking ${bookingId}, type: ${paymentType}`,
   );
 
   // Send booking confirmation emails to client and vendor
@@ -289,7 +290,7 @@ async function handleSuccessfulPayment(session: Stripe.Checkout.Session) {
           year: "numeric",
           month: "long",
           day: "numeric",
-        }
+        },
       );
 
       const bookingUrl = `${
@@ -332,7 +333,7 @@ async function handleSuccessfulPayment(session: Stripe.Checkout.Session) {
       // Send email to client
       try {
         const clientTemplate = emailTemplates.bookingConfirmationClient(
-          bookingConfirmationData
+          bookingConfirmationData,
         );
         await sendEmail({
           to: booking.clientEmail,
@@ -340,13 +341,13 @@ async function handleSuccessfulPayment(session: Stripe.Checkout.Session) {
           html: clientTemplate.html,
           text: clientTemplate.text,
         });
-        console.log(
-          `✅ Booking confirmation email sent to client: ${booking.clientEmail}`
+        logger.info(
+          `Booking confirmation email sent to client: ${booking.clientEmail}`,
         );
       } catch (error) {
-        console.error(
+        logger.error(
           "Failed to send client booking confirmation email:",
-          error
+          error,
         );
       }
 
@@ -375,20 +376,20 @@ async function handleSuccessfulPayment(session: Stripe.Checkout.Session) {
               html: vendorTemplate.html,
               text: vendorTemplate.text,
             });
-            console.log(
-              `✅ Booking confirmation email sent to vendor: ${vendorUser.email}`
+            logger.info(
+              `Booking confirmation email sent to vendor: ${vendorUser.email}`,
             );
           }
         }
       } catch (error) {
-        console.error(
+        logger.error(
           "Failed to send vendor booking confirmation email:",
-          error
+          error,
         );
       }
     }
   } catch (error) {
-    console.error("Error sending booking confirmation emails:", error);
+    logger.error("Error sending booking confirmation emails:", error);
   }
 }
 
@@ -420,7 +421,7 @@ async function handleFailedPayment(session: Stripe.Checkout.Session) {
     });
   }
 
-  console.log(`Payment failed for booking ${bookingId}`);
+  logger.info(`Payment failed for booking ${bookingId}`);
 }
 
 export async function POST(request: NextRequest) {
@@ -430,16 +431,16 @@ export async function POST(request: NextRequest) {
     const signature = headersList.get("stripe-signature");
 
     if (!signature) {
-      console.error("No Stripe signature found");
+      logger.error("No Stripe signature found");
       return NextResponse.json({ error: "No signature" }, { status: 400 });
     }
 
     const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
     if (!webhookSecret) {
-      console.error("Stripe webhook secret not configured");
+      logger.error("Stripe webhook secret not configured");
       return NextResponse.json(
         { error: "Webhook not configured" },
-        { status: 500 }
+        { status: 500 },
       );
     }
 
@@ -448,10 +449,10 @@ export async function POST(request: NextRequest) {
       event = getStripe().webhooks.constructEvent(
         body,
         signature,
-        webhookSecret
+        webhookSecret,
       );
     } catch (err) {
-      console.error("Webhook signature verification failed:", err);
+      logger.error("Webhook signature verification failed:", err);
       return NextResponse.json({ error: "Invalid signature" }, { status: 400 });
     }
 
@@ -473,27 +474,27 @@ export async function POST(request: NextRequest) {
 
       case "payment_intent.succeeded": {
         // Already handled by checkout.session.completed
-        console.log("PaymentIntent succeeded:", event.data.object.id);
+        logger.debug("PaymentIntent succeeded:", event.data.object.id);
         break;
       }
 
       case "payment_intent.payment_failed": {
         const paymentIntent = event.data.object as Stripe.PaymentIntent;
-        console.log("Payment failed:", paymentIntent.id);
+        logger.debug("Payment failed:", paymentIntent.id);
         // Could update payment record with failure details
         break;
       }
 
       default:
-        console.log(`Unhandled event type: ${event.type}`);
+        logger.debug(`Unhandled event type: ${event.type}`);
     }
 
     return NextResponse.json({ received: true });
   } catch (error) {
-    console.error("Webhook error:", error);
+    logger.error("Webhook error:", error);
     return NextResponse.json(
       { error: "Webhook handler failed" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

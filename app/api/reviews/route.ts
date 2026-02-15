@@ -22,7 +22,7 @@ export async function POST(request: NextRequest) {
     if (!validation.success) {
       return NextResponse.json(
         { message: "Invalid request", errors: validation.error.issues },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -45,7 +45,7 @@ export async function POST(request: NextRequest) {
     if (!provider) {
       return NextResponse.json(
         { message: "Provider not found" },
-        { status: 404 }
+        { status: 404 },
       );
     }
 
@@ -82,13 +82,13 @@ export async function POST(request: NextRequest) {
           "Review submitted successfully. It will be visible after moderation.",
         review,
       },
-      { status: 201 }
+      { status: 201 },
     );
   } catch (error: any) {
-    console.error("Error creating review:", error);
+    logger.error("Error creating review:", error);
     return NextResponse.json(
       { message: "Internal server error" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
@@ -110,15 +110,22 @@ export async function GET(request: NextRequest) {
     const filters: any = {};
 
     const mine = searchParams.get("mine") === "true";
+    const isPublic = searchParams.get("public") === "true";
 
     // Only show approved reviews to non-admins by default
     const isAdmin = session?.user?.role === "ADMINISTRATOR";
 
-    if (!isAdmin) {
+    if (isPublic) {
+      // Public query (e.g. testimonials section) — always show approved only
+      filters.isApproved = true;
+    } else if (!isAdmin) {
       if (mine) {
         // Strictly limit to own reviews if requesting own
         if (!session?.user?.id) {
-          return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
+          return NextResponse.json(
+            { message: "Unauthorized" },
+            { status: 401 },
+          );
         }
         filters.authorUserId = session.user.id;
       } else if (providerId) {
@@ -183,10 +190,10 @@ export async function GET(request: NextRequest) {
       },
     });
   } catch (error: any) {
-    console.error("Error fetching reviews:", error);
+    logger.error("Error fetching reviews:", error);
     return NextResponse.json(
       { message: "Internal server error" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

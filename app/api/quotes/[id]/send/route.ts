@@ -113,7 +113,7 @@ export async function POST(
       quote: updatedQuote,
     });
   } catch (error: any) {
-    console.error("Error sending quote:", error);
+    logger.error("Error sending quote:", error);
     return NextResponse.json(
       { message: "Internal server error" },
       { status: 500 }

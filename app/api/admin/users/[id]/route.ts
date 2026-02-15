@@ -84,7 +84,7 @@ export async function GET(
 
     return NextResponse.json({ success: true, user: transformedUser });
   } catch (error: any) {
-    console.error("Error fetching user:", error);
+    logger.error("Error fetching user:", error);
     return NextResponse.json(
       { success: false, error: "Internal server error" },
       { status: 500 }
@@ -196,7 +196,7 @@ export async function PATCH(
 
     return NextResponse.json({ success: true, user: transformedUser });
   } catch (error: any) {
-    console.error("Error updating user:", error);
+    logger.error("Error updating user:", error);
     return NextResponse.json(
       { success: false, error: "Internal server error" },
       { status: 500 }
@@ -268,7 +268,7 @@ export async function DELETE(
       message: "User deleted successfully",
     });
   } catch (error: any) {
-    console.error("Error deleting user:", error);
+    logger.error("Error deleting user:", error);
     return NextResponse.json(
       { success: false, error: "Internal server error" },
       { status: 500 }

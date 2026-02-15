@@ -3,6 +3,7 @@
  */
 
 import { signIn, signOut } from "next-auth/react";
+import { logger } from "./logger";
 
 export interface LoginCredentials {
   email: string;
@@ -22,6 +23,7 @@ export interface AuthResponse {
   error?: string;
   userId?: string;
   token?: string;
+  role?: string;
 }
 
 /**
@@ -29,7 +31,7 @@ export interface AuthResponse {
  */
 export async function login(
   credentials: LoginCredentials,
-  callbackUrl?: string
+  callbackUrl?: string,
 ): Promise<AuthResponse> {
   try {
     const result = await signIn("credentials", {
@@ -40,20 +42,26 @@ export async function login(
     });
 
     if (result?.error) {
-      // Use backend error message directly, unless it is a known NextAuth 'configuration' error
-      let errorMsg = result.error || "Invalid email or password";
-      // Only show 'not verified' if backend actually says so
+      // NextAuth returns the custom CredentialsSignin code in the redirect URL
+      // Parse it to determine the specific error type
+      let errorCode = "";
+      try {
+        if (result.url) {
+          const url = new URL(result.url, window.location.origin);
+          errorCode = url.searchParams.get("code") || "";
+        }
+      } catch {
+        // URL parsing failed, fall through to generic error
+      }
+
+      let errorMsg: string;
       if (
-        errorMsg.toLowerCase().includes("not verified") ||
-        errorMsg.toLowerCase().includes("verify your email")
+        errorCode === "EMAIL_NOT_VERIFIED" ||
+        result.error?.includes("EMAIL_NOT_VERIFIED")
       ) {
         errorMsg =
           "Your email address is not verified. Please check your inbox for a verification link before logging in.";
-      } else if (
-        errorMsg.trim().toLowerCase() === "configuration" ||
-        errorMsg.trim().toLowerCase() === "forbidden"
-      ) {
-        // Show a generic error for unknown NextAuth errors
+      } else {
         errorMsg = "Invalid email or password";
       }
       return {
@@ -68,7 +76,7 @@ export async function login(
       message: "Login successful",
     };
   } catch (error) {
-    console.error("Login error:", error);
+    logger.error("Login error:", error);
     return {
       success: false,
       message: "An unexpected error occurred",
@@ -116,7 +124,7 @@ export async function register(data: RegisterData): Promise<AuthResponse> {
       token: result.token,
     };
   } catch (error) {
-    console.error("Registration error:", error);
+    logger.error("Registration error:", error);
     return {
       success: false,
       message: "An unexpected error occurred",
@@ -154,7 +162,7 @@ export async function forgotPassword(email: string): Promise<AuthResponse> {
       token: result.token, // Only returned in dev mode
     };
   } catch (error) {
-    console.error("Forgot password error:", error);
+    logger.error("Forgot password error:", error);
     return {
       success: false,
       message: "An unexpected error occurred",
@@ -168,7 +176,7 @@ export async function forgotPassword(email: string): Promise<AuthResponse> {
  */
 export async function resetPassword(
   token: string,
-  newPassword: string
+  newPassword: string,
 ): Promise<AuthResponse> {
   try {
     const response = await fetch("/api/auth/reset-password", {
@@ -194,7 +202,7 @@ export async function resetPassword(
       message: result.message,
     };
   } catch (error) {
-    console.error("Reset password error:", error);
+    logger.error("Reset password error:", error);
     return {
       success: false,
       message: "An unexpected error occurred",
@@ -214,7 +222,7 @@ export async function verifyEmail(token: string): Promise<AuthResponse> {
       `/api/auth/verify-email?token=${encodeURIComponent(token)}`,
       {
         method: "GET",
-      }
+      },
     );
 
     const result = await response.json();
@@ -230,9 +238,10 @@ export async function verifyEmail(token: string): Promise<AuthResponse> {
     return {
       success: true,
       message: result.message,
+      role: result.user?.role,
     };
   } catch (error) {
-    console.error("Verify email error:", error);
+    logger.error("Verify email error:", error);
     return {
       success: false,
       message: "An unexpected error occurred",
@@ -270,7 +279,7 @@ export async function resendVerification(email: string): Promise<AuthResponse> {
       token: result.token,
     };
   } catch (error) {
-    console.error("Resend verification error:", error);
+    logger.error("Resend verification error:", error);
     return {
       success: false,
       message: "An unexpected error occurred",
@@ -300,7 +309,7 @@ export async function getCurrentUser() {
     const result = await response.json();
     return result.user;
   } catch (error) {
-    console.error("Get current user error:", error);
+    logger.error("Get current user error:", error);
     return null;
   }
 }
@@ -339,7 +348,7 @@ export async function updateProfile(data: {
       message: result.message,
     };
   } catch (error) {
-    console.error("Update profile error:", error);
+    logger.error("Update profile error:", error);
     return {
       success: false,
       message: "An unexpected error occurred",

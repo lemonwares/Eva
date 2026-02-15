@@ -76,7 +76,7 @@ export async function GET(
 
     return NextResponse.json({ inquiry });
   } catch (error: any) {
-    console.error("Error fetching inquiry:", error);
+    logger.error("Error fetching inquiry:", error);
     return NextResponse.json(
       { message: "Internal server error" },
       { status: 500 }
@@ -148,7 +148,7 @@ export async function PATCH(
       inquiry: updatedInquiry,
     });
   } catch (error: any) {
-    console.error("Error updating inquiry:", error);
+    logger.error("Error updating inquiry:", error);
     return NextResponse.json(
       { message: "Internal server error" },
       { status: 500 }

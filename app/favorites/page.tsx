@@ -5,6 +5,7 @@ import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import Header from "@/components/common/Header";
 import Footer from "@/components/common/Footer";
+import ConfirmDeleteModal from "@/components/modals/confirm-delete-modal";
 import Image from "next/image";
 import Link from "next/link";
 import {
@@ -18,6 +19,7 @@ import {
   FiTrash2,
   FiExternalLink,
 } from "react-icons/fi";
+import { logger } from "@/lib/logger";
 
 interface FavoriteVendor {
   id: string;
@@ -53,7 +55,7 @@ export default function FavoritesPage() {
 
   const [favorites, setFavorites] = useState<FavoriteVendor[]>([]);
   const [filteredFavorites, setFilteredFavorites] = useState<FavoriteVendor[]>(
-    []
+    [],
   );
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
@@ -82,7 +84,7 @@ export default function FavoritesPage() {
           setFilteredFavorites(favoritesData);
         }
       } catch (error) {
-        console.error("Error fetching favorites:", error);
+        logger.error("Error fetching favorites:", error);
       } finally {
         setLoading(false);
       }
@@ -101,12 +103,14 @@ export default function FavoritesPage() {
         (fav) =>
           fav.provider.businessName.toLowerCase().includes(query) ||
           fav.provider.description?.toLowerCase().includes(query) ||
-          fav.provider.city?.toLowerCase().includes(query)
+          fav.provider.city?.toLowerCase().includes(query),
       );
     }
 
     setFilteredFavorites(filtered);
   }, [searchQuery, favorites]);
+
+  const [favoriteToRemove, setFavoriteToRemove] = useState<string | null>(null);
 
   // Remove from favorites
   const handleRemoveFavorite = async (providerId: string) => {
@@ -119,13 +123,14 @@ export default function FavoritesPage() {
 
       if (response.ok) {
         setFavorites((prev) =>
-          prev.filter((fav) => fav.provider.id !== providerId)
+          prev.filter((fav) => fav.provider.id !== providerId),
         );
       }
     } catch (error) {
-      console.error("Error removing favorite:", error);
+      logger.error("Error removing favorite:", error);
     } finally {
       setRemovingId(null);
+      setFavoriteToRemove(null);
     }
   };
 
@@ -139,7 +144,7 @@ export default function FavoritesPage() {
           <div className="flex items-center justify-center min-h-[400px]">
             <FiLoader
               className={`w-8 h-8 animate-spin ${
-                darkMode ? "text-pink-500" : "text-pink-600"
+                darkMode ? "text-accent" : "text-accent"
               }`}
             />
           </div>
@@ -161,7 +166,7 @@ export default function FavoritesPage() {
         {/* Page Header */}
         <div className="mb-8">
           <div className="flex items-center gap-3 mb-2">
-            <div className="p-3 mt-28 bg-linear-to-br from-pink-500 to-red-500 rounded-xl text-white">
+            <div className="p-3 mt-28 bg-linear-to-br from-accent to-teal-600 rounded-xl text-white">
               <FiHeart className="w-6 h-6" />
             </div>
             <div>
@@ -207,7 +212,7 @@ export default function FavoritesPage() {
                   darkMode
                     ? "bg-gray-700 border-gray-600 text-white placeholder-gray-400"
                     : "bg-gray-50 border-gray-200 text-gray-900 placeholder-gray-500"
-                } focus:outline-none focus:ring-2 focus:ring-pink-500`}
+                } focus:outline-none focus:ring-2 focus:ring-accent`}
               />
             </div>
 
@@ -221,10 +226,10 @@ export default function FavoritesPage() {
                 onClick={() => setViewMode("grid")}
                 className={`p-2.5 ${
                   viewMode === "grid"
-                    ? "bg-pink-500 text-white"
+                    ? "bg-accent text-white"
                     : darkMode
-                    ? "bg-gray-700 text-gray-300"
-                    : "bg-gray-50 text-gray-600"
+                      ? "bg-gray-700 text-gray-300"
+                      : "bg-gray-50 text-gray-600"
                 } transition-colors`}
                 aria-label="Grid view"
               >
@@ -234,10 +239,10 @@ export default function FavoritesPage() {
                 onClick={() => setViewMode("list")}
                 className={`p-2.5 ${
                   viewMode === "list"
-                    ? "bg-pink-500 text-white"
+                    ? "bg-accent text-white"
                     : darkMode
-                    ? "bg-gray-700 text-gray-300"
-                    : "bg-gray-50 text-gray-600"
+                      ? "bg-gray-700 text-gray-300"
+                      : "bg-gray-50 text-gray-600"
                 } transition-colors`}
                 aria-label="List view"
               >
@@ -255,8 +260,8 @@ export default function FavoritesPage() {
               darkMode ? "bg-gray-800" : "bg-white"
             } shadow-sm`}
           >
-            <div className="w-20 h-20 mx-auto mb-4 rounded-full bg-linear-to-br from-pink-100 to-red-100 flex items-center justify-center">
-              <FiHeart className="w-10 h-10 text-pink-500" />
+            <div className="w-20 h-20 mx-auto mb-4 rounded-full bg-linear-to-br from-teal-100 to-cyan-100 flex items-center justify-center">
+              <FiHeart className="w-10 h-10 text-accent" />
             </div>
             <h3
               className={`text-xl font-semibold mb-2 ${
@@ -275,7 +280,7 @@ export default function FavoritesPage() {
             {!searchQuery && (
               <Link
                 href="/search"
-                className="inline-flex items-center gap-2 px-6 py-3 bg-linear-to-r from-pink-500 to-pink-600 text-white rounded-lg hover:from-pink-600 hover:to-pink-700 transition-all"
+                className="inline-flex items-center gap-2 px-6 py-3 bg-linear-to-r from-accent to-teal-600 text-white rounded-lg hover:from-teal-600 hover:to-teal-700 transition-all"
               >
                 <FiSearch className="w-5 h-5" />
                 Explore Vendors
@@ -302,7 +307,7 @@ export default function FavoritesPage() {
                         className="object-cover group-hover:scale-105 transition-transform duration-300"
                       />
                     ) : (
-                      <div className="w-full h-full bg-linear-to-br from-pink-400 to-purple-500 flex items-center justify-center">
+                      <div className="w-full h-full bg-linear-to-br from-accent to-teal-600 flex items-center justify-center">
                         <span className="text-4xl font-bold text-white">
                           {fav.provider.businessName.charAt(0)}
                         </span>
@@ -311,7 +316,7 @@ export default function FavoritesPage() {
 
                     {/* Remove Button */}
                     <button
-                      onClick={() => handleRemoveFavorite(fav.provider.id)}
+                      onClick={() => setFavoriteToRemove(fav.provider.id)}
                       disabled={removingId === fav.provider.id}
                       className="absolute top-3 right-3 p-2 bg-white/90 backdrop-blur-sm rounded-full text-red-500 hover:bg-red-500 hover:text-white transition-colors disabled:opacity-50"
                       aria-label="Remove from favorites"
@@ -328,7 +333,7 @@ export default function FavoritesPage() {
                   <div className="p-4">
                     <Link href={`/vendors/${fav.provider.id}`}>
                       <h3
-                        className={`font-semibold mb-1 hover:text-pink-500 transition-colors ${
+                        className={`font-semibold mb-1 hover:text-accent transition-colors ${
                           darkMode ? "text-white" : "text-gray-900"
                         }`}
                       >
@@ -369,14 +374,14 @@ export default function FavoritesPage() {
 
                       <Link
                         href={`/vendors/${fav.provider.id}`}
-                        className="text-pink-500 hover:text-pink-600 transition-colors"
+                        className="text-accent hover:text-accent/80 transition-colors"
                       >
                         <FiExternalLink className="w-4 h-4" />
                       </Link>
                     </div>
                   </div>
                 </div>
-              )
+              ),
             )}
           </div>
         ) : (
@@ -398,7 +403,7 @@ export default function FavoritesPage() {
                       className="object-cover"
                     />
                   ) : (
-                    <div className="w-full h-full bg-linear-to-br from-pink-400 to-purple-500 flex items-center justify-center">
+                    <div className="w-full h-full bg-linear-to-br from-accent to-teal-600 flex items-center justify-center">
                       <span className="text-3xl font-bold text-white">
                         {fav.provider.businessName.charAt(0)}
                       </span>
@@ -412,7 +417,7 @@ export default function FavoritesPage() {
                     <div>
                       <Link href={`/vendors/${fav.provider.id}`}>
                         <h3
-                          className={`text-lg font-semibold hover:text-pink-500 transition-colors ${
+                          className={`text-lg font-semibold hover:text-accent transition-colors ${
                             darkMode ? "text-white" : "text-gray-900"
                           }`}
                         >
@@ -422,7 +427,7 @@ export default function FavoritesPage() {
                     </div>
 
                     <button
-                      onClick={() => handleRemoveFavorite(fav.provider.id)}
+                      onClick={() => setFavoriteToRemove(fav.provider.id)}
                       disabled={removingId === fav.provider.id}
                       className={`p-2 rounded-lg transition-colors ${
                         darkMode
@@ -483,7 +488,7 @@ export default function FavoritesPage() {
 
                     <Link
                       href={`/vendors/${fav.provider.id}`}
-                      className="flex items-center gap-1 text-sm text-pink-500 hover:text-pink-600 transition-colors"
+                      className="flex items-center gap-1 text-sm text-accent hover:text-accent/80 transition-colors"
                     >
                       View Profile
                       <FiExternalLink className="w-4 h-4" />
@@ -495,6 +500,19 @@ export default function FavoritesPage() {
           </div>
         )}
       </main>
+
+      <ConfirmDeleteModal
+        isOpen={!!favoriteToRemove}
+        onClose={() => setFavoriteToRemove(null)}
+        onConfirm={() =>
+          favoriteToRemove && handleRemoveFavorite(favoriteToRemove)
+        }
+        title="Remove Favorite"
+        message="Are you sure you want to remove this vendor from your favorites?"
+        confirmText="Remove"
+        variant="remove"
+        isLoading={!!removingId}
+      />
 
       <Footer />
     </div>

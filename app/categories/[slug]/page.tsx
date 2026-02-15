@@ -151,7 +151,7 @@ export default function CategoryDetailPage() {
       const data = await response.json();
       setCategory(data);
     } catch (err) {
-      console.error("Error fetching category:", err);
+      logger.error("Error fetching category:", err);
     } finally {
       setIsLoading(false);
     }
@@ -189,7 +189,7 @@ export default function CategoryDetailPage() {
         pages: data.pagination?.pages || 1,
       }));
     } catch (err) {
-      console.error("Error fetching vendors:", err);
+      logger.error("Error fetching vendors:", err);
     } finally {
       setVendorsLoading(false);
     }

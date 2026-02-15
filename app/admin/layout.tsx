@@ -7,7 +7,12 @@ export default async function AdminRootLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const session = await auth();
+  let session = null;
+  try {
+    session = await auth();
+  } catch {
+    // Stale/invalid JWT cookie — redirect to auth
+  }
 
   // Server-side guard ensures only administrators can render anything under /admin.
   if (!session?.user || session.user.role !== "ADMINISTRATOR") {

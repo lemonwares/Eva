@@ -125,7 +125,7 @@ export async function GET(request: NextRequest) {
       },
     });
   } catch (error: any) {
-    console.error("Error fetching quotes:", error);
+    logger.error("Error fetching quotes:", error);
     return NextResponse.json(
       { message: "Internal server error" },
       { status: 500 }
@@ -285,7 +285,7 @@ export async function POST(request: NextRequest) {
         { status: 400 }
       );
     }
-    console.error("Error creating quote:", error);
+    logger.error("Error creating quote:", error);
     return NextResponse.json(
       { message: "Internal server error" },
       { status: 500 }

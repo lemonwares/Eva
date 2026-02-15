@@ -32,7 +32,7 @@ export default function AdminLayout({
 
   return (
     <div
-      className={`h-screen font-sans flex overflow-hidden transition-colors duration-300 ${pageBg} ${textPrimary}`}
+      className={`dashboard-scope h-screen flex overflow-hidden transition-colors duration-300 ${pageBg} ${textPrimary}`}
     >
       <AdminSidebar
         isOpen={sidebarOpen}

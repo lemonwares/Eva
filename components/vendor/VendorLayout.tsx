@@ -4,6 +4,7 @@ import { useEffect, useState, ReactNode } from "react";
 import VendorLayoutSidebar from "./VendorLayoutSidebar";
 import VendorLayoutHeader from "./VendorLayoutHeader";
 import { useVendorTheme } from "./VendorThemeContext";
+import { logger } from "@/lib/logger";
 
 interface VendorLayoutProps {
   children: ReactNode;
@@ -28,10 +29,10 @@ export default function VendorLayout({
 }: VendorLayoutProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [providerName, setProviderName] = useState<string | undefined>(
-    vendorName
+    vendorName,
   );
   const [providerType, setProviderType] = useState<string | undefined>(
-    vendorType
+    vendorType,
   );
   const { darkMode } = useVendorTheme();
 
@@ -53,11 +54,11 @@ export default function VendorLayout({
         if (isMounted) {
           setProviderName(vendorName ?? provider.businessName);
           setProviderType(
-            vendorType ?? provider.categories?.[0] ?? "Vendor Portal"
+            vendorType ?? provider.categories?.[0] ?? "Vendor Portal",
           );
         }
       } catch (error) {
-        console.error("Failed to load provider details for sidebar:", error);
+        logger.error("Failed to load provider details for sidebar:", error);
       }
     };
 
@@ -73,7 +74,7 @@ export default function VendorLayout({
 
   return (
     <div
-      className={`h-screen font-sans flex overflow-hidden transition-colors duration-300 ${
+      className={`dashboard-scope h-screen flex overflow-hidden transition-colors duration-300 ${
         darkMode ? "bg-[#0a0a0a] text-white" : "bg-gray-50 text-gray-900"
       }`}
     >

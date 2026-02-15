@@ -37,7 +37,7 @@ export async function DELETE(
 
     return Response.json({ success: true, deletedId: id });
   } catch (error) {
-    console.error("Delete error:", error);
+    logger.error("Delete error:", error);
     return Response.json(
       { error: "Failed to delete provider" },
       { status: 500 }

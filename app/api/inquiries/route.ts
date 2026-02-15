@@ -107,7 +107,7 @@ export async function GET(request: NextRequest) {
       },
     });
   } catch (error: any) {
-    console.error("Error fetching inquiries:", error);
+    logger.error("Error fetching inquiries:", error);
     return NextResponse.json(
       {
         message: "Internal server error",
@@ -260,7 +260,7 @@ export async function POST(request: NextRequest) {
         { status: 400 }
       );
     }
-    console.error("Error creating inquiry:", error);
+    logger.error("Error creating inquiry:", error);
     return NextResponse.json(
       { message: "Internal server error" },
       { status: 500 }

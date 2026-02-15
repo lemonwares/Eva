@@ -55,7 +55,7 @@ export async function GET(
 
     return NextResponse.json(tag);
   } catch (error: any) {
-    console.error("Error fetching culture tag:", error);
+    logger.error("Error fetching culture tag:", error);
     return NextResponse.json(
       { message: "Internal server error" },
       { status: 500 }
@@ -123,7 +123,7 @@ export async function PATCH(
 
     return NextResponse.json(updated);
   } catch (error: any) {
-    console.error("Error updating culture tag:", error);
+    logger.error("Error updating culture tag:", error);
     return NextResponse.json(
       { message: "Internal server error" },
       { status: 500 }
@@ -165,7 +165,7 @@ export async function DELETE(
 
     return NextResponse.json({ message: "Culture tag deleted successfully" });
   } catch (error: any) {
-    console.error("Error deleting culture tag:", error);
+    logger.error("Error deleting culture tag:", error);
     return NextResponse.json(
       { message: "Internal server error" },
       { status: 500 }

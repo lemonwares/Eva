@@ -1,18 +1,40 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import bcrypt from "bcryptjs";
+import { resetPasswordSchema, formatValidationErrors } from "@/lib/validations";
+import { checkRateLimit, getRateLimitIdentifier, rateLimitResponse, rateLimitPresets } from "@/lib/rate-limit";
 
 // POST /api/auth/reset-password
 // Resets password using a valid token from PasswordReset
 export async function POST(request: NextRequest) {
   try {
+    // Rate limit: 3 attempts per hour
+    const identifier = getRateLimitIdentifier(request);
+    const rateCheck = checkRateLimit(`auth:reset:${identifier}`, rateLimitPresets.passwordReset);
+    if (!rateCheck.success) return rateLimitResponse(rateCheck);
+
     const body = await request.json();
-    const { token, newPassword } = body;
+    const parsed = resetPasswordSchema.safeParse(body);
+    if (!parsed.success) {
+      return NextResponse.json(
+        {
+          message: "Validation failed",
+          errors: formatValidationErrors(parsed.error.issues),
+        },
+        { status: 400 },
+      );
+    }
+    const { token, newPassword } = parsed.data;
 
     // Find password reset record by token
-    const resetRecord = await prisma.passwordReset.findUnique({ where: { token } });
+    const resetRecord = await prisma.passwordReset.findUnique({
+      where: { token },
+    });
     if (!resetRecord || resetRecord.usedAt) {
-      return NextResponse.json({ message: "Invalid or used token" }, { status: 400 });
+      return NextResponse.json(
+        { message: "Invalid or used token" },
+        { status: 400 },
+      );
     }
 
     // Check if token is expired
@@ -35,10 +57,16 @@ export async function POST(request: NextRequest) {
       data: { usedAt: new Date() },
     });
 
-    return NextResponse.json({ message: "Password reset successful" }, { status: 200 });
+    return NextResponse.json(
+      { message: "Password reset successful" },
+      { status: 200 },
+    );
   } catch (error: any) {
-    console.error(`Reset password error: ${error?.message}`);
-    return NextResponse.json({ message: "Internal server error" }, { status: 500 });
+    logger.error(`Reset password error: ${error?.message}`);
+    return NextResponse.json(
+      { message: "Internal server error" },
+      { status: 500 },
+    );
   }
 }
 

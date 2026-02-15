@@ -22,6 +22,8 @@ interface SearchResultCardProps {
     tags?: string[];
     slug?: string;
     matchReason?: string;
+    distance?: number | null;
+    isWithinRadius?: boolean;
   };
   viewMode: "grid" | "list";
   isFavorite: boolean;
@@ -58,10 +60,11 @@ export default function SearchResultCard({
               src={provider.coverImage}
               alt={provider.businessName}
               fill
+              unoptimized
               className="object-cover group-hover:scale-105 transition-transform duration-300"
             />
           ) : (
-            <div className="w-full h-full bg-linear-to-br from-pink-400 to-purple-500 flex items-center justify-center">
+            <div className="w-full h-full bg-linear-to-br from-accent to-teal-600 flex items-center justify-center">
               <span className="text-4xl font-bold text-white">
                 {provider.businessName.charAt(0)}
               </span>
@@ -122,10 +125,16 @@ export default function SearchResultCard({
             {provider.businessName}
           </h3>
 
-          {provider.city && (
+          {(provider.city || provider.distance !== undefined) && (
             <div className="flex items-center gap-1 text-sm text-muted-foreground mb-2">
               <MapPin className="w-3.5 h-3.5" />
-              <span>{provider.city}</span>
+              <span>
+                {provider.city}
+                {provider.distance !== null &&
+                  provider.distance !== undefined && (
+                    <span className="ml-1">• {provider.distance} miles</span>
+                  )}
+              </span>
             </div>
           )}
 
@@ -169,10 +178,11 @@ export default function SearchResultCard({
             src={provider.coverImage}
             alt={provider.businessName}
             fill
+            unoptimized
             className="object-cover"
           />
         ) : (
-          <div className="w-full h-full bg-linear-to-br from-pink-400 to-purple-500 flex items-center justify-center">
+          <div className="w-full h-full bg-linear-to-br from-accent to-teal-600 flex items-center justify-center">
             <span className="text-2xl font-bold text-white">
               {provider.businessName.charAt(0)}
             </span>
@@ -187,10 +197,16 @@ export default function SearchResultCard({
             <h3 className="font-semibold text-foreground group-hover:text-accent transition-colors">
               {provider.businessName}
             </h3>
-            {provider.city && (
+            {(provider.city || provider.distance !== undefined) && (
               <div className="flex items-center gap-1 text-sm text-muted-foreground">
                 <MapPin className="w-3.5 h-3.5" />
-                <span>{provider.city}</span>
+                <span>
+                  {provider.city}
+                  {provider.distance !== null &&
+                    provider.distance !== undefined && (
+                      <span className="ml-1">• {provider.distance} miles</span>
+                    )}
+                </span>
               </div>
             )}
           </div>

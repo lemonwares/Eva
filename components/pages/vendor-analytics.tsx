@@ -50,7 +50,7 @@ const stats = [
 const inquirySources = [
   { label: "EVA Search", percentage: 60, color: "bg-blue-500" },
   { label: "Direct", percentage: 25, color: "bg-green-400" },
-  { label: "Social Media", percentage: 15, color: "bg-pink-500" },
+  { label: "Social Media", percentage: 15, color: "bg-accent" },
 ];
 
 const topServices = [
@@ -103,7 +103,7 @@ export default function VendorAnalytics() {
         <div className="p-4 sm:p-5">
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center gap-3">
-              <div className="w-9 h-9 rounded-full bg-linear-to-br from-orange-400 to-pink-500" />
+              <div className="w-9 h-9 rounded-full bg-linear-to-br from-accent to-teal-600" />
               <div>
                 <p className="font-bold text-sm">Eva Vendor</p>
                 <p className="text-gray-500 text-xs">Vendor Portal</p>

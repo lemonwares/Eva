@@ -45,7 +45,7 @@ export async function GET(
 
     return NextResponse.json(listing);
   } catch (error: any) {
-    console.error("Error fetching listing:", error);
+    logger.error("Error fetching listing:", error);
     return NextResponse.json(
       { message: "Internal server error" },
       { status: 500 }
@@ -106,7 +106,7 @@ export async function PATCH(
 
     return NextResponse.json(updated);
   } catch (error: any) {
-    console.error("Error updating listing:", error);
+    logger.error("Error updating listing:", error);
     return NextResponse.json(
       { message: "Internal server error" },
       { status: 500 }
@@ -157,7 +157,7 @@ export async function DELETE(
 
     return NextResponse.json({ message: "Listing deleted successfully" });
   } catch (error: any) {
-    console.error("Error deleting listing:", error);
+    logger.error("Error deleting listing:", error);
     return NextResponse.json(
       { message: "Internal server error" },
       { status: 500 }

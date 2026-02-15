@@ -2,6 +2,7 @@
 
 import AdminLayout from "@/components/admin/AdminLayout";
 import { useAdminTheme } from "@/components/admin/AdminThemeContext";
+import { logger } from "@/lib/logger";
 import {
   FileText,
   Search,
@@ -86,7 +87,7 @@ export default function AuditLogsPage() {
   const [logs, setLogs] = useState<AuditLog[]>([]);
   const [pagination, setPagination] = useState<Pagination | null>(null);
   const [availableFilters, setAvailableFilters] = useState<Filters | null>(
-    null
+    null,
   );
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -197,7 +198,7 @@ export default function AuditLogsPage() {
       a.click();
       URL.revokeObjectURL(url);
     } catch (err) {
-      console.error("Export failed:", err);
+      logger.error("Export failed:", err);
     }
   };
 
@@ -228,7 +229,7 @@ export default function AuditLogsPage() {
           </div>
           <button
             onClick={exportLogs}
-            className="flex items-center gap-2 px-4 py-2 bg-rose-500 text-white rounded-lg hover:bg-rose-600"
+            className="flex items-center gap-2 px-4 py-2 bg-accent text-white rounded-lg hover:bg-accent/90"
           >
             <Download className="w-4 h-4" />
             Export CSV
@@ -338,7 +339,7 @@ export default function AuditLogsPage() {
         {/* Logs Table */}
         {loading ? (
           <div className="flex items-center justify-center py-12">
-            <Loader2 className="w-8 h-8 animate-spin text-rose-500" />
+            <Loader2 className="w-8 h-8 animate-spin text-accent" />
           </div>
         ) : error ? (
           <div
@@ -347,7 +348,7 @@ export default function AuditLogsPage() {
             <p className="text-red-500">{error}</p>
             <button
               onClick={fetchLogs}
-              className="mt-4 px-4 py-2 bg-rose-500 text-white rounded-lg"
+              className="mt-4 px-4 py-2 bg-accent text-white rounded-lg"
             >
               Try Again
             </button>
@@ -491,7 +492,7 @@ export default function AuditLogsPage() {
                   Showing {(pagination.page - 1) * pagination.limit + 1} -{" "}
                   {Math.min(
                     pagination.page * pagination.limit,
-                    pagination.total
+                    pagination.total,
                   )}{" "}
                   of {pagination.total}
                 </p>
@@ -502,7 +503,7 @@ export default function AuditLogsPage() {
                     className={`p-2 rounded-lg ${cardBg} border ${cardBorder} ${
                       page <= 1
                         ? "opacity-50 cursor-not-allowed"
-                        : "hover:bg-rose-500/10"
+                        : "hover:bg-accent/10"
                     } ${textPrimary}`}
                   >
                     <ChevronLeft className="w-5 h-5" />
@@ -513,7 +514,7 @@ export default function AuditLogsPage() {
                     className={`p-2 rounded-lg ${cardBg} border ${cardBorder} ${
                       page >= pagination.pages
                         ? "opacity-50 cursor-not-allowed"
-                        : "hover:bg-rose-500/10"
+                        : "hover:bg-accent/10"
                     } ${textPrimary}`}
                   >
                     <ChevronRight className="w-5 h-5" />
@@ -554,7 +555,7 @@ export default function AuditLogsPage() {
               {/* Content */}
               <div className="p-6 space-y-6">
                 {/* Basic Info */}
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <p className={`text-sm ${textMuted}`}>Action</p>
                     <span

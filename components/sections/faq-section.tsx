@@ -125,7 +125,7 @@ export default function FAQSection() {
         setSubmitStatus("error");
       }
     } catch (error) {
-      console.error("Failed to send message:", error);
+      logger.error("Failed to send message:", error);
       setSubmitStatus("error");
     } finally {
       setIsLoading(false);

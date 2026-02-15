@@ -141,7 +141,7 @@ export async function GET(request: NextRequest) {
       },
     });
   } catch (error: any) {
-    console.error("Error fetching providers:", error);
+    logger.error("Error fetching providers:", error);
     return NextResponse.json(
       { success: false, error: "Internal server error" },
       { status: 500 }

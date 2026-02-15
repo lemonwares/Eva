@@ -1,6 +1,6 @@
 "use client";
 
-import { Star, Filter, X } from "lucide-react";
+import { Star, Filter, X, Navigation, Radar } from "lucide-react";
 
 interface Category {
   id: string;
@@ -22,6 +22,9 @@ interface SearchFiltersProps {
     minPrice: string;
     maxPrice: string;
     minRating: string;
+    lat: string;
+    lng: string;
+    radius: string;
   };
   categories: Category[];
   cities: City[];
@@ -90,6 +93,54 @@ export default function SearchFilters({
             </option>
           ))}
         </select>
+      </div>
+
+      {/* Geolocation & Radius */}
+      <div>
+        <label className="block text-sm font-medium text-foreground mb-2 flex items-center gap-2">
+          <Radar className="w-4 h-4" />
+          Distance Radius
+        </label>
+        <div className="space-y-4">
+          <button
+            type="button"
+            onClick={() => {
+              // Trigger geolocation logic in parent
+              setFilters((prev: any) => ({ ...prev, lat: "loading", lng: "loading" }));
+            }}
+            disabled={filters.lat === "loading"}
+            className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-accent/10 text-accent border border-accent/20 rounded-xl text-sm font-medium hover:bg-accent/20 transition disabled:opacity-50"
+          >
+            <Navigation className={`w-4 h-4 ${filters.lat === "loading" ? "animate-pulse" : ""}`} />
+            {filters.lat === "loading" ? "Locating..." : "Use my location"}
+          </button>
+
+          {filters.lat && filters.lat !== "loading" && (
+            <div className="space-y-2">
+              <div className="flex justify-between text-xs text-muted-foreground">
+                <span>Radius</span>
+                <span className="font-medium text-foreground">{filters.radius} miles</span>
+              </div>
+              <input
+                type="range"
+                min="1"
+                max="50"
+                step="1"
+                value={filters.radius}
+                onChange={(e) =>
+                  setFilters((prev: any) => ({
+                    ...prev,
+                    radius: e.target.value,
+                  }))
+                }
+                className="w-full h-1.5 bg-muted rounded-lg appearance-none cursor-pointer accent-accent"
+              />
+              <p className="text-[10px] text-muted-foreground italic">
+                * Searching within {filters.radius} miles of your location
+              </p>
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Price Range */}

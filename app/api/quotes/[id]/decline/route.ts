@@ -89,7 +89,7 @@ export async function POST(
         { status: 400 }
       );
     }
-    console.error("Error declining quote:", error);
+    logger.error("Error declining quote:", error);
     return NextResponse.json(
       { message: "Internal server error" },
       { status: 500 }

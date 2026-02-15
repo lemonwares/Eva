@@ -17,9 +17,12 @@ import {
   Star,
 } from "lucide-react";
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { useVendorTheme } from "./VendorThemeContext";
-import { signOut } from "next-auth/react";
+import { useState, useEffect } from "react";
+import { signOut, useSession } from "next-auth/react";
+import SignOutModal from "@/components/modals/sign-out-modal";
 
 const navItems = [
   { icon: LayoutDashboard, label: "Dashboard", href: "/vendor" },
@@ -50,8 +53,25 @@ export default function VendorLayoutSidebar({
 }: VendorLayoutSidebarProps) {
   const pathname = usePathname();
   const { darkMode, toggleDarkMode } = useVendorTheme();
+  const { data: session } = useSession();
+  const [showSignOutModal, setShowSignOutModal] = useState(false);
 
   const vendorInitial = (vendorName?.[0] || "V").toUpperCase();
+
+  const [vendorImage, setVendorImage] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchProfile = async () => {
+      try {
+        const res = await fetch("/api/auth/me");
+        if (res.ok) {
+          const data = await res.json();
+          setVendorImage(data.user?.avatar || null);
+        }
+      } catch {}
+    };
+    fetchProfile();
+  }, []);
 
   const isActive = (href: string) => {
     if (href === "/vendor") {
@@ -86,10 +106,23 @@ export default function VendorLayoutSidebar({
         >
           <div className="flex items-center justify-between mb-0 lg:mb-0">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full bg-linear-to-br from-accent to-pink-600 flex items-center justify-center">
-                <span className="text-white font-bold text-sm">
-                  {vendorInitial}
-                </span>
+              <div className="w-10 h-10 rounded-full overflow-hidden">
+                {vendorImage ? (
+                  <Image
+                    src={vendorImage}
+                    alt={vendorName}
+                    width={40}
+                    height={40}
+                    className="w-full h-full object-cover"
+                    unoptimized
+                  />
+                ) : (
+                  <div className="w-full h-full bg-linear-to-br from-accent to-teal-600 flex items-center justify-center">
+                    <span className="text-white font-bold text-sm">
+                      {vendorInitial}
+                    </span>
+                  </div>
+                )}
               </div>
               <div>
                 <p
@@ -129,8 +162,8 @@ export default function VendorLayoutSidebar({
                     active
                       ? "bg-accent/15 text-accent"
                       : darkMode
-                      ? "text-gray-400 hover:bg-white/5 hover:text-white"
-                      : "text-gray-600 hover:bg-gray-100 hover:text-gray-900"
+                        ? "text-gray-400 hover:bg-white/5 hover:text-white"
+                        : "text-gray-600 hover:bg-gray-100 hover:text-gray-900"
                   }`}
                 >
                   <item.icon size={20} />
@@ -178,12 +211,21 @@ export default function VendorLayoutSidebar({
             className={`flex items-center gap-3 px-4 py-3 rounded-xl ${
               darkMode ? "text-gray-400" : "text-gray-600"
             } hover:bg-red-500/10 hover:text-red-400 transition-colors w-full`}
-            onClick={() => signOut({ callbackUrl: "/", redirect: true })}
+            onClick={() => setShowSignOutModal(true)}
           >
             <LogOut size={20} />
             <span className="font-medium text-sm">Log Out</span>
           </button>
         </div>
+
+        <SignOutModal
+          isOpen={showSignOutModal}
+          onClose={() => setShowSignOutModal(false)}
+          onConfirm={() => {
+            setShowSignOutModal(false);
+            signOut({ callbackUrl: "/", redirect: true });
+          }}
+        />
       </aside>
     </>
   );

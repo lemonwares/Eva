@@ -21,7 +21,7 @@ export async function PATCH(
       { status: 501 }
     );
   } catch (error: any) {
-    console.error("Error updating notification:", error);
+    logger.error("Error updating notification:", error);
     return NextResponse.json(
       { message: "Internal server error" },
       { status: 500 }
@@ -48,7 +48,7 @@ export async function DELETE(
       { status: 501 }
     );
   } catch (error: any) {
-    console.error("Error deleting notification:", error);
+    logger.error("Error deleting notification:", error);
     return NextResponse.json(
       { message: "Internal server error" },
       { status: 500 }

@@ -118,7 +118,7 @@ export async function POST(
       review: updated,
     });
   } catch (error: any) {
-    console.error("Error moderating review:", error);
+    logger.error("Error moderating review:", error);
     return NextResponse.json(
       { message: "Internal server error" },
       { status: 500 }

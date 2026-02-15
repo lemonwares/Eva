@@ -70,7 +70,7 @@ export default function VendorDashboard() {
       <VendorSidebar />
 
       {/* Main Content */}
-      <main className="flex-1 p-10">
+      <main className="flex-1 p-4 sm:p-6 lg:p-10">
         {/* Top Bar */}
         <div className="flex justify-end items-center gap-6 mb-8">
           <button className="relative">
@@ -82,7 +82,9 @@ export default function VendorDashboard() {
           </button>
         </div>
 
-        <h1 className="text-4xl font-bold mb-8">Dashboard</h1>
+        <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold mb-8">
+          Dashboard
+        </h1>
 
         {/* Metrics */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
@@ -104,7 +106,7 @@ export default function VendorDashboard() {
 
         {/* Tabbed Table */}
         <div className="bg-white rounded-xl shadow-sm border border-border">
-          <div className="flex gap-8 px-8 pt-6 border-b border-border">
+          <div className="flex gap-4 sm:gap-8 px-4 sm:px-8 pt-6 border-b border-border overflow-x-auto">
             {tabs.map((tab) => (
               <button
                 key={tab}
@@ -119,7 +121,7 @@ export default function VendorDashboard() {
               </button>
             ))}
           </div>
-          <div className="overflow-x-auto px-8 py-6">
+          <div className="overflow-x-auto px-4 sm:px-8 py-6">
             <table className="w-full text-left">
               <thead>
                 <tr className="text-muted-foreground text-sm">

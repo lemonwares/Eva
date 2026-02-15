@@ -1,18 +1,19 @@
 "use client";
 
 import React, { useState } from "react";
-import { 
-  Share2, 
-  X, 
-  Copy, 
-  Check, 
-  Facebook, 
-  Mail, 
+import {
+  Share2,
+  X,
+  Copy,
+  Check,
+  Facebook,
+  Mail,
   Linkedin,
-  Globe
+  Globe,
 } from "lucide-react";
 import { FaWhatsapp, FaXTwitter } from "react-icons/fa6";
 import { motion, AnimatePresence } from "framer-motion";
+import { logger } from "@/lib/logger";
 
 interface ShareButtonProps {
   url?: string;
@@ -50,7 +51,7 @@ export default function ShareButton({
         return;
       } catch (error) {
         if ((error as Error).name !== "AbortError") {
-          console.error("Native share failed:", error);
+          logger.error("Native share failed:", error);
         }
       }
     }
@@ -64,7 +65,7 @@ export default function ShareButton({
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch (error) {
-      console.error("Failed to copy:", error);
+      logger.error("Failed to copy:", error);
     }
   };
 
@@ -73,38 +74,41 @@ export default function ShareButton({
       name: "WhatsApp",
       icon: FaWhatsapp,
       url: `https://wa.me/?text=${encodeURIComponent(`${shareText} ${shareUrl}`)}`,
-      hoverClass: "hover:bg-[#25D366] hover:text-white"
+      hoverClass: "hover:bg-[#25D366] hover:text-white",
     },
     {
       name: "X",
       icon: FaXTwitter,
       url: `https://twitter.com/intent/tweet?text=${encodeURIComponent(shareText)}&url=${encodeURIComponent(shareUrl)}`,
-      hoverClass: "hover:bg-black hover:text-white dark:hover:bg-white dark:hover:text-black"
+      hoverClass:
+        "hover:bg-black hover:text-white dark:hover:bg-white dark:hover:text-black",
     },
     {
       name: "Facebook",
       icon: Facebook,
       url: `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}`,
-      hoverClass: "hover:bg-[#1877F2] hover:text-white"
+      hoverClass: "hover:bg-[#1877F2] hover:text-white",
     },
     {
       name: "LinkedIn",
       icon: Linkedin,
       url: `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(shareUrl)}`,
-      hoverClass: "hover:bg-[#0A66C2] hover:text-white"
+      hoverClass: "hover:bg-[#0A66C2] hover:text-white",
     },
     {
       name: "Email",
       icon: Mail,
       url: `mailto:?subject=${encodeURIComponent(title)}&body=${encodeURIComponent(`${shareText}\n\n${shareUrl}`)}`,
-      hoverClass: "hover:bg-slate-700 hover:text-white"
+      hoverClass: "hover:bg-slate-700 hover:text-white",
     },
   ];
 
   const variants = {
-    outline: "bg-white dark:bg-gray-800 border-slate-200 dark:border-gray-700 hover:bg-slate-50 dark:hover:bg-gray-700/50 shadow-sm",
-    ghost: "hover:bg-slate-100 dark:hover:bg-gray-800 text-slate-600 dark:text-slate-400",
-    default: "bg-accent text-white hover:bg-accent/90 shadow-md"
+    outline:
+      "bg-white dark:bg-gray-800 border-slate-200 dark:border-gray-700 hover:bg-slate-50 dark:hover:bg-gray-700/50 shadow-sm",
+    ghost:
+      "hover:bg-slate-100 dark:hover:bg-gray-800 text-slate-600 dark:text-slate-400",
+    default: "bg-accent text-white hover:bg-accent/90 shadow-md",
   };
 
   return (
@@ -115,16 +119,19 @@ export default function ShareButton({
         onClick={handleMainAction}
         className={`group flex items-center justify-center transition-all duration-300 ${
           iconOnly ? "rounded-full p-2.5" : "rounded-xl px-4 py-2"
-        } ${variants[variant]} ${className}`}
+        } min-w-10 min-h-10 ${variants[variant]} ${className}`}
         aria-label="Share content"
       >
-        <Share2 size={iconOnly ? 20 : 18} className="transition-colors group-hover:text-accent" />
+        <Share2
+          size={iconOnly ? 20 : 18}
+          className="transition-colors group-hover:text-accent"
+        />
         {!iconOnly && <span className="ml-2 font-semibold text-sm">Share</span>}
       </motion.button>
 
       <AnimatePresence>
         {showModal && (
-          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+          <div className="fixed inset-0 z-100 flex items-center justify-center p-4">
             {/* Backdrop */}
             <motion.div
               initial={{ opacity: 0 }}
@@ -147,7 +154,9 @@ export default function ShareButton({
                   <div className="p-2 rounded-xl bg-accent/10 text-accent">
                     <Share2 size={20} />
                   </div>
-                  <h3 className="text-xl font-bold text-slate-900 dark:text-white">Share this listing</h3>
+                  <h3 className="text-xl font-bold text-slate-900 dark:text-white">
+                    Share this listing
+                  </h3>
                 </div>
                 <button
                   onClick={() => setShowModal(false)}
@@ -161,8 +170,10 @@ export default function ShareButton({
               <div className="p-6 space-y-8">
                 {/* Social Grid */}
                 <div>
-                  <p className="text-sm font-semibold text-slate-500 uppercase tracking-wider mb-4">Share via</p>
-                  <div className="flex justify-between items-center bg-white dark:bg-gray-900 shadow-lg border border-slate-50 dark:border-gray-800 px-6 py-4 rounded-3xl">
+                  <p className="text-sm font-semibold text-slate-500 uppercase tracking-wider mb-4">
+                    Share via
+                  </p>
+                  <div className="flex flex-wrap justify-center sm:justify-between items-center gap-3 bg-white dark:bg-gray-900 shadow-lg border border-slate-50 dark:border-gray-800 px-4 sm:px-6 py-4 rounded-3xl">
                     {shareLinks.map((link) => (
                       <motion.a
                         key={link.name}
@@ -177,7 +188,7 @@ export default function ShareButton({
                         <div className="p-3 rounded-2xl bg-slate-50 dark:bg-gray-800 group-hover/icon:bg-transparent transition-colors">
                           <link.icon size={24} />
                         </div>
-                        <span className="text-[10px] font-bold uppercase tracking-tighter opacity-0 group-hover/icon:opacity-100 transition-opacity">
+                        <span className="text-[10px] font-bold uppercase tracking-tighter sm:opacity-0 sm:group-hover/icon:opacity-100 transition-opacity">
                           {link.name}
                         </span>
                       </motion.a>
@@ -187,7 +198,9 @@ export default function ShareButton({
 
                 {/* Copy Link Section */}
                 <div>
-                  <p className="text-sm font-semibold text-slate-500 uppercase tracking-wider mb-4">Copy link</p>
+                  <p className="text-sm font-semibold text-slate-500 uppercase tracking-wider mb-4">
+                    Copy link
+                  </p>
                   <div className="relative group">
                     <div className="flex items-center gap-3 p-1.5 rounded-2xl bg-slate-100 dark:bg-gray-800/50 border border-slate-200 dark:border-gray-700/50 group-hover:border-accent/30 transition-colors">
                       <div className="pl-3 text-slate-400">

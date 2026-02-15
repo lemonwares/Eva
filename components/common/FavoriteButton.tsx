@@ -70,7 +70,7 @@ export default function FavoriteButton({
           }
         }
       } catch (error) {
-        console.error("Error checking favorite status:", error);
+        logger.error("Error checking favorite status:", error);
       } finally {
         if (isMounted) setIsChecking(false);
       }
@@ -114,13 +114,13 @@ export default function FavoriteButton({
       if (!response.ok) {
         // Revert on error
         setIsFavorited(wasFavorited);
-        console.error("Failed to update favorite status");
+        logger.error("Failed to update favorite status");
       } else {
         onToggle?.(!wasFavorited);
       }
     } catch (error) {
       setIsFavorited(wasFavorited);
-      console.error("Error toggling favorite:", error);
+      logger.error("Error toggling favorite:", error);
     } finally {
       setIsLoading(false);
     }

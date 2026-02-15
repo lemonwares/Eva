@@ -17,6 +17,7 @@ import {
 import Link from "next/link";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { logger } from "@/lib/logger";
 
 interface Inquiry {
   id: string;
@@ -82,6 +83,13 @@ function DashboardContent() {
   });
   const [providerName, setProviderName] = useState("Your Business");
   const [providerType, setProviderType] = useState("Vendor");
+  const [onboardingIncomplete, setOnboardingIncomplete] = useState(false);
+  const [onboardingChecklist, setOnboardingChecklist] = useState({
+    hasListings: false,
+    hasPhotos: false,
+    hasSchedule: false,
+    isPublished: false,
+  });
 
   useEffect(() => {
     fetchDashboardData();
@@ -102,6 +110,24 @@ function DashboardContent() {
         }
         setProviderName(profileData.provider.businessName);
         setProviderType(profileData.provider.categories?.[0] || "Vendor");
+
+        // Check onboarding completeness
+        const p = profileData.provider;
+        const checklist = {
+          hasListings: (p._count?.listings || 0) > 0,
+          hasPhotos: (p.photos?.length || 0) >= 4 && !!p.coverImage,
+          hasSchedule: (p._count?.weeklySchedules || 0) > 0,
+          isPublished: !!p.isPublished,
+        };
+        setOnboardingChecklist(checklist);
+        if (
+          !p.onboardingCompletedAt ||
+          !checklist.hasListings ||
+          !checklist.hasPhotos ||
+          !checklist.hasSchedule
+        ) {
+          setOnboardingIncomplete(true);
+        }
       } else {
         setHasProvider(false);
         router.push("/vendor/onboarding");
@@ -114,7 +140,7 @@ function DashboardContent() {
         const inquiriesData = await inquiriesRes.json();
         setRecentInquiries(inquiriesData.inquiries || []);
         const newCount = (inquiriesData.inquiries || []).filter(
-          (i: Inquiry) => i.status === "NEW"
+          (i: Inquiry) => i.status === "NEW",
         ).length;
         setStats((prev) => ({
           ...prev,
@@ -133,7 +159,7 @@ function DashboardContent() {
         }));
       }
     } catch (err) {
-      console.error("Error fetching dashboard data:", err);
+      logger.error("Error fetching dashboard data:", err);
     } finally {
       setIsLoading(false);
     }
@@ -198,6 +224,81 @@ function DashboardContent() {
 
   return (
     <>
+      {/* Onboarding Progress Banner */}
+      {onboardingIncomplete && (
+        <div className={`rounded-xl border mb-6 p-5 ${cardBg} ${cardBorder}`}>
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div>
+              <h3 className={`font-semibold ${textPrimary} mb-1`}>
+                Complete your profile setup
+              </h3>
+              <p className={`text-sm ${textMuted}`}>
+                Finish these steps to go live and start receiving inquiries.
+              </p>
+              <div className="flex flex-wrap gap-3 mt-3">
+                {[
+                  {
+                    done: onboardingChecklist.hasListings,
+                    label: "Add services",
+                  },
+                  {
+                    done: onboardingChecklist.hasPhotos,
+                    label: "Upload photos",
+                  },
+                  {
+                    done: onboardingChecklist.hasSchedule,
+                    label: "Set schedule",
+                  },
+                  {
+                    done: onboardingChecklist.isPublished,
+                    label: "Publish profile",
+                  },
+                ].map((item) => (
+                  <span
+                    key={item.label}
+                    className={`inline-flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-full ${
+                      item.done
+                        ? "bg-green-100 text-green-700"
+                        : darkMode
+                          ? "bg-white/10 text-gray-400"
+                          : "bg-gray-100 text-gray-500"
+                    }`}
+                  >
+                    {item.done ? "✓" : "○"} {item.label}
+                  </span>
+                ))}
+              </div>
+            </div>
+            <Link
+              href="/vendor/profile"
+              className="shrink-0 px-5 py-2.5 bg-accent text-white text-sm font-medium rounded-lg hover:bg-accent/90 transition-colors"
+            >
+              Complete Setup
+            </Link>
+          </div>
+          {/* Progress bar */}
+          <div
+            className={`mt-4 h-1.5 rounded-full ${darkMode ? "bg-white/10" : "bg-gray-200"}`}
+          >
+            <div
+              className="h-full bg-accent rounded-full transition-all duration-500"
+              style={{
+                width: `${
+                  ([
+                    onboardingChecklist.hasListings,
+                    onboardingChecklist.hasPhotos,
+                    onboardingChecklist.hasSchedule,
+                    onboardingChecklist.isPublished,
+                  ].filter(Boolean).length /
+                    4) *
+                  100
+                }%`,
+              }}
+            />
+          </div>
+        </div>
+      )}
+
       {/* Stats Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
         {statsConfig.map((stat, idx) => (
@@ -252,7 +353,7 @@ function DashboardContent() {
                   className={`p-4 transition-colors flex items-center justify-between border-b last:border-b-0 ${cardBorder} ${hoverBg}`}
                 >
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-full bg-linear-to-br from-accent/50 to-pink-500/50 flex items-center justify-center text-white font-medium text-sm">
+                    <div className="w-10 h-10 rounded-full bg-linear-to-br from-accent/50 to-teal-500/50 flex items-center justify-center text-white font-medium text-sm">
                       {getInitials(inquiry.fromName)}
                     </div>
                     <div>

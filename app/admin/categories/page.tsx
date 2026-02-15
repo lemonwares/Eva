@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { Plus, Loader2 } from "lucide-react";
+import { logger } from "@/lib/logger";
 import AdminLayout from "@/components/admin/AdminLayout";
 import ConfirmDialog from "@/components/admin/ConfirmDialog";
 import { Toast, ToastType } from "@/components/admin/Toast";
@@ -65,7 +66,7 @@ export default function CategoriesPage() {
 
   // Modals State
   const [selectedCategory, setSelectedCategory] = useState<Category | null>(
-    null
+    null,
   );
   const [formModalOpen, setFormModalOpen] = useState(false);
   const [formMode, setFormMode] = useState<"add" | "edit">("add");
@@ -74,6 +75,7 @@ export default function CategoriesPage() {
 
   // Confirm Dialog State
   const [deleteCategory, setDeleteCategory] = useState<Category | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   // Toast State
   const [toast, setToast] = useState<{
@@ -108,7 +110,7 @@ export default function CategoriesPage() {
         setCategories([]);
       }
     } catch (error) {
-      console.error("Error fetching categories:", error);
+      logger.error("Error fetching categories:", error);
       setToast({ message: "Failed to fetch categories", type: "error" });
     } finally {
       setLoading(false);
@@ -123,14 +125,14 @@ export default function CategoriesPage() {
   const filteredCategories = categories.filter(
     (cat) =>
       cat.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      cat.slug.toLowerCase().includes(searchQuery.toLowerCase())
+      cat.slug.toLowerCase().includes(searchQuery.toLowerCase()),
   );
 
   // Pagination Logic
   const totalPages = Math.ceil(filteredCategories.length / itemsPerPage);
   const paginatedCategories = filteredCategories.slice(
     (currentPage - 1) * itemsPerPage,
-    currentPage * itemsPerPage
+    currentPage * itemsPerPage,
   );
 
   const handleEdit = (category: Category) => {
@@ -206,13 +208,14 @@ export default function CategoriesPage() {
         }
       }
     } catch (error) {
-      console.error("Error saving category:", error);
+      logger.error("Error saving category:", error);
       setToast({ message: "Failed to save category", type: "error" });
     }
   };
 
   const handleDelete = async () => {
     if (!deleteCategory) return;
+    setIsDeleting(true);
 
     try {
       const response = await fetch(`/api/categories/${deleteCategory.id}`, {
@@ -230,24 +233,25 @@ export default function CategoriesPage() {
         });
       }
     } catch (error) {
-      console.error("Error deleting category:", error);
+      logger.error("Error deleting category:", error);
       setToast({ message: "Failed to delete category", type: "error" });
     } finally {
+      setIsDeleting(false);
       setDeleteCategory(null);
     }
   };
 
   const handleToggleFeatured = async (
     category: Category,
-    e: React.MouseEvent
+    e: React.MouseEvent,
   ) => {
     e.stopPropagation();
     // Optimistic update
     const newStatus = !category.isFeatured;
     setCategories(
       categories.map((c) =>
-        c.id === category.id ? { ...c, isFeatured: newStatus } : c
-      )
+        c.id === category.id ? { ...c, isFeatured: newStatus } : c,
+      ),
     );
 
     try {
@@ -260,16 +264,16 @@ export default function CategoriesPage() {
       if (!response.ok) {
         throw new Error("Failed to update");
       }
-      
+
       // Parse response to ensure it was successful
       await response.json();
     } catch (error) {
-      console.error("Error toggling featured:", error);
+      logger.error("Error toggling featured:", error);
       // Revert optimistic update
       setCategories(
         categories.map((c) =>
-          c.id === category.id ? { ...c, isFeatured: !newStatus } : c
-        )
+          c.id === category.id ? { ...c, isFeatured: !newStatus } : c,
+        ),
       );
       setToast({ message: "Failed to update category", type: "error" });
     }
@@ -399,6 +403,7 @@ export default function CategoriesPage() {
         message={`Are you sure you want to delete "${deleteCategory?.name}"? This will also remove all its subcategories.`}
         type="danger"
         confirmText="Delete"
+        isLoading={isDeleting}
       />
 
       {/* Toast */}

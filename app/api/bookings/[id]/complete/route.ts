@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { auth } from "@/auth";
 import { z } from "zod";
 import { sendTemplatedEmail, emailTemplates } from "@/lib/email";
+import { logger } from "@/lib/logger";
 
 const completeBookingSchema = z.object({
   completionNotes: z.string().optional(),
@@ -11,7 +12,7 @@ const completeBookingSchema = z.object({
 // POST /api/bookings/:id/complete - Mark booking as completed
 export async function POST(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ id: string }> },
 ) {
   try {
     const session = await auth();
@@ -44,7 +45,7 @@ export async function POST(
     if (!booking) {
       return NextResponse.json(
         { message: "Booking not found" },
-        { status: 404 }
+        { status: 404 },
       );
     }
 
@@ -60,7 +61,7 @@ export async function POST(
     if (booking.status !== "CONFIRMED") {
       return NextResponse.json(
         { message: `Cannot complete a booking with status: ${booking.status}` },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -84,20 +85,41 @@ export async function POST(
       },
     });
 
-    // Send review request email to client
+    // Send booking completed + review request emails to client
     if (updated.clientEmail) {
-      const reviewUrl = `${
-        process.env.NEXTAUTH_URL || "http://localhost:3000"
-      }/reviews/new?booking=${updated.id}`;
+      const baseUrl = process.env.NEXTAUTH_URL || "http://localhost:3000";
+      const bookingUrl = `${baseUrl}/dashboard/bookings`;
+      const reviewUrl = `${baseUrl}/reviews/new?booking=${updated.id}`;
+      const eventDate = updated.eventDate
+        ? new Date(updated.eventDate).toLocaleDateString("en-US", {
+            month: "long",
+            day: "numeric",
+            year: "numeric",
+          })
+        : "Your event";
+
+      // Send completion notification
+      sendTemplatedEmail(
+        updated.clientEmail,
+        emailTemplates.bookingCompleted(
+          updated.clientName,
+          updated.provider.businessName,
+          "Event Service",
+          eventDate,
+          bookingUrl,
+        ),
+      ).catch((err) => logger.error("Failed to send completion email:", err));
+
+      // Send review request
       await sendTemplatedEmail(
         updated.clientEmail,
         emailTemplates.reviewRequest(
           updated.clientName,
           updated.provider.businessName,
-          reviewUrl
-        )
+          reviewUrl,
+        ),
       ).catch((err) =>
-        console.error("Failed to send review request email:", err)
+        logger.error("Failed to send review request email:", err),
       );
     }
 
@@ -106,10 +128,10 @@ export async function POST(
       booking: updated,
     });
   } catch (error: any) {
-    console.error("Error completing booking:", error);
+    logger.error("Error completing booking:", error);
     return NextResponse.json(
       { message: "Internal server error" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

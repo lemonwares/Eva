@@ -2,199 +2,245 @@
 
 import {
   MapPin,
-  Sparkles,
-  Shield,
-  ArrowRight,
+  Users,
+  MessageSquare,
   CheckCircle2,
+  ArrowRight,
 } from "lucide-react";
+import Image from "next/image";
+import Link from "next/link";
+
+const features = [
+  {
+    icon: MapPin,
+    title: "Local-first search",
+    description:
+      "Find vendors near you by postcode and radius. Support your local community while reducing travel time and costs.",
+    bg: "bg-teal-light",
+  },
+  {
+    icon: Users,
+    title: "Trusted community vendors",
+    description:
+      "Browse verified profiles with detailed portfolios, clear pricing, and authentic reviews from your community.",
+    bg: "bg-lavender",
+  },
+  {
+    icon: MessageSquare,
+    title: "Simple messaging & quotes",
+    description:
+      "Request quotes, compare options, and book with confidence, all in one place, on any device.",
+    bg: "bg-mint",
+  },
+];
 
 export default function WhyChooseSection() {
-  const features = [
-    {
-      icon: MapPin,
-      title: "Hyper-Local Search",
-      description:
-        "Focus your search with precise postcode and radius filtering to find vendors right in your community.",
-      colour: "from-accent/20 to-accent/10",
-      iconColour: "text-accent",
-    },
-    {
-      icon: Sparkles,
-      title: "Cultural & Ceremony Matching",
-      description:
-        "Our core difference. Find specialists who understand the nuances of your traditions.",
-      colour: "from-accent/20 to-accent/10",
-      iconColour: "text-accent",
-    },
-    {
-      icon: Shield,
-      title: "Verified Professionals",
-      description:
-        "Book with confidence. All our listed vendors are vetted for quality and reliability.",
-      colour: "from-accent/20 to-accent/10",
-      iconColour: "text-accent",
-    },
-  ];
-
   return (
-    <section
-      id="about"
-      className="relative overflow-hidden bg-linear-to-b from-background via-muted/40 to-background px-4 py-24 sm:px-6 sm:py-32 lg:px-8"
-    >
-      {/* Background decorations */}
-      <div className="pointer-events-none absolute inset-0">
-        <div className="absolute left-1/4 top-20 h-96 w-96 rounded-full bg-accent/15 blur-3xl" />
-        <div className="absolute bottom-20 right-1/4 h-[500px] w-[500px] rounded-full bg-accent/20 blur-3xl" />
-      </div>
-
-      {/* Dot pattern overlay */}
-      <div className="pointer-events-none absolute inset-0 opacity-[0.04]">
-        <div className="h-full w-full bg-[radial-gradient(circle,var(--color-border)_1px,transparent_1px)] bg-size-[24px_24px]" />
-      </div>
-
-      <div className="relative mx-auto max-w-7xl">
-        {/* Header */}
-        <div className="mx-auto max-w-3xl text-center">
-          <div className="inline-flex items-center gap-2 rounded-full border border-accent/20 bg-accent/5 px-4 py-1.5 text-sm font-medium text-accent backdrop-blur-sm">
-            <Sparkles className="h-3.5 w-3.5" />
-            Built for Modern Celebrations
-          </div>
-
-          <h2 className="mt-6 text-balance text-4xl font-bold tracking-tight sm:text-5xl lg:text-6xl">
-            <span className="bg-linear-to-br from-foreground via-foreground/80 to-foreground/60 bg-clip-text text-transparent">
-              Why couples and organisers rely on{" "}
-            </span>
-            <span className="bg-linear-to-r from-accent via-primary to-accent bg-clip-text text-transparent">
-              EVA
-            </span>
-          </h2>
-
-          <p className="mx-auto mt-6 max-w-2xl text-balance text-lg leading-relaxed text-muted-foreground">
-            We connect you with vetted professionals, tailored search filters,
-            and collaborative planning tools so you can focus on designing the
-            moments that matter.
-          </p>
-        </div>
-
-        {/* Features Grid */}
-        <div className="relative mx-auto mt-20 grid max-w-7xl gap-8 lg:grid-cols-3">
-          {features.map((feature, index) => {
-            const Icon = feature.icon;
-            return (
-              <article
-                key={feature.title}
-                className="group relative flex animate-fadeInUp flex-col rounded-3xl border border-border bg-card/80 p-8 shadow-lg backdrop-blur-sm transition-all duration-300 hover:scale-[1.02] hover:border-accent/40 hover:bg-card/90 hover:shadow-2xl"
-                style={{
-                  animationDelay: `${index * 150}ms`,
-                  animationFillMode: "backwards",
-                }}
-              >
-                {/* Icon container with linear */}
-                <div
-                  className={`mb-6 inline-flex h-16 w-16 items-center justify-center rounded-2xl bg-linear-to-br ${feature.colour} shadow-md ring-1 ring-border/10 transition-all duration-300 group-hover:scale-110 group-hover:shadow-lg`}
-                >
-                  <Icon
-                    className={`h-7 w-7 ${feature.iconColour}`}
-                    strokeWidth={2}
-                  />
-                </div>
-
-                {/* Content */}
-                <h3 className="text-2xl font-bold text-foreground">
-                  {feature.title}
-                </h3>
-                <p className="mt-4 grow text-base leading-relaxed text-muted-foreground">
-                  {feature.description}
-                </p>
-
-                {/* Decorative element */}
-                <div className="mt-6 h-1 w-12 rounded-full bg-linear-to-r from-accent/50 to-accent/0 transition-all duration-300 group-hover:w-20" />
-              </article>
-            );
-          })}
-        </div>
-
-        {/* CTA Card */}
-        <div
-          className="relative mx-auto mt-20 max-w-4xl animate-fadeInUp rounded-3xl border border-border bg-linear-to-br from-card/90 to-card/60 p-10 shadow-2xl backdrop-blur-sm sm:p-12 lg:p-14"
-          style={{
-            animationDelay: "450ms",
-            animationFillMode: "backwards",
-          }}
-        >
-          {/* Accent glow */}
-          <div className="pointer-events-none absolute -left-10 -top-10 h-40 w-40 rounded-full bg-accent/20 blur-3xl" />
-          <div className="pointer-events-none absolute -bottom-10 -right-10 h-40 w-40 rounded-full bg-primary/20 blur-3xl" />
-
-          <div className="relative text-center">
-            <div className="inline-flex items-center gap-2 rounded-full border border-accent/30 bg-accent/10 px-4 py-1.5 text-sm font-medium text-accent backdrop-blur-sm">
-              <CheckCircle2 className="h-3.5 w-3.5" />
-              Ready to Explore?
-            </div>
-
-            <h3 className="mt-6 text-balance text-3xl font-bold text-foreground sm:text-4xl">
-              Book vendors, compare quotes, and manage details in one calm space
-            </h3>
-
-            <p className="mx-auto mt-4 max-w-2xl text-balance text-base text-muted-foreground">
-              Join thousands of satisfied users who've simplified their event
-              planning with EVA
+    <>
+      {/* Why Choose */}
+      <section className="py-24 px-4 sm:px-6 lg:px-8 bg-background">
+        <div className="mx-auto max-w-7xl">
+          <div className="mx-auto max-w-2xl text-center mb-16">
+            <h2 className="text-3xl sm:text-4xl lg:text-5xl text-foreground">
+              Why choose EVA Local?
+            </h2>
+            <p className="mt-4 text-lg text-muted-foreground">
+              We make finding and booking local event vendors simple, trusted,
+              and tailored to your community.
             </p>
+          </div>
 
-            {/* CTA Buttons */}
-            <div className="mt-8 flex flex-col gap-4 sm:flex-row sm:justify-center">
-              <a
-                href="/auth"
-                className="group inline-flex items-center justify-center gap-2 rounded-full bg-linear-to-r from-primary to-primary/90 px-8 py-3.5 text-sm font-semibold text-background shadow-lg transition-all duration-300 hover:scale-105 hover:shadow-xl"
-              >
-                Create Free Account
-                <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
-              </a>
-              <a
-                href="/faq"
-                className="inline-flex items-center justify-center gap-2 rounded-full border border-border bg-background/80 px-8 py-3.5 text-sm font-semibold text-foreground backdrop-blur-sm transition-all duration-300 hover:scale-105 hover:border-primary/40 hover:bg-background"
-              >
-                See How EVA Works
-              </a>
+          <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
+            {features.map((feat, i) => {
+              const Icon = feat.icon;
+              return (
+                <article
+                  key={feat.title}
+                  className="card-float group rounded-2xl p-8 animate-fadeInUp"
+                  style={{
+                    animationDelay: `${i * 120}ms`,
+                    animationFillMode: "backwards",
+                  }}
+                >
+                  <div
+                    className={`mb-5 inline-flex h-14 w-14 items-center justify-center rounded-2xl ${feat.bg} transition-transform duration-300 group-hover:scale-110`}
+                  >
+                    <Icon className="h-6 w-6 text-primary" strokeWidth={2} />
+                  </div>
+
+                  <h3
+                    className="text-xl font-semibold text-foreground"
+                    style={{ fontStyle: "normal" }}
+                  >
+                    {feat.title}
+                  </h3>
+                  <p className="mt-3 text-muted-foreground leading-relaxed">
+                    {feat.description}
+                  </p>
+
+                  <div className="mt-6 h-1 w-10 rounded-full bg-primary/30 transition-all duration-300 group-hover:w-16 group-hover:bg-primary/50" />
+                </article>
+              );
+            })}
+          </div>
+        </div>
+      </section>
+
+      {/* Tailor Made For You */}
+      <section className="py-20 px-4 sm:px-6 lg:px-8">
+        <div className="mx-auto max-w-7xl grid items-center gap-12 lg:grid-cols-2">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-[0.3em] text-primary mb-2">
+              Local Discovery
+            </p>
+            <h2 className="text-3xl sm:text-4xl text-foreground">
+              Tailor Made For You
+            </h2>
+            <p className="mt-4 text-muted-foreground leading-relaxed max-w-lg">
+              EVA Local helps you discover truly local vendors who understand
+              your community&apos;s unique needs. Reduce travel costs, support
+              local businesses, and find professionals who match your cultural
+              style and event requirements.
+            </p>
+            <ul className="mt-6 space-y-3">
+              {[
+                "Search by postcode and radius",
+                "See distance and availability quickly",
+                "Find vendors who understand your style and culture",
+              ].map((item) => (
+                <li
+                  key={item}
+                  className="flex items-center gap-2 text-sm text-foreground"
+                >
+                  <CheckCircle2 className="h-4 w-4 shrink-0 text-primary" />
+                  {item}
+                </li>
+              ))}
+            </ul>
+            <div className="mt-8">
+              <Link href="/search" className="btn-eva-primary rounded-full">
+                Start searching
+                <ArrowRight className="h-4 w-4" />
+              </Link>
             </div>
+          </div>
+          <div className="relative overflow-hidden rounded-3xl shadow-xl">
+            <Image
+              src="/images/features/tailor-made-collage.png"
+              alt="Local businesses including hair boutique, tailor at work, and couple browsing"
+              width={600}
+              height={450}
+              className="w-full object-cover"
+            />
+          </div>
+        </div>
+      </section>
 
-            {/* Trust indicators */}
-            <div className="mt-8 flex flex-wrap items-center justify-center gap-6 text-sm text-muted-foreground">
-              <div className="flex items-center gap-2">
-                <CheckCircle2 className="h-4 w-4 text-success" />
-                <span>No credit card required</span>
-              </div>
-              <div className="hidden h-1 w-1 rounded-full bg-muted-foreground/40 sm:block" />
-              <div className="flex items-center gap-2">
-                <CheckCircle2 className="h-4 w-4 text-success" />
-                <span>Cancel anytime</span>
-              </div>
-              <div className="hidden h-1 w-1 rounded-full bg-muted-foreground/40 sm:block" />
-              <div className="flex items-center gap-2">
-                <CheckCircle2 className="h-4 w-4 text-success" />
-                <span>Free forever plan</span>
-              </div>
+      {/* Book with Confidence */}
+      <section className="py-20 px-4 sm:px-6 lg:px-8 bg-cream/30">
+        <div className="mx-auto max-w-7xl grid items-center gap-12 lg:grid-cols-2">
+          <div className="relative overflow-hidden rounded-3xl shadow-xl lg:order-1">
+            <Image
+              src="/images/features/messaging-lifestyle.png"
+              alt="Customer messaging vendor about floral arrangements"
+              width={600}
+              height={450}
+              className="w-full object-cover"
+            />
+          </div>
+          <div className="lg:order-2">
+            <p className="text-xs font-semibold uppercase tracking-[0.3em] text-primary mb-2">
+              Seamless Booking
+            </p>
+            <h2 className="text-3xl sm:text-4xl text-foreground">
+              Book with confidence
+            </h2>
+            <p className="mt-4 text-muted-foreground leading-relaxed max-w-lg">
+              Message vendors directly, discuss your requirements, and get
+              personalised quotes. Keep all your conversations and confirmations
+              in one place, accessible from any device.
+            </p>
+            <div className="mt-6 flex flex-wrap gap-3">
+              {["Message", "Get a quote", "Confirm booking"].map((step) => (
+                <span
+                  key={step}
+                  className="chip-pastel bg-teal-light text-primary"
+                >
+                  {step}
+                </span>
+              ))}
+            </div>
+            <div className="mt-8">
+              <Link href="/search" className="btn-eva-primary rounded-full">
+                Find vendors now
+                <ArrowRight className="h-4 w-4" />
+              </Link>
             </div>
           </div>
         </div>
-      </div>
+      </section>
 
-      <style jsx>{`
-        @keyframes fadeInUp {
-          from {
-            opacity: 0;
-            transform: translateY(24px);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0);
-          }
-        }
-
-        .animate-fadeInUp {
-          animation: fadeInUp 0.7s cubic-bezier(0.16, 1, 0.3, 1);
-        }
-      `}</style>
-    </section>
+      {/* Find What You Need, On The Go */}
+      <section className="py-20 px-4 sm:px-6 lg:px-8">
+        <div className="mx-auto max-w-7xl grid items-center gap-12 lg:grid-cols-2">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-[0.3em] text-primary mb-2">
+              Local Discovery
+            </p>
+            <h2 className="text-3xl sm:text-4xl text-foreground">
+              Find What You Need, On The Go
+            </h2>
+            <p className="mt-4 text-muted-foreground leading-relaxed max-w-lg">
+              Our powerful geo-search puts the best local vendors at your
+              fingertips. Whether you&apos;re planning from home or on the move,
+              discover trusted professionals within your chosen radius, complete
+              with real-time availability, verified reviews, and instant
+              booking.
+            </p>
+            <ul className="mt-6 space-y-4">
+              {[
+                {
+                  label: "GPS-powered search",
+                  desc: "Find vendors within your chosen radius instantly",
+                },
+                {
+                  label: "Real-time availability",
+                  desc: "See who's available and ready to book",
+                },
+                {
+                  label: "Verified local reviews",
+                  desc: "Read trusted feedback from your community",
+                },
+              ].map((item) => (
+                <li key={item.label} className="flex items-start gap-3">
+                  <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-primary" />
+                  <div>
+                    <p className="text-sm font-semibold text-foreground">
+                      {item.label}
+                    </p>
+                    <p className="text-sm text-muted-foreground">{item.desc}</p>
+                  </div>
+                </li>
+              ))}
+            </ul>
+            <div className="mt-8">
+              <Link href="/search" className="btn-eva-primary rounded-full">
+                Try it now
+                <ArrowRight className="h-4 w-4" />
+              </Link>
+            </div>
+          </div>
+          <div className="relative overflow-hidden rounded-3xl shadow-xl">
+            <Image
+              src="/images/features/geo-mobile-screens.png"
+              alt="EVA Local mobile app showing vendor profile and map search"
+              width={600}
+              height={450}
+              className="w-full object-cover"
+            />
+          </div>
+        </div>
+      </section>
+    </>
   );
 }

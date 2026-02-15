@@ -63,7 +63,7 @@ export async function uploadImage(
       resource_type: result.resource_type,
     };
   } catch (error) {
-    console.error("Cloudinary upload error:", error);
+    logger.error("Cloudinary upload error:", error);
     throw new Error("Failed to upload image");
   }
 }
@@ -75,7 +75,7 @@ export async function deleteImage(publicId: string): Promise<void> {
   try {
     await cloudinary.uploader.destroy(publicId);
   } catch (error) {
-    console.error("Cloudinary delete error:", error);
+    logger.error("Cloudinary delete error:", error);
     throw new Error("Failed to delete image");
   }
 }

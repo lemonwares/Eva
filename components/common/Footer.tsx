@@ -1,21 +1,191 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import {
   LoaderCircle,
-  Mail,
-  MapPin,
   Facebook,
   Instagram,
   Twitter,
+  Linkedin,
 } from "lucide-react";
-import { IoToggle } from "react-icons/io5";
 import { useEffect, useState } from "react";
-import { motion } from "framer-motion";
+
+/* ------------------------------------------------------------------ */
+/*  Sub-components                                                     */
+/* ------------------------------------------------------------------ */
+
+function FooterCTA() {
+  return (
+    <div className="text-center pb-16 border-b border-white/10">
+      <h2
+        className="text-3xl sm:text-4xl font-bold text-white"
+        style={{ fontStyle: "normal" }}
+      >
+        Ready to discover your perfect vendor?
+      </h2>
+      <p className="mt-4 mx-auto max-w-xl text-white/60 text-sm leading-relaxed">
+        Whether you&apos;re planning a wedding, birthday, or cultural
+        celebration, EVA Local connects you with trusted professionals in your
+        community.
+      </p>
+      <div className="mt-8 flex flex-wrap items-center justify-center gap-4">
+        <Link
+          href="/search"
+          className="rounded-full bg-primary px-6 py-3 text-sm font-semibold text-white transition-colors hover:bg-[#007a91]"
+        >
+          Search vendors near me
+        </Link>
+        <Link
+          href="/list-your-business"
+          className="rounded-full border border-white/30 px-6 py-3 text-sm font-semibold text-white transition-colors hover:bg-white/10"
+        >
+          List my business
+        </Link>
+      </div>
+      <p className="mt-6 text-sm text-white/40">
+        Interested in joining our mission?{" "}
+        <a
+          href="mailto:hello@eva-local.co.uk"
+          className="underline hover:text-white transition-colors"
+        >
+          Get in touch
+        </a>
+      </p>
+    </div>
+  );
+}
+
+function FooterBrand() {
+  return (
+    <div className="space-y-5">
+      <Link href="/" className="inline-block">
+        <Image
+          src="/images/brand/eva-logo-dark.png"
+          alt="EVA Local"
+          width={100}
+          height={40}
+          className="h-9 w-auto object-contain"
+        />
+      </Link>
+      <p className="text-white/60 text-sm leading-relaxed max-w-xs">
+        Connecting communities with trusted local event vendors across the UK.
+      </p>
+      <div className="flex items-center gap-4">
+        {[
+          {
+            icon: Facebook,
+            href: "https://facebook.com/evalocal",
+            label: "Facebook",
+          },
+          {
+            icon: Instagram,
+            href: "https://instagram.com/evalocal",
+            label: "Instagram",
+          },
+          { icon: Twitter, href: "https://x.com/evalocal", label: "Twitter" },
+          {
+            icon: Linkedin,
+            href: "https://linkedin.com/company/evalocal",
+            label: "LinkedIn",
+          },
+        ].map((social) => (
+          <a
+            key={social.label}
+            href={social.href}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-white/60 hover:text-primary transition-colors"
+            aria-label={social.label}
+          >
+            <social.icon size={20} />
+          </a>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function FooterColumn({
+  title,
+  links,
+}: {
+  title: string;
+  links: { label: string; href: string }[];
+}) {
+  return (
+    <div>
+      <h4
+        className="font-semibold text-sm mb-5 text-white uppercase tracking-wide"
+        style={{ fontStyle: "normal" }}
+      >
+        {title}
+      </h4>
+      <ul className="space-y-3 text-white/60 text-sm">
+        {links.map((link) => (
+          <li key={link.label}>
+            <Link
+              href={link.href}
+              className="hover:text-white transition-colors"
+            >
+              {link.label}
+            </Link>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
+function InstallModal({
+  onClose,
+  onContinue,
+  isInstalling,
+}: {
+  onClose: () => void;
+  onContinue: () => void;
+  isInstalling: boolean;
+}) {
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-foreground/50 backdrop-blur-sm"
+      onClick={onClose}
+    >
+      <div
+        className="bg-white text-foreground rounded-2xl shadow-xl p-6 min-w-[300px] max-w-[90vw]"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <h2 className="text-lg font-semibold mb-2">Install EVA</h2>
+        <p className="text-muted-foreground mb-4">
+          You&apos;re about to install this app on your device. Continue?
+        </p>
+        <div className="flex justify-end gap-3">
+          <button className="btn-eva-ghost rounded-lg" onClick={onClose}>
+            Cancel
+          </button>
+          <button
+            className="btn-eva-primary rounded-lg flex items-center gap-2"
+            onClick={onContinue}
+            disabled={isInstalling}
+          >
+            {isInstalling && (
+              <LoaderCircle size={16} className="animate-spin" />
+            )}
+            {isInstalling ? "Installing..." : "Continue"}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/*  Footer                                                             */
+/* ------------------------------------------------------------------ */
 
 export default function Footer() {
   const [showInstallModal, setShowInstallModal] = useState(false);
-  const [deferredPrompt, setDeferredPrompt] = useState(null as any);
+  const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
   const [isInstalling, setIsInstalling] = useState(false);
 
   useEffect(() => {
@@ -27,14 +197,6 @@ export default function Footer() {
     return () => window.removeEventListener("beforeinstallprompt", handler);
   }, []);
 
-  const handleInstallClick = () => {
-    setShowInstallModal(true);
-  };
-
-  const handleCloseModal = () => {
-    setShowInstallModal(false);
-  };
-
   const handleContinue = async () => {
     if (deferredPrompt) {
       setIsInstalling(true);
@@ -45,202 +207,84 @@ export default function Footer() {
       setShowInstallModal(false);
     }
   };
+
   return (
-    <footer className="bg-black text-white px-4 py-16 sm:px-6 lg:px-8">
-      <div className="mx-auto max-w-7xl">
-        <div className="grid gap-12 lg:grid-cols-4 md:grid-cols-2 grid-cols-1">
-          {/* Brand Section */}
-          <div className="space-y-6">
-            <div className="font-bold text-3xl tracking-wide">EVA</div>
-            <p className="text-gray-400 text-sm leading-relaxed max-w-xs">
-              Connecting you with real people & trusted vendors to make
-              unforgettable moments
-            </p>
+    <footer className="bg-[#1e2433] text-white">
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-16">
+        {/* CTA Banner */}
+        <FooterCTA />
 
-            <button
-              onClick={handleInstallClick}
-              className="group flex items-center gap-3 rounded-full border border-white/10 bg-white/5 px-1 py-1 pr-6 hover:bg-white/10 transition-colors w-fit"
-            >
-              <div className="relative h-8 w-14 rounded-full bg-white transition-colors">
-                <div className="absolute top-1 left-1 h-6 w-6 rounded-full bg-black shadow-sm" />
-              </div>
-              <span className="font-medium text-sm">Install EVA</span>
-            </button>
-
-            {/* Install Modal */}
-            {showInstallModal && (
-              <div
-                className="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
-                onClick={handleCloseModal}
-              >
-                <div
-                  className="bg-white text-gray-900 rounded-lg shadow-lg p-6 min-w-[300px] max-w-[90vw]"
-                  onClick={(e) => e.stopPropagation()}
-                >
-                  <h2 className="text-lg font-semibold mb-2">Install EVA</h2>
-                  <p className="mb-4">
-                    You're about to install this app on your device. Continue?
-                  </p>
-                  <div className="flex justify-end gap-3">
-                    <button
-                      className="px-4 py-2 rounded bg-gray-200 hover:bg-gray-300 text-gray-800"
-                      onClick={handleCloseModal}
-                    >
-                      Cancel
-                    </button>
-                    <button
-                      className="px-4 py-2 rounded bg-black text-white flex items-center gap-2"
-                      onClick={handleContinue}
-                      disabled={isInstalling}
-                    >
-                      {isInstalling ? (
-                        <motion.span
-                          animate={{ rotate: 360 }}
-                          transition={{ repeat: Infinity, duration: 1 }}
-                          className="loader mr-2 text-white text-xl"
-                        >
-                          <LoaderCircle size={20} />
-                        </motion.span>
-                      ) : null}
-                      {isInstalling ? "Installing..." : "Continue"}
-                    </button>
-                  </div>
-                </div>
-              </div>
-            )}
+        {/* Main footer columns */}
+        <div className="mt-16 grid gap-10 grid-cols-2 md:grid-cols-3 lg:grid-cols-5">
+          <div className="col-span-2 md:col-span-3 lg:col-span-1">
+            <FooterBrand />
           </div>
 
-          {/* Quick Links */}
-          <div>
-            <h3 className="font-semibold text-lg mb-6">Quick Links</h3>
-            <ul className="space-y-4 text-gray-400 text-sm">
-              <li>
-                <Link
-                  href="/vendors"
-                  className="hover:text-white transition-colors"
-                >
-                  Find Vendors
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="/vendor/onboarding"
-                  className="hover:text-white transition-colors"
-                >
-                  Become a Vendor
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="/about"
-                  className="hover:text-white transition-colors"
-                >
-                  About
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="/contact"
-                  className="hover:text-white transition-colors"
-                >
-                  Contact
-                </Link>
-              </li>
-            </ul>
-          </div>
+          <FooterColumn
+            title="For Clients"
+            links={[
+              { label: "Browse Categories", href: "/categories" },
+              { label: "How It Works", href: "/how-it-works" },
+              { label: "Search Vendors", href: "/search" },
+              { label: "Sign Up", href: "/auth?tab=signup" },
+            ]}
+          />
 
-          {/* For You */}
-          <div>
-            <h3 className="font-semibold text-lg mb-6">For You</h3>
-            <ul className="space-y-4 text-gray-400 text-sm">
-              <li>
-                <Link
-                  href="/vendor"
-                  className="hover:text-white transition-colors"
-                >
-                  Vendor Dashboard
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="/dashboard/quotes"
-                  className="hover:text-white transition-colors"
-                >
-                  My Quotes
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="/dashboard/bookings"
-                  className="hover:text-white transition-colors"
-                >
-                  My Bookings
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="/how-it-works"
-                  className="hover:text-white transition-colors"
-                >
-                  How It Works
-                </Link>
-              </li>
-            </ul>
-          </div>
+          <FooterColumn
+            title="For Businesses"
+            links={[
+              { label: "List Your Business", href: "/list-your-business" },
+              { label: "How It Works", href: "/how-it-works" },
+              {
+                label: "Sign Up as Vendor",
+                href: "/auth?tab=signup&type=PROFESSIONAL",
+              },
+            ]}
+          />
 
-          {/* Connect With Us */}
-          <div>
-            <h3 className="font-semibold text-lg mb-6">Connect With Us</h3>
-            <div className="flex items-center gap-4 mb-6">
-              <a
-                href="#"
-                className="text-gray-400 hover:text-white transition-colors"
-              >
-                <Facebook size={20} />
-              </a>
-              <a
-                href="#"
-                className="text-gray-400 hover:text-white transition-colors"
-              >
-                <Instagram size={20} />
-              </a>
-              <a
-                href="#"
-                className="text-gray-400 hover:text-white transition-colors"
-              >
-                <Twitter size={20} />
-              </a>
-              <a
-                href="mailto:hello@evalocal.com"
-                className="text-gray-400 hover:text-white transition-colors"
-              >
-                <Mail size={20} />
-              </a>
-            </div>
-            <a
-              href="mailto:hello@evalocal.com"
-              className="text-gray-400 hover:text-white transition-colors text-sm"
-            >
-              hello@evalocal.com
-            </a>
-          </div>
+          <FooterColumn
+            title="Company"
+            links={[
+              { label: "About Us", href: "/about" },
+              { label: "Contact", href: "/contact" },
+            ]}
+          />
+
+          <FooterColumn
+            title="Legal"
+            links={[
+              { label: "Privacy Policy", href: "/privacy" },
+              { label: "Terms of Service", href: "/terms" },
+            ]}
+          />
         </div>
 
-        <div className="mt-16 pt-8 border-t border-white/10 flex flex-col md:flex-row justify-between items-center gap-4 text-sm text-gray-400">
-          <p>© {new Date().getFullYear()} EVA. All rights reserved.</p>
-          <div className="flex gap-6">
-            <Link
-              href="/privacy"
-              className="hover:text-white transition-colors"
+        {/* Bottom bar */}
+        <div className="mt-16 pt-8 border-t border-white/10 flex flex-col md:flex-row justify-between items-center gap-4 text-sm text-white/40">
+          <p>
+            &copy; {new Date().getFullYear()} EVA Local. All rights reserved.
+          </p>
+          <p>
+            Powered by{" "}
+            <a
+              href="https://www.sparkpoint.agency/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="font-semibold text-white/50 hover:text-white transition-colors"
             >
-              Privacy Policy
-            </Link>
-            <Link href="/terms" className="hover:text-white transition-colors">
-              Terms of Service
-            </Link>
-          </div>
+              SPARKPOINT
+            </a>
+          </p>
         </div>
       </div>
+
+      {showInstallModal && (
+        <InstallModal
+          onClose={() => setShowInstallModal(false)}
+          onContinue={handleContinue}
+          isInstalling={isInstalling}
+        />
+      )}
     </footer>
   );
 }

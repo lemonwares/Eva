@@ -97,7 +97,7 @@ export default function CityDetailPage() {
       const data = await response.json();
       setCity(data);
     } catch (err) {
-      console.error("Error fetching city:", err);
+      logger.error("Error fetching city:", err);
     } finally {
       setIsLoading(false);
     }
@@ -111,7 +111,7 @@ export default function CityDetailPage() {
         setCategories(Array.isArray(data) ? data : data.categories || []);
       }
     } catch (err) {
-      console.error("Error fetching categories:", err);
+      logger.error("Error fetching categories:", err);
     }
   }
 
@@ -145,7 +145,7 @@ export default function CityDetailPage() {
         pages: data.pagination?.pages || 1,
       }));
     } catch (err) {
-      console.error("Error fetching vendors:", err);
+      logger.error("Error fetching vendors:", err);
     } finally {
       setVendorsLoading(false);
     }

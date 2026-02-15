@@ -57,9 +57,9 @@ const formatCategories = (cats?: string | string[]) => {
   const catString = Array.isArray(cats)
     ? cats[0] || ""
     : typeof cats === "string"
-    ? cats
-    : "";
-    
+      ? cats
+      : "";
+
   const str = (catString ?? "").trim();
   if (!str) return "";
   return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
@@ -87,7 +87,7 @@ export default function VendorCard({ vendor }: VendorCardProps) {
           />
 
           {/* Action Buttons - Top Right */}
-          <div className="absolute right-3 top-3 z-10 flex gap-2 opacity-0 transition-opacity group-hover:opacity-100">
+          <div className="absolute right-3 top-3 z-10 flex gap-2 opacity-100 sm:opacity-0 transition-opacity sm:group-hover:opacity-100">
             <div onClick={(e) => e.preventDefault()}>
               <FavoriteButton
                 providerId={vendor.id}
@@ -163,7 +163,7 @@ export default function VendorCard({ vendor }: VendorCardProps) {
                 vendor.address && vendor.city
                   ? `${vendor.address}, ${vendor.city}`
                   : vendor.city || "UK",
-                25
+                25,
               )}
             </span>
           </div>

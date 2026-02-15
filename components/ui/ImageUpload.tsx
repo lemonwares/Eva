@@ -100,7 +100,7 @@ export default function ImageUpload({
         setPreviewUrl(null);
         URL.revokeObjectURL(localPreview);
       } catch (err: any) {
-        console.error("Upload error:", err);
+        logger.error("Upload error:", err);
         setError(err.message || "Failed to upload image");
         // Clear preview on error
         setPreviewUrl(null);

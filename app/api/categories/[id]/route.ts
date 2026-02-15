@@ -70,7 +70,7 @@ export async function GET(
 
     return NextResponse.json(category);
   } catch (error: any) {
-    console.error("Error fetching category:", error);
+    logger.error("Error fetching category:", error);
     return NextResponse.json(
       { message: "Internal server error" },
       { status: 500 }
@@ -143,7 +143,7 @@ export async function PATCH(
 
     return NextResponse.json(updated);
   } catch (error: any) {
-    console.error("Error updating category:", error);
+    logger.error("Error updating category:", error);
     return NextResponse.json(
       { message: "Internal server error" },
       { status: 500 }
@@ -210,7 +210,7 @@ export async function DELETE(
 
     return NextResponse.json({ message: "Category deleted successfully" });
   } catch (error: any) {
-    console.error("Error deleting category:", error);
+    logger.error("Error deleting category:", error);
     return NextResponse.json(
       { message: "Internal server error" },
       { status: 500 }

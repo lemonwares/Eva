@@ -1,25 +1,37 @@
 import { NextRequest, NextResponse } from "next/server";
 import { sendEmail } from "@/lib/mail";
 import { emailTemplates } from "@/templates/templateLoader";
-
-interface ContactFormData {
-  name: string;
-  email: string;
-  message: string;
-}
+import { contactSchema, formatValidationErrors } from "@/lib/validations";
+import {
+  checkRateLimit,
+  getRateLimitIdentifier,
+  rateLimitResponse,
+  rateLimitPresets,
+} from "@/lib/rate-limit";
+import { logger } from "@/lib/logger";
 
 export async function POST(request: NextRequest) {
   try {
-    const body: ContactFormData = await request.json();
-    const { name, email, message } = body;
+    // Rate limit: 5 submissions per hour
+    const identifier = getRateLimitIdentifier(request);
+    const rateCheck = checkRateLimit(
+      `contact:${identifier}`,
+      rateLimitPresets.contact,
+    );
+    if (!rateCheck.success) return rateLimitResponse(rateCheck);
 
-    // Validate required fields
-    if (!name || !email || !message) {
+    const body = await request.json();
+    const parsed = contactSchema.safeParse(body);
+    if (!parsed.success) {
       return NextResponse.json(
-        { error: "All fields are required" },
-        { status: 400 }
+        {
+          error: "Validation failed",
+          errors: formatValidationErrors(parsed.error.issues),
+        },
+        { status: 400 },
       );
     }
+    const { name, email, message } = parsed.data;
 
     // Generate reference ID for tracking
     const referenceId = `EVA-${Date.now()}-${Math.random()
@@ -54,7 +66,7 @@ export async function POST(request: NextRequest) {
       `${process.env.AUTH_URL}/dashboard`,
       `${process.env.AUTH_URL}/faq`,
       `${process.env.AUTH_URL}/terms`,
-      `${process.env.AUTH_URL}/privacy`
+      `${process.env.AUTH_URL}/privacy`,
     );
 
     // Send both emails
@@ -73,7 +85,7 @@ export async function POST(request: NextRequest) {
 
     // Check if emails were sent successfully
     if (!supportEmailResult.success || !confirmationEmailResult.success) {
-      console.error("Email sending failed:", {
+      logger.error("Email sending failed:", {
         support: supportEmailResult,
         confirmation: confirmationEmailResult,
       });
@@ -84,7 +96,7 @@ export async function POST(request: NextRequest) {
             "Failed to send emails. Please try again or contact us directly.",
           referenceId,
         },
-        { status: 500 }
+        { status: 500 },
       );
     }
 
@@ -94,10 +106,10 @@ export async function POST(request: NextRequest) {
       referenceId,
     });
   } catch (error) {
-    console.error("Contact form error:", error);
+    logger.error("Contact form error:", error);
     return NextResponse.json(
       { error: "Internal server error. Please try again later." },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

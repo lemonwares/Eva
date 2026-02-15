@@ -1,275 +1,375 @@
+import type { Metadata } from "next";
 import Image from "next/image";
+import Link from "next/link";
 import Header from "@/components/common/Header";
 import Footer from "@/components/common/Footer";
+
+export const metadata: Metadata = {
+  title: "About EVA Local",
+  description:
+    "EVA Local is the UK's multicultural events marketplace. We connect communities with trusted local vendors for weddings, birthdays, cultural celebrations, and more.",
+  openGraph: {
+    title: "About EVA Local",
+    description:
+      "The UK's multicultural events marketplace — connecting communities with trusted local vendors.",
+    url: "/about",
+  },
+  alternates: {
+    canonical: "/about",
+  },
+};
+import {
+  Heart,
+  PartyPopper,
+  Search,
+  MapPin,
+  Tag,
+  UserCheck,
+  Receipt,
+  ClipboardList,
+  ArrowRight,
+} from "lucide-react";
+
+const values = [
+  {
+    icon: Heart,
+    title: "Community First",
+    description:
+      "We prioritise local involvement and community support, helping neighbourhoods thrive through local trade.",
+    bg: "bg-blush",
+  },
+  {
+    icon: PartyPopper,
+    title: "Cultural Respect",
+    description:
+      "Every tradition matters. We celebrate diversity and ensure vendors understand cultural significance.",
+    bg: "bg-lavender",
+  },
+  {
+    icon: Search,
+    title: "Transparency",
+    description:
+      "Clear GBP pricing, honest reviews, and straightforward terms — no hidden fees or surprises.",
+    bg: "bg-mint",
+  },
+];
+
+const differentiators = [
+  {
+    icon: MapPin,
+    title: "Radius-First Discovery",
+    text: "Find vendors within your area first. We prioritise proximity so you get local talent who knows your neighbourhood.",
+  },
+  {
+    icon: Tag,
+    title: "Culture & Tradition Tags",
+    text: "Filter by South Asian, African, Caribbean, Chinese, Middle Eastern, and more. Find vendors who truly understand your celebration.",
+  },
+  {
+    icon: UserCheck,
+    title: "Frictionless Vendor Onboarding",
+    text: "Vendors can set up their profile and start receiving enquiries in minutes, not weeks.",
+  },
+  {
+    icon: Receipt,
+    title: "Transparent GBP Pricing",
+    text: "All prices displayed in British Pounds with no hidden fees. Compare vendors fairly and confidently.",
+  },
+  {
+    icon: ClipboardList,
+    title: "Complete Booking Pipeline",
+    text: "From discovery to deposit, manage the entire booking journey in one place — enquiries, quotes, and secure payments.",
+  },
+];
+
+const team = [
+  {
+    name: "Omonlua Orhewere",
+    role: "Co-founder & CEO",
+    image: "/team-abiodun.png",
+    bio: "Former event planner with 10+ years connecting communities with exceptional local talent.",
+  },
+  {
+    name: "Adebayo Adeleye",
+    role: "Head of Technology",
+    image: "/team-adebayo.jpeg",
+    bio: "Tech innovator passionate about building platforms that empower local businesses and communities.",
+  },
+  {
+    name: "Nana Bakare",
+    role: "Community & Culture Lead",
+    image: "/team-nana.jpeg",
+    bio: "Cultural ambassador celebrating and respecting diverse traditions across all communities.",
+  },
+];
 
 export default function AboutPage() {
   return (
     <>
       <Header />
-      <main className="bg-[#f9fafb] min-h-screen pb-16 pt-20">
-        {/* About EVA */}
-        <section className="text-center py-12 bg-white">
-          <h1 className="text-4xl font-bold mb-2">About EVA</h1>
-          <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+      <main className="min-h-screen bg-background pb-20 pt-20">
+        {/* Hero */}
+        <section className="bg-linear-to-b from-teal-light/40 to-background px-4 py-16 text-center">
+          <p className="text-xs font-semibold uppercase tracking-[0.3em] text-primary mb-2">
+            About EVA
+          </p>
+          <h1 className="text-4xl sm:text-5xl text-foreground mx-auto max-w-3xl">
+            Find Vendors Who Get Your Traditions
+          </h1>
+          <p className="mt-4 text-lg text-muted-foreground max-w-2xl mx-auto">
             Connecting communities with trusted local event vendors, making
             every celebration memorable and stress-free.
           </p>
         </section>
-
-        {/* Our Story */}
-        <section className="py-16 px-4 md:px-0 max-w-5xl mx-auto flex flex-col md:flex-row items-center gap-12">
-          <div className="flex-1 flex flex-col gap-4">
-            <h2 className="text-2xl font-semibold mb-2">Our Story</h2>
-            <p className="text-gray-700">
-              EVA was born from a simple observation: finding the right event
-              vendors shouldn’t be complicated, expensive, or time-consuming.
-              Too many people struggle to discover talented local professionals
-              who understand their cultural tradition and can work within their
-              budget and location constraints.
-            </p>
-            <p className="text-gray-700">
-              We recognised the best vendors are often right around the corner,
-              waiting to help, but clients were often stuck with a 25-mile
-              radius, so we help clients minimise travel expenses and support
-              their local trade. Our platform brings diverse event experts and
-              tradition tags for South Asian, African, Caribbean, Chinese, and
-              Middle Eastern traditions, ensuring vendors truly understand what
-              makes each celebration unique.
-            </p>
-            <p className="text-gray-700">
-              Today, EVA is bringing more people with events across London,
-              Manchester, Birmingham, Leeds, and Bristol—with many more cities
-              on the horizon. We’re building a platform where quality vendors
-              thrive and clients find exactly what they need, when they need it.
-            </p>
-          </div>
-          <div className="flex-1 flex flex-col gap-4 items-center w-full">
-            <div className="relative w-64 h-80 mb-4 max-w-full">
-              <Image
-                src="/about-img-1.jpeg"
-                alt="EVA event"
-                fill
-                className="object-cover rounded-xl shadow-lg"
-              />
+        {/* Built from a Real Need */}
+        <section className="py-16 px-4 sm:px-6 lg:px-8">
+          <div className="mx-auto max-w-6xl">
+            <div className="text-center mb-10">
+              <p className="text-xs font-semibold uppercase tracking-[0.3em] text-primary mb-2">
+                Our Story
+              </p>
+              <h2 className="text-3xl text-foreground">
+                Built from a Real Need
+              </h2>
             </div>
-            <div className="relative w-64 h-48 max-w-full">
-              <Image
-                src="/about-img-2.jpeg"
-                alt="EVA celebration"
-                fill
-                className="object-cover rounded-xl shadow-lg"
-              />
+
+            <div className="mx-auto max-w-3xl space-y-5 mb-12">
+              <p className="text-muted-foreground leading-relaxed">
+                We recognised a fundamental challenge: finding qualified event
+                vendors shouldn&apos;t demand excessive time, expense, or
+                complexity. The best vendors are often right around the corner —
+                neighbourhood professionals who understand cultural traditions
+                and respect your budget.
+              </p>
+              <p className="text-muted-foreground leading-relaxed">
+                But clients were often stuck searching within a 25-mile radius,
+                scrolling through endless generic listings with no way to filter
+                by the traditions and cultural understanding that matter most
+                for their celebrations.
+              </p>
+              <p className="text-muted-foreground leading-relaxed">
+                That&apos;s why we built EVA — a hyper-local events marketplace
+                that puts community, culture, and convenience at the centre of
+                every connection.
+              </p>
+            </div>
+
+            <div className="grid gap-6 sm:grid-cols-3 mb-12">
+              <div className="card-float rounded-2xl p-6 text-center">
+                <p className="text-sm font-semibold text-primary">
+                  Currently Live
+                </p>
+                <p className="mt-2 text-muted-foreground text-sm">
+                  London, Manchester, Birmingham, Leeds &amp; Bristol
+                </p>
+              </div>
+              <div className="card-float rounded-2xl p-6 text-center">
+                <p className="text-sm font-semibold text-primary">
+                  Expanding Soon
+                </p>
+                <p className="mt-2 text-muted-foreground text-sm">
+                  More UK cities coming in 2026
+                </p>
+              </div>
+              <div className="card-float rounded-2xl p-6 text-center">
+                <p className="text-sm font-semibold text-primary">
+                  Community Focused
+                </p>
+                <p className="mt-2 text-muted-foreground text-sm">
+                  Supporting neighbourhood vendors and local talent
+                </p>
+              </div>
             </div>
           </div>
         </section>
-
         {/* Mission & Vision */}
-        <section className="py-12 bg-white">
-          <div className="max-w-4xl mx-auto grid grid-cols-1 sm:grid-cols-2 gap-8">
-            <div className="bg-gray-50 rounded-lg p-6 shadow">
-              <h3 className="font-semibold text-lg mb-2 flex items-center gap-2">
-                <span className="inline-block w-4 h-4 bg-gray-400 rounded-full mr-2" />
+        <section className="py-16 px-4 sm:px-6 lg:px-8 bg-cream/30">
+          <div className="mx-auto max-w-5xl grid gap-8 sm:grid-cols-2">
+            <div className="card-float rounded-2xl p-8">
+              <h3
+                className="text-xl font-semibold text-foreground"
+                style={{ fontStyle: "normal" }}
+              >
                 Our Mission
               </h3>
-              <p className="text-gray-700">
+              <p className="mt-3 text-muted-foreground leading-relaxed">
                 To democratise event planning by connecting clients with
                 exceptional local vendors who meet their budget, location, and
-                cultural needs. EVA believes everyone deserves access to quality
-                event services without the hassle of endless searching or
-                breaking the bank on travel expenses.
+                cultural needs — making quality event services accessible to
+                everyone, everywhere.
               </p>
             </div>
-            <div className="bg-gray-50 rounded-lg p-6 shadow">
-              <h3 className="font-semibold text-lg mb-2 flex items-center gap-2">
-                <span className="inline-block w-4 h-4 bg-pink-300 rounded-full mr-2" />
+            <div className="card-float rounded-2xl p-8">
+              <h3
+                className="text-xl font-semibold text-foreground"
+                style={{ fontStyle: "normal" }}
+              >
                 Our Vision
               </h3>
-              <p className="text-gray-700">
-                To become the UK’s leading hyper-local events marketplace, where
-                cultural diversity is celebrated, every local talent thrives,
-                and every event—from intimate gatherings to grand
-                celebrations—is powered by trusted professionals who truly
-                understand their communities.
+              <p className="mt-3 text-muted-foreground leading-relaxed">
+                To become the UK&apos;s leading hyper-local events marketplace,
+                where cultural diversity is celebrated, every local talent
+                thrives, and every celebration is exactly as it should be.
               </p>
             </div>
           </div>
         </section>
-
         {/* Our Values */}
-        <section className="py-16 px-4 md:px-0 max-w-5xl mx-auto flex flex-col md:flex-row items-center gap-12">
-          <div className="flex-1 flex flex-col gap-6 w-full">
-            <h2 className="text-2xl font-semibold mb-4">Our Values</h2>
-            <div className="flex flex-col gap-4">
-              <div className="flex items-start gap-4">
-                {/* <span className="inline-block w-10 h-10 bg-gray-100 flex items-center justify-center rounded-full text-xl">
-                  ❤️
-                </span> */}
-                <div>
-                  <h4 className="font-semibold">Community First</h4>
-                  <p className="text-gray-600 text-sm">
-                    We prioritise local involvement and community support,
-                    helping neighbourhoods thrive through local trade.
-                  </p>
-                </div>
-              </div>
-              <div className="flex items-start gap-4">
-                {/* <span className="inline-block w-10 h-10 bg-pink-100 flex items-center justify-center rounded-full text-xl">
-                  🎉
-                </span> */}
-                <div>
-                  <h4 className="font-semibold">Cultural Respect</h4>
-                  <p className="text-gray-600 text-sm">
-                    Every tradition matters. We celebrate diversity and ensure
-                    vendors understand cultural significance.
-                  </p>
-                </div>
-              </div>
-              <div className="flex items-start gap-4">
-                {/* <span className="inline-block w-10 h-10 bg-green-100 flex items-center justify-center rounded-full text-xl">
-                  🔍
-                </span> */}
-                <div>
-                  <h4 className="font-semibold">Transparency</h4>
-                  <p className="text-gray-600 text-sm">
-                    Clear GBP pricing, honest reviews, and straightforward
-                    terms—no hidden fees or surprises.
-                  </p>
-                </div>
-              </div>
+        <section className="py-16 px-4 sm:px-6 lg:px-8">
+          <div className="mx-auto max-w-6xl">
+            <div className="text-center mb-12">
+              <p className="text-xs font-semibold uppercase tracking-[0.3em] text-primary mb-2">
+                Our Values
+              </p>
+              <h2 className="text-3xl text-foreground">What We Stand For</h2>
+              <p className="mt-3 text-muted-foreground">
+                Every decision we make is guided by these core principles.
+              </p>
             </div>
-          </div>
-          <div className="flex-1 flex flex-col items-center w-full mt-8 md:mt-0">
-            <div className="relative w-80 h-96 max-w-full">
-              <Image
-                src="/about-img-3.jpeg"
-                alt="EVA values"
-                fill
-                className="object-cover rounded-xl shadow-lg"
-              />
+            <div className="grid gap-8 sm:grid-cols-3">
+              {values.map((v) => {
+                const Icon = v.icon;
+                return (
+                  <article
+                    key={v.title}
+                    className="card-float rounded-2xl p-8 text-center"
+                  >
+                    <div
+                      className={`mx-auto mb-5 inline-flex h-14 w-14 items-center justify-center rounded-2xl ${v.bg}`}
+                    >
+                      <Icon className="h-6 w-6 text-primary" />
+                    </div>
+                    <h3
+                      className="text-lg font-semibold text-foreground"
+                      style={{ fontStyle: "normal" }}
+                    >
+                      {v.title}
+                    </h3>
+                    <p className="mt-3 text-sm text-muted-foreground leading-relaxed">
+                      {v.description}
+                    </p>
+                  </article>
+                );
+              })}
             </div>
           </div>
         </section>
-
         {/* What Makes EVA Different */}
-        <section className="py-12 bg-white">
-          <div className="max-w-3xl mx-auto px-4">
-            <h2 className="text-2xl font-semibold mb-6 text-center">
-              What Makes EVA Different
-            </h2>
-            <div className="bg-gray-50 rounded-lg p-8 shadow">
-              <ol className="list-decimal list-inside space-y-4 text-gray-700">
-                <li>
-                  <span className="font-semibold">Radius-First Discovery:</span>{" "}
-                  Default to inside each client travel expense and area. Find
-                  quality vendors right in your neighbourhood.
-                </li>
-                <li>
-                  <span className="font-semibold">
-                    Culture & Tradition Tags:
-                  </span>{" "}
-                  Specialized filters mean vendors understand South Asian,
-                  African, Caribbean, Chinese, Middle Eastern, and other
-                  cultural celebrations.
-                </li>
-                <li>
-                  <span className="font-semibold">
-                    Frictionless Vendor Onboarding:
-                  </span>{" "}
-                  Social and bespoke intake means any WhatsApp, Facebook live
-                  chat work from Instagram instantly.
-                </li>
-                <li>
-                  <span className="font-semibold">
-                    Transparent GBP Pricing:
-                  </span>{" "}
-                  No surprises—see breakdown and pricing charts like quotes,
-                  line items, deposit, and payment schedules.
-                </li>
-                <li>
-                  <span className="font-semibold">
-                    Complete Booking Pipeline:
-                  </span>{" "}
-                  From inquiry to quote to booking to review—manage everything
-                  in one platform.
-                </li>
-              </ol>
+        <section className="py-16 px-4 sm:px-6 lg:px-8 bg-cream/30">
+          <div className="mx-auto max-w-4xl">
+            <div className="text-center mb-10">
+              <p className="text-xs font-semibold uppercase tracking-[0.3em] text-primary mb-2">
+                Why EVA
+              </p>
+              <h2 className="text-3xl text-foreground">
+                What Makes EVA Different
+              </h2>
+              <p className="mt-3 text-muted-foreground">
+                We&apos;re not just another vendor directory. Here&apos;s what
+                sets us apart.
+              </p>
+            </div>
+            <div className="space-y-4">
+              {differentiators.map((d, i) => {
+                const Icon = d.icon;
+                return (
+                  <div
+                    key={i}
+                    className="flex items-start gap-4 rounded-2xl bg-white p-5 shadow-sm border border-border/40"
+                  >
+                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-teal-light">
+                      <Icon className="h-5 w-5 text-primary" />
+                    </div>
+                    <div>
+                      <h3
+                        className="text-base font-semibold text-foreground"
+                        style={{ fontStyle: "normal" }}
+                      >
+                        {d.title}
+                      </h3>
+                      <p className="mt-1 text-muted-foreground leading-relaxed">
+                        {d.text}
+                      </p>
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           </div>
         </section>
+        {/* Team */}
+        <section className="py-16 px-4 sm:px-6 lg:px-8">
+          <div className="mx-auto max-w-5xl text-center">
+            <p className="text-xs font-semibold uppercase tracking-[0.3em] text-primary mb-2">
+              Our Team
+            </p>
+            <h2 className="text-3xl text-foreground mb-4">
+              Meet the Leadership
+            </h2>
+            <p className="text-muted-foreground mb-12 max-w-xl mx-auto">
+              We&apos;re united by a single goal: making quality event services
+              accessible to everyone, everywhere.
+            </p>
 
-        {/* Our Team */}
-        <section className="py-16 px-4 md:px-0 max-w-5xl mx-auto">
-          <h2 className="text-2xl font-semibold mb-8 text-center">Our Team</h2>
-          <p className="text-center text-gray-600 mb-8 max-w-2xl mx-auto">
-            EVA is built by a passionate team dedicated to transforming event
-            planning
-          </p>
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-8 mb-8">
-            <div className="bg-white rounded-lg shadow p-6 flex flex-col items-center">
-              <div className="relative w-24 h-24 mb-4">
-                <Image
-                  src="/team-abiodun.png"
-                  alt="Abiodun Orhewere"
-                  fill
-                  className="object-cover rounded-full"
-                />
-              </div>
-              <h4 className="font-semibold">Omonlua Orhewere</h4>
-              <p className="text-sm text-gray-500 mb-1">Co-founder & CEO</p>
-              <p className="text-xs text-gray-400 text-center">
-                Former event planner with 10+ years experience connecting
-                communities with exceptional local talent.
-              </p>
-            </div>
-            <div className="bg-white rounded-lg shadow p-6 flex flex-col items-center">
-              <div className="relative w-24 h-24 mb-4">
-                <Image
-                  src="/team-adebayo.jpeg"
-                  alt="Adebayo Adeleye"
-                  fill
-                  className="object-cover rounded-full"
-                />
-              </div>
-              <h4 className="font-semibold">Adebayo Adeleye</h4>
-              <p className="text-sm text-gray-500 mb-1">Head of Technology</p>
-              <p className="text-xs text-gray-400 text-center">
-                Tech innovator passionate about building platforms that empower
-                local businesses and communities.
-              </p>
-            </div>
-            <div className="bg-white rounded-lg shadow p-6 flex flex-col items-center">
-              <div className="relative w-24 h-24 mb-4">
-                <Image
-                  src="/team-nana.jpeg"
-                  alt="Nana Bakare"
-                  fill
-                  className="object-cover rounded-full"
-                />
-              </div>
-              <h4 className="font-semibold">Nana Bakare</h4>
-              <p className="text-sm text-gray-500 mb-1">
-                Community & Culture Lead
-              </p>
-              <p className="text-xs text-gray-400 text-center">
-                Cultural ambassador building EVA’s celebration, and respect
-                diverse traditions across all communities.
-              </p>
+            <div className="grid gap-8 sm:grid-cols-2 md:grid-cols-3">
+              {team.map((member) => (
+                <div
+                  key={member.name}
+                  className="card-float rounded-2xl p-6 text-center"
+                >
+                  <div className="relative mx-auto mb-4 h-24 w-24 overflow-hidden rounded-full ring-2 ring-teal-light">
+                    <Image
+                      src={member.image}
+                      alt={member.name}
+                      fill
+                      className="object-cover"
+                    />
+                  </div>
+                  <h4 className="font-semibold text-foreground">
+                    {member.name}
+                  </h4>
+                  <p className="text-sm text-primary">{member.role}</p>
+                  <p className="mt-2 text-xs text-muted-foreground">
+                    {member.bio}
+                  </p>
+                </div>
+              ))}
             </div>
           </div>
-          <div className="bg-gray-50 rounded-lg p-6 text-center text-gray-700 max-w-3xl mx-auto">
-            Our diverse team brings together expertise in technology, event
-            planning, community engagement, and cultural understanding. We’re
-            united by a single goal: making quality event services accessible to
-            everyone, everywhere.
-            <br />
-            <span className="block mt-2 text-sm text-blue-600">
+        </section>
+        {/* CTA */}
+        <section className="px-4 sm:px-6 lg:px-8">
+          <div className="mx-auto max-w-4xl rounded-3xl bg-[#1e2433] px-8 py-14 text-center text-white">
+            <h2 className="text-3xl font-bold" style={{ color: "white" }}>
+              Ready to Find Your Perfect Vendor?
+            </h2>
+            <p className="mt-3 text-white/70 max-w-xl mx-auto">
+              Join thousands of clients and vendors across the UK who are making
+              celebrations unforgettable with EVA.
+            </p>
+            <div className="mt-8 flex flex-wrap justify-center gap-3">
+              <Link href="/search" className="btn-eva-primary rounded-full">
+                Browse Vendors
+                <ArrowRight className="h-4 w-4" />
+              </Link>
+              <Link
+                href="/list-your-business"
+                className="inline-flex items-center gap-2 rounded-full border border-white/30 px-6 py-3 text-sm font-semibold text-white transition hover:bg-white/10"
+              >
+                List Your Business
+              </Link>
+            </div>
+            <p className="mt-6 text-white/60 text-sm">
               Interested in joining our mission?{" "}
-              <a href="/contact" className="underline">
+              <a
+                href="mailto:hello@eva-local.co.uk"
+                className="text-primary hover:underline"
+              >
                 Get in touch
               </a>
-            </span>
+            </p>
           </div>
-        </section>
+        </section>{" "}
       </main>
       <Footer />
     </>

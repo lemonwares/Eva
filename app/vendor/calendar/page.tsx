@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { logger } from "@/lib/logger";
 
 const daysOfWeek = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
@@ -68,7 +69,7 @@ export default function VendorCalendarPage() {
   const [events, setEvents] = useState<CalendarEvent[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(
-    null
+    null,
   );
   const [view, setView] = useState<"month" | "week" | "day">("month");
 
@@ -99,13 +100,13 @@ export default function VendorCalendarPage() {
             type: booking.eventType || "event",
             color: getEventColor(booking.status),
             status: booking.status,
-          })
+          }),
         );
 
         setEvents(calendarEvents);
       }
     } catch (err) {
-      console.error("Error fetching bookings:", err);
+      logger.error("Error fetching bookings:", err);
     } finally {
       setIsLoading(false);
     }
@@ -137,7 +138,7 @@ export default function VendorCalendarPage() {
 
   const getEventsForDate = (day: number) => {
     const dateStr = `${year}-${String(month + 1).padStart(2, "0")}-${String(
-      day
+      day,
     ).padStart(2, "0")}`;
     return events.filter((e) => e.date === dateStr);
   };
@@ -247,73 +248,77 @@ export default function VendorCalendarPage() {
           } rounded-xl border overflow-hidden`}
         >
           {/* Days of Week Header */}
-          <div
-            className={`grid grid-cols-7 ${
-              darkMode ? "border-white/10" : "border-gray-200"
-            } border-b`}
-          >
-            {daysOfWeek.map((day) => (
+          <div className="overflow-x-auto">
+            <div className="min-w-[500px]">
               <div
-                key={day}
-                className="py-3 text-center text-gray-500 text-sm font-medium"
+                className={`grid grid-cols-7 ${
+                  darkMode ? "border-white/10" : "border-gray-200"
+                } border-b`}
               >
-                {day}
+                {daysOfWeek.map((day) => (
+                  <div
+                    key={day}
+                    className="py-3 text-center text-gray-500 text-sm font-medium"
+                  >
+                    {day}
+                  </div>
+                ))}
               </div>
-            ))}
-          </div>
 
-          {/* Calendar Days */}
-          <div className="grid grid-cols-7">
-            {calendarDays.map((day, idx) => {
-              const dayEvents = day ? getEventsForDate(day) : [];
-              const isToday =
-                day === new Date().getDate() &&
-                month === new Date().getMonth() &&
-                year === new Date().getFullYear();
+              {/* Calendar Days */}
+              <div className="grid grid-cols-7">
+                {calendarDays.map((day, idx) => {
+                  const dayEvents = day ? getEventsForDate(day) : [];
+                  const isToday =
+                    day === new Date().getDate() &&
+                    month === new Date().getMonth() &&
+                    year === new Date().getFullYear();
 
-              return (
-                <div
-                  key={idx}
-                  className={`min-h-[100px] sm:min-h-[120px] p-2 ${
-                    darkMode ? "border-white/10" : "border-gray-200"
-                  } border-b border-r ${
-                    day
-                      ? `${darkMode ? "hover:bg-white/5" : "hover:bg-gray-50"}`
-                      : `${darkMode ? "bg-white/2" : "bg-gray-50/50"}`
-                  } transition-colors`}
-                >
-                  {day && (
-                    <>
-                      <div
-                        className={`w-7 h-7 rounded-full flex items-center justify-center text-sm mb-1 ${
-                          isToday
-                            ? "bg-accent text-white"
-                            : `${darkMode ? "text-gray-400" : "text-gray-600"}`
-                        }`}
-                      >
-                        {day}
-                      </div>
-                      <div className="space-y-1">
-                        {dayEvents.slice(0, 2).map((event) => (
-                          <button
-                            key={event.id}
-                            onClick={() => setSelectedEvent(event)}
-                            className={`w-full text-left px-2 py-1 rounded text-xs ${event.color} text-white truncate hover:opacity-80 transition-opacity`}
+                  return (
+                    <div
+                      key={idx}
+                      className={`min-h-[100px] sm:min-h-[120px] p-2 ${
+                        darkMode ? "border-white/10" : "border-gray-200"
+                      } border-b border-r ${
+                        day
+                          ? `${darkMode ? "hover:bg-white/5" : "hover:bg-gray-50"}`
+                          : `${darkMode ? "bg-white/2" : "bg-gray-50/50"}`
+                      } transition-colors`}
+                    >
+                      {day && (
+                        <>
+                          <div
+                            className={`w-7 h-7 rounded-full flex items-center justify-center text-sm mb-1 ${
+                              isToday
+                                ? "bg-accent text-white"
+                                : `${darkMode ? "text-gray-400" : "text-gray-600"}`
+                            }`}
                           >
-                            {event.title}
-                          </button>
-                        ))}
-                        {dayEvents.length > 2 && (
-                          <p className="text-gray-500 text-xs px-2">
-                            +{dayEvents.length - 2} more
-                          </p>
-                        )}
-                      </div>
-                    </>
-                  )}
-                </div>
-              );
-            })}
+                            {day}
+                          </div>
+                          <div className="space-y-1">
+                            {dayEvents.slice(0, 2).map((event) => (
+                              <button
+                                key={event.id}
+                                onClick={() => setSelectedEvent(event)}
+                                className={`w-full text-left px-2 py-1 rounded text-xs ${event.color} text-white truncate hover:opacity-80 transition-opacity`}
+                              >
+                                {event.title}
+                              </button>
+                            ))}
+                            {dayEvents.length > 2 && (
+                              <p className="text-gray-500 text-xs px-2">
+                                +{dayEvents.length - 2} more
+                              </p>
+                            )}
+                          </div>
+                        </>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
           </div>
         </div>
       )}

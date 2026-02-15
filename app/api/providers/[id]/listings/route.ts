@@ -27,7 +27,7 @@ export async function GET(
 
     return NextResponse.json({ listings });
   } catch (error: any) {
-    console.error("Error fetching listings:", error);
+    logger.error("Error fetching listings:", error);
     return NextResponse.json(
       { message: "Internal server error" },
       { status: 500 }
@@ -90,7 +90,7 @@ export async function POST(
         { status: 400 }
       );
     }
-    console.error("Error creating listing:", error);
+    logger.error("Error creating listing:", error);
     return NextResponse.json(
       { message: "Internal server error" },
       { status: 500 }

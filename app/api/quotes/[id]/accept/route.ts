@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { z } from "zod";
 import { sendTemplatedEmail, sendEmail, emailTemplates } from "@/lib/email";
 import { formatCurrency } from "@/lib/formatters";
+import { logger } from "@/lib/logger";
 
 const acceptSchema = z.object({
   paymentMode: z.enum(["FULL_PAYMENT", "DEPOSIT_BALANCE", "CASH_ON_DELIVERY"]),
@@ -16,7 +17,7 @@ const acceptSchema = z.object({
 // POST /api/quotes/[id]/accept - Client accepts quote (creates booking)
 export async function POST(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ id: string }> },
 ) {
   try {
     const { id } = await params;
@@ -55,35 +56,35 @@ export async function POST(
     if (quote.status === "DRAFT") {
       return NextResponse.json(
         { message: "Quote has not been sent yet" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
     if (quote.status === "ACCEPTED") {
       return NextResponse.json(
         { message: "Quote has already been accepted" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
     if (quote.status === "DECLINED" || quote.status === "CANCELLED") {
       return NextResponse.json(
         { message: "Quote is no longer available" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
     if (quote.status === "EXPIRED" || new Date(quote.validUntil) < new Date()) {
       return NextResponse.json(
         { message: "Quote has expired" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
     if (quote.booking) {
       return NextResponse.json(
         { message: "A booking already exists for this quote" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -91,7 +92,7 @@ export async function POST(
     if (!quote.allowedPaymentModes.includes(validatedData.paymentMode)) {
       return NextResponse.json(
         { message: "Selected payment mode is not allowed for this quote" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -229,7 +230,7 @@ export async function POST(
       // Send email to client
       try {
         const clientTemplate = emailTemplates.bookingConfirmationClient(
-          bookingConfirmationData
+          bookingConfirmationData,
         );
         await sendEmail({
           to: validatedData.clientEmail,
@@ -237,13 +238,13 @@ export async function POST(
           html: clientTemplate.html,
           text: clientTemplate.text,
         });
-        console.log(
-          `✅ Booking confirmation email sent to client: ${validatedData.clientEmail}`
+        logger.info(
+          `Booking confirmation email sent to client: ${validatedData.clientEmail}`,
         );
       } catch (error) {
-        console.error(
+        logger.error(
           "Failed to send client booking confirmation email:",
-          error
+          error,
         );
       }
 
@@ -272,21 +273,21 @@ export async function POST(
               html: vendorTemplate.html,
               text: vendorTemplate.text,
             });
-            console.log(
-              `✅ Booking confirmation email sent to vendor: ${vendorOwner.email}`
+            logger.info(
+              `Booking confirmation email sent to vendor: ${vendorOwner.email}`,
             );
           }
         } catch (error) {
-          console.error(
+          logger.error(
             "Failed to send vendor booking confirmation email:",
-            error
+            error,
           );
         }
       }
     } else {
       // For paid bookings, just log that emails will be sent after payment
-      console.log(
-        `⏳ Booking created with payment required. Confirmation emails will be sent after payment is completed via Stripe webhook.`
+      logger.info(
+        `Booking created with payment required. Confirmation emails will be sent after payment is completed via Stripe webhook.`,
       );
     }
 
@@ -298,13 +299,13 @@ export async function POST(
     if (error instanceof z.ZodError) {
       return NextResponse.json(
         { message: "Validation error", errors: error.issues },
-        { status: 400 }
+        { status: 400 },
       );
     }
-    console.error("Error accepting quote:", error);
+    logger.error("Error accepting quote:", error);
     return NextResponse.json(
       { message: "Internal server error" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

@@ -21,10 +21,12 @@ import {
   ClipboardList,
 } from "lucide-react";
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { useAdminTheme } from "./AdminThemeContext";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { signOut, useSession } from "next-auth/react";
+import SignOutModal from "@/components/modals/sign-out-modal";
 
 const mainNavItems = [
   { icon: LayoutDashboard, label: "Overview", href: "/admin" },
@@ -65,10 +67,27 @@ export default function AdminSidebar({
   const pathname = usePathname();
   const { darkMode, toggleDarkMode } = useAdminTheme();
   const { data: session } = useSession();
+  const [showSignOutModal, setShowSignOutModal] = useState(false);
 
   const adminName = session?.user?.name || "Admin User";
   const adminEmail = session?.user?.email || "admin@evalocal.com";
   const adminInitial = adminName?.charAt(0).toUpperCase() || "A";
+
+  const [adminImage, setAdminImage] = useState<string | null>(null);
+
+  useEffect(() => {
+    // Fetch fresh avatar from database (session JWT may be stale)
+    const fetchProfile = async () => {
+      try {
+        const res = await fetch("/api/auth/me");
+        if (res.ok) {
+          const data = await res.json();
+          setAdminImage(data.user?.avatar || null);
+        }
+      } catch {}
+    };
+    fetchProfile();
+  }, []);
 
   const isActive = (href: string) => {
     if (href === "/admin") {
@@ -85,10 +104,10 @@ export default function AdminSidebar({
         onClick={onClose}
         className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 ${
           active
-            ? "bg-accent text-white"
+            ? "bg-accent/15 text-accent font-semibold"
             : darkMode
-            ? "text-gray-400 hover:bg-white/5 hover:text-white"
-            : "text-gray-600 hover:bg-gray-100 hover:text-gray-900"
+              ? "text-gray-400 hover:bg-white/5 hover:text-white"
+              : "text-gray-600 hover:bg-gray-100 hover:text-gray-900"
         } ${isCollapsed ? "justify-center" : ""}`}
         title={isCollapsed ? item.label : undefined}
       >
@@ -132,21 +151,20 @@ export default function AdminSidebar({
                 isCollapsed ? "justify-center w-full" : ""
               }`}
             >
-              <div className="w-10 h-10 rounded-xl bg-linear-to-br from-accent to-pink-600 flex items-center justify-center shrink-0">
-                <span className="text-white font-bold text-lg">E</span>
+              <div className="shrink-0">
+                <Image
+                  src={
+                    darkMode
+                      ? "/images/brand/eva-logo-dark.png"
+                      : "/images/brand/eva-logo-light.png"
+                  }
+                  alt="EVA Local"
+                  width={isCollapsed ? 36 : 120}
+                  height={isCollapsed ? 36 : 36}
+                  className="object-contain"
+                  priority
+                />
               </div>
-              {!isCollapsed && (
-                <div>
-                  <p
-                    className={`font-bold text-sm ${
-                      darkMode ? "text-white" : "text-gray-900"
-                    }`}
-                  >
-                    EVA Admin
-                  </p>
-                  <p className="text-gray-500 text-xs">Admin Panel</p>
-                </div>
-              )}
             </div>
             <button
               onClick={onClose}
@@ -242,11 +260,21 @@ export default function AdminSidebar({
                 darkMode ? "bg-white/5" : "bg-gray-50"
               }`}
             >
-              <div className="w-9 h-9 rounded-full bg-linear-to-br from-blue-400 to-blue-600 flex items-center justify-center shrink-0">
-                <span className="text-white font-semibold text-sm">
-                  {adminInitial}
-                </span>
-              </div>
+              {adminImage ? (
+                <Image
+                  src={adminImage}
+                  alt={adminName}
+                  width={36}
+                  height={36}
+                  className="w-9 h-9 rounded-full object-cover shrink-0"
+                />
+              ) : (
+                <div className="w-9 h-9 rounded-full bg-linear-to-br from-blue-400 to-blue-600 flex items-center justify-center shrink-0">
+                  <span className="text-white font-semibold text-sm">
+                    {adminInitial}
+                  </span>
+                </div>
+              )}
               <div className="flex-1 min-w-0">
                 <p
                   className={`font-medium text-sm truncate ${
@@ -309,7 +337,7 @@ export default function AdminSidebar({
 
           {/* Logout */}
           <button
-            onClick={() => signOut({ callbackUrl: "/", redirect: true })}
+            onClick={() => setShowSignOutModal(true)}
             className={`flex items-center gap-3 px-3 py-2.5 rounded-lg ${
               darkMode ? "text-gray-400" : "text-gray-600"
             } hover:bg-red-500/10 hover:text-red-400 transition-colors w-full ${
@@ -323,6 +351,15 @@ export default function AdminSidebar({
             )}
           </button>
         </div>
+
+        <SignOutModal
+          isOpen={showSignOutModal}
+          onClose={() => setShowSignOutModal(false)}
+          onConfirm={() => {
+            setShowSignOutModal(false);
+            signOut({ callbackUrl: "/", redirect: true });
+          }}
+        />
       </aside>
     </>
   );

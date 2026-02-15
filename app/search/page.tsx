@@ -14,11 +14,15 @@ import {
   Hash,
   Link2,
 } from "lucide-react";
+import SearchResultSkeleton from "@/components/ui/SearchResultSkeleton";
 import TagInput from "@/components/ui/TagInput";
 import SearchModeToggle from "@/components/ui/SearchModeToggle";
 import EnhancedSearchInput from "@/components/ui/EnhancedSearchInput";
 import SearchResultCard from "@/components/ui/SearchResultCard";
 import SearchFilters from "@/components/ui/SearchFilters";
+import { useGeolocation } from "@/hooks/useGeolocation";
+import LocationPrompt from "@/components/ui/LocationPrompt";
+import { logger } from "@/lib/logger";
 
 interface Provider {
   id: string;
@@ -33,6 +37,8 @@ interface Provider {
   isVerified: boolean;
   isFeatured: boolean;
   categories: string[];
+  distance?: number | null;
+  isWithinRadius?: boolean;
 }
 
 interface Category {
@@ -59,6 +65,10 @@ interface SearchFiltersState {
   tags: string[];
   slug: string;
   searchType: "text" | "tags" | "slug" | "all";
+  lat: string;
+  lng: string;
+  radius: string;
+  ceremony: string;
 }
 
 function SearchPageContent() {
@@ -96,7 +106,91 @@ function SearchPageContent() {
     tags: searchParams.get("tags")?.split(",").filter(Boolean) || [],
     slug: searchParams.get("slug") || "",
     searchType: (searchParams.get("searchType") as any) || "all",
+    lat: searchParams.get("lat") || "",
+    lng: searchParams.get("lng") || "",
+    radius: searchParams.get("radius") || "5",
+    ceremony: searchParams.get("ceremony") || "",
   });
+
+  // Geolocation
+  const {
+    lat: geoLat,
+    lng: geoLng,
+    error: geoError,
+    loading: geoLoading,
+    getLocation,
+    checkPermission,
+    permissionStatus,
+  } = useGeolocation();
+  const [showLocationPrompt, setShowLocationPrompt] = useState(false);
+
+  useEffect(() => {
+    checkPermission();
+  }, [checkPermission]);
+
+  useEffect(() => {
+    // If permission is already granted, just get the location automatically
+    // OR if permission is 'prompt', trigger it immediately to show the browser dialog
+    // as requested: "ensure the use location from the browser always comes up when navigated"
+    if (
+      (permissionStatus === "granted" || permissionStatus === "prompt") &&
+      !filters.lat &&
+      !filters.lng
+    ) {
+      getLocation();
+    }
+  }, [permissionStatus, filters.lat, filters.lng, getLocation]);
+
+  useEffect(() => {
+    // Show prompt if no location is set and permission is not granted
+    if (
+      !filters.lat &&
+      !filters.lng &&
+      !filters.city &&
+      (permissionStatus === "prompt" || permissionStatus === null)
+    ) {
+      setShowLocationPrompt(true);
+    } else {
+      setShowLocationPrompt(false);
+    }
+  }, [filters.lat, filters.lng, filters.city, permissionStatus]);
+
+  useEffect(() => {
+    if (geoLat && geoLng) {
+      setFilters((prev) => ({
+        ...prev,
+        lat: geoLat.toString(),
+        lng: geoLng.toString(),
+      }));
+      setShowLocationPrompt(false);
+    }
+  }, [geoLat, geoLng]);
+
+  useEffect(() => {
+    if (geoError && filters.lat === "loading") {
+      setFilters((prev) => ({ ...prev, lat: "", lng: "" }));
+      // Optional: show a toast or error message
+    }
+  }, [geoError, filters.lat]);
+
+  useEffect(() => {
+    if (filters.lat === "loading") {
+      getLocation();
+    }
+  }, [filters.lat, getLocation]);
+
+  // Handle city vs geolocation conflict
+  useEffect(() => {
+    if (filters.city && filters.lat && filters.lat !== "loading") {
+      setFilters((prev) => ({ ...prev, lat: "", lng: "" }));
+    }
+  }, [filters.city]);
+
+  useEffect(() => {
+    if (filters.lat && filters.lat !== "loading" && filters.city) {
+      setFilters((prev) => ({ ...prev, city: "" }));
+    }
+  }, [filters.lat]);
 
   // Fetch categories and cities for filters
   useEffect(() => {
@@ -117,7 +211,7 @@ function SearchPageContent() {
           setCities(Array.isArray(cityData) ? cityData : cityData.cities || []);
         }
       } catch (error) {
-        console.error("Error fetching filter options:", error);
+        logger.error("Error fetching filter options:", error);
       }
     }
 
@@ -139,7 +233,7 @@ function SearchPageContent() {
           setFavoriteIds(new Set(ids));
         }
       } catch (err) {
-        console.error("Error fetching favorites:", err);
+        logger.error("Error fetching favorites:", err);
       }
     }
     fetchFavorites();
@@ -155,7 +249,7 @@ function SearchPageContent() {
           setAvailableTags(data.tags || []);
         }
       } catch (err) {
-        console.error("Error fetching tags:", err);
+        logger.error("Error fetching tags:", err);
       }
     }
     fetchTags();
@@ -181,6 +275,10 @@ function SearchPageContent() {
         if (filters.maxPrice) params.set("maxPrice", filters.maxPrice);
         if (filters.minRating) params.set("rating", filters.minRating);
         if (filters.sortBy) params.set("sortBy", filters.sortBy);
+        if (filters.lat) params.set("lat", filters.lat);
+        if (filters.lng) params.set("lng", filters.lng);
+        if (filters.radius) params.set("radius", filters.radius);
+        if (filters.ceremony) params.set("cultureTags", filters.ceremony);
         params.set("page", currentPage.toString());
         params.set("limit", "12");
 
@@ -197,12 +295,12 @@ function SearchPageContent() {
           if (resetPage) setPage(1);
         }
       } catch (error) {
-        console.error("Error searching providers:", error);
+        logger.error("Error searching providers:", error);
       } finally {
         setLoading(false);
       }
     },
-    [filters, page]
+    [filters, page],
   );
 
   useEffect(() => {
@@ -233,6 +331,9 @@ function SearchPageContent() {
     if (filters.maxPrice) params.set("maxPrice", filters.maxPrice);
     if (filters.minRating) params.set("rating", filters.minRating);
     if (filters.sortBy !== "relevance") params.set("sortBy", filters.sortBy);
+    if (filters.lat) params.set("lat", filters.lat);
+    if (filters.lng) params.set("lng", filters.lng);
+    if (filters.radius !== "5") params.set("radius", filters.radius);
 
     const newUrl = params.toString() ? `/search?${params}` : "/search";
     router.replace(newUrl, { scroll: false });
@@ -255,6 +356,10 @@ function SearchPageContent() {
       tags: [],
       slug: "",
       searchType: "all",
+      lat: "",
+      lng: "",
+      radius: "5",
+      ceremony: "",
     });
   };
 
@@ -265,7 +370,10 @@ function SearchPageContent() {
     filters.maxPrice ||
     filters.minRating ||
     filters.tags.length > 0 ||
-    filters.slug;
+    filters.slug ||
+    filters.lat ||
+    filters.lng ||
+    filters.radius !== "5";
 
   const loadMore = () => {
     setPage((prev) => prev + 1);
@@ -299,7 +407,7 @@ function SearchPageContent() {
         }
       }
     } catch (error) {
-      console.error("Error toggling favorite:", error);
+      logger.error("Error toggling favorite:", error);
     } finally {
       setFavoriteLoading((prev) => ({ ...prev, [providerId]: false }));
     }
@@ -309,14 +417,29 @@ function SearchPageContent() {
     <div className="min-h-screen bg-background">
       <Header />
 
-      <main className="pt-24 pb-16">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          {/* Search Header */}
-          <div className="mb-8">
-            <h1 className="text-3xl font-bold text-foreground mb-4">
-              Find Your Perfect Vendor
-            </h1>
+      <LocationPrompt
+        isOpen={showLocationPrompt}
+        onAllow={() => {
+          getLocation();
+        }}
+        onDecline={() => {
+          setShowLocationPrompt(false);
+        }}
+      />
 
+      <main className="pt-20 pb-16">
+        {/* Hero banner */}
+        <section className="px-4 pt-8 pb-6 sm:px-6 lg:px-8">
+          <div className="max-w-7xl mx-auto">
+            <h1 className="text-3xl sm:text-4xl text-foreground">
+              Find your vendor
+            </h1>
+          </div>
+        </section>
+
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-6">
+          {/* Search controls */}
+          <div className="mb-8">
             {/* Enhanced Search Bar */}
             <form onSubmit={handleSearch} className="space-y-4 mb-4">
               {/* Search Mode Toggle */}
@@ -375,14 +498,14 @@ function SearchPageContent() {
 
                 <button
                   type="submit"
-                  className="px-6 py-3 bg-accent text-accent-foreground rounded-xl font-semibold hover:opacity-90 transition"
+                  className="px-4 sm:px-6 py-3 bg-accent text-accent-foreground rounded-xl font-semibold hover:opacity-90 transition shrink-0"
                 >
                   Search
                 </button>
                 <button
                   type="button"
                   onClick={() => setShowFilters(!showFilters)}
-                  className="px-4 py-3 border border-border rounded-xl flex items-center gap-2 hover:bg-muted transition md:hidden"
+                  className="px-3 sm:px-4 py-3 border border-border rounded-xl flex items-center gap-2 hover:bg-muted transition md:hidden shrink-0"
                 >
                   <SlidersHorizontal className="w-5 h-5" />
                 </button>
@@ -515,8 +638,16 @@ function SearchPageContent() {
             {/* Results */}
             <div className="flex-1">
               {loading && providers.length === 0 ? (
-                <div className="flex items-center justify-center py-20">
-                  <Loader2 className="w-8 h-8 animate-spin text-accent" />
+                <div
+                  className={
+                    viewMode === "grid"
+                      ? "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6"
+                      : "space-y-4"
+                  }
+                >
+                  {[1, 2, 3, 4, 5, 6].map((i) => (
+                    <SearchResultSkeleton key={i} viewMode={viewMode} />
+                  ))}
                 </div>
               ) : providers.length === 0 ? (
                 <div className="text-center py-20">
@@ -623,8 +754,15 @@ export default function SearchPage() {
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen bg-background flex items-center justify-center">
-          <Loader2 className="w-8 h-8 animate-spin text-accent" />
+        <div className="min-h-screen bg-background">
+          <Header />
+          <div className="pt-28 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+              {[1, 2, 3, 4, 5, 6].map((i) => (
+                <SearchResultSkeleton key={i} viewMode="grid" />
+              ))}
+            </div>
+          </div>
         </div>
       }
     >

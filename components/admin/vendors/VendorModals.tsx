@@ -1,7 +1,15 @@
 "use client";
 
 import { useState } from "react";
-import { Mail, Phone, MapPin, Globe, Loader2, CheckCircle, XCircle } from "lucide-react";
+import {
+  Mail,
+  Phone,
+  MapPin,
+  Globe,
+  Loader2,
+  CheckCircle,
+  XCircle,
+} from "lucide-react";
 import Modal from "@/components/admin/Modal";
 import { useAdminTheme } from "@/components/admin/AdminThemeContext";
 import { formatCurrency } from "@/lib/formatters";
@@ -66,10 +74,10 @@ const getAvatarColors = (name: string) => {
   const colors = [
     "from-green-400 to-emerald-500",
     "from-orange-400 to-red-500",
-    "from-purple-400 to-pink-500",
+    "from-purple-400 to-violet-500",
     "from-blue-400 to-indigo-500",
     "from-amber-400 to-orange-500",
-    "from-pink-400 to-rose-500",
+    "from-teal-400 to-cyan-500",
   ];
   return colors[name.charCodeAt(0) % colors.length];
 };
@@ -117,7 +125,7 @@ export function ViewVendorModal({
         <div className="flex items-start gap-4">
           <div
             className={`w-16 h-16 rounded-xl bg-linear-to-br ${getAvatarColors(
-              provider.businessName
+              provider.businessName,
             )} flex items-center justify-center text-white font-bold text-xl`}
           >
             {getInitials(provider.businessName)}
@@ -129,7 +137,7 @@ export function ViewVendorModal({
             <div className="flex flex-wrap items-center gap-2 mt-1">
               <span
                 className={`px-2.5 py-1 rounded-full text-xs font-medium text-white ${getStatusColor(
-                  provider.status
+                  provider.status,
                 )}`}
               >
                 {provider.status}
@@ -218,7 +226,7 @@ export function ViewVendorModal({
                 </p>
               )}
               {provider.website && (
-                 <p
+                <p
                   className={`flex items-center gap-2 text-sm ${textSecondary}`}
                 >
                   <Globe size={16} className={textMuted} />
@@ -241,7 +249,7 @@ export function ViewVendorModal({
                     categories.length > 0
                   ) {
                     const match = categories.find(
-                      (cat: Category) => cat.id === catIds[0]
+                      (cat: Category) => cat.id === catIds[0],
                     );
                     const rawName = match?.name || catIds[0] || "N/A";
                     return typeof rawName === "string" && rawName.length > 0
@@ -392,7 +400,8 @@ export function EditVendorModal({
   onSave,
   isSubmitting,
 }: EditVendorModalProps) {
-  const { darkMode, textPrimary, textSecondary, inputBg, inputBorder } = useAdminTheme();
+  const { darkMode, textPrimary, textSecondary, inputBg, inputBorder } =
+    useAdminTheme();
 
   const inputClass = `w-full px-4 py-2.5 rounded-lg border ${inputBg} ${inputBorder} ${textPrimary} text-sm focus:outline-none focus:ring-2 focus:ring-accent/50`;
   const labelClass = `block text-sm font-medium ${textPrimary} mb-1`;
@@ -404,179 +413,196 @@ export function EditVendorModal({
 
   return (
     <Modal isOpen={isOpen} onClose={onClose} title="Edit Vendor" size="xl">
-        <Tabs defaultValue="general" className="mt-2">
-            <TabsList className="mb-6 w-full grid grid-cols-3">
-                <TabsTrigger value="general">General</TabsTrigger>
-                <TabsTrigger value="contact">Contact & Location</TabsTrigger>
-                <TabsTrigger value="settings">Settings</TabsTrigger>
-            </TabsList>
+      <Tabs defaultValue="general" className="mt-2">
+        <TabsList className="mb-6 w-full grid grid-cols-3">
+          <TabsTrigger value="general">General</TabsTrigger>
+          <TabsTrigger value="contact">Contact & Location</TabsTrigger>
+          <TabsTrigger value="settings">Settings</TabsTrigger>
+        </TabsList>
 
-            <TabsContent value="general" className="space-y-4">
-                 <div>
-                    <label className={labelClass}>Business Name</label>
-                    <input
-                        type="text"
-                        value={editForm.businessName}
-                        onChange={(e) =>
-                            setEditForm({ ...editForm, businessName: e.target.value })
-                        }
-                        className={inputClass}
-                    />
-                </div>
-                 <div>
-                    <label className={labelClass}>Categories</label>
-                    <div className="relative">
-                        <select
-                            multiple
-                            value={editForm.categories}
-                            onChange={(e) => {
-                            const selected = Array.from(
-                                e.target.selectedOptions,
-                                (option) => option.value
-                            );
-                            setEditForm({ ...editForm, categories: selected });
-                            }}
-                            className={`${inputClass} min-h-[100px]`}
-                        >
-                            {categories.map((cat) => (
-                            <option
-                                key={cat.slug}
-                                value={cat.slug}
-                            >
-                                {cat.name}
-                            </option>
-                            ))}
-                        </select>
-                         <p className={`text-xs ${textSecondary} mt-1`}>Hold Ctrl/Cmd to select multiple</p>
-                    </div>
-                </div>
-                 <div>
-                    <label className={labelClass}>Description</label>
-                    <textarea
-                        value={editForm.description}
-                        onChange={(e) =>
-                        setEditForm({ ...editForm, description: e.target.value })
-                        }
-                        rows={5}
-                        className={`${inputClass} resize-none`}
-                    />
-                </div>
-            </TabsContent>
+        <TabsContent value="general" className="space-y-4">
+          <div>
+            <label className={labelClass}>Business Name</label>
+            <input
+              type="text"
+              value={editForm.businessName}
+              onChange={(e) =>
+                setEditForm({ ...editForm, businessName: e.target.value })
+              }
+              className={inputClass}
+            />
+          </div>
+          <div>
+            <label className={labelClass}>Categories</label>
+            <div className="relative">
+              <select
+                multiple
+                value={editForm.categories}
+                onChange={(e) => {
+                  const selected = Array.from(
+                    e.target.selectedOptions,
+                    (option) => option.value,
+                  );
+                  setEditForm({ ...editForm, categories: selected });
+                }}
+                className={`${inputClass} min-h-[100px]`}
+              >
+                {categories.map((cat) => (
+                  <option key={cat.slug} value={cat.slug}>
+                    {cat.name}
+                  </option>
+                ))}
+              </select>
+              <p className={`text-xs ${textSecondary} mt-1`}>
+                Hold Ctrl/Cmd to select multiple
+              </p>
+            </div>
+          </div>
+          <div>
+            <label className={labelClass}>Description</label>
+            <textarea
+              value={editForm.description}
+              onChange={(e) =>
+                setEditForm({ ...editForm, description: e.target.value })
+              }
+              rows={5}
+              className={`${inputClass} resize-none`}
+            />
+          </div>
+        </TabsContent>
 
-            <TabsContent value="contact" className="space-y-4">
-                 <div className="grid sm:grid-cols-2 gap-4">
-                    <div>
-                        <label className={labelClass}>Phone</label>
-                        <input
-                            type="tel"
-                            value={editForm.phone}
-                            onChange={(e) =>
-                                setEditForm({ ...editForm, phone: e.target.value })
-                            }
-                            className={inputClass}
-                        />
-                    </div>
-                    <div>
-                        <label className={labelClass}>Website</label>
-                        <input
-                            type="url"
-                            value={editForm.website}
-                            onChange={(e) =>
-                                setEditForm({ ...editForm, website: e.target.value })
-                            }
-                            className={inputClass}
-                        />
-                    </div>
-                </div>
-                <div>
-                   <label className={labelClass}>Address</label>
-                    <input
-                        type="text"
-                        value={editForm.address}
-                        onChange={(e) =>
-                        setEditForm({ ...editForm, address: e.target.value })
-                        }
-                        className={inputClass}
-                    /> 
-                </div>
-                <div>
-                    <label className={labelClass}>Postcode</label>
-                    <input
-                    type="text"
-                    value={editForm.postcode}
-                    onChange={(e) =>
-                        setEditForm({ ...editForm, postcode: e.target.value })
-                    }
-                    className={inputClass}
-                    />
-                </div>
-            </TabsContent>
+        <TabsContent value="contact" className="space-y-4">
+          <div className="grid sm:grid-cols-2 gap-4">
+            <div>
+              <label className={labelClass}>Phone</label>
+              <input
+                type="tel"
+                value={editForm.phone}
+                onChange={(e) =>
+                  setEditForm({ ...editForm, phone: e.target.value })
+                }
+                className={inputClass}
+              />
+            </div>
+            <div>
+              <label className={labelClass}>Website</label>
+              <input
+                type="url"
+                value={editForm.website}
+                onChange={(e) =>
+                  setEditForm({ ...editForm, website: e.target.value })
+                }
+                className={inputClass}
+              />
+            </div>
+          </div>
+          <div>
+            <label className={labelClass}>Address</label>
+            <input
+              type="text"
+              value={editForm.address}
+              onChange={(e) =>
+                setEditForm({ ...editForm, address: e.target.value })
+              }
+              className={inputClass}
+            />
+          </div>
+          <div>
+            <label className={labelClass}>Postcode</label>
+            <input
+              type="text"
+              value={editForm.postcode}
+              onChange={(e) =>
+                setEditForm({ ...editForm, postcode: e.target.value })
+              }
+              className={inputClass}
+            />
+          </div>
+        </TabsContent>
 
-            <TabsContent value="settings" className="space-y-4">
-                <div className="grid sm:grid-cols-2 gap-4">
-                    <div>
-                        <label className={labelClass}>Starting Price (€)</label>
-                        <input
-                        type="number"
-                        value={editForm.priceFrom}
-                        onChange={(e) =>
-                            setEditForm({ ...editForm, priceFrom: e.target.value })
-                        }
-                        className={inputClass}
-                        />
-                    </div>
-                    <div>
-                        <label className={labelClass}>Service Radius (miles)</label>
-                        <input
-                        type="number"
-                        value={editForm.serviceRadius}
-                        onChange={(e) =>
-                            setEditForm({ ...editForm, serviceRadius: e.target.value })
-                        }
-                        className={inputClass}
-                        />
-                    </div>
-                </div>
-                 <div className="flex flex-col gap-3 p-4 rounded-lg border border-gray-200 dark:border-white/10 mt-4">
-                    <label className="flex items-center gap-3 cursor-pointer">
-                        <input
-                        type="checkbox"
-                        checked={editForm.isVerified}
-                        onChange={(e) => handleCheckboxChange("isVerified", e.target.checked)}
-                        className="w-5 h-5 rounded accent-accent"
-                        />
-                         <div>
-                            <span className={`block text-sm font-medium ${textPrimary}`}>Verified Vendor</span>
-                            <span className={`block text-xs ${textSecondary}`}>Display verified badge on profile</span>
-                        </div>
-                    </label>
-                    <label className="flex items-center gap-3 cursor-pointer">
-                        <input
-                        type="checkbox"
-                        checked={editForm.isFeatured}
-                        onChange={(e) => handleCheckboxChange("isFeatured", e.target.checked)}
-                        className="w-5 h-5 rounded accent-accent"
-                        />
-                         <div>
-                            <span className={`block text-sm font-medium ${textPrimary}`}>Featured Vendor</span>
-                            <span className={`block text-xs ${textSecondary}`}>Boost visibility in search results</span>
-                        </div>
-                    </label>
-                    <label className="flex items-center gap-3 cursor-pointer">
-                        <input
-                        type="checkbox"
-                        checked={editForm.isPublished}
-                        onChange={(e) => handleCheckboxChange("isPublished", e.target.checked)}
-                        className="w-5 h-5 rounded accent-accent"
-                        />
-                         <div>
-                            <span className={`block text-sm font-medium ${textPrimary}`}>Published</span>
-                            <span className={`block text-xs ${textSecondary}`}>Visible to the public</span>
-                        </div>
-                    </label>
-                 </div>
-            </TabsContent>
-        </Tabs>
+        <TabsContent value="settings" className="space-y-4">
+          <div className="grid sm:grid-cols-2 gap-4">
+            <div>
+              <label className={labelClass}>Starting Price (€)</label>
+              <input
+                type="number"
+                value={editForm.priceFrom}
+                onChange={(e) =>
+                  setEditForm({ ...editForm, priceFrom: e.target.value })
+                }
+                className={inputClass}
+              />
+            </div>
+            <div>
+              <label className={labelClass}>Service Radius (miles)</label>
+              <input
+                type="number"
+                value={editForm.serviceRadius}
+                onChange={(e) =>
+                  setEditForm({ ...editForm, serviceRadius: e.target.value })
+                }
+                className={inputClass}
+              />
+            </div>
+          </div>
+          <div className="flex flex-col gap-3 p-4 rounded-lg border border-gray-200 dark:border-white/10 mt-4">
+            <label className="flex items-center gap-3 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={editForm.isVerified}
+                onChange={(e) =>
+                  handleCheckboxChange("isVerified", e.target.checked)
+                }
+                className="w-5 h-5 rounded accent-accent"
+              />
+              <div>
+                <span className={`block text-sm font-medium ${textPrimary}`}>
+                  Verified Vendor
+                </span>
+                <span className={`block text-xs ${textSecondary}`}>
+                  Display verified badge on profile
+                </span>
+              </div>
+            </label>
+            <label className="flex items-center gap-3 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={editForm.isFeatured}
+                onChange={(e) =>
+                  handleCheckboxChange("isFeatured", e.target.checked)
+                }
+                className="w-5 h-5 rounded accent-accent"
+              />
+              <div>
+                <span className={`block text-sm font-medium ${textPrimary}`}>
+                  Featured Vendor
+                </span>
+                <span className={`block text-xs ${textSecondary}`}>
+                  Boost visibility in search results
+                </span>
+              </div>
+            </label>
+            <label className="flex items-center gap-3 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={editForm.isPublished}
+                onChange={(e) =>
+                  handleCheckboxChange("isPublished", e.target.checked)
+                }
+                className="w-5 h-5 rounded accent-accent"
+              />
+              <div>
+                <span className={`block text-sm font-medium ${textPrimary}`}>
+                  Published
+                </span>
+                <span className={`block text-xs ${textSecondary}`}>
+                  Visible to the public
+                </span>
+              </div>
+            </label>
+          </div>
+        </TabsContent>
+      </Tabs>
 
       <div className="flex justify-end gap-3 pt-4 border-t border-gray-200 dark:border-white/10 mt-6">
         <button
@@ -683,7 +709,8 @@ export function AddVendorModal({
     >
       <div className="space-y-4">
         <p className={`text-sm ${textSecondary} -mt-2 mb-4`}>
-          Create a new vendor account. An invitation email will be sent to the owner.
+          Create a new vendor account. An invitation email will be sent to the
+          owner.
         </p>
 
         <div className="grid sm:grid-cols-2 gap-4">
@@ -734,9 +761,7 @@ export function AddVendorModal({
             />
           </div>
           <div>
-            <label className={labelClass}>
-              Owner Name
-            </label>
+            <label className={labelClass}>Owner Name</label>
             <input
               type="text"
               value={form.ownerName}
@@ -806,26 +831,26 @@ export function AddVendorModal({
 
         <div className="flex justify-end gap-3 mt-6 pt-4 border-t border-gray-200 dark:border-white/10">
           <button
-              onClick={() => {
+            onClick={() => {
               resetForm();
               onClose();
-              }}
-              className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+            }}
+            className={`px-4 py-2 rounded-lg font-medium transition-colors ${
               darkMode
-                  ? "bg-white/10 hover:bg-white/20 text-white"
-                  : "bg-gray-100 hover:bg-gray-200 text-gray-900"
-              }`}
-              disabled={isSubmitting}
+                ? "bg-white/10 hover:bg-white/20 text-white"
+                : "bg-gray-100 hover:bg-gray-200 text-gray-900"
+            }`}
+            disabled={isSubmitting}
           >
-              Cancel
+            Cancel
           </button>
           <button
-              onClick={handleSubmit}
-              disabled={isSubmitting}
-              className="flex items-center gap-2 px-4 py-2 rounded-lg bg-accent text-white font-medium hover:bg-accent/90 transition-colors disabled:opacity-50"
+            onClick={handleSubmit}
+            disabled={isSubmitting}
+            className="flex items-center gap-2 px-4 py-2 rounded-lg bg-accent text-white font-medium hover:bg-accent/90 transition-colors disabled:opacity-50"
           >
-              {isSubmitting && <Loader2 size={16} className="animate-spin" />}
-              {isSubmitting ? "Creating..." : "Create Vendor"}
+            {isSubmitting && <Loader2 size={16} className="animate-spin" />}
+            {isSubmitting ? "Creating..." : "Create Vendor"}
           </button>
         </div>
       </div>

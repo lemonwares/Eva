@@ -175,7 +175,7 @@ export function withErrorHandler<T>(
   handler: () => Promise<NextResponse<ApiResponse<T>>>
 ): Promise<NextResponse<ApiResponse<T>>> {
   return handler().catch((error) => {
-    console.error("API Error:", error);
+    logger.error("API Error:", error);
 
     if (error instanceof ZodError) {
       return validationErrorResponse(error) as NextResponse<ApiResponse<T>>;

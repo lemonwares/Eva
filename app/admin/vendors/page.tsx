@@ -2,6 +2,7 @@
 
 import AdminLayout from "@/components/admin/AdminLayout";
 import { useAdminTheme } from "@/components/admin/AdminThemeContext";
+import { logger } from "@/lib/logger";
 import ConfirmDialog from "@/components/admin/ConfirmDialog";
 import { ToastContainer, useToast } from "@/components/admin/Toast";
 import { Plus } from "lucide-react";
@@ -100,7 +101,7 @@ export default function AdminVendorsPage() {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [actionDialogOpen, setActionDialogOpen] = useState(false);
   const [selectedProvider, setSelectedProvider] = useState<Provider | null>(
-    null
+    null,
   );
   const [actionType, setActionType] = useState<string>("");
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -132,7 +133,7 @@ export default function AdminVendorsPage() {
           categoriesRef.current = data || [];
         }
       } catch (err) {
-        console.error("Error fetching categories:", err);
+        logger.error("Error fetching categories:", err);
       }
     }
     fetchCategories();
@@ -153,7 +154,7 @@ export default function AdminVendorsPage() {
         params.append("status", statusFilter.toLowerCase());
       if (categoryFilter !== "All") {
         const cat = categoriesRef.current.find(
-          (c) => c.name === categoryFilter
+          (c) => c.name === categoryFilter,
         );
         if (cat) params.append("categoryId", cat.id);
       }
@@ -164,10 +165,9 @@ export default function AdminVendorsPage() {
         setProviders(data.providers || []);
         setPagination(data.pagination || null);
         setStatusCounts(data.statusCounts || null);
-        console.log(`Res:`, data);
       }
     } catch (err) {
-      console.error("Error fetching providers:", err);
+      logger.error("Error fetching providers:", err);
       addToastRef.current("Failed to fetch vendors", "error");
     } finally {
       setIsLoading(false);
@@ -189,7 +189,6 @@ export default function AdminVendorsPage() {
   };
 
   const handleEdit = (provider: Provider) => {
-    console.log("Editing provider:", provider);
     setSelectedProvider(provider);
     setEditForm({
       businessName: provider.businessName || "",
@@ -246,7 +245,7 @@ export default function AdminVendorsPage() {
             isFeatured: editForm.isFeatured,
             isPublished: editForm.isPublished,
           }),
-        }
+        },
       );
 
       if (res.ok) {
@@ -310,7 +309,7 @@ export default function AdminVendorsPage() {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ action: actionType }),
-        }
+        },
       );
 
       if (res.ok) {
@@ -320,7 +319,7 @@ export default function AdminVendorsPage() {
         const data = await res.json();
         addToast(
           data.error || `Failed to ${actionType.toLowerCase()} vendor`,
-          "error"
+          "error",
         );
       }
     } catch (err) {
@@ -467,8 +466,8 @@ export default function AdminVendorsPage() {
           actionType === "SUSPEND" || actionType === "REJECT"
             ? "danger"
             : actionType === "APPROVE" || actionType === "ACTIVATE"
-            ? "success"
-            : "info"
+              ? "success"
+              : "info"
         }
         isLoading={isSubmitting}
       />

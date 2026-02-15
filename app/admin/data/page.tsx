@@ -150,7 +150,7 @@ export default function AdminDataPage() {
       setJobs(data.jobs || []);
       setTotalPages(data.pagination?.totalPages || 1);
     } catch (err) {
-      console.error("Error fetching import jobs:", err);
+      logger.error("Error fetching import jobs:", err);
     } finally {
       setLoading(false);
     }

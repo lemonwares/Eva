@@ -2,147 +2,171 @@
 
 import LoginForm from "@/components/auth/login-form";
 import SignUpForm from "@/components/auth/signup-form";
-import { Sparkles, Home } from "lucide-react";
+import { Home, Check } from "lucide-react";
 import { useState, Suspense } from "react";
+import { useSearchParams } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
 
-const tabs: { key: "login" | "signup"; label: string; description: string }[] =
-  [
-    { key: "login", label: "Sign in", description: "Welcome back" },
-    { key: "signup", label: "Create account", description: "Join EVA" },
-  ];
-
-export default function AuthPage() {
-  const [activeTab, setActiveTab] = useState<"login" | "signup">("login");
+function AuthPageContent() {
+  const searchParams = useSearchParams();
+  const initialTab = searchParams.get("tab") === "signup" ? "signup" : "login";
+  const initialType =
+    searchParams.get("type") === "PROFESSIONAL" ? "PROFESSIONAL" : undefined;
+  const [activeTab, setActiveTab] = useState<"login" | "signup">(initialTab);
 
   return (
-    <main className="relative min-h-screen overflow-hidden bg-background text-foreground">
-      <div className="pointer-events-none absolute inset-0">
-        <div className="absolute -top-24 left-16 h-72 w-72 rounded-full bg-accent/20 blur-[140px]" />
-        <div className="absolute bottom-0 right-0 h-80 w-80 rounded-full bg-primary/15 blur-[140px]" />
-        <div className="absolute inset-x-0 bottom-0 h-1/2 bg-linear-to-t from-secondary/80 to-transparent" />
-      </div>
-
-      {/* Home navigation link */}
-      <div className="absolute top-6 left-6 z-20">
+    <main className="relative min-h-screen bg-background text-foreground">
+      {/* Top bar */}
+      <div className="absolute top-6 left-6 z-20 flex items-center gap-4">
         <Link
           href="/"
-          className="inline-flex items-center gap-2 rounded-xl border border-border bg-card/80 px-4 py-2 text-sm font-medium text-muted-foreground backdrop-blur-sm transition-all hover:bg-card hover:text-foreground hover:border-accent/50"
+          className="inline-flex items-center gap-2 text-sm font-medium text-muted-foreground hover:text-foreground transition"
         >
           <Home className="h-4 w-4" />
           Back to Home
         </Link>
       </div>
 
-      <div className="relative z-10 flex min-h-screen items-center justify-center px-4 py-16">
-        <div className="grid w-full max-w-6xl overflow-hidden rounded-4xl border border-border bg-card/90 shadow-[0_30px_120px_rgba(15,23,42,0.12)] backdrop-blur-xl lg:grid-cols-[1.1fr_0.9fr]">
-          {/* Brand / Story panel */}
-          <div className="relative hidden bg-linear-to-b from-secondary via-card to-card p-12 lg:flex lg:flex-col lg:justify-between overflow-hidden">
-            {/* Background Image */}
-            <div
-              className="absolute inset-0 opacity-10"
-              style={{
-                backgroundImage:
-                  "url('https://images.unsplash.com/photo-1519741497674-611481863552?w=800&h=1200&fit=crop')",
-                backgroundSize: "cover",
-                backgroundPosition: "center",
-              }}
-            />
+      <div className="absolute top-6 left-1/2 -translate-x-1/2 z-20">
+        <Link href="/" className="inline-flex items-center gap-2">
+          <Image
+            src="/images/brand/eva-logo-light.png"
+            alt="EVA Local"
+            width={120}
+            height={40}
+            className="h-8 w-auto"
+          />
+        </Link>
+      </div>
 
-            <div className="relative z-10">
-              <div className="inline-flex items-center gap-2 rounded-full border border-border bg-card/70 px-4 py-2 text-xs font-semibold uppercase tracking-[0.25em] text-muted-foreground">
-                <Sparkles size={16} className="text-accent" />
-                Trusted Vendors
-              </div>
-              <h1 className="mt-8 text-4xl font-semibold leading-tight text-foreground">
-                Book incredible vendors with confidence.
-              </h1>
-              <p className="mt-4 text-base text-muted-foreground">
-                EVA connects clients with curated professionals across
-                decoration, catering, planning, photography, and beyond. Manage
-                every detail in one calm, collaborative workspace.
+      <div className="relative z-10 flex min-h-screen items-center justify-center px-4 py-20">
+        <div className="grid w-full max-w-5xl overflow-hidden rounded-3xl border border-border bg-card/90 shadow-xl lg:grid-cols-2">
+          {/* Mobile brand strip — visible below lg */}
+          <div className="flex items-center justify-center gap-3 bg-linear-to-r from-[#0097b2] to-[#007a91] px-6 py-4 text-white lg:hidden">
+            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-white/15 text-lg font-bold">
+              E
+            </div>
+            <div>
+              <p className="font-sans text-base font-bold leading-tight">
+                EVA Local
+              </p>
+              <p className="text-xs text-white/70">
+                Discover &amp; book event vendors
               </p>
             </div>
+          </div>
 
-            {/* Featured Image */}
-            <div className="relative z-10 my-8 rounded-2xl overflow-hidden border border-border shadow-lg">
-              <img
-                src="https://images.unsplash.com/photo-1511795409834-ef04bbd61622?w=600&h=300&fit=crop"
-                alt="Wedding celebration"
-                className="w-full h-48 object-cover"
-              />
-            </div>
+          {/* Brand panel (desktop) */}
+          <div className="relative hidden lg:flex flex-col items-center justify-center bg-linear-to-br from-[#0097b2] via-[#007a91] to-[#005f6b] p-12 text-white overflow-hidden">
+            {/* Decorative circles */}
+            <div className="absolute -top-20 -left-20 w-72 h-72 rounded-full bg-white/5" />
+            <div className="absolute -bottom-16 -right-16 w-56 h-56 rounded-full bg-white/5" />
+            <div className="absolute top-1/4 right-8 w-24 h-24 rounded-full bg-white/10" />
 
-            <div className="relative z-10 grid gap-4 text-sm text-muted-foreground sm:grid-cols-2">
-              {[
-                { stat: "100+", label: "Verified vendors" },
-                { stat: "4.9/5", label: "Average review rating" },
-                { stat: "24 hrs", label: "Quote turnaround" },
-                { stat: "99%", label: "Client satisfaction" },
-              ].map((item) => (
-                <div
-                  key={item.label}
-                  className="rounded-2xl border border-border bg-card/70 p-4"
-                >
-                  <div className="text-2xl font-semibold text-foreground">
-                    {item.stat}
+            {/* Content */}
+            <div className="relative z-10 text-center space-y-8">
+              <div className="inline-flex items-center justify-center w-20 h-20 rounded-2xl bg-white/15 backdrop-blur-sm">
+                <span className="text-4xl font-bold">E</span>
+              </div>
+
+              <div className="space-y-3">
+                <h2 className="font-sans text-3xl font-bold tracking-tight">
+                  EVA Local
+                </h2>
+                <p className="text-lg text-white/80 max-w-xs mx-auto leading-relaxed">
+                  Your trusted marketplace to discover and book the best local
+                  event vendors.
+                </p>
+              </div>
+
+              {/* Feature bullets */}
+              <div className="space-y-4 text-left max-w-xs mx-auto">
+                {[
+                  "Browse verified vendors near you",
+                  "Get instant quotes and book with ease",
+                  "Read real reviews from happy clients",
+                ].map((text) => (
+                  <div key={text} className="flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-full bg-white/15 flex items-center justify-center shrink-0">
+                      <Check className="w-4 h-4" />
+                    </div>
+                    <span className="text-sm text-white/90">{text}</span>
                   </div>
-                  <div>{item.label}</div>
-                </div>
-              ))}
+                ))}
+              </div>
+
+              <p className="text-xs text-white/50 pt-4">
+                Trusted by vendors and clients across the country
+              </p>
             </div>
           </div>
 
           {/* Form panel */}
-          <div className="bg-card p-8 text-foreground sm:p-10">
-            <div className="space-y-2">
-              <p className="text-sm font-medium uppercase tracking-[0.3em] text-muted-foreground">
-                Access EVA
-              </p>
-              <h2 className="text-3xl font-semibold text-foreground">
-                Plan, collaborate, and book in minutes
-              </h2>
+          <div className="bg-card p-8 sm:p-12">
+            <div className="space-y-2 mb-8">
+              <h1 className="font-sans text-3xl font-semibold text-foreground">
+                {activeTab === "login" ? "Welcome back" : "Create your account"}
+              </h1>
               <p className="text-muted-foreground">
-                One account unlocks premium tools for both clients and vendors.
+                {activeTab === "login"
+                  ? "Sign in to your account to continue"
+                  : "Join EVA Local and start discovering vendors"}
               </p>
             </div>
 
-            <div className="mt-8 flex rounded-2xl border border-border bg-secondary/50 p-1 text-sm font-medium">
-              {tabs.map((tab) => (
-                <button
-                  key={tab.key}
-                  onClick={() => setActiveTab(tab.key)}
-                  className={`flex-1 rounded-xl px-4 py-3 text-left transition-all ${
-                    activeTab === tab.key
-                      ? "bg-card shadow-sm text-foreground"
-                      : "text-muted-foreground hover:text-foreground"
-                  }`}
+            <Suspense
+              fallback={
+                <div className="h-40 animate-pulse bg-secondary/50 rounded-xl"></div>
+              }
+            >
+              {activeTab === "login" ? (
+                <LoginForm />
+              ) : (
+                <SignUpForm defaultType={initialType} />
+              )}
+            </Suspense>
+
+            <div className="mt-8 space-y-3 text-center text-sm">
+              {activeTab === "login" ? (
+                <p className="text-muted-foreground">
+                  Don&apos;t have an account?{" "}
+                  <button
+                    onClick={() => setActiveTab("signup")}
+                    className="text-primary font-medium hover:underline"
+                  >
+                    Create an account
+                  </button>
+                </p>
+              ) : (
+                <p className="text-muted-foreground">
+                  Already have an account?{" "}
+                  <button
+                    onClick={() => setActiveTab("login")}
+                    className="text-primary font-medium hover:underline"
+                  >
+                    Sign in
+                  </button>
+                </p>
+              )}
+              <p className="text-muted-foreground">
+                Are you a vendor?{" "}
+                <Link
+                  href="/list-your-business"
+                  className="text-primary font-medium hover:underline"
                 >
-                  <div>{tab.label}</div>
-                  <p className="text-xs text-muted-foreground">
-                    {tab.description}
-                  </p>
-                </button>
-              ))}
+                  List your business
+                </Link>
+              </p>
             </div>
 
-            <div className="mt-8">
-              <Suspense
-                fallback={
-                  <div className="h-40 animate-pulse bg-secondary/50 rounded-xl"></div>
-                }
-              >
-                {activeTab === "login" ? <LoginForm /> : <SignUpForm />}
-              </Suspense>
-            </div>
-
-            <p className="mt-10 text-center text-xs text-muted-foreground">
+            <p className="mt-8 text-center text-xs text-muted-foreground">
               By continuing, you agree to our{" "}
-              <Link href="/terms" className="text-accent hover:underline">
+              <Link href="/terms" className="text-primary hover:underline">
                 Terms of Service
               </Link>{" "}
               and{" "}
-              <Link href="/privacy" className="text-accent hover:underline">
+              <Link href="/privacy" className="text-primary hover:underline">
                 Privacy Policy.
               </Link>
             </p>
@@ -150,5 +174,19 @@ export default function AuthPage() {
         </div>
       </div>
     </main>
+  );
+}
+
+export default function AuthPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen flex items-center justify-center">
+          <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+        </div>
+      }
+    >
+      <AuthPageContent />
+    </Suspense>
   );
 }

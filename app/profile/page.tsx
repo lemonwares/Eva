@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 import Header from "@/components/common/Header";
 import Footer from "@/components/common/Footer";
 import {
@@ -22,6 +23,7 @@ import {
   ArrowLeft,
 } from "lucide-react";
 import Link from "next/link";
+import { logger } from "@/lib/logger";
 
 interface UserProfile {
   id: string;
@@ -76,7 +78,7 @@ export default function ProfilePage() {
     setToast({ show: true, message, type });
     setTimeout(
       () => setToast({ show: false, message: "", type: "success" }),
-      3000
+      3000,
     );
   };
 
@@ -90,7 +92,7 @@ export default function ProfilePage() {
         setEditPhone(data.user.phone || "");
       }
     } catch (error) {
-      console.error("Error fetching profile:", error);
+      logger.error("Error fetching profile:", error);
       showToast("Failed to load profile", "error");
     } finally {
       setIsLoading(false);
@@ -117,7 +119,7 @@ export default function ProfilePage() {
       if (res.ok) {
         const data = await res.json();
         setProfile((prev) =>
-          prev ? { ...prev, name: editName, phone: editPhone || null } : null
+          prev ? { ...prev, name: editName, phone: editPhone || null } : null,
         );
         setIsEditing(false);
         showToast("Profile updated successfully!", "success");
@@ -126,7 +128,7 @@ export default function ProfilePage() {
         showToast(error.message || "Failed to update profile", "error");
       }
     } catch (error) {
-      console.error("Error updating profile:", error);
+      logger.error("Error updating profile:", error);
       showToast("Failed to update profile", "error");
     } finally {
       setIsSaving(false);
@@ -158,13 +160,13 @@ export default function ProfilePage() {
 
         if (updateRes.ok) {
           setProfile((prev) =>
-            prev ? { ...prev, avatar: uploadData.url } : null
+            prev ? { ...prev, avatar: uploadData.url } : null,
           );
           showToast("Avatar updated!", "success");
         }
       }
     } catch (error) {
-      console.error("Error uploading avatar:", error);
+      logger.error("Error uploading avatar:", error);
       showToast("Failed to upload avatar", "error");
     } finally {
       setIsUploadingAvatar(false);
@@ -257,10 +259,13 @@ export default function ProfilePage() {
                 <div className="relative">
                   <div className="w-24 h-24 rounded-full border-4 border-card bg-accent flex items-center justify-center overflow-hidden">
                     {profile.avatar ? (
-                      <img
+                      <Image
                         src={profile.avatar}
                         alt={profile.name}
+                        width={96}
+                        height={96}
                         className="w-full h-full object-cover"
+                        unoptimized
                       />
                     ) : (
                       <span className="text-2xl font-bold text-accent-foreground">

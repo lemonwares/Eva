@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { logger } from "@/lib/logger";
 
 const enhancedCategories = [
   {
@@ -624,7 +625,7 @@ const enhancedCategories = [
 
 export async function POST(request: NextRequest) {
   try {
-    console.log("Starting enhanced category seeding...");
+    logger.info("Starting enhanced category seeding...");
 
     for (const categoryData of enhancedCategories) {
       const { subcategories, ...categoryInfo } = categoryData;
@@ -636,7 +637,7 @@ export async function POST(request: NextRequest) {
         create: categoryInfo,
       });
 
-      console.log(`Processed category: ${category.name}`);
+      logger.debug(`Processed category: ${category.name}`);
 
       // Create or update subcategories
       if (subcategories && subcategories.length > 0) {
@@ -653,7 +654,7 @@ export async function POST(request: NextRequest) {
             },
           });
         }
-        console.log(`  Added ${subcategories.length} subcategories`);
+        logger.debug(`  Added ${subcategories.length} subcategories`);
       }
     }
 
@@ -668,14 +669,14 @@ export async function POST(request: NextRequest) {
       },
     });
   } catch (error) {
-    console.error("Error seeding enhanced categories:", error);
+    logger.error("Error seeding enhanced categories:", error);
     let errorMessage = "Unknown error";
     if (error instanceof Error) {
       errorMessage = error.message;
     }
     return NextResponse.json(
       { message: "Error seeding categories", error: errorMessage },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
@@ -688,14 +689,14 @@ export async function DELETE(request: NextRequest) {
       message: "All categories and subcategories deleted!",
     });
   } catch (error) {
-    console.error("Error deleting categories:", error);
+    logger.error("Error deleting categories:", error);
     let errorMessage = "Unknown error";
     if (error instanceof Error) {
       errorMessage = error.message;
     }
     return NextResponse.json(
       { message: "Error deleting categories", error: errorMessage },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

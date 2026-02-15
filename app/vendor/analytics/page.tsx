@@ -3,6 +3,7 @@
 import VendorLayout from "@/components/vendor/VendorLayout";
 import { useVendorTheme } from "@/components/vendor/VendorThemeContext";
 import { formatCurrency } from "@/lib/formatters";
+import { logger } from "@/lib/logger";
 import {
   TrendingUp,
   TrendingDown,
@@ -83,7 +84,7 @@ export default function VendorAnalyticsPage() {
         setAnalytics(data);
       }
     } catch (err) {
-      console.error("Error fetching analytics:", err);
+      logger.error("Error fetching analytics:", err);
     } finally {
       setIsLoading(false);
     }
@@ -150,8 +151,8 @@ export default function VendorAnalyticsPage() {
                     period === opt.value
                       ? "text-accent"
                       : darkMode
-                      ? "text-gray-400 hover:bg-white/5"
-                      : "text-gray-600 hover:bg-gray-50"
+                        ? "text-gray-400 hover:bg-white/5"
+                        : "text-gray-600 hover:bg-gray-50"
                   }`}
                 >
                   {opt.label}
@@ -352,7 +353,7 @@ export default function VendorAnalyticsPage() {
               >
                 Booking Overview
               </h3>
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div
                   className={`p-4 rounded-lg ${
                     darkMode ? "bg-white/5" : "bg-gray-50"

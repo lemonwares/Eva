@@ -149,7 +149,7 @@ export async function GET(
       timeline,
     });
   } catch (error: any) {
-    console.error("Error fetching booking timeline:", error);
+    logger.error("Error fetching booking timeline:", error);
     return NextResponse.json(
       { message: "Internal server error" },
       { status: 500 }

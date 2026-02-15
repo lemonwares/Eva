@@ -3,6 +3,7 @@
 import { Suspense, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
+import { CheckCircle } from "lucide-react";
 import { formatCurrency, formatDate } from "@/lib/formatters";
 
 interface BookingDetails {
@@ -55,7 +56,7 @@ function PaymentSuccessContent() {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
-          <div className="w-16 h-16 border-4 border-rose-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <div className="w-16 h-16 border-4 border-accent border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
           <p className="text-gray-600">Processing your payment...</p>
         </div>
       </div>
@@ -67,19 +68,7 @@ function PaymentSuccessContent() {
       <div className="bg-white rounded-2xl shadow-xl max-w-lg w-full p-8 text-center">
         {/* Success Icon */}
         <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
-          <svg
-            className="w-10 h-10 text-green-500"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M5 13l4 4L19 7"
-            />
-          </svg>
+          <CheckCircle className="w-10 h-10 text-green-500" />
         </div>
 
         <h1 className="text-2xl font-bold text-gray-900 mb-2">
@@ -132,7 +121,7 @@ function PaymentSuccessContent() {
         <div className="space-y-3">
           <Link
             href="/dashboard/bookings"
-            className="block w-full py-3 px-4 bg-rose-500 text-white font-medium rounded-lg hover:bg-rose-600 transition-colors"
+            className="block w-full py-3 px-4 bg-accent text-white font-medium rounded-lg hover:bg-accent/90 transition-colors"
           >
             View My Bookings
           </Link>
@@ -164,7 +153,7 @@ export default function PaymentSuccessPage() {
       fallback={
         <div className="min-h-screen bg-gray-50 flex items-center justify-center">
           <div className="text-center">
-            <div className="w-16 h-16 border-4 border-rose-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+            <div className="w-16 h-16 border-4 border-accent border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
             <p className="text-gray-600">Loading...</p>
           </div>
         </div>

@@ -1,4 +1,5 @@
 import axios from "axios";
+import { logger } from "./logger";
 
 interface EmailOptions {
   to: string;
@@ -9,13 +10,13 @@ interface EmailOptions {
 export async function sendEmail({ to, subject, html }: EmailOptions) {
   // Check if email service is configured
   if (!process.env.ZEPTOMAIL_TOKEN || !process.env.ZEPTOMAIL_FROM_EMAIL) {
-    console.warn("Email service not configured. Skipping email send to:", to);
-    console.warn("Subject:", subject);
+    logger.warn("Email service not configured. Skipping email send to:", to);
+    logger.warn("Subject:", subject);
     // In development, log the email content for debugging
     if (process.env.NODE_ENV === "development") {
-      console.log(
+      logger.debug(
         "Email HTML preview (first 500 chars):",
-        html.substring(0, 500)
+        html.substring(0, 500),
       );
     }
     return { success: false, error: "Email service not configured" };
@@ -51,7 +52,7 @@ export async function sendEmail({ to, subject, html }: EmailOptions) {
             Authorization: process.env.ZEPTOMAIL_TOKEN,
             "Content-Type": "application/json",
           },
-        }
+        },
       );
       return { success: true, data: response.data };
     } catch (error: unknown) {
@@ -60,9 +61,9 @@ export async function sendEmail({ to, subject, html }: EmailOptions) {
         message?: string;
       };
       lastError = axiosError.response?.data || axiosError.message;
-      console.error(
+      logger.error(
         `Email sending failed (attempt ${attempt + 1}):`,
-        lastError
+        lastError,
       );
       // Only retry on network or server errors
       if (attempt < maxRetries - 1) {

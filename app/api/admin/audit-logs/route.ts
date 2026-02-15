@@ -114,7 +114,7 @@ export async function GET(request: NextRequest) {
       },
     });
   } catch (error: any) {
-    console.error("Error fetching audit logs:", error);
+    logger.error("Error fetching audit logs:", error);
     return NextResponse.json(
       { message: "Internal server error" },
       { status: 500 }

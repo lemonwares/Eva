@@ -1,13 +1,30 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import bcrypt from "bcryptjs";
+import { loginSchema, formatValidationErrors } from "@/lib/validations";
+import { checkRateLimit, getRateLimitIdentifier, rateLimitResponse, rateLimitPresets } from "@/lib/rate-limit";
 
 // POST /api/auth/login
 // Handles login for all roles (Client, Professional, Admin, etc.)
 export async function POST(request: NextRequest) {
   try {
+    // Rate limit: 10 attempts per 15 minutes
+    const identifier = getRateLimitIdentifier(request);
+    const rateCheck = checkRateLimit(`auth:login:${identifier}`, rateLimitPresets.auth);
+    if (!rateCheck.success) return rateLimitResponse(rateCheck);
+
     const body = await request.json();
-    const { email, password } = body;
+    const parsed = loginSchema.safeParse(body);
+    if (!parsed.success) {
+      return NextResponse.json(
+        {
+          message: "Validation failed",
+          errors: formatValidationErrors(parsed.error.issues),
+        },
+        { status: 400 },
+      );
+    }
+    const { email, password } = parsed.data;
 
     // Find user by email
     const user = await prisma.user.findUnique({
@@ -18,7 +35,7 @@ export async function POST(request: NextRequest) {
     if (!user || !user.password) {
       return NextResponse.json(
         { message: "Invalid email or password" },
-        { status: 401 }
+        { status: 401 },
       );
     }
 
@@ -26,7 +43,7 @@ export async function POST(request: NextRequest) {
     if (!user.emailVerifiedAt) {
       return NextResponse.json(
         { message: "Please verify your email before logging in." },
-        { status: 403 }
+        { status: 403 },
       );
     }
 
@@ -36,7 +53,7 @@ export async function POST(request: NextRequest) {
     if (!isValid) {
       return NextResponse.json(
         { message: "Invalid email or password" },
-        { status: 401 }
+        { status: 401 },
       );
     }
 
@@ -53,13 +70,13 @@ export async function POST(request: NextRequest) {
         },
         message: "Login successful",
       },
-      { status: 200 }
+      { status: 200 },
     );
   } catch (error: any) {
-    console.error(`Login error: ${error?.message}`);
+    logger.error(`Login error: ${error?.message}`);
     return NextResponse.json(
       { message: "Internal server error" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

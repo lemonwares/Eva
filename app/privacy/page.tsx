@@ -1,264 +1,470 @@
 "use client";
 
-import Header from "@/components/common/Header";
-import Footer from "@/components/common/Footer";
+import LegalLayout from "@/components/common/LegalLayout";
+
+const sections = [
+  { id: "introduction", label: "1. Introduction" },
+  { id: "data-controller", label: "2. Data Controller" },
+  { id: "data-collected", label: "3. What Data We Collect" },
+  { id: "how-we-use", label: "4. How We Use Your Data" },
+  { id: "data-sharing", label: "5. Who We Share Your Data With" },
+  { id: "data-retention", label: "6. Data Retention" },
+  { id: "your-rights", label: "7. Your Rights Under UK GDPR" },
+  { id: "cookies", label: "8. Cookies" },
+  { id: "children", label: "9. Children's Data" },
+  { id: "security", label: "10. Security" },
+  { id: "changes", label: "11. Changes to This Policy" },
+  { id: "contact", label: "12. Contact Us" },
+];
 
 export default function PrivacyPage() {
   return (
-    <div className="min-h-screen bg-background text-foreground">
-      <Header />
-
-      <main className="container mx-auto mt-10 px-4 py-16 max-w-4xl">
-        <h1 className="text-4xl font-bold mb-8">Privacy Policy</h1>
-        <p className="text-muted-foreground mb-8">
-          Last updated: December 2024
-        </p>
-
-        <div className="prose prose-lg dark:prose-invert max-w-none space-y-8">
-          <section>
-            <h2 className="text-2xl font-semibold mb-4">1. Introduction</h2>
-            <p className="text-muted-foreground leading-relaxed">
-              EVA (Event Vendor App) is committed to protecting your privacy.
-              This Privacy Policy explains how we collect, use, disclose, and
-              safeguard your information when you use our platform. Please read
-              this policy carefully.
-            </p>
-          </section>
-
-          <section>
-            <h2 className="text-2xl font-semibold mb-4">
-              2. Information We Collect
-            </h2>
-            <h3 className="text-xl font-medium mb-3 mt-6">
-              Personal Information
-            </h3>
-            <p className="text-muted-foreground leading-relaxed mb-4">
-              We may collect personal information that you voluntarily provide,
-              including:
-            </p>
-            <ul className="list-disc list-inside text-muted-foreground space-y-2 ml-4">
-              <li>Name and contact information (email, phone number)</li>
-              <li>Account credentials</li>
-              <li>Profile information and photos</li>
-              <li>Payment and billing information</li>
-              <li>Event details and preferences</li>
-              <li>Communications with vendors or clients</li>
-            </ul>
-
-            <h3 className="text-xl font-medium mb-3 mt-6">
-              Automatically Collected Information
-            </h3>
-            <p className="text-muted-foreground leading-relaxed mb-4">
-              When you use EVA, we automatically collect:
-            </p>
-            <ul className="list-disc list-inside text-muted-foreground space-y-2 ml-4">
-              <li>Device information (browser type, operating system)</li>
-              <li>IP address and location data</li>
-              <li>Usage patterns and preferences</li>
-              <li>Cookies and similar tracking technologies</li>
-            </ul>
-          </section>
-
-          <section>
-            <h2 className="text-2xl font-semibold mb-4">
-              3. How We Use Your Information
-            </h2>
-            <p className="text-muted-foreground leading-relaxed mb-4">
-              We use the collected information to:
-            </p>
-            <ul className="list-disc list-inside text-muted-foreground space-y-2 ml-4">
-              <li>Provide, operate, and maintain our platform</li>
-              <li>Connect clients with appropriate vendors</li>
-              <li>Process transactions and send related information</li>
-              <li>
-                Send administrative information, updates, and marketing
-                communications
-              </li>
-              <li>Respond to enquiries and offer customer support</li>
-              <li>Personalise and improve user experience</li>
-              <li>Monitor and analyse usage patterns</li>
-              <li>Detect, prevent, and address fraud and security issues</li>
-            </ul>
-          </section>
-
-          <section>
-            <h2 className="text-2xl font-semibold mb-4">
-              4. Information Sharing
-            </h2>
-            <p className="text-muted-foreground leading-relaxed mb-4">
-              We may share your information in the following situations:
-            </p>
-            <ul className="list-disc list-inside text-muted-foreground space-y-2 ml-4">
-              <li>
-                <strong>With Vendors/Clients:</strong> To facilitate bookings
-                and communications
-              </li>
-              <li>
-                <strong>Service Providers:</strong> Third parties who perform
-                services on our behalf
-              </li>
-              <li>
-                <strong>Legal Requirements:</strong> When required by law or to
-                protect our rights
-              </li>
-              <li>
-                <strong>Business Transfers:</strong> In connection with a
-                merger, acquisition, or sale
-              </li>
-              <li>
-                <strong>With Consent:</strong> When you have given us permission
-                to share
-              </li>
-            </ul>
-          </section>
-
-          <section>
-            <h2 className="text-2xl font-semibold mb-4">5. Data Security</h2>
-            <p className="text-muted-foreground leading-relaxed">
-              We implement appropriate technical and organizational security
-              measures to protect your personal information. However, no
-              electronic transmission or storage system is 100% secure. While we
-              strive to protect your information, we cannot guarantee absolute
-              security.
-            </p>
-          </section>
-
-          <section>
-            <h2 className="text-2xl font-semibold mb-4">6. Data Retention</h2>
-            <p className="text-muted-foreground leading-relaxed">
-              We retain your personal information for as long as necessary to
-              fulfil the purposes outlined in this policy, unless a longer
-              retention period is required by law. When we no longer need your
-              information, we will securely delete or anonymize it.
-            </p>
-          </section>
-
-          <section>
-            <h2 className="text-2xl font-semibold mb-4">7. Your Rights</h2>
-            <p className="text-muted-foreground leading-relaxed mb-4">
-              Depending on your location, you may have the following rights:
-            </p>
-            <ul className="list-disc list-inside text-muted-foreground space-y-2 ml-4">
-              <li>
-                <strong>Access:</strong> Request a copy of your personal data
-              </li>
-              <li>
-                <strong>Correction:</strong> Request correction of inaccurate
-                data
-              </li>
-              <li>
-                <strong>Deletion:</strong> Request deletion of your personal
-                data
-              </li>
-              <li>
-                <strong>Portability:</strong> Receive your data in a portable
-                format
-              </li>
-              <li>
-                <strong>Objection:</strong> Object to certain processing of your
-                data
-              </li>
-              <li>
-                <strong>Withdrawal:</strong> Withdraw consent for data
-                processing
-              </li>
-            </ul>
-            <p className="text-muted-foreground leading-relaxed mt-4">
-              To exercise these rights, please contact us at{" "}
-              <a
-                href="mailto:hello@evalocal.com"
-                className="text-accent hover:underline"
-              >
-                hello@evalocal.com
-              </a>
-            </p>
-          </section>
-
-          <section>
-            <h2 className="text-2xl font-semibold mb-4">
-              8. Cookies and Tracking
-            </h2>
-            <p className="text-muted-foreground leading-relaxed">
-              We use cookies and similar technologies to enhance your
-              experience, analyse usage, and deliver personalised content. You
-              can control cookie preferences through your browser settings. Note
-              that disabling cookies may affect platform functionality.
-            </p>
-          </section>
-
-          <section>
-            <h2 className="text-2xl font-semibold mb-4">
-              9. Third-Party Links
-            </h2>
-            <p className="text-muted-foreground leading-relaxed">
-              Our platform may contain links to third-party websites or
-              services. We are not responsible for the privacy practices of
-              these third parties. We encourage you to review their privacy
-              policies before providing any personal information.
-            </p>
-          </section>
-
-          <section>
-            <h2 className="text-2xl font-semibold mb-4">
-              10. Children&apos;s Privacy
-            </h2>
-            <p className="text-muted-foreground leading-relaxed">
-              EVA is not intended for users under 18 years of age. We do not
-              knowingly collect personal information from children. If you
-              believe we have collected information from a minor, please contact
-              us immediately.
-            </p>
-          </section>
-
-          <section>
-            <h2 className="text-2xl font-semibold mb-4">
-              11. International Transfers
-            </h2>
-            <p className="text-muted-foreground leading-relaxed">
-              Your information may be transferred to and processed in countries
-              other than your own. We ensure appropriate safeguards are in place
-              to protect your information in compliance with applicable data
-              protection laws.
-            </p>
-          </section>
-
-          <section>
-            <h2 className="text-2xl font-semibold mb-4">
-              12. Changes to This Policy
-            </h2>
-            <p className="text-muted-foreground leading-relaxed">
-              We may update this Privacy Policy from time to time. We will
-              notify you of any material changes by posting the new policy on
-              this page and updating the &quot;Last updated&quot; date. We
-              encourage you to review this policy periodically.
-            </p>
-          </section>
-
-          <section>
-            <h2 className="text-2xl font-semibold mb-4">13. Contact Us</h2>
-            <p className="text-muted-foreground leading-relaxed">
-              If you have questions about this Privacy Policy or our data
-              practices, please contact us at:
-            </p>
-            <div className="mt-4 p-6 bg-secondary/50 rounded-xl">
-              <p className="text-foreground font-medium">
-                EVA - Event Vendor App
-              </p>
-              <p className="text-muted-foreground mt-2">
-                Email:{" "}
+    <LegalLayout>
+      <div className="flex gap-12">
+        {/* TOC sidebar */}
+        <nav className="hidden lg:block w-56 shrink-0 sticky top-24 self-start">
+          <ul className="space-y-2 text-sm">
+            {sections.map((s) => (
+              <li key={s.id}>
                 <a
-                  href="mailto:hello@evalocal.com"
-                  className="text-accent hover:underline"
+                  href={`#${s.id}`}
+                  className="text-muted-foreground hover:text-primary transition block py-1"
                 >
-                  hello@evalocal.com
+                  {s.label}
                 </a>
-              </p>
-            </div>
-          </section>
-        </div>
-      </main>
+              </li>
+            ))}
+          </ul>
+        </nav>
 
-      <Footer />
-    </div>
+        {/* Content */}
+        <div className="flex-1 max-w-3xl">
+          <h1 className="text-4xl sm:text-5xl text-foreground mb-2">
+            Privacy Policy
+          </h1>
+          <p className="text-muted-foreground mb-12">
+            Last updated: February 2026
+          </p>
+
+          <div className="space-y-10 text-muted-foreground leading-relaxed">
+            <section id="introduction">
+              <h2 className="text-2xl font-semibold text-foreground mb-4">
+                1. Introduction
+              </h2>
+              <p>
+                EVA Local (&ldquo;we&rdquo;, &ldquo;us&rdquo;,
+                &ldquo;our&rdquo;) is operated by Sparkpoint Digital. We are
+                committed to protecting and respecting your privacy.
+              </p>
+              <p className="mt-3">
+                This Privacy Policy explains how we collect, use, store, and
+                share your personal data when you use the EVA Local platform,
+                including our website, progressive web app, and associated
+                services (the &ldquo;Platform&rdquo;).
+              </p>
+              <p className="mt-3">
+                This policy is written in compliance with the UK General Data
+                Protection Regulation (UK GDPR) and the Data Protection Act
+                2018. We encourage you to read it carefully so you understand
+                how your personal data is handled.
+              </p>
+              <p className="mt-3">
+                By using the Platform, you acknowledge that you have read and
+                understood this Privacy Policy. If you do not agree with our
+                practices, please do not use the Platform.
+              </p>
+            </section>
+
+            <section id="data-controller">
+              <h2 className="text-2xl font-semibold text-foreground mb-4">
+                2. Data Controller
+              </h2>
+              <p>
+                For the purposes of UK GDPR, the data controller responsible for
+                your personal data is:
+              </p>
+              <ul className="mt-3 list-disc list-inside space-y-1">
+                <li>Company: Sparkpoint Digital</li>
+                <li>
+                  Data Protection Email:{" "}
+                  <a
+                    href="mailto:privacy@evalocal.com"
+                    className="text-primary hover:underline"
+                  >
+                    privacy@evalocal.com
+                  </a>
+                </li>
+                <li>Registered Address: [To be confirmed]</li>
+              </ul>
+            </section>
+
+            <section id="data-collected">
+              <h2 className="text-2xl font-semibold text-foreground mb-4">
+                3. What Data We Collect
+              </h2>
+              <p>
+                We collect different types of personal data depending on how you
+                use the Platform:
+              </p>
+
+              <h3 className="text-lg font-semibold text-foreground mt-6 mb-3">
+                Account Data
+              </h3>
+              <ul className="list-disc list-inside space-y-1">
+                <li>Full name and email address</li>
+                <li>Phone number (optional)</li>
+                <li>Account type (client or vendor)</li>
+                <li>Password (securely hashed — never stored in plain text)</li>
+                <li>
+                  Google account data if you sign in with Google (name, email,
+                  and profile picture as provided by Google)
+                </li>
+              </ul>
+
+              <h3 className="text-lg font-semibold text-foreground mt-6 mb-3">
+                Vendor Business Data
+              </h3>
+              <p>If you register as a vendor, we also collect:</p>
+              <ul className="mt-2 list-disc list-inside space-y-1">
+                <li>Business name, description, and address</li>
+                <li>Service offerings and pricing</li>
+                <li>Profile and portfolio images</li>
+                <li>Availability and scheduling information</li>
+                <li>
+                  Bank account details for payouts (held securely by Stripe, not
+                  stored by EVA Local)
+                </li>
+              </ul>
+
+              <h3 className="text-lg font-semibold text-foreground mt-6 mb-3">
+                Booking &amp; Transaction Data
+              </h3>
+              <ul className="list-disc list-inside space-y-1">
+                <li>Inquiry details, quotes, and booking information</li>
+                <li>
+                  Payment amounts, transaction references, and booking status
+                </li>
+                <li>
+                  Messages exchanged between clients and vendors through the
+                  Platform
+                </li>
+              </ul>
+              <p className="mt-3 text-sm font-medium">
+                Important: Credit and debit card details are never stored by EVA
+                Local. All payment data is processed and held securely by
+                Stripe, our PCI-DSS compliant payment processor.
+              </p>
+
+              <h3 className="text-lg font-semibold text-foreground mt-6 mb-3">
+                Automatically Collected Data
+              </h3>
+              <ul className="list-disc list-inside space-y-1">
+                <li>IP address</li>
+                <li>Browser type and version</li>
+                <li>Device type and operating system</li>
+                <li>Pages visited, time spent, and navigation patterns</li>
+                <li>Cookies and similar technologies (see Section 8)</li>
+                <li>
+                  Location data — only when you use the vendor search feature
+                  and grant permission
+                </li>
+              </ul>
+            </section>
+
+            <section id="how-we-use">
+              <h2 className="text-2xl font-semibold text-foreground mb-4">
+                4. How We Use Your Data
+              </h2>
+              <p className="mb-4">
+                Under UK GDPR, we must have a lawful basis for processing your
+                personal data:
+              </p>
+              <div className="space-y-2">
+                {[
+                  [
+                    "Creating and managing your account",
+                    "Performance of contract — Art. 6(1)(b)",
+                  ],
+                  [
+                    "Processing bookings and payments",
+                    "Performance of contract — Art. 6(1)(b)",
+                  ],
+                  [
+                    "Sending booking confirmations and status updates",
+                    "Performance of contract — Art. 6(1)(b)",
+                  ],
+                  [
+                    "Sending welcome and onboarding emails",
+                    "Legitimate interest — Art. 6(1)(f)",
+                  ],
+                  [
+                    "Displaying vendor profiles publicly",
+                    "Performance of contract — Art. 6(1)(b)",
+                  ],
+                  [
+                    "Sending marketing communications",
+                    "Consent — Art. 6(1)(a)",
+                  ],
+                  [
+                    "Improving our Platform and services",
+                    "Legitimate interest — Art. 6(1)(f)",
+                  ],
+                  [
+                    "Preventing fraud and protecting Platform integrity",
+                    "Legitimate interest — Art. 6(1)(f)",
+                  ],
+                  [
+                    "Complying with legal and regulatory obligations",
+                    "Legal obligation — Art. 6(1)(c)",
+                  ],
+                ].map(([purpose, basis]) => (
+                  <div key={purpose} className="flex gap-3 text-sm">
+                    <span className="font-medium text-foreground min-w-[50%]">
+                      {purpose}
+                    </span>
+                    <span>{basis}</span>
+                  </div>
+                ))}
+              </div>
+            </section>
+
+            <section id="data-sharing">
+              <h2 className="text-2xl font-semibold text-foreground mb-4">
+                5. Who We Share Your Data With
+              </h2>
+              <p>
+                We work with carefully selected third-party service providers to
+                operate the Platform. We only share the minimum data necessary
+                for each service.
+              </p>
+              <p className="mt-4 font-medium text-foreground">We do not:</p>
+              <ul className="mt-2 list-disc list-inside space-y-1">
+                <li>Sell your personal data to any third party.</li>
+                <li>
+                  Share your data for advertising or behavioural targeting
+                  purposes.
+                </li>
+                <li>
+                  Allow third parties to use your data for their own marketing.
+                </li>
+              </ul>
+            </section>
+
+            <section id="data-retention">
+              <h2 className="text-2xl font-semibold text-foreground mb-4">
+                6. Data Retention
+              </h2>
+              <p>
+                We retain your personal data only for as long as necessary for
+                the purposes set out in this policy, or as required by law:
+              </p>
+              <ul className="mt-3 list-disc list-inside space-y-1">
+                <li>
+                  Active account data: Duration of your account + 2 years after
+                  deletion
+                </li>
+                <li>
+                  Booking and transaction records: 7 years (UK tax and
+                  accounting requirements)
+                </li>
+                <li>Messages and inquiries: 3 years after last activity</li>
+                <li>
+                  Payment records (held by Stripe): 7 years (managed by Stripe)
+                </li>
+                <li>Marketing consent records: Duration of consent + 1 year</li>
+                <li>Automatically collected data: 26 months</li>
+              </ul>
+            </section>
+
+            <section id="your-rights">
+              <h2 className="text-2xl font-semibold text-foreground mb-4">
+                7. Your Rights Under UK GDPR
+              </h2>
+              <p>
+                Under UK GDPR, you have the following rights in relation to your
+                personal data:
+              </p>
+              <ul className="mt-3 list-disc list-inside space-y-2">
+                <li>
+                  <strong>Right of Access:</strong> You can request a copy of
+                  the personal data we hold about you.
+                </li>
+                <li>
+                  <strong>Right to Rectification:</strong> You can ask us to
+                  correct any inaccurate or incomplete personal data.
+                </li>
+                <li>
+                  <strong>Right to Erasure:</strong> You can ask us to delete
+                  your personal data (the &ldquo;right to be forgotten&rdquo;).
+                </li>
+                <li>
+                  <strong>Right to Restrict Processing:</strong> You can ask us
+                  to temporarily limit how we use your data.
+                </li>
+                <li>
+                  <strong>Right to Data Portability:</strong> You can request
+                  your data in a structured, commonly used, machine-readable
+                  format.
+                </li>
+                <li>
+                  <strong>Right to Object:</strong> You can object to our
+                  processing of your data where we rely on legitimate interest.
+                </li>
+                <li>
+                  <strong>Right to Withdraw Consent:</strong> Where processing
+                  is based on your consent, you can withdraw that consent at any
+                  time.
+                </li>
+              </ul>
+              <p className="mt-4">
+                To exercise any of these rights, please email us at{" "}
+                <a
+                  href="mailto:privacy@evalocal.com"
+                  className="text-primary hover:underline"
+                >
+                  privacy@evalocal.com
+                </a>
+                . We will respond within 30 days.
+              </p>
+            </section>
+
+            <section id="cookies">
+              <h2 className="text-2xl font-semibold text-foreground mb-4">
+                8. Cookies
+              </h2>
+              <h3 className="text-lg font-semibold text-foreground mt-4 mb-2">
+                Essential Cookies
+              </h3>
+              <p>
+                These are required for the Platform to function and cannot be
+                switched off. They include cookies for authentication, session
+                management, and security.
+              </p>
+              <h3 className="text-lg font-semibold text-foreground mt-4 mb-2">
+                Analytics Cookies
+              </h3>
+              <p>
+                These help us understand how visitors interact with the
+                Platform. Analytics cookies are only placed with your consent.
+              </p>
+              <h3 className="text-lg font-semibold text-foreground mt-4 mb-2">
+                What We Do Not Use
+              </h3>
+              <p>
+                We do not use advertising cookies, tracking pixels, or
+                third-party behavioural advertising technologies.
+              </p>
+            </section>
+
+            <section id="children">
+              <h2 className="text-2xl font-semibold text-foreground mb-4">
+                9. Children&apos;s Data
+              </h2>
+              <p>
+                EVA Local is not intended for use by individuals under the age
+                of 18. We do not knowingly collect personal data from children
+                under 18. If we become aware that we have collected personal
+                data from a child under 18, we will take steps to delete that
+                data as promptly as possible.
+              </p>
+            </section>
+
+            <section id="security">
+              <h2 className="text-2xl font-semibold text-foreground mb-4">
+                10. Security
+              </h2>
+              <p>
+                We take the security of your personal data seriously and
+                implement appropriate technical and organisational measures to
+                protect it, including:
+              </p>
+              <ul className="mt-3 list-disc list-inside space-y-1">
+                <li>
+                  All data transmitted between your device and the Platform is
+                  encrypted using HTTPS/TLS.
+                </li>
+                <li>
+                  Passwords are hashed using industry-standard cryptographic
+                  algorithms.
+                </li>
+                <li>
+                  Database access is restricted, authenticated, and monitored.
+                </li>
+                <li>
+                  Payment data is handled exclusively by Stripe, which is
+                  PCI-DSS Level 1 certified.
+                </li>
+                <li>
+                  We conduct regular reviews of our security practices and
+                  infrastructure.
+                </li>
+              </ul>
+            </section>
+
+            <section id="changes">
+              <h2 className="text-2xl font-semibold text-foreground mb-4">
+                11. Changes to This Policy
+              </h2>
+              <p>
+                We may update this Privacy Policy from time to time to reflect
+                changes in our practices, services, or legal requirements. Where
+                we make material changes, we will notify you by email and/or by
+                posting a prominent notice on the Platform.
+              </p>
+            </section>
+
+            <section id="contact">
+              <h2 className="text-2xl font-semibold text-foreground mb-4">
+                12. Contact Us
+              </h2>
+              <p>
+                If you have any questions about this Privacy Policy or how we
+                handle your personal data, please contact us:
+              </p>
+              <ul className="mt-3 list-disc list-inside space-y-1">
+                <li>
+                  Data Protection Enquiries:{" "}
+                  <a
+                    href="mailto:privacy@evalocal.com"
+                    className="text-primary hover:underline"
+                  >
+                    privacy@evalocal.com
+                  </a>
+                </li>
+                <li>
+                  General Enquiries:{" "}
+                  <a
+                    href="mailto:hello@evalocal.com"
+                    className="text-primary hover:underline"
+                  >
+                    hello@evalocal.com
+                  </a>
+                </li>
+                <li>Company: Sparkpoint Digital</li>
+              </ul>
+              <p className="mt-4">
+                If you wish to raise a concern with the UK&apos;s data
+                protection authority:
+              </p>
+              <ul className="mt-2 list-disc list-inside space-y-1">
+                <li>Information Commissioner&apos;s Office (ICO)</li>
+                <li>
+                  Website:{" "}
+                  <a
+                    href="https://ico.org.uk/"
+                    className="text-primary hover:underline"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    ico.org.uk
+                  </a>
+                </li>
+                <li>Telephone: 0303 123 1113</li>
+              </ul>
+            </section>
+          </div>
+        </div>
+      </div>
+    </LegalLayout>
   );
 }

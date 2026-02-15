@@ -35,7 +35,7 @@ const cultureTags = [
     label: "Bilingual (English/Spanish)",
     color: "border-green-500 text-green-400",
   },
-  { label: "LGBTQ+ Friendly", color: "border-pink-500 text-pink-400" },
+  { label: "LGBTQ+ Friendly", color: "border-accent text-accent" },
   {
     label: "Traditional Ceremonies",
     color: "border-yellow-500 text-yellow-400",

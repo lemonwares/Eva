@@ -75,7 +75,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({ suggestions });
   } catch (error: any) {
-    console.error("Error fetching suggestions:", error);
+    logger.error("Error fetching suggestions:", error);
     return NextResponse.json(
       { message: "Internal server error" },
       { status: 500 }

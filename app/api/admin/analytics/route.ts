@@ -242,7 +242,7 @@ export async function GET(request: NextRequest) {
       },
     });
   } catch (error: any) {
-    console.error("Error fetching analytics:", error);
+    logger.error("Error fetching analytics:", error);
     return NextResponse.json(
       { success: false, error: "Internal server error" },
       { status: 500 }

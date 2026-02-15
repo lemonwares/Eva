@@ -2,11 +2,22 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { Star } from "lucide-react";
+import {
+  Star,
+  Loader2,
+  CalendarDays,
+  MapPin,
+  Building2,
+  Search,
+  X,
+  Check,
+} from "lucide-react";
 import Link from "next/link";
+import Image from "next/image";
 import { useDashboardTheme } from "../layout";
 import { useSession } from "next-auth/react";
 import { formatCurrency, formatDate } from "@/lib/formatters";
+import { logger } from "@/lib/logger";
 
 interface Booking {
   id: string;
@@ -83,7 +94,7 @@ export default function BookingsPage() {
       const data = await response.json();
       setBookings(data.bookings || []);
     } catch (error) {
-      console.error("Error fetching bookings:", error);
+      logger.error("Error fetching bookings:", error);
     } finally {
       setLoading(false);
     }
@@ -95,16 +106,26 @@ export default function BookingsPage() {
 
   const getStatusColor = (status: string) => {
     const colors: Record<string, string> = {
-      PENDING_PAYMENT: "bg-yellow-100 text-yellow-700",
-      DEPOSIT_PAID: "bg-blue-100 text-blue-700",
-      BALANCE_SCHEDULED: "bg-purple-100 text-purple-700",
-      FULLY_PAID: "bg-green-100 text-green-700",
-      CONFIRMED: "bg-green-100 text-green-700",
-      COMPLETED: "bg-gray-100 text-gray-700",
-      CANCELLED: "bg-red-100 text-red-700",
-      REFUNDED: "bg-orange-100 text-orange-700",
+      PENDING_PAYMENT:
+        "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400",
+      DEPOSIT_PAID:
+        "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400",
+      BALANCE_SCHEDULED:
+        "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400",
+      FULLY_PAID:
+        "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400",
+      CONFIRMED:
+        "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400",
+      COMPLETED:
+        "bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-400",
+      CANCELLED: "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400",
+      REFUNDED:
+        "bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400",
     };
-    return colors[status] || "bg-gray-100 text-gray-700";
+    return (
+      colors[status] ||
+      "bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-400"
+    );
   };
 
   const openDetails = (booking: Booking) => {
@@ -115,7 +136,7 @@ export default function BookingsPage() {
   // Handle Stripe checkout for payments
   const handlePayment = async (
     bookingId: string,
-    paymentType: "DEPOSIT" | "BALANCE" | "FULL"
+    paymentType: "DEPOSIT" | "BALANCE" | "FULL",
   ) => {
     setPaymentLoading(bookingId);
     try {
@@ -137,7 +158,7 @@ export default function BookingsPage() {
         window.location.href = data.url;
       }
     } catch (error) {
-      console.error("Payment error:", error);
+      logger.error("Payment error:", error);
       alert("Failed to initiate payment. Please try again.");
     } finally {
       setPaymentLoading(null);
@@ -223,8 +244,8 @@ export default function BookingsPage() {
       // Mark booking as having a review
       setBookings((prev) =>
         prev.map((b) =>
-          b.id === reviewBooking.id ? { ...b, hasReview: true } : b
-        )
+          b.id === reviewBooking.id ? { ...b, hasReview: true } : b,
+        ),
       );
 
       // Close modal after 2 seconds
@@ -239,62 +260,32 @@ export default function BookingsPage() {
     }
   };
 
-  // Render star rating input
-  const renderStarInput = () => {
-    return (
-      <div className="flex gap-1">
-        {[1, 2, 3, 4, 5].map((star) => (
-          <button
-            key={star}
-            type="button"
-            onClick={() => setReviewForm({ ...reviewForm, rating: star })}
-            className="p-1 transition-transform hover:scale-110"
-          >
-            <svg
-              className={`w-8 h-8 ${
-                star <= reviewForm.rating
-                  ? "text-amber-400 fill-amber-400"
-                  : textMuted
-              }`}
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-              fill={star <= reviewForm.rating ? "currentColor" : "none"}
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"
-              />
-            </svg>
-          </button>
-        ))}
-      </div>
-    );
-  };
-
-  const inputClass = `px-3 py-2 rounded-lg ${inputBg} border ${inputBorder} ${textPrimary} focus:outline-none focus:ring-2 focus:ring-rose-500`;
+  const inputClass = `px-3 py-2 rounded-lg ${inputBg} border ${inputBorder} ${textPrimary} focus:outline-none focus:ring-2 focus:ring-accent`;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       {/* Header */}
       <div>
-        <h1 className={`text-2xl font-bold ${textPrimary}`}>My Bookings</h1>
-        <p className={textSecondary}>View and manage your event bookings</p>
+        <h1 className={`text-xl sm:text-2xl font-bold ${textPrimary}`}>
+          My Bookings
+        </h1>
+        <p className={`text-sm sm:text-base ${textSecondary}`}>
+          View and manage your event bookings
+        </p>
       </div>
 
       {/* Filters */}
-      <div className={`${cardBg} ${cardBorder} border rounded-xl p-4`}>
-        <div className="flex flex-col sm:flex-row gap-4">
+      <div className={`${cardBg} ${cardBorder} border rounded-xl p-3 sm:p-4`}>
+        <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
           <div className="flex gap-2">
             <button
               onClick={() => setTimeFilter("upcoming")}
-              className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+              className={`px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg text-xs sm:text-sm font-medium transition-colors ${
                 timeFilter === "upcoming"
-                  ? "bg-rose-500 text-white"
+                  ? "bg-accent text-white"
                   : `${
                       darkMode
-                        ? "bg-gray-700 text-gray-300"
+                        ? "bg-white/5 text-gray-300"
                         : "bg-gray-100 text-gray-600"
                     }`
               }`}
@@ -303,12 +294,12 @@ export default function BookingsPage() {
             </button>
             <button
               onClick={() => setTimeFilter("all")}
-              className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+              className={`px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg text-xs sm:text-sm font-medium transition-colors ${
                 timeFilter === "all"
-                  ? "bg-rose-500 text-white"
+                  ? "bg-accent text-white"
                   : `${
                       darkMode
-                        ? "bg-gray-700 text-gray-300"
+                        ? "bg-white/5 text-gray-300"
                         : "bg-gray-100 text-gray-600"
                     }`
               }`}
@@ -335,50 +326,29 @@ export default function BookingsPage() {
       {/* Bookings List */}
       {loading ? (
         <div className="flex items-center justify-center py-20">
-          <div className="animate-spin w-8 h-8 border-2 border-rose-500 border-t-transparent rounded-full"></div>
+          <div className="animate-spin w-8 h-8 border-2 border-accent border-t-transparent rounded-full"></div>
         </div>
       ) : bookings.length === 0 ? (
         <div
           className={`${cardBg} ${cardBorder} border rounded-xl p-12 text-center`}
         >
-          <svg
-            className={`w-16 h-16 mx-auto ${textMuted}`}
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
-            />
-          </svg>
-          <p className={`mt-4 text-lg font-medium ${textPrimary}`}>
+          <CalendarDays
+            className={`w-14 h-14 sm:w-16 sm:h-16 mx-auto ${textMuted}`}
+            strokeWidth={1.5}
+          />
+          <p className={`mt-4 text-base sm:text-lg font-medium ${textPrimary}`}>
             No bookings found
           </p>
-          <p className={`mt-1 ${textMuted}`}>
+          <p className={`mt-1 text-sm ${textMuted}`}>
             {timeFilter === "upcoming"
               ? "You don't have any upcoming bookings"
               : "You haven't made any bookings yet"}
           </p>
           <Link
             href="/vendors"
-            className="mt-4 inline-flex items-center gap-2 px-4 py-2 bg-rose-500 text-white rounded-lg hover:bg-rose-600"
+            className="mt-4 inline-flex items-center gap-2 px-4 py-2 bg-accent text-white rounded-lg hover:bg-accent/90 text-sm sm:text-base"
           >
-            <svg
-              className="w-5 h-5"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-              />
-            </svg>
+            <Search className="w-4 h-4 sm:w-5 sm:h-5" />
             Find Vendors
           </Link>
         </div>
@@ -392,31 +362,25 @@ export default function BookingsPage() {
               <div className="flex flex-col md:flex-row">
                 {/* Vendor Image */}
                 <div
-                  className={`w-full md:w-48 h-32 md:h-auto ${
-                    darkMode ? "bg-gray-700" : "bg-gray-100"
+                  className={`relative w-full md:w-48 h-32 md:h-auto ${
+                    darkMode ? "bg-white/5" : "bg-gray-100"
                   } shrink-0`}
                 >
                   {booking.provider.coverImage ? (
-                    <img
+                    <Image
                       src={booking.provider.coverImage}
                       alt={booking.provider.businessName}
-                      className="w-full h-full object-cover"
+                      fill
+                      className="object-cover"
+                      sizes="(max-width: 768px) 100vw, 192px"
+                      unoptimized
                     />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center">
-                      <svg
-                        className={`w-12 h-12 ${textMuted}`}
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"
-                        />
-                      </svg>
+                      <Building2
+                        className={`w-10 h-10 sm:w-12 sm:h-12 ${textMuted}`}
+                        strokeWidth={1.5}
+                      />
                     </div>
                   )}
                 </div>
@@ -427,7 +391,7 @@ export default function BookingsPage() {
                     <div>
                       <Link
                         href={`/vendors/${booking.provider.id}`}
-                        className={`text-lg font-semibold ${textPrimary} hover:text-rose-500`}
+                        className={`text-lg font-semibold ${textPrimary} hover:text-accent`}
                       >
                         {booking.provider.businessName}
                       </Link>
@@ -435,32 +399,14 @@ export default function BookingsPage() {
                         <p
                           className={`text-sm ${textMuted} flex items-center gap-1`}
                         >
-                          <svg
-                            className="w-4 h-4"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={2}
-                              d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
-                            />
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={2}
-                              d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
-                            />
-                          </svg>
+                          <MapPin className="w-4 h-4" />
                           {booking.provider.city}
                         </p>
                       )}
                     </div>
                     <span
                       className={`inline-block px-3 py-1 text-sm rounded-full ${getStatusColor(
-                        booking.status
+                        booking.status,
                       )}`}
                     >
                       {booking.status.replace(/_/g, " ")}
@@ -501,7 +447,7 @@ export default function BookingsPage() {
                       onClick={() => openDetails(booking)}
                       className={`px-4 py-2 text-sm rounded-lg ${
                         darkMode
-                          ? "bg-gray-700 hover:bg-gray-600"
+                          ? "bg-white/5 hover:bg-white/10"
                           : "bg-gray-100 hover:bg-gray-200"
                       } ${textPrimary}`}
                     >
@@ -549,7 +495,7 @@ export default function BookingsPage() {
                       <div className="flex items-center gap-2">
                         <a
                           href={`tel:${booking.provider.phonePublic}`}
-                          className="px-4 py-2 text-sm bg-rose-500 text-white rounded-lg hover:bg-rose-600"
+                          className="px-4 py-2 text-sm bg-accent text-white rounded-lg hover:bg-accent/90"
                         >
                           Contact Vendor
                         </a>
@@ -600,32 +546,29 @@ export default function BookingsPage() {
                               stiffness: 400,
                               damping: 30,
                             }}
-                            className="bg-white dark:bg-gray-900 rounded-3xl shadow-2xl w-full max-w-md p-8 relative"
+                            className={`${cardBg} rounded-3xl shadow-2xl w-full max-w-md p-5 sm:p-8 relative`}
                           >
                             <button
-                              className="absolute top-4 right-4 text-gray-400 hover:text-gray-700 dark:hover:text-white"
+                              className={`absolute top-3 right-3 sm:top-4 sm:right-4 p-1 rounded-lg transition-colors ${
+                                darkMode
+                                  ? "text-gray-400 hover:text-white hover:bg-white/10"
+                                  : "text-gray-400 hover:text-gray-700 hover:bg-gray-100"
+                              }`}
                               onClick={() => setReviewModalOpen(false)}
                               aria-label="Close"
                             >
-                              <svg
-                                width="24"
-                                height="24"
-                                fill="none"
-                                stroke="currentColor"
-                                strokeWidth="2"
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                              >
-                                <line x1="18" y1="6" x2="6" y2="18" />
-                                <line x1="6" y1="6" x2="18" y2="18" />
-                              </svg>
+                              <X className="w-5 h-5" />
                             </button>
                             <div className="flex flex-col items-center gap-2 mb-4">
-                              <Star className="w-8 h-8 text-amber-500" />
-                              <h2 className="text-xl font-bold">
+                              <Star className="w-7 h-7 sm:w-8 sm:h-8 text-amber-500" />
+                              <h2
+                                className={`text-lg sm:text-xl font-bold ${textPrimary}`}
+                              >
                                 Write a Review
                               </h2>
-                              <p className="text-sm text-gray-500 dark:text-gray-400 text-center">
+                              <p
+                                className={`text-sm ${textSecondary} text-center`}
+                              >
                                 Share your experience with{" "}
                                 <span className="font-semibold">
                                   {reviewBooking.provider.businessName}
@@ -658,7 +601,7 @@ export default function BookingsPage() {
                                   if (!res.ok) {
                                     const data = await res.json();
                                     setReviewError(
-                                      data.message || "Failed to submit review"
+                                      data.message || "Failed to submit review",
                                     );
                                   } else {
                                     setReviewSuccess(true);
@@ -669,7 +612,7 @@ export default function BookingsPage() {
                                   }
                                 } catch (err) {
                                   setReviewError(
-                                    "Network error. Please try again."
+                                    "Network error. Please try again.",
                                   );
                                 } finally {
                                   setSubmittingReview(false);
@@ -708,7 +651,7 @@ export default function BookingsPage() {
                               </div>
                               <input
                                 type="text"
-                                className="w-full px-4 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-amber-400"
+                                className={`w-full px-3 sm:px-4 py-2 rounded-lg border ${inputBorder} ${inputBg} ${textPrimary} focus:outline-none focus:ring-2 focus:ring-amber-400`}
                                 placeholder="Review title *"
                                 value={reviewForm.title}
                                 onChange={(e) =>
@@ -720,7 +663,7 @@ export default function BookingsPage() {
                                 maxLength={80}
                               />
                               <textarea
-                                className="w-full px-4 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-amber-400"
+                                className={`w-full px-3 sm:px-4 py-2 rounded-lg border ${inputBorder} ${inputBg} ${textPrimary} focus:outline-none focus:ring-2 focus:ring-amber-400`}
                                 placeholder="Write your review..."
                                 value={reviewForm.body}
                                 onChange={(e) =>
@@ -745,9 +688,12 @@ export default function BookingsPage() {
                               )}
                               <button
                                 type="submit"
-                                className="w-full py-2 rounded-lg bg-amber-500 hover:bg-amber-600 text-white font-semibold transition-all disabled:opacity-60"
+                                className="w-full py-2 rounded-lg bg-amber-500 hover:bg-amber-600 text-white font-semibold transition-all disabled:opacity-60 flex items-center justify-center gap-2"
                                 disabled={submittingReview}
                               >
+                                {submittingReview && (
+                                  <Loader2 size={16} className="animate-spin" />
+                                )}
                                 {submittingReview
                                   ? "Submitting..."
                                   : "Submit Review"}
@@ -759,23 +705,11 @@ export default function BookingsPage() {
                     </AnimatePresence>
                     {booking.status === "COMPLETED" && booking.hasReview && (
                       <span
-                        className={`px-4 py-2 text-sm rounded-lg flex items-center gap-2 ${
-                          darkMode ? "bg-gray-700" : "bg-gray-100"
+                        className={`px-3 sm:px-4 py-2 text-xs sm:text-sm rounded-lg flex items-center gap-2 ${
+                          darkMode ? "bg-white/5" : "bg-gray-100"
                         } ${textMuted}`}
                       >
-                        <svg
-                          className="w-4 h-4 text-green-500"
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M5 13l4 4L19 7"
-                          />
-                        </svg>
+                        <Check className="w-4 h-4 text-green-500" />
                         Review Submitted
                       </span>
                     )}
@@ -806,22 +740,10 @@ export default function BookingsPage() {
               <button
                 onClick={() => setDetailsOpen(false)}
                 className={`p-2 rounded-lg ${
-                  darkMode ? "hover:bg-gray-700" : "hover:bg-gray-100"
+                  darkMode ? "hover:bg-white/5" : "hover:bg-gray-100"
                 }`}
               >
-                <svg
-                  className={`w-5 h-5 ${textSecondary}`}
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M6 18L18 6M6 6l12 12"
-                  />
-                </svg>
+                <X className={`w-5 h-5 ${textSecondary}`} />
               </button>
             </div>
 
@@ -830,30 +752,24 @@ export default function BookingsPage() {
               <div className="flex items-center gap-4">
                 <div
                   className={`w-16 h-16 rounded-lg ${
-                    darkMode ? "bg-gray-700" : "bg-gray-100"
+                    darkMode ? "bg-white/5" : "bg-gray-100"
                   } overflow-hidden`}
                 >
                   {selectedBooking.provider.coverImage ? (
-                    <img
+                    <Image
                       src={selectedBooking.provider.coverImage}
                       alt=""
+                      width={64}
+                      height={64}
                       className="w-full h-full object-cover"
+                      unoptimized
                     />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center">
-                      <svg
+                      <Building2
                         className={`w-8 h-8 ${textMuted}`}
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"
-                        />
-                      </svg>
+                        strokeWidth={1.5}
+                      />
                     </div>
                   )}
                 </div>
@@ -868,7 +784,7 @@ export default function BookingsPage() {
                   )}
                   <span
                     className={`inline-block mt-1 px-2 py-0.5 text-xs rounded-full ${getStatusColor(
-                      selectedBooking.status
+                      selectedBooking.status,
                     )}`}
                   >
                     {selectedBooking.status.replace(/_/g, " ")}
@@ -879,13 +795,13 @@ export default function BookingsPage() {
               {/* Event Details */}
               <div
                 className={`p-4 rounded-lg ${
-                  darkMode ? "bg-gray-800" : "bg-gray-50"
+                  darkMode ? "bg-[#141414]" : "bg-gray-50"
                 }`}
               >
                 <h4 className={`font-medium ${textPrimary} mb-3`}>
                   Event Details
                 </h4>
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                   <div>
                     <p className={`text-xs ${textMuted}`}>Event Date</p>
                     <p className={`font-medium ${textPrimary}`}>
@@ -922,7 +838,7 @@ export default function BookingsPage() {
               {/* Payment Details */}
               <div
                 className={`p-4 rounded-lg ${
-                  darkMode ? "bg-gray-800" : "bg-gray-50"
+                  darkMode ? "bg-[#141414]" : "bg-gray-50"
                 }`}
               >
                 <h4 className={`font-medium ${textPrimary} mb-3`}>
@@ -1015,7 +931,7 @@ export default function BookingsPage() {
                 selectedBooking.quote.items.length > 0 && (
                   <div
                     className={`p-4 rounded-lg ${
-                      darkMode ? "bg-gray-800" : "bg-gray-50"
+                      darkMode ? "bg-[#141414]" : "bg-gray-50"
                     }`}
                   >
                     <h4 className={`font-medium ${textPrimary} mb-3`}>
@@ -1032,7 +948,7 @@ export default function BookingsPage() {
                               {formatCurrency(item.totalPrice)}
                             </span>
                           </div>
-                        )
+                        ),
                       )}
                     </div>
                   </div>
@@ -1043,7 +959,7 @@ export default function BookingsPage() {
                 {selectedBooking.provider.phonePublic && (
                   <a
                     href={`tel:${selectedBooking.provider.phonePublic}`}
-                    className="flex-1 sm:flex-none px-4 py-2 bg-rose-500 text-white rounded-lg hover:bg-rose-600 text-center"
+                    className="flex-1 sm:flex-none px-4 py-2 bg-accent text-white rounded-lg hover:bg-accent/90 text-center"
                   >
                     Call Vendor
                   </a>
@@ -1052,7 +968,7 @@ export default function BookingsPage() {
                   href={`/vendors/${selectedBooking.provider.id}`}
                   className={`flex-1 sm:flex-none px-4 py-2 rounded-lg text-center ${
                     darkMode
-                      ? "bg-gray-700 hover:bg-gray-600"
+                      ? "bg-white/5 hover:bg-white/10"
                       : "bg-gray-100 hover:bg-gray-200"
                   } ${textPrimary}`}
                 >

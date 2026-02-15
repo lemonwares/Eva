@@ -79,7 +79,7 @@ export default function VendorBookings() {
       case "Confirmed":
         return "bg-green-500/20 text-green-400 border border-green-500/30";
       case "Paid":
-        return "bg-pink-500/20 text-pink-400 border border-pink-500/30";
+        return "bg-accent/20 text-accent border border-accent/30";
       default:
         return "bg-gray-500/20 text-gray-400 border border-gray-500/30";
     }
@@ -104,7 +104,7 @@ export default function VendorBookings() {
         {/* Logo */}
         <div className="p-4 sm:p-6 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-linear-to-br from-pink-400 to-pink-600" />
+            <div className="w-10 h-10 rounded-full bg-linear-to-br from-accent to-teal-600" />
             <div>
               <p className="font-bold">EVA Platform</p>
               <p className="text-gray-500 text-sm">Vendor Portal</p>
@@ -126,7 +126,7 @@ export default function VendorBookings() {
               href="#"
               className={`flex items-center gap-3 px-4 py-3 rounded-lg mb-1 transition-colors ${
                 item.active
-                  ? "bg-pink-500/10 text-pink-400"
+                  ? "bg-accent/10 text-accent"
                   : "text-gray-400 hover:bg-gray-800 hover:text-white"
               }`}
             >
@@ -146,7 +146,7 @@ export default function VendorBookings() {
             <button
               onClick={() => setDarkMode(!darkMode)}
               className={`w-12 h-6 rounded-full transition-colors relative ${
-                darkMode ? "bg-pink-500" : "bg-gray-600"
+                darkMode ? "bg-accent" : "bg-gray-600"
               }`}
             >
               <div
@@ -175,7 +175,7 @@ export default function VendorBookings() {
                 Confirmed Bookings
               </h1>
             </div>
-            <button className="bg-pink-500 text-white font-semibold px-4 sm:px-6 py-2.5 sm:py-3 rounded-lg hover:bg-pink-600 transition-colors text-sm sm:text-base whitespace-nowrap">
+            <button className="bg-accent text-white font-semibold px-4 sm:px-6 py-2.5 sm:py-3 rounded-lg hover:bg-accent/90 transition-colors text-sm sm:text-base whitespace-nowrap">
               Add Manual Booking
             </button>
           </div>
@@ -192,7 +192,7 @@ export default function VendorBookings() {
               <input
                 type="text"
                 placeholder="Search by client name, event..."
-                className="w-full pl-11 pr-4 py-3 rounded-lg bg-[#1a1a1a] text-white border border-gray-800 focus:outline-none focus:ring-2 focus:ring-pink-500 text-sm"
+                className="w-full pl-11 pr-4 py-3 rounded-lg bg-[#1a1a1a] text-white border border-gray-800 focus:outline-none focus:ring-2 focus:ring-accent text-sm"
               />
             </div>
             <div className="flex gap-3">
@@ -256,7 +256,7 @@ export default function VendorBookings() {
                       <td className="px-6 py-5">
                         <span
                           className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusStyle(
-                            booking.status
+                            booking.status,
                           )}`}
                         >
                           {booking.status}
@@ -293,7 +293,7 @@ export default function VendorBookings() {
                   </div>
                   <span
                     className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusStyle(
-                      booking.status
+                      booking.status,
                     )}`}
                   >
                     {booking.status}
@@ -331,7 +331,7 @@ export default function VendorBookings() {
             </button>
 
             <div className="flex items-center gap-2">
-              <button className="w-9 h-9 rounded-lg bg-pink-500 text-white font-medium text-sm">
+              <button className="w-9 h-9 rounded-lg bg-accent text-white font-medium text-sm">
                 1
               </button>
               <button className="w-9 h-9 rounded-lg text-gray-400 hover:bg-gray-800 font-medium text-sm">
