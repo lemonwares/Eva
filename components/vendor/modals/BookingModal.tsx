@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import Image from "next/image";
 import { X, ArrowLeft, ChevronRight, Plus, Minus } from "lucide-react";
 
 export interface BookingService {
@@ -69,7 +70,7 @@ export default function BookingModal({
 
   const handleSelect = (id: string) => {
     setSelected((prev) =>
-      prev.includes(id) ? prev.filter((sid) => sid !== id) : [...prev, id]
+      prev.includes(id) ? prev.filter((sid) => sid !== id) : [...prev, id],
     );
   };
 
@@ -236,10 +237,13 @@ export default function BookingModal({
                 {/* Business Info */}
                 <div className="flex gap-3 sm:gap-4 mb-4 sm:mb-6 pb-4 sm:pb-6 border-b border-gray-200">
                   {businessImage && (
-                    <img
+                    <Image
                       src={businessImage}
                       alt={businessName}
+                      width={64}
+                      height={64}
                       className="w-12 h-12 sm:w-16 sm:h-16 rounded-lg object-cover"
+                      unoptimized
                     />
                   )}
                   <div className="flex-1">

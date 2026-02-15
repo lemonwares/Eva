@@ -55,7 +55,7 @@ export async function GET(request: NextRequest) {
       suggestions: similarProviders,
     });
   } catch (error: any) {
-    console.error("Error checking slug:", error);
+    logger.error("Error checking slug:", error);
     return NextResponse.json(
       { message: "Internal server error" },
       { status: 500 }

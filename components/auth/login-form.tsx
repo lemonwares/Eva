@@ -5,6 +5,7 @@ import { useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { login, loginWithGoogle } from "@/lib/auth-client";
 import Link from "next/link";
+import { logger } from "@/lib/logger";
 
 export default function LoginForm() {
   const router = useRouter();
@@ -12,7 +13,6 @@ export default function LoginForm() {
   const callbackUrl = searchParams.get("callbackUrl") || "/";
 
   const [showPassword, setShowPassword] = useState(false);
-  const [rememberMe, setRememberMe] = useState(true);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
@@ -27,17 +27,7 @@ export default function LoginForm() {
       const result = await login({ email, password }, callbackUrl);
 
       if (!result.success) {
-        // Show a specific error if the backend says email is not verified
-        if (
-          result.message?.toLowerCase().includes("verify your email") ||
-          result.error?.toLowerCase().includes("verify your email")
-        ) {
-          setError(
-            "Your email address is not verified. Please check your inbox for a verification link before logging in."
-          );
-        } else {
-          setError(result.message);
-        }
+        setError(result.message || "Invalid email or password");
         return;
       }
 
@@ -64,9 +54,9 @@ export default function LoginForm() {
             }
           }
         } catch (lookupError) {
-          console.error(
+          logger.error(
             "Role lookup failed, falling back to callbackUrl",
-            lookupError
+            lookupError,
           );
         }
       }
@@ -119,7 +109,7 @@ export default function LoginForm() {
             onChange={(e) => setEmail(e.target.value)}
             required
             disabled={loading}
-            className="w-full rounded-xl border border-border bg-input/60 px-11 py-3 text-foreground placeholder:text-muted-foreground focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/30 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full rounded-xl border border-border bg-input/60 px-11 py-3 text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30 disabled:opacity-50 disabled:cursor-not-allowed"
           />
         </div>
       </div>
@@ -138,7 +128,7 @@ export default function LoginForm() {
             required
             minLength={6}
             disabled={loading}
-            className="w-full rounded-xl border border-border bg-input/60 px-11 py-3 text-foreground placeholder:text-muted-foreground focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/30 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full rounded-xl border border-border bg-input/60 px-11 py-3 text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30 disabled:opacity-50 disabled:cursor-not-allowed"
           />
           <button
             type="button"
@@ -155,20 +145,10 @@ export default function LoginForm() {
         </div>
       </div>
 
-      <div className="flex items-center justify-between text-sm">
-        <label className="flex items-center gap-2 text-muted-foreground cursor-pointer">
-          <input
-            type="checkbox"
-            checked={rememberMe}
-            onChange={(e) => setRememberMe(e.target.checked)}
-            disabled={loading}
-            className="h-4 w-4 rounded border-border text-accent focus:ring-accent"
-          />
-          Remember me
-        </label>
+      <div className="flex items-center justify-end text-sm">
         <Link
           href="/auth/forgot-password"
-          className="font-medium text-accent hover:underline"
+          className="font-medium text-primary hover:underline"
         >
           Forgot password?
         </Link>
@@ -177,7 +157,7 @@ export default function LoginForm() {
       <button
         type="submit"
         disabled={loading}
-        className="w-full rounded-xl bg-linear-to-r from-primary to-accent py-3 font-semibold text-primary-foreground shadow-[0_18px_45px_rgba(233,89,146,0.25)] transition hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0 flex items-center justify-center gap-2"
+        className="w-full rounded-xl bg-primary py-3 font-semibold text-white shadow-lg transition hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0 flex items-center justify-center gap-2"
       >
         {loading ? (
           <>

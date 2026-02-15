@@ -42,7 +42,7 @@ export async function GET(
 
     return NextResponse.json(tag);
   } catch (error: any) {
-    console.error("Error fetching tag:", error);
+    logger.error("Error fetching tag:", error);
     return NextResponse.json(
       { message: "Internal server error" },
       { status: 500 }
@@ -107,7 +107,7 @@ export async function PATCH(
 
     return NextResponse.json(updated);
   } catch (error: any) {
-    console.error("Error updating tag:", error);
+    logger.error("Error updating tag:", error);
     return NextResponse.json(
       { message: "Internal server error" },
       { status: 500 }
@@ -146,7 +146,7 @@ export async function DELETE(
 
     return NextResponse.json({ message: "Tag deleted successfully" });
   } catch (error: any) {
-    console.error("Error deleting tag:", error);
+    logger.error("Error deleting tag:", error);
     return NextResponse.json(
       { message: "Internal server error" },
       { status: 500 }

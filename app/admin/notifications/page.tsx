@@ -95,7 +95,7 @@ export default function AdminNotificationsPage() {
         setUnreadCount(data.unreadCount || 0);
       }
     } catch (err) {
-      console.error("Error fetching notifications:", err);
+      logger.error("Error fetching notifications:", err);
     } finally {
       setIsLoading(false);
     }
@@ -437,7 +437,7 @@ export default function AdminNotificationsPage() {
                   Showing {(pagination.page - 1) * pagination.limit + 1} to{" "}
                   {Math.min(
                     pagination.page * pagination.limit,
-                    pagination.total
+                    pagination.total,
                   )}{" "}
                   of {pagination.total} results
                 </p>
@@ -453,7 +453,7 @@ export default function AdminNotificationsPage() {
                   </button>
                   {Array.from(
                     { length: Math.min(5, pagination.pages) },
-                    (_, i) => i + 1
+                    (_, i) => i + 1,
                   ).map((page) => (
                     <button
                       key={page}
@@ -511,7 +511,7 @@ export default function AdminNotificationsPage() {
               </button>
             </div>
             <div className="p-6 space-y-4">
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <p className={`text-sm ${textMuted}`}>Type</p>
                   <p className={`font-medium ${textPrimary}`}>

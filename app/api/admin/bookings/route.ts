@@ -85,7 +85,7 @@ export async function GET(request: NextRequest) {
       ),
     });
   } catch (error: any) {
-    console.error("Error fetching bookings:", error);
+    logger.error("Error fetching bookings:", error);
     return NextResponse.json(
       { message: "Internal server error" },
       { status: 500 }

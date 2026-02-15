@@ -1,9 +1,16 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { logger } from "@/lib/logger";
 import crypto from "crypto";
 import z from "zod";
 import { emailTemplates } from "@/templates/templateLoader";
 import { sendEmail } from "@/lib/mail";
+import {
+  checkRateLimit,
+  getRateLimitIdentifier,
+  rateLimitResponse,
+  rateLimitPresets,
+} from "@/lib/rate-limit";
 
 // POST /api/auth/forgot-password
 // Initiates password reset by generating a token and saving it in PasswordReset
@@ -14,18 +21,27 @@ const forgotPasswordSchema = z.object({
 
 export async function POST(request: NextRequest) {
   try {
+    // Rate limit: 3 attempts per hour
+    const identifier = getRateLimitIdentifier(request);
+    const rateCheck = checkRateLimit(
+      `auth:forgot:${identifier}`,
+      rateLimitPresets.passwordReset,
+    );
+    if (!rateCheck.success) return rateLimitResponse(rateCheck);
+
     const body = await request.json();
     const { email } = forgotPasswordSchema.parse(body);
 
     // Find user by email
     const user = await prisma.user.findUnique({ where: { email } });
     if (!user) {
+      // Return same message to prevent email enumeration
       return NextResponse.json(
         {
           message:
-            "If an account exists with this email, a password reset link has been sent.q",
+            "If an account exists with this email, a password reset link has been sent.",
         },
-        { status: 404 }
+        { status: 200 },
       );
     }
 
@@ -43,7 +59,9 @@ export async function POST(request: NextRequest) {
     });
 
     const resetUrl = `${
-      process.env.AUTH_URL
+      process.env.AUTH_URL ||
+      process.env.NEXTAUTH_URL ||
+      "http://localhost:3000"
     }/auth/reset-password?token=${token}&email=${encodeURIComponent(email)}`;
 
     // Inline the HTML template directly with modern design
@@ -145,16 +163,19 @@ export async function POST(request: NextRequest) {
       html: htmlContent,
     });
 
-    // In production, integrate with email provider
     return NextResponse.json(
-      { message: "Password reset link sent", token },
-      { status: 200 }
+      {
+        message:
+          "If an account exists with this email, a password reset link has been sent.",
+        ...(process.env.NODE_ENV === "development" && { token }),
+      },
+      { status: 200 },
     );
   } catch (error: any) {
-    console.error(`Forgot password error: ${error?.message}`);
+    logger.error(`Forgot password error: ${error?.message}`);
     return NextResponse.json(
       { message: "Internal server error" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

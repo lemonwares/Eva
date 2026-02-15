@@ -1,6 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/auth";
+import {
+  vendorProfileCreateSchema,
+  vendorProfileUpdateSchema,
+  formatValidationErrors,
+} from "@/lib/validations";
+import { logger } from "@/lib/logger";
+import { slugify } from "@/lib/formatters";
 
 // GET /api/vendor/profile - Get vendor's provider profile
 export async function GET(request: NextRequest) {
@@ -31,16 +38,16 @@ export async function GET(request: NextRequest) {
     if (!provider) {
       return NextResponse.json(
         { message: "No provider profile found", provider: null },
-        { status: 200 }
+        { status: 200 },
       );
     }
 
     return NextResponse.json({ provider });
   } catch (error: unknown) {
-    console.error("Error fetching vendor profile:", error);
+    logger.error("Error fetching vendor profile:", error);
     return NextResponse.json(
       { message: "Internal server error" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
@@ -61,27 +68,28 @@ export async function POST(request: NextRequest) {
     if (existingProvider) {
       return NextResponse.json(
         { message: "You already have a vendor profile" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
     let body;
     try {
       body = await request.json();
-      console.log("Request body parsed successfully:", {
-        hasPhotos: Array.isArray(body.photos),
-        photosLength: Array.isArray(body.photos)
-          ? body.photos.length
-          : "not-array",
-        photosType: typeof body.photos,
-        coverImageType: typeof body.coverImage,
-        keys: Object.keys(body),
-      });
     } catch (parseError) {
-      console.error("JSON parse error:", parseError);
       return NextResponse.json(
         { message: "Invalid JSON in request body" },
-        { status: 400 }
+        { status: 400 },
+      );
+    }
+
+    const parsed = vendorProfileCreateSchema.safeParse(body);
+    if (!parsed.success) {
+      return NextResponse.json(
+        {
+          message: "Validation failed",
+          errors: formatValidationErrors(parsed.error.issues),
+        },
+        { status: 400 },
       );
     }
 
@@ -104,33 +112,7 @@ export async function POST(request: NextRequest) {
       photos,
       priceFrom,
       isPublished,
-    } = body;
-
-    // Validation
-    if (!businessName || !postcode || !serviceRadiusMiles) {
-      return NextResponse.json(
-        { message: "Business name, postcode, and service radius are required" },
-        { status: 400 }
-      );
-    }
-
-    // Validate and normalize array fields
-    const validateArray = (field: any, fieldName: string): string[] => {
-      if (!field) return [];
-      if (!Array.isArray(field)) {
-        console.warn(`${fieldName} is not an array:`, field);
-        return [];
-      }
-      return field.filter((item) => typeof item === "string");
-    };
-
-    const categories_valid = validateArray(categories, "categories");
-    const subcategories_valid = validateArray(subcategories, "subcategories");
-    const cultureTraditionTags_valid = validateArray(
-      cultureTraditionTags,
-      "cultureTraditionTags"
-    );
-    const photos_valid = validateArray(photos, "photos");
+    } = parsed.data;
 
     // Geocode the postcode
     let geoLat: number | null = null;
@@ -148,13 +130,13 @@ export async function POST(request: NextRequest) {
       } else {
         const geoRes = await fetch(
           `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(
-            postcode
+            postcode,
           )}&countrycodes=gb`,
           {
             headers: {
               "User-Agent": "EVA-EventVendorApp/1.0",
             },
-          }
+          },
         );
         const geoData = await geoRes.json();
         if (geoData && geoData.length > 0) {
@@ -176,11 +158,21 @@ export async function POST(request: NextRequest) {
       // Geocoding failed, continue without coordinates
     }
 
+    // Generate a unique slug from business name
+    let slug = slugify(businessName);
+    const existingSlug = await prisma.provider.findFirst({
+      where: { slug },
+    });
+    if (existingSlug) {
+      slug = `${slug}-${Date.now().toString(36)}`;
+    }
+
     // Create the provider profile
     const provider = await prisma.provider.create({
       data: {
         ownerUserId: session.user.id,
         businessName,
+        slug,
         description: description || null,
         phonePublic: phonePublic || null,
         website: website || null,
@@ -190,18 +182,19 @@ export async function POST(request: NextRequest) {
         serviceRadiusMiles: Number(serviceRadiusMiles),
         geoLat,
         geoLng,
-        categories: categories_valid,
-        subcategories: subcategories_valid,
-        cultureTraditionTags: cultureTraditionTags_valid,
+        categories,
+        subcategories,
+        cultureTraditionTags,
         instagram: instagram || null,
         tiktok: tiktok || null,
         facebook: facebook || null,
         coverImage: coverImage || null,
-        photos: photos_valid,
+        photos,
         priceFrom: priceFrom ? Number(priceFrom) : null,
         isPublished: isPublished ?? false,
         isVerified: false,
         planTier: "FREE",
+        onboardingCompletedAt: isPublished ? new Date() : null,
       },
     });
 
@@ -213,18 +206,18 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json(
       { message: "Profile created successfully", provider },
-      { status: 201 }
+      { status: 201 },
     );
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : "Unknown error";
-    console.error("Error creating vendor profile:", message);
-    console.error("Full error:", error);
+    logger.error("Error creating vendor profile:", message);
+    logger.error("Full error:", error);
 
     // Check for specific Prisma errors
     if (message.includes("Unique constraint")) {
       return NextResponse.json(
         { message: "A vendor profile with this information already exists" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -235,13 +228,13 @@ export async function POST(request: NextRequest) {
             "Invalid data format. Please ensure all array fields are properly formatted.",
           error: message,
         },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
     return NextResponse.json(
       { message: "Failed to create vendor profile. Please try again." },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
@@ -261,11 +254,31 @@ export async function PUT(request: NextRequest) {
     if (!provider) {
       return NextResponse.json(
         { message: "No provider profile found" },
-        { status: 404 }
+        { status: 404 },
       );
     }
 
-    const body = await request.json();
+    let body;
+    try {
+      body = await request.json();
+    } catch (parseError) {
+      return NextResponse.json(
+        { message: "Invalid JSON in request body" },
+        { status: 400 },
+      );
+    }
+
+    const parsed = vendorProfileUpdateSchema.safeParse(body);
+    if (!parsed.success) {
+      return NextResponse.json(
+        {
+          message: "Validation failed",
+          errors: formatValidationErrors(parsed.error.issues),
+        },
+        { status: 400 },
+      );
+    }
+
     const {
       businessName,
       description,
@@ -285,7 +298,7 @@ export async function PUT(request: NextRequest) {
       photos,
       priceFrom,
       isPublished,
-    } = body;
+    } = parsed.data;
 
     // Re-geocode if postcode changed
     let geoLat = provider.geoLat;
@@ -295,13 +308,13 @@ export async function PUT(request: NextRequest) {
       try {
         const geoRes = await fetch(
           `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(
-            postcode
+            postcode,
           )}&countrycodes=gb`,
           {
             headers: {
               "User-Agent": "EVA-EventVendorApp/1.0",
             },
-          }
+          },
         );
         const geoData = await geoRes.json();
         if (geoData && geoData.length > 0) {
@@ -346,10 +359,10 @@ export async function PUT(request: NextRequest) {
       provider: updatedProvider,
     });
   } catch (error: unknown) {
-    console.error("Error updating vendor profile:", error);
+    logger.error("Error updating vendor profile:", error);
     return NextResponse.json(
       { message: "Internal server error" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

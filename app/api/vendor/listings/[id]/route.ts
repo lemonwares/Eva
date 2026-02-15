@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/auth";
+import { listingUpdateSchema, formatValidationErrors } from "@/lib/validations";
+import { logger } from "@/lib/logger";
 
 interface RouteParams {
   params: {
@@ -24,7 +26,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
     if (!listing) {
       return NextResponse.json(
         { message: "Listing not found" },
-        { status: 404 }
+        { status: 404 },
       );
     }
 
@@ -35,10 +37,10 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
 
     return NextResponse.json({ listing });
   } catch (error: unknown) {
-    console.error("Error fetching listing:", error);
+    logger.error("Error fetching listing:", error);
     return NextResponse.json(
       { message: "Internal server error" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
@@ -60,7 +62,7 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
     if (!listing) {
       return NextResponse.json(
         { message: "Listing not found" },
-        { status: 404 }
+        { status: 404 },
       );
     }
 
@@ -69,15 +71,19 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
     }
 
     const body = await request.json();
-    const { headline, longDescription, minPrice, maxPrice, coverImageUrl } =
-      body;
-
-    if (headline !== undefined && (!headline || headline.trim() === "")) {
+    const parsed = listingUpdateSchema.safeParse(body);
+    if (!parsed.success) {
       return NextResponse.json(
-        { message: "Service name cannot be empty" },
-        { status: 400 }
+        {
+          message: "Validation failed",
+          errors: formatValidationErrors(parsed.error.issues),
+        },
+        { status: 400 },
       );
     }
+
+    const { headline, longDescription, minPrice, maxPrice, coverImageUrl } =
+      parsed.data;
 
     const updated = await prisma.listing.update({
       where: { id: params.id },
@@ -98,10 +104,10 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
 
     return NextResponse.json({ listing: updated });
   } catch (error: unknown) {
-    console.error("Error updating listing:", error);
+    logger.error("Error updating listing:", error);
     return NextResponse.json(
       { message: "Internal server error" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
@@ -123,7 +129,7 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
     if (!listing) {
       return NextResponse.json(
         { message: "Listing not found" },
-        { status: 404 }
+        { status: 404 },
       );
     }
 
@@ -140,10 +146,10 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
       success: true,
     });
   } catch (error: unknown) {
-    console.error("Error deleting listing:", error);
+    logger.error("Error deleting listing:", error);
     return NextResponse.json(
       { message: "Internal server error" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

@@ -24,6 +24,7 @@ import {
   X,
 } from "lucide-react";
 import { useState, useEffect } from "react";
+import { logger } from "@/lib/logger";
 
 interface QuoteItem {
   name: string;
@@ -124,7 +125,7 @@ function ViewBookingModal({
           </div>
           <span
             className={`px-4 py-2 rounded-full text-sm font-medium text-white ${getStatusColor(
-              booking.status
+              booking.status,
             )}`}
           >
             {booking.status.replace(/_/g, " ")}
@@ -220,7 +221,7 @@ function ViewBookingModal({
         {/* Payment Info */}
         <div className="bg-gray-50 rounded-lg p-4">
           <h4 className="font-semibold mb-3">Payment Details</h4>
-          <div className="grid grid-cols-2 gap-3 text-sm">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
             <div>
               <p className="text-gray-500">Payment Mode</p>
               <p className="font-medium">
@@ -331,7 +332,7 @@ function UpdateStatusModal({
       await onUpdate(status, note);
       onClose();
     } catch (err) {
-      console.error("Error updating status:", err);
+      logger.error("Error updating status:", err);
     } finally {
       setSaving(false);
     }
@@ -376,8 +377,9 @@ function UpdateStatusModal({
           <button
             onClick={handleSubmit}
             disabled={saving || status === booking.status}
-            className="flex-1 px-4 py-3 rounded-lg bg-accent text-white hover:bg-accent/90 font-medium transition-colors disabled:opacity-50"
+            className="flex-1 px-4 py-3 rounded-lg bg-accent text-white hover:bg-accent/90 font-medium transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
           >
+            {saving && <Loader2 size={16} className="animate-spin" />}
             {saving ? "Updating..." : "Update Status"}
           </button>
         </div>
@@ -404,6 +406,7 @@ export default function VendorBookingsPage() {
   const [viewModalOpen, setViewModalOpen] = useState(false);
   const [updateModalOpen, setUpdateModalOpen] = useState(false);
   const [actionMenuOpen, setActionMenuOpen] = useState<string | null>(null);
+  const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [toast, setToast] = useState<{
     show: boolean;
     message: string;
@@ -434,7 +437,7 @@ export default function VendorBookingsPage() {
         }));
       }
     } catch (err) {
-      console.error("Error fetching bookings:", err);
+      logger.error("Error fetching bookings:", err);
     } finally {
       setIsLoading(false);
     }
@@ -444,7 +447,7 @@ export default function VendorBookingsPage() {
     setToast({ show: true, message, type });
     setTimeout(
       () => setToast({ show: false, message: "", type: "success" }),
-      3000
+      3000,
     );
   };
 
@@ -471,6 +474,7 @@ export default function VendorBookingsPage() {
   };
 
   const handleMarkComplete = async (booking: Booking) => {
+    setActionLoading(booking.id);
     try {
       const res = await fetch(`/api/bookings/${booking.id}/complete`, {
         method: "POST",
@@ -485,12 +489,15 @@ export default function VendorBookingsPage() {
       }
     } catch (err) {
       showToast("An error occurred", "error");
+    } finally {
+      setActionLoading(null);
     }
     setActionMenuOpen(null);
   };
 
   const handleCancelBooking = async (booking: Booking) => {
     if (!confirm("Are you sure you want to cancel this booking?")) return;
+    setActionLoading(booking.id);
 
     try {
       const res = await fetch(`/api/bookings/${booking.id}/cancel`, {
@@ -508,6 +515,8 @@ export default function VendorBookingsPage() {
       }
     } catch (err) {
       showToast("An error occurred", "error");
+    } finally {
+      setActionLoading(null);
     }
     setActionMenuOpen(null);
   };
@@ -700,7 +709,7 @@ export default function VendorBookingsPage() {
                       <td className="px-6 py-5">
                         <span
                           className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusStyle(
-                            booking.status
+                            booking.status,
                           )}`}
                         >
                           {booking.status.replace(/_/g, " ")}
@@ -720,7 +729,7 @@ export default function VendorBookingsPage() {
                               setActionMenuOpen(
                                 actionMenuOpen === booking.id
                                   ? null
-                                  : booking.id
+                                  : booking.id,
                               )
                             }
                             className={`p-2 rounded-lg ${
@@ -774,19 +783,29 @@ export default function VendorBookingsPage() {
                                       onClick={() =>
                                         handleMarkComplete(booking)
                                       }
-                                      className={`w-full text-left px-4 py-2 text-sm flex items-center gap-2 text-green-600 ${
+                                      disabled={actionLoading === booking.id}
+                                      className={`w-full text-left px-4 py-2 text-sm flex items-center gap-2 text-green-600 disabled:opacity-50 ${
                                         darkMode
                                           ? "hover:bg-white/5"
                                           : "hover:bg-gray-50"
                                       }`}
                                     >
-                                      <CheckCircle size={14} /> Mark Complete
+                                      {actionLoading === booking.id ? (
+                                        <Loader2
+                                          size={14}
+                                          className="animate-spin"
+                                        />
+                                      ) : (
+                                        <CheckCircle size={14} />
+                                      )}{" "}
+                                      Mark Complete
                                     </button>
                                     <button
                                       onClick={() =>
                                         handleCancelBooking(booking)
                                       }
-                                      className={`w-full text-left px-4 py-2 text-sm flex items-center gap-2 text-red-500 ${
+                                      disabled={actionLoading === booking.id}
+                                      className={`w-full text-left px-4 py-2 text-sm flex items-center gap-2 text-red-500 disabled:opacity-50 ${
                                         darkMode
                                           ? "hover:bg-white/5"
                                           : "hover:bg-gray-50"
@@ -835,7 +854,7 @@ export default function VendorBookingsPage() {
                   </div>
                   <span
                     className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusStyle(
-                      booking.status
+                      booking.status,
                     )}`}
                   >
                     {booking.status.replace(/_/g, " ")}
@@ -908,8 +927,8 @@ export default function VendorBookingsPage() {
                   pagination.page === 1
                     ? "opacity-50 cursor-not-allowed"
                     : darkMode
-                    ? "text-gray-400 hover:text-white"
-                    : "text-gray-500 hover:text-gray-900"
+                      ? "text-gray-400 hover:text-white"
+                      : "text-gray-500 hover:text-gray-900"
                 } transition-colors text-sm`}
               >
                 <ChevronLeft size={18} />
@@ -931,14 +950,14 @@ export default function VendorBookingsPage() {
                           pagination.page === pageNum
                             ? "bg-accent text-white"
                             : darkMode
-                            ? "text-gray-400 hover:bg-white/10"
-                            : "text-gray-500 hover:bg-gray-100"
+                              ? "text-gray-400 hover:bg-white/10"
+                              : "text-gray-500 hover:bg-gray-100"
                         }`}
                       >
                         {pageNum}
                       </button>
                     );
-                  }
+                  },
                 )}
               </div>
 
@@ -954,8 +973,8 @@ export default function VendorBookingsPage() {
                   pagination.page === pagination.pages
                     ? "opacity-50 cursor-not-allowed"
                     : darkMode
-                    ? "text-gray-400 hover:text-white"
-                    : "text-gray-500 hover:text-gray-900"
+                      ? "text-gray-400 hover:text-white"
+                      : "text-gray-500 hover:text-gray-900"
                 } transition-colors text-sm`}
               >
                 <span>Next</span>

@@ -118,7 +118,7 @@ export async function GET(
 
     return NextResponse.json({ provider: mappedProvider });
   } catch (error: any) {
-    console.error("Error fetching provider:", error);
+    logger.error("Error fetching provider:", error);
     return NextResponse.json(
       { message: "Internal server error" },
       { status: 500 }
@@ -178,7 +178,7 @@ export async function PATCH(
           updateData.geoLng = parseFloat(geoData[0].lon);
         }
       } catch (geoError) {
-        console.warn("Geocoding failed:", geoError);
+        logger.warn("Geocoding failed:", geoError);
       }
     }
 
@@ -208,7 +208,7 @@ export async function PATCH(
         { status: 400 }
       );
     }
-    console.error("Error updating provider:", error);
+    logger.error("Error updating provider:", error);
     return NextResponse.json(
       { message: "Internal server error" },
       { status: 500 }
@@ -275,7 +275,7 @@ export async function DELETE(
       { status: 200 }
     );
   } catch (error: any) {
-    console.error("Error deleting provider:", error);
+    logger.error("Error deleting provider:", error);
     return NextResponse.json(
       { message: "Internal server error" },
       { status: 500 }

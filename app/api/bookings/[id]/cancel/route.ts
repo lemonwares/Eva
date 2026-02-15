@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/auth";
 import { z } from "zod";
+import { sendTemplatedEmail, emailTemplates } from "@/lib/email";
+import { logger } from "@/lib/logger";
 
 const cancelBookingSchema = z.object({
   reason: z.string().min(1, "Cancellation reason is required"),
@@ -11,7 +13,7 @@ const cancelBookingSchema = z.object({
 // POST /api/bookings/:id/cancel - Cancel a booking
 export async function POST(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ id: string }> },
 ) {
   try {
     const session = await auth();
@@ -26,7 +28,7 @@ export async function POST(
     if (!validation.success) {
       return NextResponse.json(
         { message: "Invalid request", errors: validation.error.issues },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -36,7 +38,7 @@ export async function POST(
       where: { id },
       include: {
         provider: {
-          select: { id: true, ownerUserId: true },
+          select: { id: true, ownerUserId: true, businessName: true },
         },
       },
     });
@@ -44,7 +46,7 @@ export async function POST(
     if (!booking) {
       return NextResponse.json(
         { message: "Booking not found" },
-        { status: 404 }
+        { status: 404 },
       );
     }
 
@@ -61,7 +63,7 @@ export async function POST(
     if (booking.status === "COMPLETED" || booking.status === "CANCELLED") {
       return NextResponse.json(
         { message: `Cannot cancel a ${booking.status.toLowerCase()} booking` },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -89,15 +91,66 @@ export async function POST(
       },
     });
 
+    // Send cancellation email notifications
+    const baseUrl = process.env.NEXTAUTH_URL || "http://localhost:3000";
+    const bookingUrl = `${baseUrl}/dashboard/bookings`;
+    const vendorBookingUrl = `${baseUrl}/vendor/bookings`;
+    const eventDate = booking.eventDate
+      ? new Date(booking.eventDate).toLocaleDateString("en-US", {
+          month: "long",
+          day: "numeric",
+          year: "numeric",
+        })
+      : "TBD";
+
+    // Notify client
+    if (booking.clientEmail) {
+      sendTemplatedEmail(
+        booking.clientEmail,
+        emailTemplates.bookingCancelledClient(
+          booking.clientName || "Client",
+          updated.provider.businessName,
+          eventDate,
+          reason,
+          cancellationParty || "Vendor",
+          bookingUrl,
+        ),
+      ).catch((err) =>
+        logger.error("Failed to send cancellation email to client:", err),
+      );
+    }
+
+    // Notify vendor owner
+    const vendorOwner = await prisma.user.findUnique({
+      where: { id: booking.provider.ownerUserId },
+      select: { email: true, name: true },
+    });
+
+    if (vendorOwner?.email) {
+      sendTemplatedEmail(
+        vendorOwner.email,
+        emailTemplates.bookingCancelledVendor(
+          vendorOwner.name || updated.provider.businessName,
+          booking.clientName || "Client",
+          eventDate,
+          reason,
+          cancellationParty || "Client",
+          vendorBookingUrl,
+        ),
+      ).catch((err) =>
+        logger.error("Failed to send cancellation email to vendor:", err),
+      );
+    }
+
     return NextResponse.json({
       message: "Booking cancelled successfully",
       booking: updated,
     });
   } catch (error: any) {
-    console.error("Error cancelling booking:", error);
+    logger.error("Error cancelling booking:", error);
     return NextResponse.json(
       { message: "Internal server error" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

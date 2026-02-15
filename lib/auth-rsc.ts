@@ -35,6 +35,7 @@ export const { auth } = NextAuth({
         token.email = user.email;
         token.name = user.name;
         token.role = user.role || "CLIENT";
+        token.image = user.image || null;
       }
       return token;
     },
@@ -45,10 +46,11 @@ export const { auth } = NextAuth({
         session.user.email = token.email as string;
         session.user.name = token.name as string;
         session.user.role = token.role as string;
+        session.user.image = token.image as string | null;
       }
       return session;
     },
   },
   // Use the same secret as main auth.ts for JWT compatibility
-  secret: process.env.AUTH_SECRET,
+  secret: process.env.AUTH_SECRET || process.env.NEXTAUTH_SECRET,
 });

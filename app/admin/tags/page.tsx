@@ -2,6 +2,7 @@
 
 import AdminLayout from "@/components/admin/AdminLayout";
 import { useAdminTheme } from "@/components/admin/AdminThemeContext";
+import { logger } from "@/lib/logger";
 import Modal from "@/components/admin/Modal";
 import ConfirmDialog from "@/components/admin/ConfirmDialog";
 import { Toast } from "@/components/admin/Toast";
@@ -107,7 +108,7 @@ export default function AdminTagsPage() {
         setTags(data);
       }
     } catch (err) {
-      console.error("Error fetching tags:", err);
+      logger.error("Error fetching tags:", err);
     } finally {
       setIsLoading(false);
     }
@@ -127,7 +128,7 @@ export default function AdminTagsPage() {
   const totalPages = Math.ceil(filteredTags.length / itemsPerPage);
   const paginatedTags = filteredTags.slice(
     (currentPage - 1) * itemsPerPage,
-    currentPage * itemsPerPage
+    currentPage * itemsPerPage,
   );
 
   const openAddModal = () => {
@@ -212,7 +213,7 @@ export default function AdminTagsPage() {
         });
       }
     } catch (err) {
-      console.error("Error saving tag:", err);
+      logger.error("Error saving tag:", err);
       setToast({ show: true, message: "Failed to save tag", type: "error" });
     } finally {
       setIsSaving(false);
@@ -244,7 +245,7 @@ export default function AdminTagsPage() {
         });
       }
     } catch (err) {
-      console.error("Error deleting tag:", err);
+      logger.error("Error deleting tag:", err);
       setToast({ show: true, message: "Failed to delete tag", type: "error" });
     } finally {
       setIsDeleting(false);
@@ -296,8 +297,8 @@ export default function AdminTagsPage() {
             {statusFilter === null
               ? "All Status"
               : statusFilter
-              ? "Active"
-              : "Inactive"}
+                ? "Active"
+                : "Inactive"}
             <ChevronDown size={16} className="ml-auto" />
           </button>
           {showStatusDropdown && (
@@ -460,7 +461,7 @@ export default function AdminTagsPage() {
                 </button>
                 {Array.from(
                   { length: Math.min(5, totalPages) },
-                  (_, i) => i + 1
+                  (_, i) => i + 1,
                 ).map((page) => (
                   <button
                     key={page}
@@ -555,8 +556,8 @@ export default function AdminTagsPage() {
                     formData.icon === icon
                       ? "ring-2 ring-accent bg-accent/10"
                       : darkMode
-                      ? "bg-white/5 hover:bg-white/10"
-                      : "bg-gray-100 hover:bg-gray-200"
+                        ? "bg-white/5 hover:bg-white/10"
+                        : "bg-gray-100 hover:bg-gray-200"
                   }`}
                 >
                   {icon}
@@ -591,7 +592,7 @@ export default function AdminTagsPage() {
             />
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label
                 className={`block text-sm font-medium ${textSecondary} mb-1.5`}

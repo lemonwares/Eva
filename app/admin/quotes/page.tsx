@@ -2,6 +2,7 @@
 
 import AdminLayout from "@/components/admin/AdminLayout";
 import { useAdminTheme } from "@/components/admin/AdminThemeContext";
+import { logger } from "@/lib/logger";
 import { formatCurrency, formatDate } from "@/lib/formatters";
 import {
   Filter,
@@ -103,7 +104,7 @@ export default function AdminQuotesPage() {
         setPagination(data.pagination || null);
       }
     } catch (err) {
-      console.error("Error fetching quotes:", err);
+      logger.error("Error fetching quotes:", err);
     } finally {
       setIsLoading(false);
     }
@@ -282,7 +283,7 @@ export default function AdminQuotesPage() {
                       <td className="px-6 py-4">
                         <span
                           className={`inline-flex px-2.5 py-1 rounded-full text-xs font-medium text-white ${getStatusColor(
-                            quote.status
+                            quote.status,
                           )}`}
                         >
                           {quote.status}
@@ -315,7 +316,7 @@ export default function AdminQuotesPage() {
                   Showing {(pagination.page - 1) * pagination.limit + 1} to{" "}
                   {Math.min(
                     pagination.page * pagination.limit,
-                    pagination.total
+                    pagination.total,
                   )}{" "}
                   of {pagination.total} results
                 </p>
@@ -331,7 +332,7 @@ export default function AdminQuotesPage() {
                   </button>
                   {Array.from(
                     { length: Math.min(5, pagination.pages) },
-                    (_, i) => i + 1
+                    (_, i) => i + 1,
                   ).map((page) => (
                     <button
                       key={page}
@@ -390,7 +391,7 @@ export default function AdminQuotesPage() {
             </div>
             <div className="p-6 space-y-6">
               {/* Quote Info */}
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <p className={`text-sm ${textMuted}`}>Quote ID</p>
                   <p className={`font-medium ${textPrimary}`}>
@@ -401,7 +402,7 @@ export default function AdminQuotesPage() {
                   <p className={`text-sm ${textMuted}`}>Status</p>
                   <span
                     className={`inline-flex px-2.5 py-1 rounded-full text-xs font-medium text-white ${getStatusColor(
-                      selectedQuote.status
+                      selectedQuote.status,
                     )}`}
                   >
                     {selectedQuote.status}
@@ -439,9 +440,9 @@ export default function AdminQuotesPage() {
               <div>
                 <h4 className={`font-medium ${textPrimary} mb-3`}>Items</h4>
                 <div
-                  className={`border ${cardBorder} rounded-lg overflow-hidden`}
+                  className={`border ${cardBorder} rounded-lg overflow-x-auto`}
                 >
-                  <table className="w-full">
+                  <table className="w-full min-w-[400px]">
                     <thead>
                       <tr
                         className={`${darkMode ? "bg-white/5" : "bg-gray-50"}`}

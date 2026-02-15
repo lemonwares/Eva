@@ -78,7 +78,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json(category, { status: 201 });
   } catch (error: any) {
-    console.error("Error creating category:", error);
+    logger.error("Error creating category:", error);
     return NextResponse.json(
       { message: "Internal server error" },
       { status: 500 }
@@ -135,7 +135,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json(categoriesWithVendorCount);
   } catch (error: any) {
-    console.error("Error fetching categories:", error);
+    logger.error("Error fetching categories:", error);
     return NextResponse.json(
       { message: "Internal server error" },
       { status: 500 }

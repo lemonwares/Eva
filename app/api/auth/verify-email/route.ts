@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { sendEmail } from "@/lib/mail";
 import { emailTemplates } from "@/templates/templateLoader";
+import { logger } from "@/lib/logger";
 
 // GET /api/auth/verify-email?token=xxx
 // Alternative endpoint for email link verification via query params
@@ -13,17 +14,17 @@ export async function GET(request: NextRequest) {
     if (!token) {
       return NextResponse.json(
         { message: "Verification token is required" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
     // Reuse the verification logic by calling the shared function below
     return await handleVerification(token);
   } catch (error: any) {
-    console.error(`Email verification error (GET): ${error?.message}`);
+    logger.error(`Email verification error (GET): ${error?.message}`);
     return NextResponse.json(
       { message: "Internal server error" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
@@ -33,25 +34,26 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { token } = body;
-
-    // Log for debugging - helps identify if body parsing is the issue
-    console.log("Verify email request body:", { token, fullBody: body });
-
-    if (!token) {
+    const { z } = await import("zod");
+    const tokenSchema = z.object({
+      token: z.string().min(1, "Token is required"),
+    });
+    const parsed = tokenSchema.safeParse(body);
+    if (!parsed.success) {
       return NextResponse.json(
         { message: "Verification token is required" },
-        { status: 400 }
+        { status: 400 },
       );
     }
+    const { token } = parsed.data;
 
     // Delegate to shared verification handler
     return await handleVerification(token);
   } catch (error: any) {
-    console.error(`Email verification error (POST): ${error?.message}`);
+    logger.error(`Email verification error (POST): ${error?.message}`);
     return NextResponse.json(
       { message: "Internal server error" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
@@ -59,7 +61,7 @@ export async function POST(request: NextRequest) {
 // Shared verification logic for both GET and POST handlers
 async function handleVerification(token: string) {
   try {
-    console.log("Looking up verification token:", token);
+    logger.debug("Looking up verification token");
 
     // Find verification record by token
     const verification = await prisma.emailVerification.findUnique({
@@ -67,26 +69,18 @@ async function handleVerification(token: string) {
       include: { user: true },
     });
 
-    if (verification) {
-      console.log("Verification record found:", verification);
-    } else {
-      console.log("Verification record found: No");
-    }
-
     if (!verification) {
-      console.log("Error: Verification token not found in database");
       return NextResponse.json(
         { message: "Invalid verification token" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
     // Check if token has expired
     if (verification.expiresAt && new Date() > verification.expiresAt) {
-      console.log("Error: Token expired at", verification.expiresAt);
       return NextResponse.json(
         { message: "Verification token has expired" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -104,16 +98,17 @@ async function handleVerification(token: string) {
               id: verification.user.id,
               name: verification.user.name,
               email: verification.user.email,
+              role: verification.user.role,
             },
           },
-          { status: 200 }
+          { status: 200 },
         );
       } else {
         // After 2 minutes, delete the token and return error
         await prisma.emailVerification.delete({ where: { token } });
         return NextResponse.json(
           { message: "Verification token has expired" },
-          { status: 400 }
+          { status: 400 },
         );
       }
     }
@@ -231,11 +226,16 @@ async function handleVerification(token: string) {
 </body>
 </html>`;
 
-    await sendEmail({
-      to: user.email,
-      subject: "Welcome to Eva Marketplace! 🎉",
-      html: htmlContent,
-    });
+    try {
+      await sendEmail({
+        to: user.email,
+        subject: "Welcome to Eva Marketplace! 🎉",
+        html: htmlContent,
+      });
+    } catch (emailError) {
+      // Welcome email is non-critical — verification already succeeded
+      logger.error("Failed to send welcome email:", emailError);
+    }
 
     return NextResponse.json(
       {
@@ -244,15 +244,16 @@ async function handleVerification(token: string) {
           id: user.id,
           name: user.name,
           email: user.email,
+          role: user.role,
         },
       },
-      { status: 200 }
+      { status: 200 },
     );
   } catch (error: any) {
-    console.error(`Email verification handler error: ${error?.message}`);
+    logger.error(`Email verification handler error: ${error?.message}`);
     return NextResponse.json(
       { message: "Internal server error" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

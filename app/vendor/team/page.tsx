@@ -4,6 +4,7 @@ import VendorLayout from "@/components/vendor/VendorLayout";
 import { Camera, Loader, LoaderCircle, LoaderIcon, Trash2 } from "lucide-react";
 import Image from "next/image";
 import { useRef, useState, useEffect } from "react";
+import ConfirmDeleteModal from "@/components/modals/confirm-delete-modal";
 
 export default function TeamPage() {
   const [teamMembers, setTeamMembers] = useState<
@@ -33,7 +34,7 @@ export default function TeamPage() {
             id: tm.id,
             name: tm.name,
             image: tm.imageUrl || "/favicon.co",
-          }))
+          })),
         );
       }
       setLoading(false);
@@ -86,6 +87,8 @@ export default function TeamPage() {
     setLoading(false);
   }
 
+  const [memberToDelete, setMemberToDelete] = useState<string | null>(null);
+
   async function handleDeleteTeamMember(id: string) {
     setLoading(true);
     try {
@@ -97,6 +100,7 @@ export default function TeamPage() {
       }
     } finally {
       setLoading(false);
+      setMemberToDelete(null);
     }
   }
 
@@ -186,7 +190,7 @@ export default function TeamPage() {
               </div>
             )}
 
-            <div className="grid grid-cols-4 gap-6 max-md:grid-cols-3">
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 sm:gap-6">
               {teamMembers.map((member, idx) => {
                 return (
                   <div key={member.id} className="flex flex-col items-center">
@@ -214,8 +218,8 @@ export default function TeamPage() {
                         unoptimized={true}
                       />
                       <button
-                        className="absolute top-0 left-0 w-20 h-20 rounded-full opacity-0 hover:opacity-70 flex items-center justify-center bg-gray-700 transition ease-in-out z-10"
-                        onClick={() => handleDeleteTeamMember(member.id)}
+                        className="absolute top-0 left-0 w-20 h-20 rounded-full opacity-70 sm:opacity-0 sm:hover:opacity-70 flex items-center justify-center bg-gray-700 transition ease-in-out z-10"
+                        onClick={() => setMemberToDelete(member.id)}
                         aria-label={`Delete ${member.name}`}
                         type="button"
                         style={{ width: "80px", height: "80px" }}
@@ -231,6 +235,18 @@ export default function TeamPage() {
           </div>
         </div>
       </>
+
+      <ConfirmDeleteModal
+        isOpen={!!memberToDelete}
+        onClose={() => setMemberToDelete(null)}
+        onConfirm={() =>
+          memberToDelete && handleDeleteTeamMember(memberToDelete)
+        }
+        title="Delete Team Member"
+        message="Are you sure you want to delete this team member? This action cannot be undone."
+        confirmText="Delete"
+        isLoading={loading}
+      />
     </VendorLayout>
   );
 }

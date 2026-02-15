@@ -203,7 +203,7 @@ export async function deleteFile(
     }
     return true;
   } catch (error) {
-    console.error("Error deleting file:", error);
+    logger.error("Error deleting file:", error);
     return false;
   }
 }

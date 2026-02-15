@@ -81,7 +81,7 @@ export async function GET(request: NextRequest) {
           .filter((tag) => !query || tag.includes(query.toLowerCase()))
           .slice(0, limit);
       } catch (dbError: any) {
-        console.error("Database error in tags API:", dbError);
+        logger.error("Database error in tags API:", dbError);
         // Fallback: return common tags if database query fails
         const commonTags = [
           "wedding",
@@ -140,7 +140,7 @@ export async function GET(request: NextRequest) {
       count: tags.length,
     });
   } catch (error: any) {
-    console.error("Error fetching tags:", error);
+    logger.error("Error fetching tags:", error);
     return NextResponse.json(
       { message: "Internal server error" },
       { status: 500 }

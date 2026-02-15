@@ -201,8 +201,11 @@ model Provider {
   quotesAcceptedCount Int    @default(0) @map("quotes_accepted_count")
 
   // Stripe Connect (for payments v1.1)
-  stripeAccountId          String? @unique @map("stripe_account_id")
-  stripeOnboardingComplete Boolean @default(false) @map("stripe_onboarding_complete")
+  stripeAccountId          String?   @unique @map("stripe_account_id")
+  stripeOnboardingComplete Boolean   @default(false) @map("stripe_onboarding_complete")
+
+  // Onboarding tracking
+  onboardingCompletedAt DateTime? @map("onboarding_completed_at")
 
   // Relationships
   owner           User             @relation(fields: [ownerUserId], references: [id], onDelete: Cascade)

@@ -2,9 +2,12 @@
 
 import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { useDashboardTheme } from "../layout";
 import { useSession } from "next-auth/react";
 import { formatCurrency, formatDate } from "@/lib/formatters";
+import { FileText, X, CheckCircle, XCircle, Lock, Loader2 } from "lucide-react";
+import { logger } from "@/lib/logger";
 
 interface QuoteItem {
   name: string;
@@ -90,7 +93,7 @@ export default function QuotesPage() {
       const data = await response.json();
       setQuotes(data.quotes || []);
     } catch (error) {
-      console.error("Error fetching quotes:", error);
+      logger.error("Error fetching quotes:", error);
     } finally {
       setLoading(false);
     }
@@ -134,7 +137,7 @@ export default function QuotesPage() {
         setSelectedQuote(null);
       }
     } catch (error) {
-      console.error("Error declining quote:", error);
+      logger.error("Error declining quote:", error);
     } finally {
       setActionLoading(false);
     }
@@ -188,7 +191,7 @@ export default function QuotesPage() {
       setShowModal(false);
       setSelectedQuote(null);
     } catch (error) {
-      console.error("Error accepting quote:", error);
+      logger.error("Error accepting quote:", error);
       alert("Failed to accept quote. Please try again.");
     } finally {
       setActionLoading(false);
@@ -202,15 +205,22 @@ export default function QuotesPage() {
 
   const getStatusColor = (status: string) => {
     const colors: Record<string, string> = {
-      DRAFT: "bg-gray-100 text-gray-700",
-      SENT: "bg-blue-100 text-blue-700",
-      VIEWED: "bg-purple-100 text-purple-700",
-      ACCEPTED: "bg-green-100 text-green-700",
-      DECLINED: "bg-red-100 text-red-700",
-      EXPIRED: "bg-amber-100 text-amber-700",
-      REVISED: "bg-indigo-100 text-indigo-700",
+      DRAFT: "bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-400",
+      SENT: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400",
+      VIEWED:
+        "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400",
+      ACCEPTED:
+        "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400",
+      DECLINED: "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400",
+      EXPIRED:
+        "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400",
+      REVISED:
+        "bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-400",
     };
-    return colors[status] || "bg-gray-100 text-gray-700";
+    return (
+      colors[status] ||
+      "bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-400"
+    );
   };
 
   const isExpired = (validUntil: string) => {
@@ -224,26 +234,30 @@ export default function QuotesPage() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       {/* Header */}
       <div>
-        <h1 className={`text-2xl font-bold ${textPrimary}`}>My Quotes</h1>
-        <p className={textSecondary}>Price quotes received from vendors</p>
+        <h1 className={`text-xl sm:text-2xl font-bold ${textPrimary}`}>
+          My Quotes
+        </h1>
+        <p className={`text-sm sm:text-base ${textSecondary}`}>
+          Price quotes received from vendors
+        </p>
       </div>
 
       {/* Filters */}
-      <div className={`${cardBg} ${cardBorder} border rounded-xl p-4`}>
-        <div className="flex flex-wrap gap-2">
+      <div className={`${cardBg} ${cardBorder} border rounded-xl p-3 sm:p-4`}>
+        <div className="flex gap-2 overflow-x-auto pb-1 -mb-1 scrollbar-hide">
           {["all", "SENT", "VIEWED", "ACCEPTED", "DECLINED"].map((status) => (
             <button
               key={status}
               onClick={() => setStatusFilter(status)}
-              className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+              className={`px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg text-xs sm:text-sm font-medium transition-colors whitespace-nowrap shrink-0 ${
                 statusFilter === status
-                  ? "bg-rose-500 text-white"
+                  ? "bg-accent text-white"
                   : `${
                       darkMode
-                        ? "bg-gray-700 text-gray-300"
+                        ? "bg-white/5 text-gray-300"
                         : "bg-gray-100 text-gray-600"
                     }`
               }`}
@@ -257,29 +271,20 @@ export default function QuotesPage() {
       {/* Quotes Grid */}
       {loading ? (
         <div className="flex items-center justify-center py-12">
-          <div className="animate-spin w-8 h-8 border-3 border-rose-500 border-t-transparent rounded-full"></div>
+          <div className="animate-spin w-8 h-8 border-3 border-accent border-t-transparent rounded-full"></div>
         </div>
       ) : quotes.length === 0 ? (
         <div
           className={`${cardBg} ${cardBorder} border rounded-xl p-12 text-center`}
         >
-          <svg
-            className={`w-16 h-16 mx-auto ${textMuted}`}
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-            />
-          </svg>
-          <p className={`mt-4 text-lg font-medium ${textPrimary}`}>
+          <FileText
+            className={`w-14 h-14 sm:w-16 sm:h-16 mx-auto ${textMuted}`}
+            strokeWidth={1.5}
+          />
+          <p className={`mt-4 text-base sm:text-lg font-medium ${textPrimary}`}>
             No quotes yet
           </p>
-          <p className={`mt-1 ${textMuted}`}>
+          <p className={`mt-1 text-sm ${textMuted}`}>
             Quotes from vendors will appear here
           </p>
         </div>
@@ -298,14 +303,17 @@ export default function QuotesPage() {
               <div className="p-4 flex items-center gap-3">
                 <div
                   className={`w-12 h-12 rounded-lg ${
-                    darkMode ? "bg-gray-700" : "bg-gray-100"
+                    darkMode ? "bg-white/5" : "bg-gray-100"
                   } shrink-0 overflow-hidden`}
                 >
                   {quote.provider.coverImage ? (
-                    <img
+                    <Image
                       src={quote.provider.coverImage}
                       alt=""
+                      width={48}
+                      height={48}
                       className="w-full h-full object-cover"
+                      unoptimized
                     />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center">
@@ -330,7 +338,7 @@ export default function QuotesPage() {
               {/* Amount */}
               <div
                 className={`px-4 py-3 ${
-                  darkMode ? "bg-gray-800" : "bg-gray-50"
+                  darkMode ? "bg-[#141414]" : "bg-gray-50"
                 }`}
               >
                 <p className={`text-2xl font-bold ${textPrimary}`}>
@@ -344,7 +352,7 @@ export default function QuotesPage() {
                   <span className={`text-sm ${textMuted}`}>Status</span>
                   <span
                     className={`px-2 py-0.5 text-xs rounded-full ${getStatusColor(
-                      quote.status
+                      quote.status,
                     )}`}
                   >
                     {quote.status}
@@ -400,13 +408,13 @@ export default function QuotesPage() {
           >
             {/* Header */}
             <div
-              className={`p-6 border-b ${cardBorder} flex items-start justify-between`}
+              className={`p-4 sm:p-6 border-b ${cardBorder} flex items-start justify-between`}
             >
               <div>
-                <h2 className={`text-xl font-bold ${textPrimary}`}>
+                <h2 className={`text-lg sm:text-xl font-bold ${textPrimary}`}>
                   Quote Details
                 </h2>
-                <p className={`mt-1 ${textMuted}`}>
+                <p className={`mt-1 text-sm ${textMuted}`}>
                   From {selectedQuote.provider.businessName}
                 </p>
               </div>
@@ -416,34 +424,22 @@ export default function QuotesPage() {
                   setSelectedQuote(null);
                 }}
                 className={`p-2 rounded-lg ${
-                  darkMode ? "hover:bg-gray-700" : "hover:bg-gray-100"
+                  darkMode ? "hover:bg-white/10" : "hover:bg-gray-100"
                 }`}
               >
-                <svg
-                  className={`w-5 h-5 ${textMuted}`}
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M6 18L18 6M6 6l12 12"
-                  />
-                </svg>
+                <X className={`w-5 h-5 ${textMuted}`} />
               </button>
             </div>
 
             {/* Content */}
-            <div className="p-6 space-y-6">
+            <div className="p-4 sm:p-6 space-y-5 sm:space-y-6">
               {/* Status & Validity */}
               <div className="flex flex-wrap gap-4">
                 <div className="flex items-center gap-2">
                   <span className={textMuted}>Status:</span>
                   <span
                     className={`px-3 py-1 rounded-full text-sm ${getStatusColor(
-                      selectedQuote.status
+                      selectedQuote.status,
                     )}`}
                   >
                     {selectedQuote.status}
@@ -466,20 +462,23 @@ export default function QuotesPage() {
               {/* Vendor Info */}
               <div
                 className={`p-4 rounded-lg ${
-                  darkMode ? "bg-gray-800" : "bg-gray-50"
+                  darkMode ? "bg-[#141414]" : "bg-gray-50"
                 }`}
               >
                 <div className="flex items-center gap-3">
                   <div
                     className={`w-14 h-14 rounded-lg ${
-                      darkMode ? "bg-gray-700" : "bg-gray-200"
+                      darkMode ? "bg-white/5" : "bg-gray-200"
                     } overflow-hidden`}
                   >
                     {selectedQuote.provider.coverImage ? (
-                      <img
+                      <Image
                         src={selectedQuote.provider.coverImage}
                         alt=""
+                        width={56}
+                        height={56}
                         className="w-full h-full object-cover"
+                        unoptimized
                       />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center">
@@ -492,7 +491,7 @@ export default function QuotesPage() {
                   <div>
                     <Link
                       href={`/vendors/${selectedQuote.provider.id}`}
-                      className={`font-semibold ${textPrimary} hover:text-rose-500`}
+                      className={`font-semibold ${textPrimary} hover:text-accent`}
                     >
                       {selectedQuote.provider.businessName}
                     </Link>
@@ -520,11 +519,11 @@ export default function QuotesPage() {
                     Quote Items
                   </h3>
                   <div
-                    className={`border ${cardBorder} rounded-lg overflow-hidden`}
+                    className={`border ${cardBorder} rounded-lg overflow-x-auto`}
                   >
-                    <table className="w-full">
+                    <table className="w-full min-w-[400px]">
                       <thead
-                        className={darkMode ? "bg-gray-800" : "bg-gray-50"}
+                        className={darkMode ? "bg-[#141414]" : "bg-gray-50"}
                       >
                         <tr>
                           <th
@@ -574,7 +573,7 @@ export default function QuotesPage() {
                         ))}
                       </tbody>
                       <tfoot
-                        className={darkMode ? "bg-gray-800" : "bg-gray-50"}
+                        className={darkMode ? "bg-[#141414]" : "bg-gray-50"}
                       >
                         <tr>
                           <td
@@ -608,7 +607,7 @@ export default function QuotesPage() {
               {/* Event Info */}
               <div
                 className={`p-4 rounded-lg ${
-                  darkMode ? "bg-gray-800" : "bg-gray-50"
+                  darkMode ? "bg-[#141414]" : "bg-gray-50"
                 }`}
               >
                 <h3 className={`font-medium ${textPrimary} mb-2`}>
@@ -637,7 +636,7 @@ export default function QuotesPage() {
 
             {/* Actions */}
             {canRespond(selectedQuote) && (
-              <div className={`p-6 border-t ${cardBorder} flex gap-3`}>
+              <div className={`p-4 sm:p-6 border-t ${cardBorder} flex gap-3`}>
                 <button
                   onClick={() => handleAction("decline")}
                   disabled={actionLoading}
@@ -648,7 +647,7 @@ export default function QuotesPage() {
                 <button
                   onClick={() => handleAction("accept")}
                   disabled={actionLoading}
-                  className="flex-1 py-3 px-4 rounded-lg bg-rose-500 text-white font-medium hover:bg-rose-600 disabled:opacity-50"
+                  className="flex-1 py-3 px-4 rounded-lg bg-accent text-white font-medium hover:bg-accent/90 disabled:opacity-50"
                 >
                   {actionLoading ? (
                     <span className="flex items-center justify-center">
@@ -663,24 +662,20 @@ export default function QuotesPage() {
             )}
 
             {selectedQuote.status === "ACCEPTED" && (
-              <div className={`p-6 border-t ${cardBorder}`}>
-                <div className="bg-green-50 text-green-700 p-4 rounded-lg flex items-center gap-3">
-                  <svg
-                    className="w-6 h-6"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
-                    />
-                  </svg>
+              <div className={`p-4 sm:p-6 border-t ${cardBorder}`}>
+                <div
+                  className={`p-3 sm:p-4 rounded-lg flex items-center gap-3 ${
+                    darkMode
+                      ? "bg-green-900/20 text-green-400"
+                      : "bg-green-50 text-green-700"
+                  }`}
+                >
+                  <CheckCircle className="w-5 h-5 sm:w-6 sm:h-6 shrink-0" />
                   <div>
-                    <p className="font-medium">Quote Accepted</p>
-                    <p className="text-sm">
+                    <p className="font-medium text-sm sm:text-base">
+                      Quote Accepted
+                    </p>
+                    <p className="text-xs sm:text-sm opacity-80">
                       The vendor will reach out to finalize your booking.
                     </p>
                   </div>
@@ -689,24 +684,20 @@ export default function QuotesPage() {
             )}
 
             {selectedQuote.status === "DECLINED" && (
-              <div className={`p-6 border-t ${cardBorder}`}>
-                <div className="bg-red-50 text-red-700 p-4 rounded-lg flex items-center gap-3">
-                  <svg
-                    className="w-6 h-6"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"
-                    />
-                  </svg>
+              <div className={`p-4 sm:p-6 border-t ${cardBorder}`}>
+                <div
+                  className={`p-3 sm:p-4 rounded-lg flex items-center gap-3 ${
+                    darkMode
+                      ? "bg-red-900/20 text-red-400"
+                      : "bg-red-50 text-red-700"
+                  }`}
+                >
+                  <XCircle className="w-5 h-5 sm:w-6 sm:h-6 shrink-0" />
                   <div>
-                    <p className="font-medium">Quote Declined</p>
-                    <p className="text-sm">
+                    <p className="font-medium text-sm sm:text-base">
+                      Quote Declined
+                    </p>
+                    <p className="text-xs sm:text-sm opacity-80">
                       You declined this quote on{" "}
                       {formatDate(selectedQuote.updatedAt)}
                     </p>
@@ -724,48 +715,41 @@ export default function QuotesPage() {
           <div
             className={`${cardBg} rounded-xl w-full max-w-lg max-h-[90vh] overflow-y-auto`}
           >
-            <div className={`p-6 border-b ${cardBorder}`}>
+            <div className={`p-4 sm:p-6 border-b ${cardBorder}`}>
               <div className="flex items-center justify-between">
                 <div>
-                  <h2 className={`text-xl font-bold ${textPrimary}`}>
+                  <h2 className={`text-lg sm:text-xl font-bold ${textPrimary}`}>
                     Accept Quote
                   </h2>
-                  <p className={textMuted}>Complete your booking details</p>
+                  <p className={`text-sm ${textMuted}`}>
+                    Complete your booking details
+                  </p>
                 </div>
                 <button
                   onClick={() => setShowAcceptModal(false)}
                   className={`p-2 rounded-lg ${
-                    darkMode ? "hover:bg-gray-700" : "hover:bg-gray-100"
+                    darkMode ? "hover:bg-white/10" : "hover:bg-gray-100"
                   }`}
                 >
-                  <svg
-                    className={`w-5 h-5 ${textMuted}`}
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M6 18L18 6M6 6l12 12"
-                    />
-                  </svg>
+                  <X className={`w-5 h-5 ${textMuted}`} />
                 </button>
               </div>
             </div>
 
-            <form onSubmit={handleAcceptSubmit} className="p-6 space-y-6">
+            <form
+              onSubmit={handleAcceptSubmit}
+              className="p-4 sm:p-6 space-y-5 sm:space-y-6"
+            >
               {/* Quote Summary */}
               <div
                 className={`p-4 rounded-lg ${
-                  darkMode ? "bg-gray-800" : "bg-gray-50"
+                  darkMode ? "bg-[#141414]" : "bg-gray-50"
                 }`}
               >
                 <div className="flex items-center gap-3 mb-3">
                   <div
                     className={`w-10 h-10 rounded-lg ${
-                      darkMode ? "bg-gray-700" : "bg-gray-200"
+                      darkMode ? "bg-white/5" : "bg-gray-200"
                     } flex items-center justify-center`}
                   >
                     <span className={`font-medium ${textMuted}`}>
@@ -795,7 +779,7 @@ export default function QuotesPage() {
                   <label
                     className={`flex items-start gap-3 p-4 border ${cardBorder} rounded-lg cursor-pointer ${
                       acceptForm.paymentMode === "FULL_PAYMENT"
-                        ? "ring-2 ring-rose-500 bg-rose-50/50"
+                        ? "ring-2 ring-accent bg-accent/5"
                         : ""
                     }`}
                   >
@@ -835,7 +819,7 @@ export default function QuotesPage() {
                   <label
                     className={`flex items-start gap-3 p-4 border ${cardBorder} rounded-lg cursor-pointer ${
                       acceptForm.paymentMode === "DEPOSIT_BALANCE"
-                        ? "ring-2 ring-rose-500 bg-rose-50/50"
+                        ? "ring-2 ring-accent bg-accent/5"
                         : ""
                     }`}
                   >
@@ -870,7 +854,7 @@ export default function QuotesPage() {
                         deposit now,
                         {formatCurrency(
                           selectedQuote.totalPrice -
-                            calculateDeposit(selectedQuote)
+                            calculateDeposit(selectedQuote),
                         )}{" "}
                         before event
                       </p>
@@ -881,7 +865,7 @@ export default function QuotesPage() {
                   <label
                     className={`flex items-start gap-3 p-4 border ${cardBorder} rounded-lg cursor-pointer ${
                       acceptForm.paymentMode === "CASH_ON_DELIVERY"
-                        ? "ring-2 ring-rose-500 bg-rose-50/50"
+                        ? "ring-2 ring-accent bg-accent/5"
                         : ""
                     }`}
                   >
@@ -1013,18 +997,19 @@ export default function QuotesPage() {
                 <button
                   type="button"
                   onClick={() => setShowAcceptModal(false)}
-                  className={`flex-1 py-3 px-4 rounded-lg border ${cardBorder} ${textPrimary} font-medium hover:bg-gray-100`}
+                  disabled={actionLoading}
+                  className={`flex-1 py-3 px-4 rounded-lg border ${cardBorder} ${textPrimary} font-medium hover:bg-gray-100 disabled:opacity-50`}
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={actionLoading}
-                  className="flex-1 py-3 px-4 rounded-lg bg-rose-500 text-white font-medium hover:bg-rose-600 disabled:opacity-50 flex items-center justify-center gap-2"
+                  className="flex-1 py-3 px-4 rounded-lg bg-accent text-white font-medium hover:bg-accent/90 disabled:opacity-50 flex items-center justify-center gap-2"
                 >
                   {actionLoading ? (
                     <>
-                      <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                      <Loader2 className="w-5 h-5 animate-spin" />
                       Processing...
                     </>
                   ) : acceptForm.paymentMode === "CASH_ON_DELIVERY" ? (
@@ -1049,17 +1034,7 @@ export default function QuotesPage() {
                 <p
                   className={`text-xs ${textMuted} text-center flex items-center justify-center gap-1`}
                 >
-                  <svg
-                    className="w-4 h-4"
-                    fill="currentColor"
-                    viewBox="0 0 20 20"
-                  >
-                    <path
-                      fillRule="evenodd"
-                      d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z"
-                      clipRule="evenodd"
-                    />
-                  </svg>
+                  <Lock className="w-3.5 h-3.5" />
                   Secure payment powered by Stripe
                 </p>
               )}

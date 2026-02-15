@@ -87,7 +87,7 @@ export async function POST(
       { status: 201 }
     );
   } catch (error: any) {
-    console.error("Error creating response:", error);
+    logger.error("Error creating response:", error);
     return NextResponse.json(
       { message: "Internal server error" },
       { status: 500 }
@@ -160,7 +160,7 @@ export async function PATCH(
 
     return NextResponse.json(updated);
   } catch (error: any) {
-    console.error("Error updating response:", error);
+    logger.error("Error updating response:", error);
     return NextResponse.json(
       { message: "Internal server error" },
       { status: 500 }
@@ -221,7 +221,7 @@ export async function DELETE(
 
     return NextResponse.json({ message: "Response deleted successfully" });
   } catch (error: any) {
-    console.error("Error deleting response:", error);
+    logger.error("Error deleting response:", error);
     return NextResponse.json(
       { message: "Internal server error" },
       { status: 500 }

@@ -68,7 +68,7 @@ export default function VendorQuotes() {
         <div className="flex items-center justify-between px-4 sm:px-6 lg:px-8 py-3 sm:py-4 max-w-[1400px] mx-auto">
           {/* Logo */}
           <div className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-pink-500 rounded-lg flex items-center justify-center">
+            <div className="w-8 h-8 bg-accent rounded-lg flex items-center justify-center">
               <span className="text-white font-bold text-sm">E</span>
             </div>
             <span className="text-xl font-bold">EVA</span>
@@ -138,7 +138,7 @@ export default function VendorQuotes() {
         {/* Page Header */}
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6 sm:mb-8">
           <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold">Quotes</h1>
-          <button className="bg-pink-500 text-white font-semibold px-5 sm:px-6 py-2.5 sm:py-3 rounded-lg hover:bg-pink-600 transition-colors text-sm sm:text-base w-full sm:w-auto">
+          <button className="bg-accent text-white font-semibold px-5 sm:px-6 py-2.5 sm:py-3 rounded-lg hover:bg-accent/90 transition-colors text-sm sm:text-base w-full sm:w-auto">
             Create New Quote
           </button>
         </div>
@@ -154,7 +154,7 @@ export default function VendorQuotes() {
               <input
                 type="text"
                 placeholder="Search by client or service..."
-                className="w-full pl-11 pr-4 py-3 rounded-lg bg-[#252525] text-white border border-gray-700 focus:outline-none focus:ring-2 focus:ring-pink-500 text-sm"
+                className="w-full pl-11 pr-4 py-3 rounded-lg bg-[#252525] text-white border border-gray-700 focus:outline-none focus:ring-2 focus:ring-accent text-sm"
               />
             </div>
             <div className="flex gap-3">
@@ -195,7 +195,7 @@ export default function VendorQuotes() {
                     <td className="px-6 py-5">
                       <span
                         className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusStyle(
-                          quote.status
+                          quote.status,
                         )}`}
                       >
                         {quote.status}
@@ -233,7 +233,7 @@ export default function VendorQuotes() {
                 </div>
                 <span
                   className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusStyle(
-                    quote.status
+                    quote.status,
                   )}`}
                 >
                   {quote.status}

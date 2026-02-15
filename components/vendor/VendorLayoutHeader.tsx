@@ -2,7 +2,10 @@
 
 import { Bell, Menu, Search } from "lucide-react";
 import Link from "next/link";
+import Image from "next/image";
 import { useVendorTheme } from "./VendorThemeContext";
+import { useSession } from "next-auth/react";
+import { useState, useEffect } from "react";
 
 interface VendorLayoutHeaderProps {
   title: string;
@@ -22,6 +25,24 @@ export default function VendorLayoutHeader({
   showSearch = false,
 }: VendorLayoutHeaderProps) {
   const { darkMode } = useVendorTheme();
+  const { data: session } = useSession();
+  const userName = session?.user?.name || "Vendor";
+  const userInitial = userName?.charAt(0).toUpperCase() || "V";
+
+  const [userImage, setUserImage] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchProfile = async () => {
+      try {
+        const res = await fetch("/api/auth/me");
+        if (res.ok) {
+          const data = await res.json();
+          setUserImage(data.user?.avatar || null);
+        }
+      } catch {}
+    };
+    fetchProfile();
+  }, []);
 
   return (
     <header
@@ -104,7 +125,24 @@ export default function VendorLayoutHeader({
             </>
           )}
 
-          <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-linear-to-br from-accent/80 to-pink-500 border-2 border-accent/30" />
+          <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-full overflow-hidden border-2 border-accent/30">
+            {userImage ? (
+              <Image
+                src={userImage}
+                alt={userName}
+                width={40}
+                height={40}
+                className="w-full h-full object-cover"
+                unoptimized
+              />
+            ) : (
+              <div className="w-full h-full bg-linear-to-br from-accent/80 to-teal-500 flex items-center justify-center">
+                <span className="text-white font-semibold text-sm">
+                  {userInitial}
+                </span>
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </header>

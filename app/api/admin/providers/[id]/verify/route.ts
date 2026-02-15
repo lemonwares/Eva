@@ -79,7 +79,7 @@ export async function PATCH(
         { status: 400 }
       );
     }
-    console.error("Error verifying provider:", error);
+    logger.error("Error verifying provider:", error);
     return NextResponse.json(
       { message: "Internal server error" },
       { status: 500 }
@@ -139,7 +139,7 @@ export async function GET(
 
     return NextResponse.json({ provider: { ...provider, auditLogs } });
   } catch (error: any) {
-    console.error("Error fetching provider verification status:", error);
+    logger.error("Error fetching provider verification status:", error);
     return NextResponse.json(
       { message: "Internal server error" },
       { status: 500 }

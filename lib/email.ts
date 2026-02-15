@@ -1,4 +1,5 @@
 import { formatCurrency } from "./formatters";
+import { logger } from "./logger";
 import {
   generateBookingConfirmationHTMLClient,
   generateBookingConfirmationTextClient,
@@ -33,7 +34,14 @@ const EMAIL_STYLE = `
   .footer-contact a { color: #7c3aed; text-decoration: none; }
 `;
 
-const EMAIL_LAYOUT = (title: string, emoji: string, headerTitle: string, content: string, footerTagline: string = "Connecting you with the best event service providers", isGreen: boolean = false) => `
+const EMAIL_LAYOUT = (
+  title: string,
+  emoji: string,
+  headerTitle: string,
+  content: string,
+  footerTagline: string = "Connecting you with the best event service providers",
+  isGreen: boolean = false,
+) => `
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -119,7 +127,7 @@ async function sendWithZeptoMail(options: EmailOptions): Promise<boolean> {
 
   if (!response.ok) {
     const error = await response.json();
-    console.error("ZeptoMail error:", error);
+    logger.error("ZeptoMail error:", error);
     throw new Error(`ZeptoMail error: ${JSON.stringify(error)}`);
   }
 
@@ -130,7 +138,7 @@ async function sendWithZeptoMail(options: EmailOptions): Promise<boolean> {
 export async function sendEmail(options: EmailOptions): Promise<boolean> {
   // Check if ZeptoMail is configured
   if (!process.env.ZEPTOMAIL_TOKEN || !process.env.ZEPTOMAIL_FROM_EMAIL) {
-    console.warn(
+    logger.warn(
       "📧 [DEV MODE] ZeptoMail not configured. Email would be sent:",
       {
         from: options.from || DEFAULT_FROM,
@@ -138,7 +146,7 @@ export async function sendEmail(options: EmailOptions): Promise<boolean> {
         subject: options.subject,
         preview:
           options.text?.substring(0, 100) || options.html.substring(0, 100),
-      }
+      },
     );
     return true;
   }
@@ -150,11 +158,11 @@ export async function sendEmail(options: EmailOptions): Promise<boolean> {
 
   while (attempt < maxRetries) {
     try {
-      console.log(`📧 Sending email via ZeptoMail to: ${options.to}`);
+      logger.info(`Sending email via ZeptoMail to: ${options.to}`);
       return await sendWithZeptoMail(options);
     } catch (error) {
       lastError = error;
-      console.error(`Email sending failed (attempt ${attempt + 1}):`, error);
+      logger.error(`Email sending failed (attempt ${attempt + 1}):`, error);
       if (attempt < maxRetries - 1) {
         await new Promise((resolve) => setTimeout(resolve, delayMs));
       }
@@ -190,7 +198,7 @@ export const emailTemplates = {
         <div class="content-text" style="margin-bottom: 0;">
           Best regards,<br>The EVA Team
         </div>
-      `
+      `,
     ),
     text: `Hi ${name},\n\nWelcome to EVA! Thank you for joining us.\n\nStart exploring vendors at ${process.env.NEXTAUTH_URL}/browse\n\nBest regards,\nThe EVA Team`,
   }),
@@ -216,7 +224,7 @@ export const emailTemplates = {
         <div class="content-text" style="margin-bottom: 0;">
           If you didn't create an account, you can safely ignore this email.
         </div>
-      `
+      `,
     ),
     text: `Hi ${name},\n\nPlease verify your email: ${verificationUrl}\n\nThis link expires in 24 hours.`,
   }),
@@ -239,7 +247,7 @@ export const emailTemplates = {
         <div class="warning-box">
           🛡️ <strong>Security Notice:</strong> This link will expire in 1 hour. If you didn't request this, please ignore this email or contact support.
         </div>
-      `
+      `,
     ),
     text: `Hi ${name},\n\nReset your password: ${resetUrl}\n\nThis link expires in 1 hour.`,
   }),
@@ -250,7 +258,7 @@ export const emailTemplates = {
     clientName: string,
     eventType: string,
     eventDate: string,
-    inquiryUrl: string
+    inquiryUrl: string,
   ): EmailTemplate => ({
     subject: `New Inquiry from ${clientName} - ${eventType}`,
     html: EMAIL_LAYOUT(
@@ -275,7 +283,7 @@ export const emailTemplates = {
         </div>
       `,
       "Providing you with the best tools to grow your event business",
-      true
+      true,
     ),
     text: `Hi ${vendorName},\n\nYou have a new inquiry from ${clientName} for ${eventType} on ${eventDate}.\n\nView it at: ${inquiryUrl}`,
   }),
@@ -285,7 +293,7 @@ export const emailTemplates = {
     clientName: string,
     vendorName: string,
     totalPrice: string | number,
-    quoteUrl: string
+    quoteUrl: string,
   ): EmailTemplate => {
     const formattedPrice = formatCurrency(Number(totalPrice) || 0);
     return {
@@ -308,7 +316,7 @@ export const emailTemplates = {
           <div class="content-text" style="margin-bottom: 0;">
             Review the details and respond to secure your booking!
           </div>
-        `
+        `,
       ),
       text: `Hi ${clientName},\n\n${vendorName} has sent you a quote for ${formattedPrice}.\n\nView it at: ${quoteUrl}`,
     };
@@ -320,7 +328,7 @@ export const emailTemplates = {
     vendorName: string,
     eventDate: string,
     eventType: string,
-    bookingUrl: string
+    bookingUrl: string,
   ): EmailTemplate => ({
     subject: `Booking Confirmed with ${vendorName}! 🎉`,
     html: EMAIL_LAYOUT(
@@ -345,7 +353,7 @@ export const emailTemplates = {
         </div>
       `,
       "Thank you for choosing EVA for your event needs",
-      true
+      true,
     ),
     text: `Hi ${name},\n\nYour booking with ${vendorName} is confirmed!\n\nEvent: ${eventType}\nDate: ${eventDate}\n\nView details: ${bookingUrl}`,
   }),
@@ -354,7 +362,7 @@ export const emailTemplates = {
   reviewRequest: (
     clientName: string,
     vendorName: string,
-    reviewUrl: string
+    reviewUrl: string,
   ): EmailTemplate => ({
     subject: `How was ${vendorName}? Share your experience!`,
     html: EMAIL_LAYOUT(
@@ -378,14 +386,14 @@ export const emailTemplates = {
         <div class="content-text" style="margin-bottom: 0; text-align: center;">
           It only takes a minute of your time!
         </div>
-      `
+      `,
     ),
     text: `Hi ${clientName},\n\nHow was your experience with ${vendorName}?\n\nLeave a review: ${reviewUrl}`,
   }),
 
   // Booking confirmation (client notification - after payment)
   bookingConfirmationClient: (
-    data: BookingConfirmationEmailData
+    data: BookingConfirmationEmailData,
   ): EmailTemplate => ({
     subject: `✅ Booking Confirmed with ${data.vendorName}! 🎉`,
     html: generateBookingConfirmationHTMLClient(data),
@@ -394,18 +402,125 @@ export const emailTemplates = {
 
   // Booking confirmation (vendor notification - after payment)
   bookingConfirmationVendor: (
-    data: BookingConfirmationEmailData & { vendorBusinessName: string }
+    data: BookingConfirmationEmailData & { vendorBusinessName: string },
   ): EmailTemplate => ({
     subject: `🎉 New Booking Confirmed - ${data.clientName}`,
     html: generateBookingConfirmationHTMLVendor(data),
     text: generateBookingConfirmationTextVendor(data),
+  }),
+
+  // Booking completed notification (to client)
+  bookingCompleted: (
+    clientName: string,
+    vendorName: string,
+    eventType: string,
+    eventDate: string,
+    bookingUrl: string,
+  ): EmailTemplate => ({
+    subject: `Booking Completed with ${vendorName} ✅`,
+    html: EMAIL_LAYOUT(
+      "Booking Completed",
+      "🎊",
+      "Event Completed!",
+      `
+        <div class="greeting">Hi ${clientName},</div>
+        <div class="content-text">
+          Your event with <strong>${vendorName}</strong> has been marked as completed. We hope everything went perfectly!
+        </div>
+        <div class="details-box details-box-green">
+          <div class="content-text" style="margin-bottom: 8px;"><strong>Vendor:</strong> ${vendorName}</div>
+          <div class="content-text" style="margin-bottom: 8px;"><strong>Event:</strong> ${eventType}</div>
+          <div class="content-text" style="margin-bottom: 0;"><strong>Date:</strong> ${eventDate}</div>
+        </div>
+        <div class="button-container">
+          <a href="${bookingUrl}" class="button button-green">View Booking</a>
+        </div>
+        <div class="content-text" style="margin-bottom: 0;">
+          Consider leaving a review to help other clients find great vendors!
+        </div>
+      `,
+      "Thank you for using EVA for your event",
+      true,
+    ),
+    text: `Hi ${clientName},\n\nYour event with ${vendorName} is completed!\n\nEvent: ${eventType}\nDate: ${eventDate}\n\nView details: ${bookingUrl}`,
+  }),
+
+  // Booking cancelled notification (to client)
+  bookingCancelledClient: (
+    clientName: string,
+    vendorName: string,
+    eventDate: string,
+    reason: string,
+    cancelledBy: string,
+    bookingUrl: string,
+  ): EmailTemplate => ({
+    subject: `Booking with ${vendorName} Cancelled`,
+    html: EMAIL_LAYOUT(
+      "Booking Cancelled",
+      "❌",
+      "Booking Cancelled",
+      `
+        <div class="greeting">Hi ${clientName},</div>
+        <div class="content-text">
+          We're sorry to inform you that your booking with <strong>${vendorName}</strong> has been cancelled.
+        </div>
+        <div class="details-box" style="border-left: 4px solid #ef4444;">
+          <div class="content-text" style="margin-bottom: 8px;"><strong>Vendor:</strong> ${vendorName}</div>
+          <div class="content-text" style="margin-bottom: 8px;"><strong>Event Date:</strong> ${eventDate}</div>
+          <div class="content-text" style="margin-bottom: 8px;"><strong>Cancelled By:</strong> ${cancelledBy}</div>
+          <div class="content-text" style="margin-bottom: 0;"><strong>Reason:</strong> ${reason}</div>
+        </div>
+        <div class="button-container">
+          <a href="${bookingUrl}" class="button">View Details</a>
+        </div>
+        <div class="content-text" style="margin-bottom: 0;">
+          If you have any questions, please contact our support team.
+        </div>
+      `,
+    ),
+    text: `Hi ${clientName},\n\nYour booking with ${vendorName} on ${eventDate} has been cancelled.\n\nCancelled by: ${cancelledBy}\nReason: ${reason}\n\nView details: ${bookingUrl}`,
+  }),
+
+  // Booking cancelled notification (to vendor)
+  bookingCancelledVendor: (
+    vendorName: string,
+    clientName: string,
+    eventDate: string,
+    reason: string,
+    cancelledBy: string,
+    bookingUrl: string,
+  ): EmailTemplate => ({
+    subject: `Booking Cancelled - ${clientName}`,
+    html: EMAIL_LAYOUT(
+      "Booking Cancelled",
+      "❌",
+      "Booking Cancelled",
+      `
+        <div class="greeting">Hi ${vendorName},</div>
+        <div class="content-text">
+          A booking has been cancelled.
+        </div>
+        <div class="details-box" style="border-left: 4px solid #ef4444;">
+          <div class="content-text" style="margin-bottom: 8px;"><strong>Client:</strong> ${clientName}</div>
+          <div class="content-text" style="margin-bottom: 8px;"><strong>Event Date:</strong> ${eventDate}</div>
+          <div class="content-text" style="margin-bottom: 8px;"><strong>Cancelled By:</strong> ${cancelledBy}</div>
+          <div class="content-text" style="margin-bottom: 0;"><strong>Reason:</strong> ${reason}</div>
+        </div>
+        <div class="button-container">
+          <a href="${bookingUrl}" class="button">View Details</a>
+        </div>
+      `,
+      "Managing your event business with EVA",
+      true,
+    ),
+    text: `Hi ${vendorName},\n\nBooking from ${clientName} on ${eventDate} has been cancelled.\n\nCancelled by: ${cancelledBy}\nReason: ${reason}\n\nView details: ${bookingUrl}`,
   }),
 };
 
 // Helper function to send templated emails
 export async function sendTemplatedEmail(
   to: string,
-  template: EmailTemplate
+  template: EmailTemplate,
 ): Promise<boolean> {
   return sendEmail({
     to,

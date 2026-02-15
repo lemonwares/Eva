@@ -113,7 +113,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json(city, { status: 201 });
   } catch (error: any) {
-    console.error("Error creating city:", error);
+    logger.error("Error creating city:", error);
     return NextResponse.json(
       { message: "Internal server error" },
       { status: 500 }
@@ -154,7 +154,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json(cities);
   } catch (error: any) {
-    console.error("Error fetching cities:", error);
+    logger.error("Error fetching cities:", error);
     return NextResponse.json(
       { message: "Internal server error" },
       { status: 500 }

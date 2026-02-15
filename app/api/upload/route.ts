@@ -9,6 +9,13 @@ export const config = {
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { uploadImage, deleteImage } from "@/lib/cloudinary";
+import {
+  checkRateLimit,
+  getRateLimitIdentifier,
+  rateLimitResponse,
+  rateLimitPresets,
+} from "@/lib/rate-limit";
+import { logger } from "@/lib/logger";
 
 const ALLOWED_IMAGE_TYPES = [
   "image/jpeg",
@@ -34,6 +41,14 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
     }
 
+    // Rate limit: 10 uploads per minute
+    const identifier = getRateLimitIdentifier(request, session.user.id);
+    const rateCheck = checkRateLimit(
+      `upload:${identifier}`,
+      rateLimitPresets.upload,
+    );
+    if (!rateCheck.success) return rateLimitResponse(rateCheck);
+
     // Check if Cloudinary is configured
     if (
       !process.env.CLOUDINARY_CLOUD_NAME ||
@@ -45,7 +60,7 @@ export async function POST(request: NextRequest) {
           message:
             "Image upload service not configured. Please add Cloudinary credentials to environment variables.",
         },
-        { status: 500 }
+        { status: 500 },
       );
     }
 
@@ -60,7 +75,7 @@ export async function POST(request: NextRequest) {
       if (!files || files.length === 0) {
         return NextResponse.json(
           { message: "No files provided" },
-          { status: 400 }
+          { status: 400 },
         );
       }
 
@@ -80,7 +95,7 @@ export async function POST(request: NextRequest) {
           errors.push({
             name: file.name,
             error: `Invalid file type. Allowed: ${ALLOWED_IMAGE_TYPES.join(
-              ", "
+              ", ",
             )}`,
           });
           continue;
@@ -108,8 +123,8 @@ export async function POST(request: NextRequest) {
               type === "avatar"
                 ? { width: 400, height: 400, crop: "fill" }
                 : type === "cover"
-                ? { width: 1200, height: 600, crop: "fill" }
-                : undefined,
+                  ? { width: 1200, height: 600, crop: "fill" }
+                  : undefined,
           });
 
           uploadedFiles.push({
@@ -120,7 +135,7 @@ export async function POST(request: NextRequest) {
             type: file.type,
           });
         } catch (uploadError) {
-          console.error(`Error uploading ${file.name}:`, uploadError);
+          logger.error(`Error uploading ${file.name}:`, uploadError);
           errors.push({
             name: file.name,
             error: "Failed to upload to cloud storage",
@@ -131,7 +146,7 @@ export async function POST(request: NextRequest) {
       if (uploadedFiles.length === 0 && errors.length > 0) {
         return NextResponse.json(
           { message: "All files failed validation", errors },
-          { status: 400 }
+          { status: 400 },
         );
       }
 
@@ -153,7 +168,7 @@ export async function POST(request: NextRequest) {
       if (!image) {
         return NextResponse.json(
           { message: "No image provided" },
-          { status: 400 }
+          { status: 400 },
         );
       }
 
@@ -165,7 +180,7 @@ export async function POST(request: NextRequest) {
             message:
               "Invalid image format. Please provide a base64 encoded image.",
           },
-          { status: 400 }
+          { status: 400 },
         );
       }
 
@@ -177,10 +192,10 @@ export async function POST(request: NextRequest) {
         return NextResponse.json(
           {
             message: `Invalid file type. Allowed: ${ALLOWED_IMAGE_TYPES.join(
-              ", "
+              ", ",
             )}`,
           },
-          { status: 400 }
+          { status: 400 },
         );
       }
 
@@ -189,7 +204,7 @@ export async function POST(request: NextRequest) {
       if (approximateSize > MAX_FILE_SIZE) {
         return NextResponse.json(
           { message: "File too large. Maximum size is 10MB." },
-          { status: 400 }
+          { status: 400 },
         );
       }
 
@@ -216,13 +231,13 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json(
       { message: "Invalid request format" },
-      { status: 400 }
+      { status: 400 },
     );
   } catch (error: any) {
-    console.error("Error uploading files:", error);
+    logger.error("Error uploading files:", error);
     return NextResponse.json(
       { message: "Internal server error" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
@@ -241,7 +256,7 @@ export async function DELETE(request: NextRequest) {
     if (!publicId) {
       return NextResponse.json(
         { message: "No public ID provided" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -252,10 +267,10 @@ export async function DELETE(request: NextRequest) {
       message: "Image deleted successfully",
     });
   } catch (error) {
-    console.error("Delete error:", error);
+    logger.error("Delete error:", error);
     return NextResponse.json(
       { message: "Failed to delete image" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

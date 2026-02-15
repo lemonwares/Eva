@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import { logger } from "@/lib/logger";
 import {
   Search,
   Plus,
@@ -18,7 +19,9 @@ import {
   Calendar,
   Shield,
   Activity,
-  Filter
+  Filter,
+  Loader2,
+  ChevronDown,
 } from "lucide-react";
 import AdminLayout from "@/components/admin/AdminLayout";
 import Modal from "@/components/admin/Modal";
@@ -69,14 +72,14 @@ function ViewUserModal({
               darkMode ? "bg-gray-700" : "bg-gray-200"
             } flex items-center justify-center overflow-hidden`}
           >
-             {user.image ? (
+            {user.image ? (
               <img
                 src={user.image}
                 alt={user.name}
                 className="w-full h-full object-cover"
               />
             ) : (
-                <UserIcon size={32} className={textSecondary} />
+              <UserIcon size={32} className={textSecondary} />
             )}
           </div>
           <div>
@@ -88,10 +91,10 @@ function ViewUserModal({
                   user.role === "ADMINISTRATOR"
                     ? "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300"
                     : user.role === "PROFESSIONAL"
-                    ? "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300"
-                    : user.role === "CLIENT"
-                    ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300"
-                    : "bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300"
+                      ? "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300"
+                      : user.role === "CLIENT"
+                        ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300"
+                        : "bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300"
                 }`}
               >
                 {user.role === "PROFESSIONAL"
@@ -103,8 +106,8 @@ function ViewUserModal({
                   user.status === "ACTIVE"
                     ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300"
                     : user.status === "SUSPENDED"
-                    ? "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300"
-                    : "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-300"
+                      ? "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300"
+                      : "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-300"
                 }`}
               >
                 {user.status}
@@ -118,48 +121,48 @@ function ViewUserModal({
           className={`grid grid-cols-1 md:grid-cols-2 gap-4 p-4 rounded-lg border ${darkMode ? "bg-white/5 border-gray-700" : "bg-gray-50 border-gray-200"}`}
         >
           <div className="flex items-start gap-3">
-             <Phone size={16} className={`mt-0.5 ${textMuted}`} />
-             <div>
-                <p className={`text-xs ${textMuted}`}>Phone</p>
-                <p className={`font-medium ${textPrimary}`}>
+            <Phone size={16} className={`mt-0.5 ${textMuted}`} />
+            <div>
+              <p className={`text-xs ${textMuted}`}>Phone</p>
+              <p className={`font-medium ${textPrimary}`}>
                 {user.phone || "Not provided"}
-                </p>
-             </div>
+              </p>
+            </div>
           </div>
           <div className="flex items-start gap-3">
-             <Shield size={16} className={`mt-0.5 ${textMuted}`} />
-             <div>
-                <p className={`text-xs ${textMuted}`}>Email Verified</p>
-                <p className={`font-medium ${textPrimary}`}>
+            <Shield size={16} className={`mt-0.5 ${textMuted}`} />
+            <div>
+              <p className={`text-xs ${textMuted}`}>Email Verified</p>
+              <p className={`font-medium ${textPrimary}`}>
                 {user.emailVerified
-                    ? new Date(user.emailVerified).toLocaleDateString()
-                    : "Not verified"}
-                </p>
-             </div>
+                  ? new Date(user.emailVerified).toLocaleDateString()
+                  : "Not verified"}
+              </p>
+            </div>
           </div>
           <div className="flex items-start gap-3">
-             <Calendar size={16} className={`mt-0.5 ${textMuted}`} />
-             <div>
-                <p className={`text-xs ${textMuted}`}>Joined</p>
-                <p className={`font-medium ${textPrimary}`}>
+            <Calendar size={16} className={`mt-0.5 ${textMuted}`} />
+            <div>
+              <p className={`text-xs ${textMuted}`}>Joined</p>
+              <p className={`font-medium ${textPrimary}`}>
                 {new Date(user.createdAt).toLocaleDateString()}
-                </p>
-             </div>
+              </p>
+            </div>
           </div>
           <div className="flex items-start gap-3">
-             <Activity size={16} className={`mt-0.5 ${textMuted}`} />
-             <div>
-                <p className={`text-xs ${textMuted}`}>Last Updated</p>
-                <p className={`font-medium ${textPrimary}`}>
+            <Activity size={16} className={`mt-0.5 ${textMuted}`} />
+            <div>
+              <p className={`text-xs ${textMuted}`}>Last Updated</p>
+              <p className={`font-medium ${textPrimary}`}>
                 {new Date(user.updatedAt).toLocaleDateString()}
-                </p>
-             </div>
+              </p>
+            </div>
           </div>
         </div>
 
         {/* Activity Stats */}
         {user._count && (
-          <div className="grid grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div
               className={`p-4 rounded-lg text-center border ${darkMode ? "bg-white/5 border-gray-700" : "bg-gray-50 border-gray-200"}`}
             >
@@ -213,7 +216,8 @@ function EditUserModal({
   onClose: () => void;
   onSave: (data: Partial<User>) => void;
 }) {
-  const { darkMode, textPrimary, textSecondary, inputBg, inputBorder } = useAdminTheme();
+  const { darkMode, textPrimary, textSecondary, inputBg, inputBorder } =
+    useAdminTheme();
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -290,44 +294,44 @@ function EditUserModal({
           />
         </div>
 
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
             <label className={labelClass}>Role</label>
             <div className="relative">
-                <select
+              <select
                 value={formData.role}
                 onChange={(e) =>
-                    setFormData({ ...formData, role: e.target.value })
+                  setFormData({ ...formData, role: e.target.value })
                 }
                 className={`${inputClass} appearance-none`}
-                >
+              >
                 <option value="CLIENT">Client</option>
                 <option value="PROFESSIONAL">Professional</option>
                 <option value="ADMINISTRATOR">Administrator</option>
-                </select>
-                <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-500">
-                    <svg className="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/></svg>
-                </div>
+              </select>
+              <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-500">
+                <ChevronDown className="h-4 w-4" />
+              </div>
             </div>
           </div>
 
           <div>
             <label className={labelClass}>Status</label>
             <div className="relative">
-                <select
+              <select
                 value={formData.status}
                 onChange={(e) =>
-                    setFormData({ ...formData, status: e.target.value })
+                  setFormData({ ...formData, status: e.target.value })
                 }
                 className={`${inputClass} appearance-none`}
-                >
+              >
                 <option value="ACTIVE">Active</option>
                 <option value="INACTIVE">Inactive</option>
                 <option value="SUSPENDED">Suspended</option>
-                </select>
-                 <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-500">
-                    <svg className="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/></svg>
-                </div>
+              </select>
+              <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-500">
+                <ChevronDown className="h-4 w-4" />
+              </div>
             </div>
           </div>
         </div>
@@ -343,9 +347,10 @@ function EditUserModal({
           </button>
           <button
             type="submit"
-            className="px-4 py-2.5 bg-accent text-white rounded-lg hover:bg-accent/90 transition-colors disabled:opacity-50 font-medium"
+            className="px-4 py-2.5 bg-accent text-white rounded-lg hover:bg-accent/90 transition-colors disabled:opacity-50 font-medium flex items-center gap-2"
             disabled={saving}
           >
+            {saving && <Loader2 size={16} className="animate-spin" />}
             {saving ? "Saving..." : "Save Changes"}
           </button>
         </div>
@@ -364,7 +369,8 @@ function AddUserModal({
   onClose: () => void;
   onSave: (data: Partial<User>) => void;
 }) {
-  const { darkMode, textPrimary, textSecondary, inputBg, inputBorder } = useAdminTheme();
+  const { darkMode, textPrimary, textSecondary, inputBg, inputBorder } =
+    useAdminTheme();
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -453,20 +459,22 @@ function AddUserModal({
 
         <div>
           <label className={labelClass}>Role</label>
-           <div className="relative">
-                <select
-                    value={formData.role}
-                    onChange={(e) => setFormData({ ...formData, role: e.target.value })}
-                    className={`${inputClass} appearance-none`}
-                >
-                    <option value="CLIENT">Client</option>
-                    <option value="PROFESSIONAL">Professional</option>
-                    <option value="ADMINISTRATOR">Administrator</option>
-                </select>
-                <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-500">
-                    <svg className="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/></svg>
-                </div>
-           </div>
+          <div className="relative">
+            <select
+              value={formData.role}
+              onChange={(e) =>
+                setFormData({ ...formData, role: e.target.value })
+              }
+              className={`${inputClass} appearance-none`}
+            >
+              <option value="CLIENT">Client</option>
+              <option value="PROFESSIONAL">Professional</option>
+              <option value="ADMINISTRATOR">Administrator</option>
+            </select>
+            <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-500">
+              <ChevronDown className="h-4 w-4" />
+            </div>
+          </div>
         </div>
 
         <div className="flex justify-end gap-3 mt-6 pt-4 border-t border-gray-200 dark:border-gray-700">
@@ -480,9 +488,10 @@ function AddUserModal({
           </button>
           <button
             type="submit"
-            className="px-4 py-2.5 bg-accent text-white rounded-lg hover:bg-accent/90 transition-colors disabled:opacity-50 font-medium"
+            className="px-4 py-2.5 bg-accent text-white rounded-lg hover:bg-accent/90 transition-colors disabled:opacity-50 font-medium flex items-center gap-2"
             disabled={saving}
           >
+            {saving && <Loader2 size={16} className="animate-spin" />}
             {saving ? "Creating..." : "Create User"}
           </button>
         </div>
@@ -524,6 +533,7 @@ export default function UsersPage() {
     type: "delete" | "suspend" | "activate";
     user: User;
   } | null>(null);
+  const [isConfirming, setIsConfirming] = useState(false);
 
   // Toast State
   const [toast, setToast] = useState<{
@@ -557,7 +567,7 @@ export default function UsersPage() {
         });
       }
     } catch (error) {
-      console.error("Error fetching users:", error);
+      logger.error("Error fetching users:", error);
       setToast({ message: "Failed to fetch users", type: "error" });
     } finally {
       setLoading(false);
@@ -605,7 +615,7 @@ export default function UsersPage() {
         });
       }
     } catch (error) {
-      console.error("Error updating user:", error);
+      logger.error("Error updating user:", error);
       setToast({ message: "Failed to update user", type: "error" });
     }
   };
@@ -632,7 +642,7 @@ export default function UsersPage() {
         });
       }
     } catch (error) {
-      console.error("Error creating user:", error);
+      logger.error("Error creating user:", error);
       setToast({ message: "Failed to create user", type: "error" });
     }
   };
@@ -655,6 +665,7 @@ export default function UsersPage() {
   // Confirm action
   const handleConfirmAction = async () => {
     if (!confirmAction) return;
+    setIsConfirming(true);
 
     const { type, user } = confirmAction;
 
@@ -700,9 +711,10 @@ export default function UsersPage() {
         }
       }
     } catch (error) {
-      console.error("Error performing action:", error);
+      logger.error("Error performing action:", error);
       setToast({ message: "Failed to perform action", type: "error" });
     } finally {
+      setIsConfirming(false);
       setConfirmAction(null);
     }
   };
@@ -745,58 +757,64 @@ export default function UsersPage() {
       <div className="space-y-6">
         {/* Filters */}
         <div className="flex flex-col sm:flex-row gap-4 mb-6">
-            <div className="relative flex-1">
-                <Search
-                    size={18}
-                    className={`absolute left-3 top-1/2 -translate-y-1/2 ${textMuted}`}
-                />
-                 <input
-                    type="text"
-                    placeholder="Search users..."
-                    value={searchQuery}
-                    onChange={(e) => {
-                        setSearchQuery(e.target.value);
-                        setCurrentPage(1);
-                    }}
-                    className={`w-full pl-10 pr-4 py-2.5 rounded-lg border ${inputBg} ${inputBorder} ${textPrimary} text-sm focus:outline-none focus:ring-2 focus:ring-accent/50`}
-                />
+          <div className="relative flex-1">
+            <Search
+              size={18}
+              className={`absolute left-3 top-1/2 -translate-y-1/2 ${textMuted}`}
+            />
+            <input
+              type="text"
+              placeholder="Search users..."
+              value={searchQuery}
+              onChange={(e) => {
+                setSearchQuery(e.target.value);
+                setCurrentPage(1);
+              }}
+              className={`w-full pl-10 pr-4 py-2.5 rounded-lg border ${inputBg} ${inputBorder} ${textPrimary} text-sm focus:outline-none focus:ring-2 focus:ring-accent/50`}
+            />
+          </div>
+
+          <div className="flex gap-2">
+            <div className="relative">
+              <select
+                value={roleFilter}
+                onChange={(e) => {
+                  setRoleFilter(e.target.value);
+                  setCurrentPage(1);
+                }}
+                className={`appearance-none px-4 py-2.5 pr-8 rounded-lg border ${inputBg} ${inputBorder} ${textSecondary} text-sm focus:outline-none focus:ring-2 focus:ring-accent/50 min-w-[140px]`}
+              >
+                <option value="all">All Roles</option>
+                <option value="CLIENT">Client</option>
+                <option value="PROFESSIONAL">Professional</option>
+                <option value="ADMINISTRATOR">Administrator</option>
+              </select>
+              <ChevronRight
+                size={16}
+                className={`absolute right-3 top-1/2 -translate-y-1/2 rotate-90 ${textMuted} pointer-events-none`}
+              />
             </div>
-            
-            <div className="flex gap-2">
-                <div className="relative">
-                    <select
-                        value={roleFilter}
-                        onChange={(e) => {
-                        setRoleFilter(e.target.value);
-                        setCurrentPage(1);
-                        }}
-                        className={`appearance-none px-4 py-2.5 pr-8 rounded-lg border ${inputBg} ${inputBorder} ${textSecondary} text-sm focus:outline-none focus:ring-2 focus:ring-accent/50 min-w-[140px]`}
-                    >
-                        <option value="all">All Roles</option>
-                        <option value="CLIENT">Client</option>
-                        <option value="PROFESSIONAL">Professional</option>
-                        <option value="ADMINISTRATOR">Administrator</option>
-                    </select>
-                     <ChevronRight size={16} className={`absolute right-3 top-1/2 -translate-y-1/2 rotate-90 ${textMuted} pointer-events-none`} />
-                </div>
-                
-                 <div className="relative">
-                    <select
-                        value={statusFilter}
-                        onChange={(e) => {
-                        setStatusFilter(e.target.value);
-                        setCurrentPage(1);
-                        }}
-                         className={`appearance-none px-4 py-2.5 pr-8 rounded-lg border ${inputBg} ${inputBorder} ${textSecondary} text-sm focus:outline-none focus:ring-2 focus:ring-accent/50 min-w-[140px]`}
-                    >
-                        <option value="all">All Status</option>
-                        <option value="ACTIVE">Active</option>
-                        <option value="INACTIVE">Inactive</option>
-                         <option value="SUSPENDED">Suspended</option>
-                    </select>
-                    <ChevronRight size={16} className={`absolute right-3 top-1/2 -translate-y-1/2 rotate-90 ${textMuted} pointer-events-none`} />
-                 </div>
+
+            <div className="relative">
+              <select
+                value={statusFilter}
+                onChange={(e) => {
+                  setStatusFilter(e.target.value);
+                  setCurrentPage(1);
+                }}
+                className={`appearance-none px-4 py-2.5 pr-8 rounded-lg border ${inputBg} ${inputBorder} ${textSecondary} text-sm focus:outline-none focus:ring-2 focus:ring-accent/50 min-w-[140px]`}
+              >
+                <option value="all">All Status</option>
+                <option value="ACTIVE">Active</option>
+                <option value="INACTIVE">Inactive</option>
+                <option value="SUSPENDED">Suspended</option>
+              </select>
+              <ChevronRight
+                size={16}
+                className={`absolute right-3 top-1/2 -translate-y-1/2 rotate-90 ${textMuted} pointer-events-none`}
+              />
             </div>
+          </div>
         </div>
 
         {/* Stats */}
@@ -826,7 +844,9 @@ export default function UsersPage() {
         </div>
 
         {/* Users Table */}
-        <div className={`${cardBg} border ${cardBorder} rounded-xl overflow-hidden`}>
+        <div
+          className={`${cardBg} border ${cardBorder} rounded-xl overflow-hidden`}
+        >
           {loading ? (
             <div className="p-12 text-center">
               <div className="animate-spin w-8 h-8 border-2 border-accent border-t-transparent rounded-full mx-auto"></div>
@@ -835,7 +855,9 @@ export default function UsersPage() {
           ) : users.length === 0 ? (
             <div className="p-12 text-center">
               <UserIcon className={`w-12 h-12 mx-auto mb-4 ${textMuted}`} />
-              <p className={`text-lg font-medium ${textPrimary}`}>No users found</p>
+              <p className={`text-lg font-medium ${textPrimary}`}>
+                No users found
+              </p>
             </div>
           ) : (
             <>
@@ -885,7 +907,9 @@ export default function UsersPage() {
                       <tr
                         key={user.id}
                         className={
-                          darkMode ? "hover:bg-white/5" : "hover:bg-gray-50 bg-white"
+                          darkMode
+                            ? "hover:bg-white/5"
+                            : "hover:bg-gray-50 bg-white"
                         }
                       >
                         <td className="px-6 py-4 whitespace-nowrap">
@@ -918,18 +942,19 @@ export default function UsersPage() {
                         <td className="px-6 py-4 whitespace-nowrap">
                           <span
                             className={`px-2 py-1 text-xs rounded-full font-medium ${getRoleBadgeClass(
-                              user.role
+                              user.role,
                             )}`}
                           >
-                             {user.role === "PROFESSIONAL"
-                                ? "Professional"
-                                : user.role.charAt(0) + user.role.slice(1).toLowerCase()}
+                            {user.role === "PROFESSIONAL"
+                              ? "Professional"
+                              : user.role.charAt(0) +
+                                user.role.slice(1).toLowerCase()}
                           </span>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <span
                             className={`px-2 py-1 text-xs rounded-full font-medium ${getStatusBadgeClass(
-                              user.status
+                              user.status,
                             )}`}
                           >
                             {user.status}
@@ -958,7 +983,7 @@ export default function UsersPage() {
                               } transition-colors`}
                               title="View Details"
                             >
-                               <Eye size={16} className={textMuted} />
+                              <Eye size={16} className={textMuted} />
                             </button>
                             <button
                               onClick={() => handleEdit(user)}
@@ -969,7 +994,7 @@ export default function UsersPage() {
                               } transition-colors`}
                               title="Edit User"
                             >
-                               <Edit2 size={16} className="text-blue-500" />
+                              <Edit2 size={16} className="text-blue-500" />
                             </button>
                             {user.status === "SUSPENDED" ? (
                               <button
@@ -981,7 +1006,10 @@ export default function UsersPage() {
                                 } transition-colors`}
                                 title="Activate User"
                               >
-                                <CheckCircle size={16} className="text-green-500" />
+                                <CheckCircle
+                                  size={16}
+                                  className="text-green-500"
+                                />
                               </button>
                             ) : (
                               <button
@@ -1005,7 +1033,7 @@ export default function UsersPage() {
                               } transition-colors`}
                               title="Delete User"
                             >
-                               <Trash2 size={16} className="text-red-500" />
+                              <Trash2 size={16} className="text-red-500" />
                             </button>
                           </div>
                         </td>
@@ -1074,7 +1102,7 @@ export default function UsersPage() {
                     darkMode ? "hover:bg-white/10" : "hover:bg-gray-100"
                   } transition-colors disabled:opacity-50`}
                 >
-                   <ChevronRight size={18} className={textMuted} />
+                  <ChevronRight size={18} className={textMuted} />
                 </button>
               </div>
             </div>
@@ -1116,6 +1144,7 @@ export default function UsersPage() {
           message={`Are you sure you want to delete "${confirmAction?.user.name}"? This action cannot be undone and will remove all their data.`}
           type="danger"
           confirmText="Delete"
+          isLoading={isConfirming}
         />
 
         <ConfirmDialog
@@ -1126,6 +1155,7 @@ export default function UsersPage() {
           message={`Are you sure you want to suspend "${confirmAction?.user.name}"? They will not be able to access their account until reactivated.`}
           type="warning"
           confirmText="Suspend"
+          isLoading={isConfirming}
         />
 
         <ConfirmDialog
@@ -1136,6 +1166,7 @@ export default function UsersPage() {
           message={`Are you sure you want to activate "${confirmAction?.user.name}"? They will regain access to their account.`}
           type="info"
           confirmText="Activate"
+          isLoading={isConfirming}
         />
 
         {/* Toast */}

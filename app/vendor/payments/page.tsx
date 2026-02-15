@@ -144,7 +144,7 @@ export default function VendorPaymentsPage() {
         });
       }
     } catch (err) {
-      console.error("Error fetching payment data:", err);
+      logger.error("Error fetching payment data:", err);
     } finally {
       setIsLoading(false);
     }
@@ -162,7 +162,7 @@ export default function VendorPaymentsPage() {
           formatCurrency(stats.availableBalance)
       );
     } catch (err) {
-      console.error("Withdrawal error:", err);
+      logger.error("Withdrawal error:", err);
     } finally {
       setIsWithdrawing(false);
     }

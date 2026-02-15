@@ -1,4 +1,4 @@
-import NextAuth from "next-auth";
+import NextAuth, { CredentialsSignin } from "next-auth";
 import Google from "next-auth/providers/google";
 import Credentials from "next-auth/providers/credentials";
 import { prisma } from "@/lib/prisma";
@@ -6,6 +6,15 @@ import bcrypt from "bcryptjs";
 import { z } from "zod";
 import { emailTemplates } from "@/templates/templateLoader";
 import { sendEmail } from "@/lib/mail";
+
+// Custom error classes so NextAuth can relay specific codes to the client
+class EmailNotVerifiedError extends CredentialsSignin {
+  code = "EMAIL_NOT_VERIFIED";
+}
+
+class InvalidCredentialsError extends CredentialsSignin {
+  code = "INVALID_CREDENTIALS";
+}
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
   // Explicit secret so JWT validation works across API routes
@@ -42,21 +51,18 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         });
 
         if (!user || !user.password) {
-          // NextAuth expects an Error to show a custom message
-          throw new Error("Invalid email or password");
+          throw new InvalidCredentialsError();
         }
 
         // Block login if email is not verified
         if (!user.emailVerifiedAt) {
-          throw new Error(
-            "Your email address is not verified. Please check your inbox for a verification link before logging in."
-          );
+          throw new EmailNotVerifiedError();
         }
 
         const passwordMatch = await bcrypt.compare(password, user.password);
 
         if (!passwordMatch) {
-          return null;
+          throw new InvalidCredentialsError();
         }
 
         return {
@@ -125,7 +131,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
               const htmlContent = emailTemplates.welcome(
                 dbUser.name,
                 dashboardUrl,
-                helpUrl
+                helpUrl,
               );
               await sendEmail({
                 to: dbUser.email,
@@ -135,7 +141,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
             } catch (emailErr) {
               console.error(
                 "Failed to send welcome email after Google sign in:",
-                emailErr
+                emailErr,
               );
             }
           }
@@ -143,6 +149,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           // Update user info in token for later use
           user.id = dbUser.id;
           user.role = dbUser.role;
+          user.image = dbUser.avatar || user.image;
 
           return true;
         } catch (error) {
@@ -156,6 +163,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       if (user) {
         token.id = user.id;
         token.role = user.role;
+        token.image = user.image || null;
       }
       return token;
     },
@@ -163,6 +171,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       if (session.user) {
         session.user.id = token.id as string;
         session.user.role = token.role as string;
+        session.user.image = token.image as string | null;
       }
       return session;
     },

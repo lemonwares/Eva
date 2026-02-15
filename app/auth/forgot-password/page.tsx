@@ -47,8 +47,8 @@ export default function ForgotPasswordPage() {
 
       {/* Background effects */}
       <div className="pointer-events-none absolute inset-0">
-        <div className="absolute -top-24 left-16 h-72 w-72 rounded-full bg-accent/20 blur-[140px]" />
-        <div className="absolute bottom-0 right-0 h-80 w-80 rounded-full bg-primary/15 blur-[140px]" />
+        <div className="absolute -top-24 left-16 h-72 w-72 rounded-full bg-primary/15 blur-[140px]" />
+        <div className="absolute bottom-0 right-0 h-80 w-80 rounded-full bg-mint/30 blur-[140px]" />
       </div>
 
       <div className="relative z-10 flex min-h-screen items-center justify-center px-4 py-16">
@@ -80,7 +80,7 @@ export default function ForgotPasswordPage() {
                   Didn&apos;t receive the email?{" "}
                   <button
                     onClick={() => setSuccess(false)}
-                    className="text-accent hover:underline"
+                    className="text-primary hover:underline"
                   >
                     Try again
                   </button>
@@ -131,7 +131,7 @@ export default function ForgotPasswordPage() {
                         onChange={(e) => setEmail(e.target.value)}
                         required
                         disabled={loading}
-                        className="w-full rounded-xl border border-border bg-input/60 px-11 py-3 text-foreground placeholder:text-muted-foreground focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/30 disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="w-full rounded-xl border border-border bg-input/60 px-11 py-3 text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30 disabled:opacity-50 disabled:cursor-not-allowed"
                       />
                     </div>
                   </div>
@@ -139,7 +139,7 @@ export default function ForgotPasswordPage() {
                   <button
                     type="submit"
                     disabled={loading}
-                    className="w-full rounded-xl bg-linear-to-r from-primary to-accent py-3 font-semibold text-primary-foreground shadow-[0_18px_45px_rgba(233,89,146,0.25)] transition hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0 flex items-center justify-center gap-2"
+                    className="w-full rounded-xl bg-primary py-3 font-semibold text-white shadow-lg transition hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0 flex items-center justify-center gap-2"
                   >
                     {loading ? (
                       <>

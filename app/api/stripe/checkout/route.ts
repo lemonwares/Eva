@@ -3,6 +3,12 @@ import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { getStripe, formatAmountForStripe } from "@/lib/stripe";
 import { z } from "zod";
+import {
+  checkRateLimit,
+  getRateLimitIdentifier,
+  rateLimitResponse,
+  rateLimitPresets,
+} from "@/lib/rate-limit";
 
 const checkoutSchema = z.object({
   bookingId: z.string(),
@@ -16,9 +22,17 @@ export async function POST(request: NextRequest) {
     if (!session?.user?.id) {
       return NextResponse.json(
         { error: "You must be logged in to make a payment" },
-        { status: 401 }
+        { status: 401 },
       );
     }
+
+    // Rate limit: 60 requests per minute
+    const identifier = getRateLimitIdentifier(request, session.user.id);
+    const rateCheck = checkRateLimit(
+      `checkout:${identifier}`,
+      rateLimitPresets.standard,
+    );
+    if (!rateCheck.success) return rateLimitResponse(rateCheck);
 
     const body = await request.json();
     const { bookingId, paymentType } = checkoutSchema.parse(body);
@@ -64,7 +78,7 @@ export async function POST(request: NextRequest) {
     if (!isClient && !isInquiryOwner) {
       return NextResponse.json(
         { error: "You are not authorized to make this payment" },
-        { status: 403 }
+        { status: 403 },
       );
     }
 
@@ -77,17 +91,17 @@ export async function POST(request: NextRequest) {
         if (!booking.depositAmount) {
           return NextResponse.json(
             { error: "This booking doesn't require a deposit" },
-            { status: 400 }
+            { status: 400 },
           );
         }
         // Check if deposit already paid
         const depositPaid = booking.payments.some(
-          (p) => p.paymentType === "DEPOSIT" && p.status === "SUCCEEDED"
+          (p) => p.paymentType === "DEPOSIT" && p.status === "SUCCEEDED",
         );
         if (depositPaid) {
           return NextResponse.json(
             { error: "Deposit has already been paid" },
-            { status: 400 }
+            { status: 400 },
           );
         }
         amount = booking.depositAmount;
@@ -100,17 +114,17 @@ export async function POST(request: NextRequest) {
         if (!booking.balanceAmount) {
           return NextResponse.json(
             { error: "This booking doesn't have a balance payment" },
-            { status: 400 }
+            { status: 400 },
           );
         }
         // Check if balance already paid
         const balancePaid = booking.payments.some(
-          (p) => p.paymentType === "BALANCE" && p.status === "SUCCEEDED"
+          (p) => p.paymentType === "BALANCE" && p.status === "SUCCEEDED",
         );
         if (balancePaid) {
           return NextResponse.json(
             { error: "Balance has already been paid" },
-            { status: 400 }
+            { status: 400 },
           );
         }
         // Check if deposit was paid first (for DEPOSIT_BALANCE mode)
@@ -120,7 +134,7 @@ export async function POST(request: NextRequest) {
         ) {
           return NextResponse.json(
             { error: "Please pay the deposit first before paying the balance" },
-            { status: 400 }
+            { status: 400 },
           );
         }
         amount = booking.balanceAmount;
@@ -135,7 +149,7 @@ export async function POST(request: NextRequest) {
         if (anyPaid) {
           return NextResponse.json(
             { error: "A payment has already been made for this booking" },
-            { status: 400 }
+            { status: 400 },
           );
         }
         amount = booking.pricingTotal;
@@ -147,7 +161,7 @@ export async function POST(request: NextRequest) {
       default:
         return NextResponse.json(
           { error: "Invalid payment type" },
-          { status: 400 }
+          { status: 400 },
         );
     }
 
@@ -213,18 +227,18 @@ export async function POST(request: NextRequest) {
       sessionId: checkoutSession.id,
     });
   } catch (error) {
-    console.error("Checkout error:", error);
+    logger.error("Checkout error:", error);
 
     if (error instanceof z.ZodError) {
       return NextResponse.json(
         { error: "Invalid request data", details: error.issues },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
     return NextResponse.json(
       { error: "Failed to create checkout session" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

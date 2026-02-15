@@ -33,7 +33,7 @@ export async function createNotification({
     });
     return notification;
   } catch (error) {
-    console.error("Error creating notification:", error);
+    logger.error("Error creating notification:", error);
     throw error;
   }
 }
@@ -58,7 +58,7 @@ export async function createBulkNotifications(
     });
     return notifications;
   } catch (error) {
-    console.error("Error creating bulk notifications:", error);
+    logger.error("Error creating bulk notifications:", error);
     throw error;
   }
 }
@@ -211,7 +211,7 @@ export async function getPendingNotificationCount(): Promise<number> {
     });
     return count;
   } catch (error) {
-    console.error("Error getting pending count:", error);
+    logger.error("Error getting pending count:", error);
     return 0;
   }
 }
@@ -230,7 +230,7 @@ export async function markAsSent(notificationId: string) {
     });
     return result;
   } catch (error) {
-    console.error("Error marking as sent:", error);
+    logger.error("Error marking as sent:", error);
     throw error;
   }
 }
@@ -253,7 +253,7 @@ export async function cleanupOldNotifications(daysOld: number = 30) {
     });
     return result;
   } catch (error) {
-    console.error("Error cleaning up old notifications:", error);
+    logger.error("Error cleaning up old notifications:", error);
     throw error;
   }
 }

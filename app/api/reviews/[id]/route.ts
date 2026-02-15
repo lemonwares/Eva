@@ -53,7 +53,7 @@ export async function GET(
 
     return NextResponse.json(review);
   } catch (error: any) {
-    console.error("Error fetching review:", error);
+    logger.error("Error fetching review:", error);
     return NextResponse.json(
       { message: "Internal server error" },
       { status: 500 }
@@ -121,7 +121,7 @@ export async function PATCH(
 
     return NextResponse.json(updated);
   } catch (error: any) {
-    console.error("Error updating review:", error);
+    logger.error("Error updating review:", error);
     return NextResponse.json(
       { message: "Internal server error" },
       { status: 500 }
@@ -189,7 +189,7 @@ export async function DELETE(
 
     return NextResponse.json({ message: "Review deleted successfully" });
   } catch (error: any) {
-    console.error("Error deleting review:", error);
+    logger.error("Error deleting review:", error);
     return NextResponse.json(
       { message: "Internal server error" },
       { status: 500 }

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/auth";
 import { z } from "zod";
+import { logger } from "@/lib/logger";
 
 const moderateProviderSchema = z.object({
   action: z.enum([
@@ -19,9 +20,9 @@ const moderateProviderSchema = z.object({
 
 export async function PATCH(
   request: NextRequest,
-  ctx: { params: Promise<{ id: string }> }
+  ctx: { params: Promise<{ id: string }> },
 ) {
-  console.log("[PATCH /api/admin/providers/[id]/moderate] called");
+  logger.debug("[PATCH /api/admin/providers/[id]/moderate] called");
   const session = await auth();
   if (!session?.user?.id || session.user.role !== "ADMINISTRATOR") {
     return NextResponse.json({ message: "Forbidden" }, { status: 403 });
@@ -36,7 +37,7 @@ export async function PATCH(
     if (!validation.success) {
       return NextResponse.json(
         { message: "Invalid request", errors: validation.error.issues },
-        { status: 400 }
+        { status: 400 },
       );
     }
     const { action } = validation.data;
@@ -44,7 +45,7 @@ export async function PATCH(
     if (!provider) {
       return NextResponse.json(
         { message: "Provider not found" },
-        { status: 404 }
+        { status: 404 },
       );
     }
     let updateData: {
@@ -57,7 +58,7 @@ export async function PATCH(
         if (provider.isPublished) {
           return NextResponse.json(
             { message: "Provider is already published" },
-            { status: 400 }
+            { status: 400 },
           );
         }
         updateData = { isPublished: true };
@@ -69,7 +70,7 @@ export async function PATCH(
         if (!provider.isPublished) {
           return NextResponse.json(
             { message: "Provider is already unpublished" },
-            { status: 400 }
+            { status: 400 },
           );
         }
         updateData = { isPublished: false };

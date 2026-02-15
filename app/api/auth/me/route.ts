@@ -61,7 +61,7 @@ export async function GET() {
     );
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : "Unknown error";
-    console.error(`Get user error: ${message}`);
+    logger.error(`Get user error: ${message}`);
     return NextResponse.json(
       { message: "Internal server error" },
       { status: 500 }
@@ -148,7 +148,7 @@ export async function PATCH(request: NextRequest) {
     });
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : "Unknown error";
-    console.error(`Update profile error: ${message}`);
+    logger.error(`Update profile error: ${message}`);
     return NextResponse.json(
       { message: "Internal server error" },
       { status: 500 }

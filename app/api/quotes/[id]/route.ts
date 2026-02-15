@@ -98,7 +98,7 @@ export async function GET(
 
     return NextResponse.json({ quote });
   } catch (error: any) {
-    console.error("Error fetching quote:", error);
+    logger.error("Error fetching quote:", error);
     return NextResponse.json(
       { message: "Internal server error" },
       { status: 500 }
@@ -172,7 +172,7 @@ export async function PATCH(
         { status: 400 }
       );
     }
-    console.error("Error updating quote:", error);
+    logger.error("Error updating quote:", error);
     return NextResponse.json(
       { message: "Internal server error" },
       { status: 500 }
@@ -244,7 +244,7 @@ export async function DELETE(
       message: "Quote deleted successfully",
     });
   } catch (error: any) {
-    console.error("Error deleting quote:", error);
+    logger.error("Error deleting quote:", error);
     return NextResponse.json(
       { message: "Internal server error" },
       { status: 500 }

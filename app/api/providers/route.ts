@@ -153,7 +153,7 @@ export async function GET(request: NextRequest) {
       },
     });
   } catch (error: any) {
-    console.error("Error fetching providers:", error);
+    logger.error("Error fetching providers:", error);
     return NextResponse.json(
       { message: "Internal server error" },
       { status: 500 }
@@ -201,7 +201,7 @@ export async function POST(request: NextRequest) {
           geoLng = parseFloat(geoData[0].lon);
         }
       } catch (geoError) {
-        console.warn("Geocoding failed:", geoError);
+        logger.warn("Geocoding failed:", geoError);
       }
     }
 
@@ -232,7 +232,7 @@ export async function POST(request: NextRequest) {
         { status: 400 }
       );
     }
-    console.error("Error creating provider:", error);
+    logger.error("Error creating provider:", error);
     return NextResponse.json(
       { message: "Internal server error" },
       { status: 500 }

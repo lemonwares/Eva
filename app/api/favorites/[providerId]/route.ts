@@ -42,7 +42,7 @@ export async function DELETE(
 
     return NextResponse.json({ message: "Provider removed from favorites" });
   } catch (error: any) {
-    console.error("Error removing favorite:", error);
+    logger.error("Error removing favorite:", error);
     return NextResponse.json(
       { message: "Internal server error" },
       { status: 500 }
@@ -74,7 +74,7 @@ export async function GET(
 
     return NextResponse.json({ isFavorited: !!favorite });
   } catch (error: any) {
-    console.error("Error checking favorite:", error);
+    logger.error("Error checking favorite:", error);
     return NextResponse.json(
       { message: "Internal server error" },
       { status: 500 }

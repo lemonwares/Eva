@@ -18,6 +18,7 @@ import {
   Globe,
 } from "lucide-react";
 import { useState, useEffect } from "react";
+import { logger } from "@/lib/logger";
 
 const settingsSections = [
   { id: "profile", label: "Profile", icon: User },
@@ -48,6 +49,8 @@ export default function VendorSettingsPage() {
   const { darkMode, toggleDarkMode } = useVendorTheme();
   const [activeSection, setActiveSection] = useState("profile");
   const [showPassword, setShowPassword] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [message, setMessage] = useState<{
@@ -132,7 +135,7 @@ export default function VendorSettingsPage() {
         }
       }
     } catch (err) {
-      console.error("Error fetching profile:", err);
+      logger.error("Error fetching profile:", err);
     } finally {
       setIsLoading(false);
     }
@@ -409,7 +412,7 @@ export default function VendorSettingsPage() {
                                       });
                                     }
                                   } catch (err) {
-                                    console.error("Upload failed:", err);
+                                    logger.error("Upload failed:", err);
                                   }
                                 }
                               };
@@ -895,7 +898,7 @@ export default function VendorSettingsPage() {
                             size={18}
                           />
                           <input
-                            type="password"
+                            type={showNewPassword ? "text" : "password"}
                             value={passwordData.newPassword}
                             onChange={(e) =>
                               setPasswordData({
@@ -904,12 +907,23 @@ export default function VendorSettingsPage() {
                               })
                             }
                             placeholder="••••••••"
-                            className={`w-full pl-11 pr-4 py-3 rounded-lg ${
+                            className={`w-full pl-11 pr-12 py-3 rounded-lg ${
                               darkMode
                                 ? "bg-white/5 text-white border-white/10"
                                 : "bg-gray-50 text-gray-900 border-gray-200"
                             } border focus:outline-none focus:ring-2 focus:ring-accent/50`}
                           />
+                          <button
+                            type="button"
+                            onClick={() => setShowNewPassword(!showNewPassword)}
+                            className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-300"
+                          >
+                            {showNewPassword ? (
+                              <EyeOff size={18} />
+                            ) : (
+                              <Eye size={18} />
+                            )}
+                          </button>
                         </div>
                       </div>
                       <div>
@@ -926,7 +940,7 @@ export default function VendorSettingsPage() {
                             size={18}
                           />
                           <input
-                            type="password"
+                            type={showConfirmPassword ? "text" : "password"}
                             value={passwordData.confirmPassword}
                             onChange={(e) =>
                               setPasswordData({
@@ -935,12 +949,25 @@ export default function VendorSettingsPage() {
                               })
                             }
                             placeholder="••••••••"
-                            className={`w-full pl-11 pr-4 py-3 rounded-lg ${
+                            className={`w-full pl-11 pr-12 py-3 rounded-lg ${
                               darkMode
                                 ? "bg-white/5 text-white border-white/10"
                                 : "bg-gray-50 text-gray-900 border-gray-200"
                             } border focus:outline-none focus:ring-2 focus:ring-accent/50`}
                           />
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setShowConfirmPassword(!showConfirmPassword)
+                            }
+                            className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-300"
+                          >
+                            {showConfirmPassword ? (
+                              <EyeOff size={18} />
+                            ) : (
+                              <Eye size={18} />
+                            )}
+                          </button>
                         </div>
                       </div>
                     </div>

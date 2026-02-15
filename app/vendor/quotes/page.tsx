@@ -22,10 +22,12 @@ import {
   Plus,
   Minus,
   CalendarDays,
+  Loader2,
 } from "lucide-react";
 import { Modal } from "@/components/ui";
 import { useVendorTheme } from "@/components/vendor/VendorThemeContext";
 import { formatCurrency, formatDate } from "@/lib/formatters";
+import { logger } from "@/lib/logger";
 
 interface QuoteItem {
   id?: string;
@@ -71,7 +73,7 @@ interface Quote {
 
 const getStatusColor = (
   status: string,
-  isDark: boolean
+  isDark: boolean,
 ): { bg: string; text: string } => {
   const colors: Record<string, { bg: string; text: string }> = {
     DRAFT: {
@@ -175,7 +177,7 @@ export default function VendorQuotesPage() {
     setToast({ show: true, message, type });
     setTimeout(
       () => setToast({ show: false, message: "", type: "success" }),
-      3000
+      3000,
     );
   };
 
@@ -198,7 +200,7 @@ export default function VendorQuotesPage() {
         setTotalPages(data.pagination.totalPages);
       }
     } catch (error) {
-      console.error("Error fetching quotes:", error);
+      logger.error("Error fetching quotes:", error);
       showToast("Failed to load quotes", "error");
     } finally {
       setLoading(false);
@@ -218,7 +220,7 @@ export default function VendorQuotesPage() {
       setSelectedQuote(fullQuote);
       setIsViewModalOpen(true);
     } catch (error) {
-      console.error("Error fetching quote:", error);
+      logger.error("Error fetching quote:", error);
       showToast("Failed to load quote details", "error");
     }
     setOpenMenuId(null);
@@ -237,7 +239,7 @@ export default function VendorQuotesPage() {
           quantity: item.quantity,
           unitPrice: item.unitPrice,
           total: item.total,
-        }))
+        })),
       );
       setEditValidUntil(fullQuote.validUntil.split("T")[0]);
       setEditPaymentMode(fullQuote.paymentMode);
@@ -246,7 +248,7 @@ export default function VendorQuotesPage() {
       setEditNotes(fullQuote.notes || "");
       setIsEditModalOpen(true);
     } catch (error) {
-      console.error("Error fetching quote:", error);
+      logger.error("Error fetching quote:", error);
       showToast("Failed to load quote for editing", "error");
     }
     setOpenMenuId(null);
@@ -274,7 +276,7 @@ export default function VendorQuotesPage() {
       setSelectedQuote(null);
       fetchQuotes();
     } catch (error) {
-      console.error("Error sending quote:", error);
+      logger.error("Error sending quote:", error);
       showToast("Failed to send quote", "error");
     } finally {
       setSaving(false);
@@ -307,7 +309,7 @@ export default function VendorQuotesPage() {
       setSelectedQuote(null);
       fetchQuotes();
     } catch (error) {
-      console.error("Error updating quote:", error);
+      logger.error("Error updating quote:", error);
       showToast("Failed to update quote", "error");
     } finally {
       setSaving(false);
@@ -330,7 +332,7 @@ export default function VendorQuotesPage() {
   const updateQuoteItem = (
     index: number,
     field: keyof QuoteItem,
-    value: string | number
+    value: string | number,
   ) => {
     const updated = [...editItems];
     updated[index] = { ...updated[index], [field]: value };
@@ -367,8 +369,8 @@ export default function VendorQuotesPage() {
                   ? "bg-green-800 text-green-100"
                   : "bg-green-100 text-green-800"
                 : isDark
-                ? "bg-red-800 text-red-100"
-                : "bg-red-100 text-red-800"
+                  ? "bg-red-800 text-red-100"
+                  : "bg-red-100 text-red-800"
             }`}
           >
             {toast.message}
@@ -408,7 +410,7 @@ export default function VendorQuotesPage() {
                 isDark
                   ? "bg-gray-800 border-gray-700 text-white placeholder-gray-400"
                   : "bg-white border-gray-300 text-gray-900 placeholder-gray-500"
-              } focus:ring-2 focus:ring-rose-500 focus:border-transparent`}
+              } focus:ring-2 focus:ring-accent focus:border-transparent`}
             />
           </div>
 
@@ -425,7 +427,7 @@ export default function VendorQuotesPage() {
                 isDark
                   ? "bg-gray-800 border-gray-700 text-white"
                   : "bg-white border-gray-300 text-gray-900"
-              } focus:ring-2 focus:ring-rose-500 focus:border-transparent`}
+              } focus:ring-2 focus:ring-accent focus:border-transparent`}
             >
               {statuses.map((status) => (
                 <option key={status} value={status}>
@@ -444,7 +446,7 @@ export default function VendorQuotesPage() {
         >
           {loading ? (
             <div className="p-8 flex justify-center">
-              <div className="animate-spin h-8 w-8 border-4 border-rose-500 border-t-transparent rounded-full" />
+              <div className="animate-spin h-8 w-8 border-4 border-accent border-t-transparent rounded-full" />
             </div>
           ) : quotes.length === 0 ? (
             <div className="p-8 text-center">
@@ -598,7 +600,7 @@ export default function VendorQuotesPage() {
                             <button
                               onClick={() =>
                                 setOpenMenuId(
-                                  openMenuId === quote.id ? null : quote.id
+                                  openMenuId === quote.id ? null : quote.id,
                                 )
                               }
                               className={`p-2 rounded-lg ${
@@ -730,7 +732,7 @@ export default function VendorQuotesPage() {
               >
                 Client Information
               </h4>
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <p
                     className={`text-sm ${
@@ -883,104 +885,106 @@ export default function VendorQuotesPage() {
                   isDark ? "border-gray-700" : "border-gray-200"
                 }`}
               >
-                <table className="w-full">
-                  <thead>
-                    <tr className={isDark ? "bg-gray-700/50" : "bg-gray-50"}>
-                      <th
-                        className={`px-4 py-2 text-left text-sm font-medium ${
-                          isDark ? "text-gray-300" : "text-gray-600"
-                        }`}
+                <div className="overflow-x-auto">
+                  <table className="w-full min-w-[400px]">
+                    <thead>
+                      <tr className={isDark ? "bg-gray-700/50" : "bg-gray-50"}>
+                        <th
+                          className={`px-4 py-2 text-left text-sm font-medium ${
+                            isDark ? "text-gray-300" : "text-gray-600"
+                          }`}
+                        >
+                          Description
+                        </th>
+                        <th
+                          className={`px-4 py-2 text-right text-sm font-medium ${
+                            isDark ? "text-gray-300" : "text-gray-600"
+                          }`}
+                        >
+                          Qty
+                        </th>
+                        <th
+                          className={`px-4 py-2 text-right text-sm font-medium ${
+                            isDark ? "text-gray-300" : "text-gray-600"
+                          }`}
+                        >
+                          Unit Price
+                        </th>
+                        <th
+                          className={`px-4 py-2 text-right text-sm font-medium ${
+                            isDark ? "text-gray-300" : "text-gray-600"
+                          }`}
+                        >
+                          Total
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-700/50">
+                      {selectedQuote.items?.map((item, index) => (
+                        <tr key={index}>
+                          <td
+                            className={`px-4 py-3 ${
+                              isDark ? "text-white" : "text-gray-900"
+                            }`}
+                          >
+                            {item.description}
+                          </td>
+                          <td
+                            className={`px-4 py-3 text-right ${
+                              isDark ? "text-gray-300" : "text-gray-700"
+                            }`}
+                          >
+                            {item.quantity}
+                          </td>
+                          <td
+                            className={`px-4 py-3 text-right ${
+                              isDark ? "text-gray-300" : "text-gray-700"
+                            }`}
+                          >
+                            {formatCurrency(item.unitPrice)}
+                          </td>
+                          <td
+                            className={`px-4 py-3 text-right font-medium ${
+                              isDark ? "text-white" : "text-gray-900"
+                            }`}
+                          >
+                            {formatCurrency(item.total)}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                    <tfoot>
+                      <tr
+                        className={
+                          isDark
+                            ? "bg-gray-700/50 border-t border-gray-600"
+                            : "bg-gray-50 border-t border-gray-200"
+                        }
                       >
-                        Description
-                      </th>
-                      <th
-                        className={`px-4 py-2 text-right text-sm font-medium ${
-                          isDark ? "text-gray-300" : "text-gray-600"
-                        }`}
-                      >
-                        Qty
-                      </th>
-                      <th
-                        className={`px-4 py-2 text-right text-sm font-medium ${
-                          isDark ? "text-gray-300" : "text-gray-600"
-                        }`}
-                      >
-                        Unit Price
-                      </th>
-                      <th
-                        className={`px-4 py-2 text-right text-sm font-medium ${
-                          isDark ? "text-gray-300" : "text-gray-600"
-                        }`}
-                      >
-                        Total
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-gray-700/50">
-                    {selectedQuote.items?.map((item, index) => (
-                      <tr key={index}>
                         <td
-                          className={`px-4 py-3 ${
+                          colSpan={3}
+                          className={`px-4 py-3 text-right font-semibold ${
                             isDark ? "text-white" : "text-gray-900"
                           }`}
                         >
-                          {item.description}
+                          Grand Total
                         </td>
                         <td
-                          className={`px-4 py-3 text-right ${
-                            isDark ? "text-gray-300" : "text-gray-700"
+                          className={`px-4 py-3 text-right font-bold text-lg ${
+                            isDark ? "text-accent" : "text-accent"
                           }`}
                         >
-                          {item.quantity}
-                        </td>
-                        <td
-                          className={`px-4 py-3 text-right ${
-                            isDark ? "text-gray-300" : "text-gray-700"
-                          }`}
-                        >
-                          {formatCurrency(item.unitPrice)}
-                        </td>
-                        <td
-                          className={`px-4 py-3 text-right font-medium ${
-                            isDark ? "text-white" : "text-gray-900"
-                          }`}
-                        >
-                          {formatCurrency(item.total)}
+                          {formatCurrency(selectedQuote.total)}
                         </td>
                       </tr>
-                    ))}
-                  </tbody>
-                  <tfoot>
-                    <tr
-                      className={
-                        isDark
-                          ? "bg-gray-700/50 border-t border-gray-600"
-                          : "bg-gray-50 border-t border-gray-200"
-                      }
-                    >
-                      <td
-                        colSpan={3}
-                        className={`px-4 py-3 text-right font-semibold ${
-                          isDark ? "text-white" : "text-gray-900"
-                        }`}
-                      >
-                        Grand Total
-                      </td>
-                      <td
-                        className={`px-4 py-3 text-right font-bold text-lg ${
-                          isDark ? "text-rose-400" : "text-rose-600"
-                        }`}
-                      >
-                        {formatCurrency(selectedQuote.total)}
-                      </td>
-                    </tr>
-                  </tfoot>
-                </table>
+                    </tfoot>
+                  </table>
+                </div>
               </div>
             </div>
 
             {/* Payment Terms */}
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <p
                   className={`text-sm ${
@@ -1007,7 +1011,7 @@ export default function VendorQuotesPage() {
                       {selectedQuote.depositPercent}% (
                       {formatCurrency(
                         (selectedQuote.total * selectedQuote.depositPercent) /
-                          100
+                          100,
                       )}
                       )
                     </p>
@@ -1093,7 +1097,7 @@ export default function VendorQuotesPage() {
                       setIsViewModalOpen(false);
                       handleSendQuote(selectedQuote);
                     }}
-                    className="px-4 py-2 bg-rose-600 text-white rounded-lg hover:bg-rose-700"
+                    className="px-4 py-2 bg-accent text-white rounded-lg hover:bg-accent/90"
                   >
                     Send to Client
                   </button>
@@ -1128,7 +1132,7 @@ export default function VendorQuotesPage() {
                 </h4>
                 <button
                   onClick={addQuoteItem}
-                  className="flex items-center gap-1 text-sm text-rose-500 hover:text-rose-600"
+                  className="flex items-center gap-1 text-sm text-accent hover:text-accent/80"
                 >
                   <Plus className="h-4 w-4" />
                   Add Item
@@ -1136,8 +1140,11 @@ export default function VendorQuotesPage() {
               </div>
               <div className="space-y-3">
                 {editItems.map((item, index) => (
-                  <div key={index} className="flex gap-3 items-start">
-                    <div className="flex-1">
+                  <div
+                    key={index}
+                    className="flex flex-col sm:flex-row gap-3 items-start"
+                  >
+                    <div className="flex-1 w-full">
                       <input
                         type="text"
                         placeholder="Description"
@@ -1152,7 +1159,7 @@ export default function VendorQuotesPage() {
                         }`}
                       />
                     </div>
-                    <div className="w-20">
+                    <div className="w-full sm:w-20">
                       <input
                         type="number"
                         placeholder="Qty"
@@ -1162,7 +1169,7 @@ export default function VendorQuotesPage() {
                           updateQuoteItem(
                             index,
                             "quantity",
-                            parseInt(e.target.value) || 0
+                            parseInt(e.target.value) || 0,
                           )
                         }
                         className={`w-full px-3 py-2 rounded-lg border ${
@@ -1172,7 +1179,7 @@ export default function VendorQuotesPage() {
                         }`}
                       />
                     </div>
-                    <div className="w-32">
+                    <div className="w-full sm:w-32">
                       <input
                         type="number"
                         placeholder="Unit Price"
@@ -1182,7 +1189,7 @@ export default function VendorQuotesPage() {
                           updateQuoteItem(
                             index,
                             "unitPrice",
-                            parseFloat(e.target.value) || 0
+                            parseFloat(e.target.value) || 0,
                           )
                         }
                         className={`w-full px-3 py-2 rounded-lg border ${
@@ -1192,7 +1199,7 @@ export default function VendorQuotesPage() {
                         }`}
                       />
                     </div>
-                    <div className="w-32 flex items-center justify-end">
+                    <div className="w-full sm:w-32 flex items-center sm:justify-end">
                       <span
                         className={`font-medium ${
                           isDark ? "text-white" : "text-gray-900"
@@ -1299,7 +1306,7 @@ export default function VendorQuotesPage() {
                   <span className={isDark ? "text-gray-400" : "text-gray-600"}>
                     % ={" "}
                     {formatCurrency(
-                      (calculateTotal() * editDepositPercent) / 100
+                      (calculateTotal() * editDepositPercent) / 100,
                     )}
                   </span>
                 </div>
@@ -1368,8 +1375,9 @@ export default function VendorQuotesPage() {
               <button
                 onClick={handleUpdateQuote}
                 disabled={saving}
-                className="px-4 py-2 bg-rose-600 text-white rounded-lg hover:bg-rose-700 disabled:opacity-50"
+                className="px-4 py-2 bg-accent text-white rounded-lg hover:bg-accent/90 disabled:opacity-50 flex items-center gap-2"
               >
+                {saving && <Loader2 size={16} className="animate-spin" />}
                 {saving ? "Saving..." : "Save Changes"}
               </button>
             </div>
@@ -1477,10 +1485,13 @@ export default function VendorQuotesPage() {
               <button
                 onClick={confirmSendQuote}
                 disabled={saving}
-                className="px-4 py-2 bg-rose-600 text-white rounded-lg hover:bg-rose-700 disabled:opacity-50 flex items-center gap-2"
+                className="px-4 py-2 bg-accent text-white rounded-lg hover:bg-accent/90 disabled:opacity-50 flex items-center gap-2"
               >
                 {saving ? (
-                  "Sending..."
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    Sending...
+                  </>
                 ) : (
                   <>
                     <Send className="h-4 w-4" />

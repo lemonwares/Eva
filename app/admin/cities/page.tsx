@@ -2,6 +2,7 @@
 
 import AdminLayout from "@/components/admin/AdminLayout";
 import { useAdminTheme } from "@/components/admin/AdminThemeContext";
+import { logger } from "@/lib/logger";
 import Modal from "@/components/admin/Modal";
 import ConfirmDialog from "@/components/admin/ConfirmDialog";
 import {
@@ -113,7 +114,7 @@ export default function AdminCitiesPage() {
         setCities(data);
       }
     } catch (err) {
-      console.error("Error fetching cities:", err);
+      logger.error("Error fetching cities:", err);
     } finally {
       setIsLoading(false);
     }
@@ -125,14 +126,14 @@ export default function AdminCitiesPage() {
 
   // Get unique regions for filter
   const regions = Array.from(
-    new Set(cities.map((c) => c.region).filter(Boolean))
+    new Set(cities.map((c) => c.region).filter(Boolean)),
   ) as string[];
 
   // Pagination
   const totalPages = Math.ceil(cities.length / itemsPerPage);
   const paginatedCities = cities.slice(
     (currentPage - 1) * itemsPerPage,
-    currentPage * itemsPerPage
+    currentPage * itemsPerPage,
   );
 
   const openAddModal = () => {
@@ -229,7 +230,7 @@ export default function AdminCitiesPage() {
         });
       }
     } catch (err) {
-      console.error("Error saving city:", err);
+      logger.error("Error saving city:", err);
       setToast({ show: true, message: "Failed to save city", type: "error" });
     } finally {
       setIsSaving(false);
@@ -261,7 +262,7 @@ export default function AdminCitiesPage() {
         });
       }
     } catch (err) {
-      console.error("Error deleting city:", err);
+      logger.error("Error deleting city:", err);
       setToast({ show: true, message: "Failed to delete city", type: "error" });
     } finally {
       setIsDeleting(false);
@@ -269,16 +270,16 @@ export default function AdminCitiesPage() {
     }
   };
 
-
-
-
-
   const toggleFeatured = async (city: City, e: React.MouseEvent) => {
     e.stopPropagation();
     const newStatus = !city.isFeatured;
-    
+
     // Optimistic update
-    setCities(cities.map(c => c.id === city.id ? { ...c, isFeatured: newStatus } : c));
+    setCities(
+      cities.map((c) =>
+        c.id === city.id ? { ...c, isFeatured: newStatus } : c,
+      ),
+    );
 
     try {
       const res = await fetch(`/api/cities/${city.id}`, {
@@ -292,8 +293,16 @@ export default function AdminCitiesPage() {
       }
     } catch (err) {
       // Revert on failure
-      setCities(cities.map(c => c.id === city.id ? { ...c, isFeatured: !newStatus } : c));
-      setToast({ show: true, message: "Failed to update status", type: "error" });
+      setCities(
+        cities.map((c) =>
+          c.id === city.id ? { ...c, isFeatured: !newStatus } : c,
+        ),
+      );
+      setToast({
+        show: true,
+        message: "Failed to update status",
+        type: "error",
+      });
     }
   };
 
@@ -501,7 +510,7 @@ export default function AdminCitiesPage() {
                       </td>
                       <td className="px-6 py-4">
                         {city.isFeatured ? (
-                          <button 
+                          <button
                             onClick={(e) => toggleFeatured(city, e)}
                             className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-amber-500/10 text-amber-500 hover:bg-amber-500/20 transition-colors"
                           >
@@ -595,7 +604,7 @@ export default function AdminCitiesPage() {
                   </button>
                   {Array.from(
                     { length: Math.min(5, totalPages) },
-                    (_, i) => i + 1
+                    (_, i) => i + 1,
                   ).map((page) => (
                     <button
                       key={page}
@@ -647,7 +656,7 @@ export default function AdminCitiesPage() {
             </TabsList>
 
             <TabsContent value="general" className="space-y-5">
-              <div className="grid grid-cols-2 gap-5">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                 <div>
                   <label
                     className={`block text-sm font-medium ${textSecondary} mb-1.5`}
@@ -687,7 +696,7 @@ export default function AdminCitiesPage() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-5">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                 <div>
                   <label
                     className={`block text-sm font-medium ${textSecondary} mb-1.5`}
@@ -721,7 +730,7 @@ export default function AdminCitiesPage() {
                         }
                         className="sr-only peer"
                       />
-                      <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-accent/20 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-accent"></div>
+                      <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-accent/20 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-0.5 after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-accent"></div>
                     </div>
                     <span className={`text-sm font-medium ${textPrimary}`}>
                       Featured City
@@ -732,7 +741,7 @@ export default function AdminCitiesPage() {
             </TabsContent>
 
             <TabsContent value="location" className="space-y-5">
-              <div className="grid grid-cols-2 gap-5">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                 <div>
                   <label
                     className={`block text-sm font-medium ${textSecondary} mb-1.5`}
@@ -767,7 +776,7 @@ export default function AdminCitiesPage() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-3 gap-5">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
                 <div className="col-span-3 sm:col-span-1">
                   <label
                     className={`block text-sm font-medium ${textSecondary} mb-1.5`}
@@ -827,10 +836,12 @@ export default function AdminCitiesPage() {
             <TabsContent value="seo" className="space-y-5">
               <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg mb-4">
                 <p className="text-sm text-blue-700 dark:text-blue-300">
-                  <span className="font-semibold">Pro Tip:</span> Good SEO titles and descriptions help your city pages appear in Google search results.
+                  <span className="font-semibold">Pro Tip:</span> Good SEO
+                  titles and descriptions help your city pages appear in Google
+                  search results.
                 </p>
               </div>
-              
+
               <div>
                 <label
                   className={`block text-sm font-medium ${textSecondary} mb-1.5`}

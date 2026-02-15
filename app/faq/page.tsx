@@ -127,7 +127,7 @@ export default function FAQPage() {
                       isOpen ? "max-h-96 opacity-100" : "max-h-0 opacity-0"
                     }`}
                   >
-                    <div className="px-6 pb-6 pl-20">
+                    <div className="px-6 pb-6 pl-6 sm:pl-20">
                       <p className="text-muted-foreground leading-relaxed">
                         {faq.answer}
                       </p>

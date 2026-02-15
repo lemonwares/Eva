@@ -1,7 +1,14 @@
 "use client";
 
 import { useState, useEffect, Suspense } from "react";
-import { Loader2, CheckCircle, XCircle, Mail, ArrowLeft, Home } from "lucide-react";
+import {
+  Loader2,
+  CheckCircle,
+  XCircle,
+  Mail,
+  ArrowLeft,
+  Home,
+} from "lucide-react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { verifyEmail, resendVerification } from "@/lib/auth-client";
@@ -17,6 +24,7 @@ function VerifyEmailContent() {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
   const [resendSuccess, setResendSuccess] = useState(false);
+  const [userRole, setUserRole] = useState<string | null>(null);
 
   // Only run verification once per token, and remember in sessionStorage
   useEffect(() => {
@@ -47,15 +55,18 @@ function VerifyEmailContent() {
       }
 
       setSuccess(true);
+      if (result.role) setUserRole(result.role);
 
       // Mark as verified in sessionStorage to prevent re-verification
       if (typeof window !== "undefined") {
         sessionStorage.setItem(`verified-${verificationToken}`, "true");
       }
 
-      // Redirect to login after 3 seconds
+      // Redirect vendors to onboarding, others to login
+      const redirectUrl =
+        result.role === "PROFESSIONAL" ? "/vendor/onboarding" : "/auth";
       setTimeout(() => {
-        router.push("/auth");
+        router.push(redirectUrl);
       }, 3000);
     } catch (err) {
       setError("An unexpected error occurred. Please try again.");
@@ -158,11 +169,14 @@ function VerifyEmailContent() {
                   Email verified!
                 </h2>
                 <p className="text-muted-foreground mb-6">
-                  Your email has been successfully verified. You can now sign in
-                  to your account.
+                  {userRole === "PROFESSIONAL"
+                    ? "Your email has been verified. Let's set up your business profile!"
+                    : "Your email has been successfully verified. You can now sign in to your account."}
                 </p>
                 <p className="text-sm text-muted-foreground">
-                  Redirecting to sign in...
+                  {userRole === "PROFESSIONAL"
+                    ? "Redirecting to vendor onboarding..."
+                    : "Redirecting to sign in..."}
                 </p>
               </div>
             ) : error && token ? (

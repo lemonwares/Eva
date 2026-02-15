@@ -1,6 +1,8 @@
 "use client";
 
 import { AlertOctagon, RefreshCw } from "lucide-react";
+import * as Sentry from "@sentry/nextjs";
+import { useEffect } from "react";
 
 export default function GlobalError({
   error,
@@ -9,6 +11,10 @@ export default function GlobalError({
   error: Error & { digest?: string };
   reset: () => void;
 }) {
+  useEffect(() => {
+    Sentry.captureException(error);
+  }, [error]);
+
   return (
     <html lang="en">
       <body>
@@ -31,7 +37,7 @@ export default function GlobalError({
               width: "96px",
               height: "96px",
               borderRadius: "50%",
-              backgroundColor: "#fee2e2",
+              backgroundColor: "#d4f0f5",
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
@@ -39,7 +45,7 @@ export default function GlobalError({
             }}
           >
             <AlertOctagon
-              style={{ width: "48px", height: "48px", color: "#ef4444" }}
+              style={{ width: "48px", height: "48px", color: "#0097b2" }}
             />
           </div>
 
@@ -86,7 +92,7 @@ export default function GlobalError({
               gap: "0.5rem",
               padding: "0.75rem 1.5rem",
               borderRadius: "9999px",
-              backgroundColor: "#e91e63",
+              backgroundColor: "#0097b2",
               color: "white",
               fontWeight: "600",
               border: "none",
@@ -112,7 +118,7 @@ export default function GlobalError({
                 width: "32px",
                 height: "32px",
                 borderRadius: "50%",
-                backgroundColor: "#e91e63",
+                backgroundColor: "#0097b2",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",

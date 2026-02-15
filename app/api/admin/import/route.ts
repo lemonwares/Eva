@@ -168,7 +168,7 @@ export async function POST(request: NextRequest) {
   } catch (error: unknown) {
     const errorMessage =
       error instanceof Error ? error.message : "Unknown error";
-    console.error("Import error:", errorMessage);
+    logger.error("Import error:", errorMessage);
     return NextResponse.json(
       { message: "Import failed", error: errorMessage },
       { status: 500 }
@@ -646,7 +646,7 @@ export async function GET(request: NextRequest) {
       },
     });
   } catch (error: unknown) {
-    console.error("Error fetching import jobs:", error);
+    logger.error("Error fetching import jobs:", error);
     return NextResponse.json(
       { message: "Internal server error" },
       { status: 500 }

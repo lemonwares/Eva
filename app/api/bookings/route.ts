@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/auth";
 import { getStripe, formatAmountForStripe } from "@/lib/stripe";
+import { bookingCreateSchema, formatValidationErrors } from "@/lib/validations";
+import { logger } from "@/lib/logger";
 
 // GET /api/bookings - List bookings (for authenticated vendor, client, or admin)
 export async function GET(request: NextRequest) {
@@ -121,10 +123,10 @@ export async function GET(request: NextRequest) {
       },
     });
   } catch (error: any) {
-    console.error("Error fetching bookings:", error);
+    logger.error("Error fetching bookings:", error);
     return NextResponse.json(
       { message: "Internal server error" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
@@ -139,9 +141,20 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
+    const parsed = bookingCreateSchema.safeParse(body);
+    if (!parsed.success) {
+      return NextResponse.json(
+        {
+          message: "Validation failed",
+          errors: formatValidationErrors(parsed.error.issues),
+        },
+        { status: 400 },
+      );
+    }
+
     const {
       providerId,
-      services, // Array of { id, headline, minPrice, maxPrice }
+      services,
       clientName,
       clientEmail,
       clientPhone,
@@ -151,14 +164,7 @@ export async function POST(request: NextRequest) {
       specialRequests,
       paymentMode,
       pricingTotal,
-    } = body;
-
-    if (!providerId || !Array.isArray(services) || services.length === 0) {
-      return NextResponse.json(
-        { message: "Missing required fields" },
-        { status: 400 }
-      );
-    }
+    } = parsed.data;
 
     // Create a quote for the booking (optional, for tracking)
     const quote = await prisma.quote.create({
@@ -172,15 +178,15 @@ export async function POST(request: NextRequest) {
         })),
         subtotal: services.reduce(
           (sum: number, s: any) => sum + (s.minPrice || 0),
-          0
+          0,
         ),
         tax: 0,
         discount: 0,
         totalPrice: services.reduce(
           (sum: number, s: any) => sum + (s.minPrice || 0),
-          0
+          0,
         ),
-        allowedPaymentModes: [paymentMode || "FULL_PAYMENT"],
+        allowedPaymentModes: [paymentMode || "FULL_PAYMENT"] as any,
         depositPercentage: 0,
         validUntil: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 1 week
         status: "SENT",
@@ -192,14 +198,14 @@ export async function POST(request: NextRequest) {
       data: {
         quoteId: quote.id,
         providerId,
-        clientName,
-        clientEmail,
+        clientName: clientName || session.user.name || "Guest",
+        clientEmail: clientEmail || session.user.email || "",
         clientPhone,
         eventDate: new Date(eventDate),
         eventLocation,
         guestsCount: guestsCount ? Number(guestsCount) : null,
         specialRequests,
-        paymentMode: paymentMode || "FULL_PAYMENT",
+        paymentMode: (paymentMode || "FULL_PAYMENT") as any,
         pricingTotal: pricingTotal || quote.totalPrice,
         status: "PENDING_PAYMENT",
         statusTimeline: [
@@ -249,10 +255,10 @@ export async function POST(request: NextRequest) {
       paymentUrl: sessionStripe.url,
     });
   } catch (error: any) {
-    console.error("Error creating booking:", error);
+    logger.error("Error creating booking:", error);
     return NextResponse.json(
       { message: "Internal server error" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

@@ -22,6 +22,7 @@ function ResetPasswordContent() {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
@@ -29,7 +30,7 @@ function ResetPasswordContent() {
   useEffect(() => {
     if (!token) {
       setError(
-        "Invalid or missing reset token. Please request a new password reset link."
+        "Invalid or missing reset token. Please request a new password reset link.",
       );
     }
   }, [token]);
@@ -45,6 +46,13 @@ function ResetPasswordContent() {
 
     if (password.length < 8) {
       setError("Password must be at least 8 characters long");
+      return;
+    }
+
+    if (!/(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/.test(password)) {
+      setError(
+        "Password must contain at least one uppercase letter, one lowercase letter, and one number",
+      );
       return;
     }
 
@@ -187,8 +195,20 @@ function ResetPasswordContent() {
                         required
                         minLength={8}
                         disabled={loading}
-                        className="w-full rounded-xl border border-border bg-input/60 px-4 py-3 text-foreground placeholder:text-muted-foreground focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/30 disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="w-full rounded-xl border border-border bg-input/60 px-4 py-3 pr-12 text-foreground placeholder:text-muted-foreground focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/30 disabled:opacity-50 disabled:cursor-not-allowed"
                       />
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                        disabled={loading}
+                        className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors disabled:opacity-50"
+                      >
+                        {showPassword ? (
+                          <EyeOff className="w-5 h-5" />
+                        ) : (
+                          <Eye className="w-5 h-5" />
+                        )}
+                      </button>
                     </div>
                   </div>
 
@@ -198,22 +218,24 @@ function ResetPasswordContent() {
                     </label>
                     <div className="relative">
                       <input
-                        type={showPassword ? "text" : "password"}
+                        type={showConfirmPassword ? "text" : "password"}
                         placeholder="••••••••"
                         value={confirmPassword}
                         onChange={(e) => setConfirmPassword(e.target.value)}
                         required
                         minLength={8}
                         disabled={loading}
-                        className="w-full rounded-xl border border-border bg-input/60 px-4 py-3 text-foreground placeholder:text-muted-foreground focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/30 disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="w-full rounded-xl border border-border bg-input/60 px-4 py-3 pr-12 text-foreground placeholder:text-muted-foreground focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/30 disabled:opacity-50 disabled:cursor-not-allowed"
                       />
                       <button
                         type="button"
-                        onClick={() => setShowPassword(!showPassword)}
+                        onClick={() =>
+                          setShowConfirmPassword(!showConfirmPassword)
+                        }
                         disabled={loading}
                         className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors disabled:opacity-50"
                       >
-                        {showPassword ? (
+                        {showConfirmPassword ? (
                           <EyeOff className="w-5 h-5" />
                         ) : (
                           <Eye className="w-5 h-5" />

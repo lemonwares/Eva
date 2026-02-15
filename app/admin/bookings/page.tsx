@@ -2,6 +2,7 @@
 
 import AdminLayout from "@/components/admin/AdminLayout";
 import { useAdminTheme } from "@/components/admin/AdminThemeContext";
+import { logger } from "@/lib/logger";
 import { formatCurrency } from "@/lib/formatters";
 import Modal from "@/components/admin/Modal";
 import ConfirmDialog from "@/components/admin/ConfirmDialog";
@@ -131,7 +132,7 @@ function ViewBookingModal({
           </div>
           <span
             className={`px-3 py-1 rounded-full text-sm font-medium text-white ${getStatusColor(
-              booking.status
+              booking.status,
             )}`}
           >
             {booking.status}
@@ -151,7 +152,7 @@ function ViewBookingModal({
           >
             Event Details
           </h4>
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="flex items-center gap-2">
               <Calendar size={16} className="text-accent" />
               <div>
@@ -214,7 +215,7 @@ function ViewBookingModal({
           >
             <User size={16} /> Client Information
           </h4>
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <p
                 className={`text-xs ${
@@ -318,7 +319,7 @@ function ViewBookingModal({
                 </span>
                 <span className="text-accent">
                   {formatCurrency(
-                    booking.totalPrice ?? booking.quote?.totalPrice ?? 0
+                    booking.totalPrice ?? booking.quote?.totalPrice ?? 0,
                   )}
                 </span>
               </div>
@@ -455,8 +456,9 @@ function EditStatusModal({
           <button
             onClick={handleSave}
             disabled={saving}
-            className="flex-1 px-4 py-2 rounded-lg bg-accent text-white hover:bg-accent/90 disabled:opacity-50"
+            className="flex-1 px-4 py-2 rounded-lg bg-accent text-white hover:bg-accent/90 disabled:opacity-50 flex items-center justify-center gap-2"
           >
+            {saving && <Loader2 size={16} className="animate-spin" />}
             {saving ? "Saving..." : "Update Status"}
           </button>
         </div>
@@ -517,7 +519,7 @@ export default function AdminBookingsPage() {
         setStatusCounts(data.statusCounts || null);
       }
     } catch (err) {
-      console.error("Error fetching bookings:", err);
+      logger.error("Error fetching bookings:", err);
     } finally {
       setIsLoading(false);
     }
@@ -603,7 +605,7 @@ export default function AdminBookingsPage() {
         >
           {page}
         </button>
-      )
+      ),
     );
   };
 
@@ -634,7 +636,7 @@ export default function AdminBookingsPage() {
     setToast({ show: true, message, type });
     setTimeout(
       () => setToast({ show: false, message: "", type: "success" }),
-      3000
+      3000,
     );
   };
 
@@ -652,8 +654,8 @@ export default function AdminBookingsPage() {
       if (res.ok) {
         setBookings((prev) =>
           prev.map((b) =>
-            b.id === selectedBooking.id ? { ...b, status: newStatus } : b
-          )
+            b.id === selectedBooking.id ? { ...b, status: newStatus } : b,
+          ),
         );
         setEditModalOpen(false);
         showToast("Booking status updated successfully", "success");
@@ -663,14 +665,17 @@ export default function AdminBookingsPage() {
         showToast(data.error || "Failed to update booking status", "error");
       }
     } catch (err) {
-      console.error("Error updating booking:", err);
+      logger.error("Error updating booking:", err);
       showToast("An error occurred while updating booking", "error");
     }
   };
 
+  const [isDeleting, setIsDeleting] = useState(false);
+
   // Handle delete booking
   const handleDeleteBooking = async () => {
     if (!selectedBooking) return;
+    setIsDeleting(true);
 
     try {
       const res = await fetch(`/api/bookings/${selectedBooking.id}`, {
@@ -687,8 +692,10 @@ export default function AdminBookingsPage() {
         showToast(data.error || "Failed to delete booking", "error");
       }
     } catch (err) {
-      console.error("Error deleting booking:", err);
+      logger.error("Error deleting booking:", err);
       showToast("An error occurred while deleting booking", "error");
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -904,13 +911,13 @@ export default function AdminBookingsPage() {
                         className={`px-6 py-4 text-sm font-medium ${textPrimary}`}
                       >
                         {formatCurrency(
-                          booking.totalPrice ?? booking.quote?.totalPrice ?? 0
+                          booking.totalPrice ?? booking.quote?.totalPrice ?? 0,
                         )}
                       </td>
                       <td className="px-6 py-4">
                         <span
                           className={`inline-flex px-2.5 py-1 rounded-full text-xs font-medium text-white ${getStatusColor(
-                            booking.status
+                            booking.status,
                           )}`}
                         >
                           {booking.status}
@@ -923,7 +930,7 @@ export default function AdminBookingsPage() {
                               setActionMenuOpen(
                                 actionMenuOpen === booking.id
                                   ? null
-                                  : booking.id
+                                  : booking.id,
                               )
                             }
                             className={`p-2 rounded-lg ${
@@ -987,7 +994,7 @@ export default function AdminBookingsPage() {
                     {(pagination.page - 1) * pagination.limit + 1}-
                     {Math.min(
                       pagination.page * pagination.limit,
-                      pagination.total
+                      pagination.total,
                     )}
                   </span>{" "}
                   of <span className={textPrimary}>{pagination.total}</span>
@@ -1047,6 +1054,7 @@ export default function AdminBookingsPage() {
           .toUpperCase()}? This action cannot be undone.`}
         confirmText="Delete"
         type="danger"
+        isLoading={isDeleting}
       />
 
       {/* Toast Notification */}

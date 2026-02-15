@@ -55,7 +55,7 @@ export async function POST(request: NextRequest) {
     });
     return NextResponse.json(listing, { status: 201 });
   } catch (error: any) {
-    console.error("Error creating listing:", error);
+    logger.error("Error creating listing:", error);
     return NextResponse.json(
       { message: "Internal server error" },
       { status: 500 }
@@ -115,7 +115,7 @@ export async function GET(request: NextRequest) {
 
     // Public listings for a provider
   } catch (error: any) {
-    console.error("Error fetching listings:", error);
+    logger.error("Error fetching listings:", error);
     return NextResponse.json(
       { message: "Internal server error" },
       { status: 500 }

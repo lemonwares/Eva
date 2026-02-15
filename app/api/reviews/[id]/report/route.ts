@@ -105,7 +105,7 @@ export async function POST(
           </div>
         `,
       }).catch((err) =>
-        console.error("Failed to send admin notification:", err)
+        logger.error("Failed to send admin notification:", err)
       );
     }
 
@@ -113,7 +113,7 @@ export async function POST(
       message: "Review reported successfully. Our team will review it shortly.",
     });
   } catch (error: any) {
-    console.error("Error reporting review:", error);
+    logger.error("Error reporting review:", error);
     return NextResponse.json(
       { message: "Internal server error" },
       { status: 500 }

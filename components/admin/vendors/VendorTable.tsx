@@ -111,10 +111,10 @@ export default function VendorTable({
     const colors = [
       "from-green-400 to-emerald-500",
       "from-orange-400 to-red-500",
-      "from-purple-400 to-pink-500",
+      "from-purple-400 to-violet-500",
       "from-blue-400 to-indigo-500",
       "from-amber-400 to-orange-500",
-      "from-pink-400 to-rose-500",
+      "from-teal-400 to-cyan-500",
     ];
     return colors[name.charCodeAt(0) % colors.length];
   };
@@ -152,7 +152,7 @@ export default function VendorTable({
 
     return pages.map((page, idx) =>
       page < 0 ? (
-        <span key={idx} className={textMuted}>
+        <span key={`ellipsis-${idx}`} className={textMuted}>
           ...
         </span>
       ) : (
@@ -169,7 +169,7 @@ export default function VendorTable({
         >
           {page}
         </button>
-      )
+      ),
     );
   };
 
@@ -247,7 +247,7 @@ export default function VendorTable({
                       <div className="flex items-center gap-3">
                         <div
                           className={`w-10 h-10 rounded-full bg-linear-to-br ${getAvatarColors(
-                            provider.businessName
+                            provider.businessName,
                           )} flex items-center justify-center text-white font-semibold text-sm`}
                         >
                           {getInitials(provider.businessName)}
@@ -283,7 +283,7 @@ export default function VendorTable({
                           cats.length > 0
                         ) {
                           const match = cats.find(
-                            (cat) => cat.id === catIds[0]
+                            (cat) => cat.id === catIds[0],
                           );
                           const rawName = match?.name || catIds[0] || "N/A";
                           return typeof rawName === "string" &&
@@ -327,7 +327,7 @@ export default function VendorTable({
                     <td className="px-6 py-4">
                       <span
                         className={`inline-flex px-2.5 py-1 rounded-full text-xs font-medium text-white ${getStatusColor(
-                          provider.status
+                          provider.status,
                         )}`}
                       >
                         {provider.status}
@@ -376,7 +376,7 @@ export default function VendorTable({
                   <div className="flex items-center gap-3">
                     <div
                       className={`w-12 h-12 rounded-full bg-linear-to-br ${getAvatarColors(
-                        provider.businessName
+                        provider.businessName,
                       )} flex items-center justify-center text-white font-semibold`}
                     >
                       {getInitials(provider.businessName)}
@@ -396,7 +396,7 @@ export default function VendorTable({
                             cats.length > 0
                           ) {
                             const match = cats.find(
-                              (cat) => cat.id === catIds[0]
+                              (cat) => cat.id === catIds[0],
                             );
                             const rawName = match?.name || catIds[0] || "N/A";
                             return typeof rawName === "string" &&
@@ -412,7 +412,7 @@ export default function VendorTable({
                   </div>
                   <span
                     className={`px-2.5 py-1 rounded-full text-xs font-medium text-white ${getStatusColor(
-                      provider.status
+                      provider.status,
                     )}`}
                   >
                     {provider.status}
@@ -481,7 +481,7 @@ export default function VendorTable({
                   {(pagination.page - 1) * pagination.limit + 1}-
                   {Math.min(
                     pagination.page * pagination.limit,
-                    pagination.total
+                    pagination.total,
                   )}
                 </span>{" "}
                 of <span className={textPrimary}>{pagination.total}</span>

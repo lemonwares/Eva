@@ -1,10 +1,18 @@
 "use client";
 
-import { Eye, EyeOff, Mail, User2, Loader2, CheckCircle } from "lucide-react";
-import { useState } from "react";
+import {
+  Eye,
+  EyeOff,
+  Mail,
+  User2,
+  Loader2,
+  CheckCircle,
+  Check,
+  X,
+} from "lucide-react";
+import { useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { register, loginWithGoogle } from "@/lib/auth-client";
-// import Link from "next/link";
 
 type AccountType = "CLIENT" | "PROFESSIONAL";
 
@@ -22,10 +30,17 @@ const defaultState: FormState = {
   confirmPassword: "",
 };
 
-export default function SignUpForm() {
+export default function SignUpForm({
+  defaultType,
+}: {
+  defaultType?: "PROFESSIONAL";
+}) {
   const router = useRouter();
   const [showPassword, setShowPassword] = useState(false);
-  const [accountType, setAccountType] = useState<AccountType>("CLIENT");
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [accountType, setAccountType] = useState<AccountType>(
+    defaultType || "CLIENT",
+  );
   const [formData, setFormData] = useState<FormState>(defaultState);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -49,9 +64,16 @@ export default function SignUpForm() {
       return;
     }
 
-    // Validate password strength
+    // Validate password strength (must match server-side passwordSchema)
     if (formData.password.length < 8) {
       setError("Password must be at least 8 characters long");
+      return;
+    }
+
+    if (!/(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/.test(formData.password)) {
+      setError(
+        "Password must contain at least one uppercase letter, one lowercase letter, and one number",
+      );
       return;
     }
 
@@ -76,7 +98,7 @@ export default function SignUpForm() {
       // Redirect to verify email page after 2 seconds
       setTimeout(() => {
         router.push(
-          `/auth/verify-email?email=${encodeURIComponent(formData.email)}`
+          `/auth/verify-email?email=${encodeURIComponent(formData.email)}`,
         );
       }, 2000);
     } catch (err) {
@@ -88,7 +110,10 @@ export default function SignUpForm() {
 
   const handleGoogleSignup = async () => {
     setLoading(true);
-    await loginWithGoogle("/");
+    // Redirect vendors to onboarding, clients to home
+    await loginWithGoogle(
+      accountType === "PROFESSIONAL" ? "/vendor/onboarding" : "/",
+    );
   };
 
   if (success) {
@@ -167,7 +192,7 @@ export default function SignUpForm() {
             onChange={handleChange}
             required
             disabled={loading}
-            className="w-full rounded-xl border border-border bg-input/60 px-11 py-3 text-foreground placeholder:text-muted-foreground focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/30 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full rounded-xl border border-border bg-input/60 px-11 py-3 text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30 disabled:opacity-50 disabled:cursor-not-allowed"
           />
         </div>
       </div>
@@ -186,14 +211,16 @@ export default function SignUpForm() {
             onChange={handleChange}
             required
             disabled={loading}
-            className="w-full rounded-xl border border-border bg-input/60 px-11 py-3 text-foreground placeholder:text-muted-foreground focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/30 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full rounded-xl border border-border bg-input/60 px-11 py-3 text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30 disabled:opacity-50 disabled:cursor-not-allowed"
           />
         </div>
       </div>
 
       <PasswordFields
         showPassword={showPassword}
-        onToggle={() => setShowPassword((prev) => !prev)}
+        showConfirmPassword={showConfirmPassword}
+        onTogglePassword={() => setShowPassword((prev) => !prev)}
+        onToggleConfirmPassword={() => setShowConfirmPassword((prev) => !prev)}
         formData={formData}
         onChange={handleChange}
         disabled={loading}
@@ -210,7 +237,7 @@ export default function SignUpForm() {
       <button
         type="submit"
         disabled={loading}
-        className="w-full rounded-xl bg-linear-to-r from-primary to-accent py-3 font-semibold text-primary-foreground shadow-[0_18px_45px_rgba(233,89,146,0.25)] transition hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0 flex items-center justify-center gap-2"
+        className="w-full rounded-xl bg-primary py-3 font-semibold text-white shadow-lg transition hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0 flex items-center justify-center gap-2"
       >
         {loading ? (
           <>
@@ -231,7 +258,7 @@ export default function SignUpForm() {
         type="button"
         onClick={handleGoogleSignup}
         disabled={loading}
-        className="flex w-full items-center justify-center gap-3 rounded-xl border border-border bg-secondary/50 py-3 font-medium text-muted-foreground transition hover:border-accent/40 hover:text-foreground disabled:opacity-50 disabled:cursor-not-allowed"
+        className="flex w-full items-center justify-center gap-3 rounded-xl border border-border bg-secondary/50 py-3 font-medium text-muted-foreground transition hover:border-primary/40 hover:text-foreground disabled:opacity-50 disabled:cursor-not-allowed"
       >
         <svg className="h-5 w-5" viewBox="0 0 24 24">
           <path
@@ -279,14 +306,14 @@ function AccountTypeCard({
       type="button"
       onClick={onClick}
       disabled={disabled}
-      className={`relative flex h-full flex-col rounded-2xl border p-4 text-left transition hover:border-accent/60 disabled:opacity-50 disabled:cursor-not-allowed ${
+      className={`relative flex h-full flex-col rounded-2xl border p-4 text-left transition hover:border-primary/60 disabled:opacity-50 disabled:cursor-not-allowed ${
         selected
-          ? "border-accent bg-accent/5 shadow-[0_0_30px_rgba(16,185,129,0.2)]"
+          ? "border-primary bg-primary/5 shadow-[0_0_30px_rgba(0,151,178,0.15)]"
           : "border-border bg-transparent"
       }`}
     >
       <div className="flex items-center gap-3">
-        <div className="flex h-11 min-w-11 items-center justify-center rounded-xl bg-accent/20 text-2xl">
+        <div className="flex h-11 min-w-11 items-center justify-center rounded-xl bg-primary/20 text-2xl">
           {title === "Client" ? "🎉" : "🛠️"}
         </div>
         <div>
@@ -306,9 +333,49 @@ function AccountTypeCard({
   );
 }
 
+/* ─── Password helpers ─── */
+
+function getPasswordStrength(password: string) {
+  let score = 0;
+  if (password.length >= 8) score++;
+  if (/[A-Z]/.test(password)) score++;
+  if (/[0-9]/.test(password)) score++;
+  if (/[^A-Za-z0-9]/.test(password)) score++;
+
+  if (score <= 1) return { label: "Weak", color: "bg-red-500", width: "w-1/4" };
+  if (score === 2)
+    return { label: "Fair", color: "bg-orange-400", width: "w-2/4" };
+  if (score === 3)
+    return { label: "Good", color: "bg-yellow-400", width: "w-3/4" };
+  return { label: "Strong", color: "bg-green-500", width: "w-full" };
+}
+
+const PASSWORD_RULES = [
+  {
+    key: "length",
+    label: "At least 8 characters",
+    test: (p: string) => p.length >= 8,
+  },
+  {
+    key: "upper",
+    label: "Uppercase letter",
+    test: (p: string) => /[A-Z]/.test(p),
+  },
+  { key: "number", label: "Number", test: (p: string) => /[0-9]/.test(p) },
+  {
+    key: "special",
+    label: "Special character",
+    test: (p: string) => /[^A-Za-z0-9]/.test(p),
+  },
+] as const;
+
+/* ─── PasswordFields ─── */
+
 type PasswordFieldsProps = {
   showPassword: boolean;
-  onToggle: () => void;
+  showConfirmPassword: boolean;
+  onTogglePassword: () => void;
+  onToggleConfirmPassword: () => void;
   formData: FormState;
   onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   disabled?: boolean;
@@ -316,53 +383,113 @@ type PasswordFieldsProps = {
 
 function PasswordFields({
   showPassword,
-  onToggle,
+  showConfirmPassword,
+  onTogglePassword,
+  onToggleConfirmPassword,
   formData,
   onChange,
   disabled,
 }: PasswordFieldsProps) {
+  const strength = useMemo(
+    () => getPasswordStrength(formData.password),
+    [formData.password],
+  );
+  const showStrength = formData.password.length > 0;
+
   return (
-    <div className="grid gap-4 sm:grid-cols-2">
-      {[
-        { label: "Password", name: "password" as const },
-        { label: "Confirm password", name: "confirmPassword" as const },
-      ].map(({ label, name }) => (
-        <div key={name} className="space-y-2">
-          <label className="block text-sm font-medium text-muted-foreground">
-            {label}
-          </label>
-          <div className="relative">
-            <input
-              type={showPassword ? "text" : "password"}
-              name={name}
-              placeholder="••••••••"
-              value={formData[name]}
-              onChange={onChange}
-              required
-              minLength={8}
-              disabled={disabled}
-              className="w-full rounded-xl border border-border bg-input/60 px-4 py-3 text-foreground placeholder:text-muted-foreground focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/30 disabled:opacity-50 disabled:cursor-not-allowed"
-            />
-            {name === "confirmPassword" ? (
+    <div className="space-y-4">
+      <div className="grid gap-4 sm:grid-cols-2">
+        {[
+          {
+            label: "Password",
+            name: "password" as const,
+            visible: showPassword,
+            toggle: onTogglePassword,
+          },
+          {
+            label: "Confirm password",
+            name: "confirmPassword" as const,
+            visible: showConfirmPassword,
+            toggle: onToggleConfirmPassword,
+          },
+        ].map(({ label, name, visible, toggle }) => (
+          <div key={name} className="space-y-2">
+            <label className="block text-sm font-medium text-muted-foreground">
+              {label}
+            </label>
+            <div className="relative">
+              <input
+                type={visible ? "text" : "password"}
+                name={name}
+                placeholder="••••••••"
+                value={formData[name]}
+                onChange={onChange}
+                required
+                minLength={8}
+                disabled={disabled}
+                className="w-full rounded-xl border border-border bg-input/60 px-4 py-3 pr-12 text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30 disabled:opacity-50 disabled:cursor-not-allowed"
+              />
               <button
                 type="button"
-                onClick={onToggle}
+                onClick={toggle}
                 disabled={disabled}
                 className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors disabled:opacity-50"
               >
-                {showPassword ? (
+                {visible ? (
                   <EyeOff className="w-5 h-5" />
                 ) : (
                   <Eye className="w-5 h-5" />
                 )}
               </button>
-            ) : null}
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Strength meter */}
+      {showStrength && (
+        <div className="space-y-2">
+          <div className="flex items-center gap-2">
+            <div className="h-1.5 flex-1 rounded-full bg-secondary overflow-hidden">
+              <div
+                className={`h-full rounded-full transition-all duration-300 ${strength.color} ${strength.width}`}
+              />
+            </div>
+            <span className="text-xs font-medium text-muted-foreground w-12 text-right">
+              {strength.label}
+            </span>
+          </div>
+
+          {/* Requirements checklist */}
+          <div className="grid grid-cols-2 gap-x-4 gap-y-1">
+            {PASSWORD_RULES.map(({ key, label, test }) => {
+              const passed = test(formData.password);
+              return (
+                <div
+                  key={key}
+                  className={`flex items-center gap-1.5 text-xs transition-colors ${
+                    passed ? "text-green-600" : "text-muted-foreground"
+                  }`}
+                >
+                  {passed ? (
+                    <Check className="w-3.5 h-3.5 shrink-0" />
+                  ) : (
+                    <X className="w-3.5 h-3.5 shrink-0" />
+                  )}
+                  {label}
+                </div>
+              );
+            })}
           </div>
         </div>
-      ))}
-      <div className="sm:col-span-2 text-xs text-muted-foreground">
-        Password must be at least 8 characters long
-      </div>
+      )}
+
+      {/* Fallback hint when password not yet typed */}
+      {!showStrength && (
+        <p className="text-xs text-muted-foreground">
+          Password must be at least 8 characters long
+        </p>
+      )}
     </div>
   );
 }

@@ -140,7 +140,7 @@ function VendorsPageContent() {
         pages: data.pagination?.pages || 1,
       }));
     } catch (err) {
-      console.error("Error fetching vendors:", err);
+      logger.error("Error fetching vendors:", err);
     } finally {
       setIsLoading(false);
     }

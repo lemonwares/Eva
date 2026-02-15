@@ -26,6 +26,7 @@ import {
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { logger } from "@/lib/logger";
 
 const statusFilters = ["All", "NEW", "VIEWED", "QUOTED", "ARCHIVED"];
 
@@ -68,6 +69,7 @@ function ViewInquiryModal({
   onArchive,
   onCreateQuote,
   darkMode,
+  archiving,
 }: {
   inquiry: Inquiry | null;
   isOpen: boolean;
@@ -76,6 +78,7 @@ function ViewInquiryModal({
   onArchive: () => void;
   onCreateQuote: () => void;
   darkMode: boolean;
+  archiving?: boolean;
 }) {
   const [replyMessage, setReplyMessage] = useState("");
   const [sending, setSending] = useState(false);
@@ -130,7 +133,7 @@ function ViewInquiryModal({
           </div>
           <span
             className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusStyle(
-              inquiry.status
+              inquiry.status,
             )}`}
           >
             {inquiry.status}
@@ -252,9 +255,15 @@ function ViewInquiryModal({
             <div className="flex gap-3 mt-4">
               <button
                 onClick={onArchive}
-                className="flex items-center gap-2 px-4 py-2 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium transition-colors"
+                disabled={archiving}
+                className="flex items-center gap-2 px-4 py-2 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium transition-colors disabled:opacity-50"
               >
-                <Archive size={16} /> Archive
+                {archiving ? (
+                  <Loader2 size={16} className="animate-spin" />
+                ) : (
+                  <Archive size={16} />
+                )}{" "}
+                {archiving ? "Archiving..." : "Archive"}
               </button>
               <button
                 onClick={onCreateQuote}
@@ -267,7 +276,12 @@ function ViewInquiryModal({
                 disabled={!replyMessage.trim() || sending}
                 className="flex-1 flex items-center justify-center gap-2 px-4 py-2 rounded-lg bg-accent hover:bg-accent/90 text-white font-medium transition-colors disabled:opacity-50"
               >
-                <Send size={16} /> {sending ? "Sending..." : "Send Reply"}
+                {sending ? (
+                  <Loader2 size={16} className="animate-spin" />
+                ) : (
+                  <Send size={16} />
+                )}{" "}
+                {sending ? "Sending..." : "Send Reply"}
               </button>
             </div>
           </div>
@@ -290,7 +304,7 @@ function CreateQuoteModal({
   onSubmit: (
     items: QuoteItem[],
     validDays: number,
-    notes: string
+    notes: string,
   ) => Promise<void>;
 }) {
   const [items, setItems] = useState<QuoteItem[]>([
@@ -313,7 +327,7 @@ function CreateQuoteModal({
   const updateItem = (
     idx: number,
     field: keyof QuoteItem,
-    value: string | number
+    value: string | number,
   ) => {
     const updated = [...items];
     if (field === "name") {
@@ -367,8 +381,11 @@ function CreateQuoteModal({
           </label>
           <div className="space-y-3">
             {items.map((item, idx) => (
-              <div key={idx} className="flex gap-3 items-start">
-                <div className="flex-1">
+              <div
+                key={idx}
+                className="flex flex-col sm:flex-row gap-3 items-start"
+              >
+                <div className="flex-1 w-full">
                   <input
                     type="text"
                     value={item.name}
@@ -377,7 +394,7 @@ function CreateQuoteModal({
                     className="w-full px-3 py-2 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-accent/50 text-sm"
                   />
                 </div>
-                <div className="w-20">
+                <div className="w-full sm:w-20">
                   <input
                     type="number"
                     value={item.qty}
@@ -387,7 +404,7 @@ function CreateQuoteModal({
                     className="w-full px-3 py-2 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-accent/50 text-sm text-center"
                   />
                 </div>
-                <div className="w-28">
+                <div className="w-full sm:w-28">
                   <div className="relative">
                     <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
                       €
@@ -405,7 +422,7 @@ function CreateQuoteModal({
                     />
                   </div>
                 </div>
-                <div className="w-24 text-right">
+                <div className="w-full sm:w-24 sm:text-right">
                   <p className="py-2 font-medium">
                     {formatCurrency(item.totalPrice)}
                   </p>
@@ -500,6 +517,7 @@ function InquiriesContent() {
   const [selectedInquiry, setSelectedInquiry] = useState<Inquiry | null>(null);
   const [viewModalOpen, setViewModalOpen] = useState(false);
   const [quoteModalOpen, setQuoteModalOpen] = useState(false);
+  const [archiving, setArchiving] = useState(false);
   const [toast, setToast] = useState<{
     show: boolean;
     message: string;
@@ -533,7 +551,7 @@ function InquiriesContent() {
       const data = await response.json();
       setInquiries(data.inquiries || []);
     } catch (err) {
-      console.error("Error fetching inquiries:", err);
+      logger.error("Error fetching inquiries:", err);
     } finally {
       setIsLoading(false);
     }
@@ -543,7 +561,7 @@ function InquiriesContent() {
     setToast({ show: true, message, type });
     setTimeout(
       () => setToast({ show: false, message: "", type: "success" }),
-      3000
+      3000,
     );
   };
 
@@ -557,7 +575,7 @@ function InquiriesContent() {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ text: message }),
-        }
+        },
       );
 
       if (response.ok) {
@@ -576,6 +594,7 @@ function InquiriesContent() {
 
   async function handleArchive() {
     if (!selectedInquiry) return;
+    setArchiving(true);
 
     try {
       const response = await fetch(`/api/inquiries/${selectedInquiry.id}`, {
@@ -593,13 +612,15 @@ function InquiriesContent() {
       }
     } catch (err) {
       showToast("An error occurred", "error");
+    } finally {
+      setArchiving(false);
     }
   }
 
   async function handleCreateQuote(
     items: QuoteItem[],
     validDays: number,
-    notes: string
+    notes: string,
   ) {
     if (!selectedInquiry) return;
 
@@ -648,7 +669,7 @@ function InquiriesContent() {
     (inquiry) =>
       inquiry.fromName.toLowerCase().includes(searchQuery.toLowerCase()) ||
       inquiry.message.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      inquiry.fromEmail.toLowerCase().includes(searchQuery.toLowerCase())
+      inquiry.fromEmail.toLowerCase().includes(searchQuery.toLowerCase()),
   );
 
   const getInitials = (name: string) => {
@@ -662,7 +683,7 @@ function InquiriesContent() {
 
   const getInitialsColor = (name: string) => {
     const colors = [
-      "from-orange-400 to-pink-500",
+      "from-teal-400 to-cyan-500",
       "from-blue-400 to-blue-600",
       "from-green-400 to-teal-500",
       "from-purple-400 to-purple-600",
@@ -799,7 +820,7 @@ function InquiriesContent() {
                   <div className="flex items-center gap-3">
                     <div
                       className={`w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-linear-to-br ${getInitialsColor(
-                        inquiry.fromName
+                        inquiry.fromName,
                       )} flex items-center justify-center text-white font-bold text-sm`}
                     >
                       {getInitials(inquiry.fromName)}
@@ -815,7 +836,7 @@ function InquiriesContent() {
                   </div>
                   <span
                     className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusStyle(
-                      inquiry.status
+                      inquiry.status,
                     )}`}
                   >
                     {inquiry.status}
@@ -917,6 +938,7 @@ function InquiriesContent() {
           setQuoteModalOpen(true);
         }}
         darkMode={darkMode}
+        archiving={archiving}
       />
 
       {/* Create Quote Modal */}

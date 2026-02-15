@@ -16,7 +16,7 @@ const inquiries = [
   {
     id: 1,
     initials: "AC",
-    initialsColor: "bg-gradient-to-br from-orange-400 to-pink-500",
+    initialsColor: "bg-gradient-to-br from-accent to-teal-600",
     name: "Amelia Chen",
     receivedTime: "2 hours ago",
     status: "New",
@@ -47,7 +47,7 @@ export default function VendorInquiries() {
   const getStatusStyle = (status: string) => {
     switch (status) {
       case "New":
-        return "text-pink-400";
+        return "text-accent";
       case "Replied":
         return "text-gray-500 bg-gray-800 px-3 py-1 rounded-full text-xs";
       default:

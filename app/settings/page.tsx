@@ -5,6 +5,7 @@ import { useSession, signOut } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import Header from "@/components/common/Header";
 import Footer from "@/components/common/Footer";
+import SignOutModal from "@/components/modals/sign-out-modal";
 import {
   User,
   Shield,
@@ -19,6 +20,7 @@ import {
   LogOut,
 } from "lucide-react";
 import Link from "next/link";
+import { logger } from "@/lib/logger";
 
 type SettingsTab = "account" | "security" | "notifications";
 
@@ -30,6 +32,10 @@ export default function SettingsPage() {
   const [isSaving, setIsSaving] = useState(false);
   const [showCurrentPassword, setShowCurrentPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [deletePassword, setDeletePassword] = useState("");
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [showDeletePassword, setShowDeletePassword] = useState(false);
   const [toast, setToast] = useState<{
     show: boolean;
     message: string;
@@ -67,7 +73,7 @@ export default function SettingsPage() {
     setToast({ show: true, message, type });
     setTimeout(
       () => setToast({ show: false, message: "", type: "success" }),
-      3000
+      3000,
     );
   };
 
@@ -81,7 +87,7 @@ export default function SettingsPage() {
         setPhone(data.user.phone || "");
       }
     } catch (error) {
-      console.error("Error fetching profile:", error);
+      logger.error("Error fetching profile:", error);
     } finally {
       setIsLoading(false);
     }
@@ -111,7 +117,7 @@ export default function SettingsPage() {
         showToast(error.message || "Failed to update account", "error");
       }
     } catch (error) {
-      console.error("Error updating account:", error);
+      logger.error("Error updating account:", error);
       showToast("Failed to update account", "error");
     } finally {
       setIsSaving(false);
@@ -153,14 +159,21 @@ export default function SettingsPage() {
         showToast(error.message || "Failed to change password", "error");
       }
     } catch (error) {
-      console.error("Error changing password:", error);
+      logger.error("Error changing password:", error);
       showToast("Failed to change password", "error");
     } finally {
       setIsSaving(false);
     }
   };
 
-  const handleSignOut = async () => {
+  const [isSignOutModalOpen, setIsSignOutModalOpen] = useState(false);
+
+  const handleSignOut = () => {
+    setIsSignOutModalOpen(true);
+  };
+
+  const confirmSignOut = async () => {
+    setIsSignOutModalOpen(false);
     await signOut({ callbackUrl: "/" });
   };
 
@@ -434,10 +447,120 @@ export default function SettingsPage() {
                         Once you delete your account, there is no going back.
                         Please be certain.
                       </p>
-                      <button className="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-destructive text-destructive hover:bg-destructive/10 transition-colors">
+                      <button
+                        onClick={() => setShowDeleteModal(true)}
+                        className="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-destructive text-destructive hover:bg-destructive/10 transition-colors"
+                      >
                         <Trash2 size={16} />
                         Delete Account
                       </button>
+
+                      {/* Delete Account Confirmation Modal */}
+                      {showDeleteModal && (
+                        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+                          <div className="w-full max-w-md mx-4 rounded-2xl border border-border bg-card p-6 shadow-xl">
+                            <h3 className="text-lg font-semibold text-destructive mb-2">
+                              Delete Your Account?
+                            </h3>
+                            <p className="text-sm text-muted-foreground mb-4">
+                              This action is{" "}
+                              <strong>permanent and irreversible</strong>. All
+                              your data, bookings, reviews, and provider
+                              profiles will be deleted.
+                            </p>
+                            <label className="block text-sm font-medium text-foreground mb-1">
+                              Enter your password to confirm
+                            </label>
+                            <div className="relative mb-4">
+                              <input
+                                type={showDeletePassword ? "text" : "password"}
+                                value={deletePassword}
+                                onChange={(e) =>
+                                  setDeletePassword(e.target.value)
+                                }
+                                placeholder="Your current password"
+                                className="w-full rounded-lg border border-border bg-background px-3 py-2 pr-10 text-sm focus:outline-none focus:ring-2 focus:ring-accent"
+                              />
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  setShowDeletePassword(!showDeletePassword)
+                                }
+                                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                              >
+                                {showDeletePassword ? (
+                                  <EyeOff size={16} />
+                                ) : (
+                                  <Eye size={16} />
+                                )}
+                              </button>
+                            </div>
+                            <div className="flex items-center gap-3 justify-end">
+                              <button
+                                onClick={() => {
+                                  setShowDeleteModal(false);
+                                  setDeletePassword("");
+                                }}
+                                className="px-4 py-2 rounded-lg text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
+                              >
+                                Cancel
+                              </button>
+                              <button
+                                disabled={!deletePassword || isDeleting}
+                                onClick={async () => {
+                                  setIsDeleting(true);
+                                  try {
+                                    const res = await fetch(
+                                      "/api/auth/delete-account",
+                                      {
+                                        method: "DELETE",
+                                        headers: {
+                                          "Content-Type": "application/json",
+                                        },
+                                        body: JSON.stringify({
+                                          password: deletePassword,
+                                        }),
+                                      },
+                                    );
+                                    const data = await res.json();
+                                    if (!res.ok) {
+                                      setToast({
+                                        show: true,
+                                        message:
+                                          data.message ||
+                                          "Failed to delete account",
+                                        type: "error",
+                                      });
+                                      return;
+                                    }
+                                    // Sign out and redirect to home
+                                    await signOut({ callbackUrl: "/" });
+                                  } catch {
+                                    setToast({
+                                      show: true,
+                                      message:
+                                        "An error occurred. Please try again.",
+                                      type: "error",
+                                    });
+                                  } finally {
+                                    setIsDeleting(false);
+                                    setShowDeleteModal(false);
+                                    setDeletePassword("");
+                                  }
+                                }}
+                                className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-destructive text-white text-sm font-medium hover:bg-destructive/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                              >
+                                {isDeleting ? (
+                                  <Loader2 size={16} className="animate-spin" />
+                                ) : (
+                                  <Trash2 size={16} />
+                                )}
+                                Permanently Delete
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      )}
                     </div>
                   </div>
                 )}
@@ -552,6 +675,12 @@ export default function SettingsPage() {
         </div>
       </main>
       <Footer />
+
+      <SignOutModal
+        isOpen={isSignOutModalOpen}
+        onClose={() => setIsSignOutModalOpen(false)}
+        onConfirm={confirmSignOut}
+      />
     </>
   );
 }

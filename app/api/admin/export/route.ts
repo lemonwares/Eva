@@ -111,7 +111,7 @@ export async function POST(request: NextRequest) {
       exportedAt: new Date().toISOString(),
     });
   } catch (error: any) {
-    console.error("Error exporting data:", error);
+    logger.error("Error exporting data:", error);
     return NextResponse.json(
       { message: "Internal server error" },
       { status: 500 }

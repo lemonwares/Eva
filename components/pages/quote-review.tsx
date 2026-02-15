@@ -41,26 +41,22 @@ function QuoteContent({ quoteId }: { quoteId: string }) {
 
   useEffect(() => {
     if (!quoteId) {
-      console.log("No quote ID provided");
       router.push("/dashboard/quotes");
       return;
     }
 
     const fetchQuote = async () => {
       try {
-        console.log("Fetching quote with ID:", quoteId);
         const response = await fetch(`/api/quotes/${quoteId}`);
-        console.log("Response status:", response.status);
         if (!response.ok) {
           const errorData = await response.json();
-          console.error("API error:", errorData);
+          logger.error("API error:", errorData);
           throw new Error(errorData.message || "Failed to fetch quote");
         }
         const data = await response.json();
-        console.log("Quote data received:", data);
         setQuote(data.quote || data);
       } catch (error) {
-        console.error("Error fetching quote:", error);
+        logger.error("Error fetching quote:", error);
       } finally {
         setLoading(false);
       }
@@ -187,7 +183,7 @@ function QuoteContent({ quoteId }: { quoteId: string }) {
 
             {/* Vendor Info */}
             <div className="flex items-center gap-3 sm:gap-4 mb-4 sm:mb-6">
-              <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-linear-to-br from-purple-400 to-pink-400 shrink-0" />
+              <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-linear-to-br from-accent to-teal-600 shrink-0" />
               <div>
                 <p className="font-bold text-base sm:text-lg">
                   {quote.provider.businessName}

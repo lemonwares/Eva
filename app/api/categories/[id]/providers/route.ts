@@ -113,7 +113,7 @@ export async function GET(
       },
     });
   } catch (error: any) {
-    console.error("Error fetching category providers:", error);
+    logger.error("Error fetching category providers:", error);
     return NextResponse.json(
       { message: "Internal server error" },
       { status: 500 }

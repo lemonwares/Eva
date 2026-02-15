@@ -3,7 +3,10 @@
 import { Menu, Search, Bell, User } from "lucide-react";
 import { useAdminTheme } from "./AdminThemeContext";
 import Link from "next/link";
+import Image from "next/image";
 import { useState, useEffect } from "react";
+import { useSession } from "next-auth/react";
+import { logger } from "@/lib/logger";
 
 interface AdminHeaderProps {
   title: string;
@@ -36,7 +39,26 @@ export default function AdminHeader({
     inputBorder,
   } = useAdminTheme();
 
+  const { data: session } = useSession();
+  const userName = session?.user?.name || "Admin User";
+  const userInitial = userName?.charAt(0).toUpperCase() || "A";
+
+  const [userImage, setUserImage] = useState<string | null>(null);
   const [unreadCount, setUnreadCount] = useState(0);
+
+  useEffect(() => {
+    // Fetch fresh avatar from database (session JWT may be stale)
+    const fetchProfile = async () => {
+      try {
+        const res = await fetch("/api/auth/me");
+        if (res.ok) {
+          const data = await res.json();
+          setUserImage(data.user?.avatar || null);
+        }
+      } catch {}
+    };
+    fetchProfile();
+  }, []);
 
   useEffect(() => {
     const fetchUnreadCount = async () => {
@@ -47,7 +69,7 @@ export default function AdminHeader({
           setUnreadCount(data.unreadCount || 0);
         }
       } catch (err) {
-        console.error("Error fetching notification count:", err);
+        logger.error("Error fetching notification count:", err);
       }
     };
 
@@ -123,11 +145,23 @@ export default function AdminHeader({
             href="/admin/settings"
             className="hidden sm:flex items-center gap-3 hover:opacity-80 transition-opacity"
           >
-            <div className="w-9 h-9 rounded-full bg-linear-to-br from-blue-400 to-blue-600 flex items-center justify-center">
-              <span className="text-white font-semibold text-sm">A</span>
-            </div>
+            {userImage ? (
+              <Image
+                src={userImage}
+                alt={userName}
+                width={36}
+                height={36}
+                className="w-9 h-9 rounded-full object-cover"
+              />
+            ) : (
+              <div className="w-9 h-9 rounded-full bg-linear-to-br from-blue-400 to-blue-600 flex items-center justify-center">
+                <span className="text-white font-semibold text-sm">
+                  {userInitial}
+                </span>
+              </div>
+            )}
             <div className="hidden lg:block">
-              <p className={`font-medium text-sm ${textPrimary}`}>Admin User</p>
+              <p className={`font-medium text-sm ${textPrimary}`}>{userName}</p>
               <p className="text-gray-500 text-xs">Administrator</p>
             </div>
           </Link>

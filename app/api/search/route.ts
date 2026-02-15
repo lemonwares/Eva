@@ -1,5 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import {
+  checkRateLimit,
+  getRateLimitIdentifier,
+  rateLimitResponse,
+  rateLimitPresets,
+} from "@/lib/rate-limit";
 
 // Helper: Haversine formula for distance in km
 function getDistanceKm(lat1: number, lng1: number, lat2: number, lng2: number) {
@@ -28,7 +34,7 @@ function milesToKm(miles: number): number {
 
 // Helper: Resolve category aliases/sub-tags to actual category slugs
 async function resolveCategoryAliases(
-  searchTerms: string[]
+  searchTerms: string[],
 ): Promise<{ categoryMatch: string; relevanceBoost: number }[]> {
   if (searchTerms.length === 0) return [];
 
@@ -71,6 +77,14 @@ async function resolveCategoryAliases(
 // - Category alias/sub-tag resolution (new)
 export async function GET(request: NextRequest) {
   try {
+    // Rate limit: 100 requests per minute
+    const identifier = getRateLimitIdentifier(request);
+    const rateCheck = checkRateLimit(
+      `search:${identifier}`,
+      rateLimitPresets.search,
+    );
+    if (!rateCheck.success) return rateLimitResponse(rateCheck);
+
     const searchParams = request.nextUrl.searchParams;
 
     // Existing parameters (maintain backward compatibility)
@@ -101,7 +115,14 @@ export async function GET(request: NextRequest) {
     let searchLng: number | null = null;
     let geocodedCity: string | null = null;
 
-    if (postcode) {
+    // Check for direct coordinates first
+    const lat = searchParams.get("lat");
+    const lng = searchParams.get("lng");
+
+    if (lat && lng) {
+      searchLat = parseFloat(lat);
+      searchLng = parseFloat(lng);
+    } else if (postcode) {
       // Check cache first
       const cached = await prisma.postcodeCache.findUnique({
         where: { postcode: postcode.toUpperCase().replace(/\s/g, "") },
@@ -114,13 +135,13 @@ export async function GET(request: NextRequest) {
       } else {
         const geoRes = await fetch(
           `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(
-            postcode
+            postcode,
           )}&countrycodes=gb`,
           {
             headers: {
               "User-Agent": "EVA-EventVendorApp/1.0",
             },
-          }
+          },
         );
         const geoData = await geoRes.json();
         if (geoData && geoData.length > 0) {
@@ -241,8 +262,8 @@ export async function GET(request: NextRequest) {
           sort === "rating"
             ? { averageRating: "desc" }
             : sort === "price"
-            ? { priceFrom: "asc" }
-            : { createdAt: "desc" },
+              ? { priceFrom: "asc" }
+              : { createdAt: "desc" },
       });
 
       // Fetch categories for relevance boosting
@@ -250,7 +271,7 @@ export async function GET(request: NextRequest) {
         select: { slug: true, subTags: true },
       });
     } catch (dbError: any) {
-      console.error("Database error in search API:", dbError);
+      logger.error("Database error in search API:", dbError);
 
       // Fallback: try without the new fields if they don't exist
       const fallbackFilters: any = { ...filters };
@@ -259,7 +280,7 @@ export async function GET(request: NextRequest) {
       if (fallbackFilters.slug) delete fallbackFilters.slug;
       if (fallbackFilters.OR) {
         fallbackFilters.OR = fallbackFilters.OR.filter(
-          (condition: any) => !condition.tags && !condition.slug
+          (condition: any) => !condition.tags && !condition.slug,
         );
         if (fallbackFilters.OR.length === 0) delete fallbackFilters.OR;
       }
@@ -271,12 +292,12 @@ export async function GET(request: NextRequest) {
           sort === "rating"
             ? { averageRating: "desc" }
             : sort === "price"
-            ? { priceFrom: "asc" }
-            : { createdAt: "desc" },
+              ? { priceFrom: "asc" }
+              : { createdAt: "desc" },
       });
     }
 
-    // Apply distance filtering based on search mode
+    // Apply distance filtering/marking based on search mode
     if (searchLat !== null && searchLng !== null) {
       const userRadiusMiles = Number(radius);
       const userRadiusKm = milesToKm(userRadiusMiles);
@@ -284,38 +305,40 @@ export async function GET(request: NextRequest) {
       providers = providers
         .map((p) => {
           if (p.geoLat === null || p.geoLng === null) {
-            return null; // Exclude providers without coordinates
+            return {
+              ...p,
+              distance: null,
+              distanceKm: null,
+              isWithinRadius: false,
+              relevanceBoost: 1,
+            };
           }
 
           const distanceKm = getDistanceKm(
             searchLat!,
             searchLng!,
             p.geoLat,
-            p.geoLng
+            p.geoLng,
           );
           const distanceMiles = kmToMiles(distanceKm);
           const vendorRadiusMiles = p.serviceRadiusMiles || 0;
-          const vendorRadiusKm = milesToKm(vendorRadiusMiles);
 
           // Mode A: User is within X miles of vendor's location
           const modeAMatch = distanceKm <= userRadiusKm;
 
           // Mode B: Vendor's service radius covers user's location
-          const modeBMatch = distanceKm <= vendorRadiusKm;
+          const modeBMatch = distanceKm <= milesToKm(vendorRadiusMiles);
 
-          let isMatch = false;
+          let isWithinRadius = false;
           if (searchMode === "modeA") {
-            isMatch = modeAMatch;
+            isWithinRadius = modeAMatch;
           } else if (searchMode === "modeB") {
-            isMatch = modeBMatch;
+            isWithinRadius = modeBMatch;
           } else {
-            // "both" - include if either mode matches
-            isMatch = modeAMatch || modeBMatch;
+            isWithinRadius = modeAMatch || modeBMatch;
           }
 
-          if (!isMatch) return null;
-
-          // Calculate relevance boost based on category sub-tag intersection
+          // Relevance boost logic (keep existing)
           let relevanceBoost = 1;
           if (
             categories.length > 0 &&
@@ -324,18 +347,17 @@ export async function GET(request: NextRequest) {
           ) {
             for (const providerCat of p.categories) {
               const categoryData = categories.find(
-                (c) => c.slug === providerCat
+                (c) => c.slug === providerCat,
               );
               if (categoryData && p.tags && p.tags.length > 0) {
-                // Check if any provider tag matches category sub-tag
                 const matchingSubTags = p.tags.filter((tag: string) =>
                   categoryData.subTags.some(
                     (subTag: string) =>
-                      subTag.toLowerCase() === tag.toLowerCase()
-                  )
+                      subTag.toLowerCase() === tag.toLowerCase(),
+                  ),
                 );
                 if (matchingSubTags.length > 0) {
-                  relevanceBoost += matchingSubTags.length * 0.5; // +0.5 per matching sub-tag
+                  relevanceBoost += matchingSubTags.length * 0.5;
                 }
               }
             }
@@ -343,29 +365,32 @@ export async function GET(request: NextRequest) {
 
           return {
             ...p,
-            distance: Math.round(distanceMiles * 10) / 10, // Round to 1 decimal
+            distance: Math.round(distanceMiles * 10) / 10,
             distanceKm: Math.round(distanceKm * 10) / 10,
-            matchMode:
-              modeAMatch && modeBMatch
-                ? "both"
-                : modeAMatch
-                ? "modeA"
-                : "modeB",
+            isWithinRadius,
             relevanceBoost,
           };
         })
-        .filter((p): p is NonNullable<typeof p> => p !== null)
         .sort((a, b) => {
-          // Sort by relevance boost if sort=relevance
+          // 1. First prioritize results within radius
+          if (a.isWithinRadius && !b.isWithinRadius) return -1;
+          if (!a.isWithinRadius && b.isWithinRadius) return 1;
+
+          // 2. Then by relevance boost if requested
           if (sort === "relevance") {
             if (b.relevanceBoost !== a.relevanceBoost) {
               return b.relevanceBoost - a.relevanceBoost;
             }
-            // If relevance is equal, sort by distance
+          }
+
+          // 3. Finally by distance (if both are within radius or both outside)
+          if (a.distance !== null && b.distance !== null) {
             return a.distance - b.distance;
           }
-          // Default: sort by distance
-          return a.distance - b.distance;
+          if (a.distance !== null) return -1;
+          if (b.distance !== null) return 1;
+
+          return 0;
         });
     }
 
@@ -420,15 +445,15 @@ export async function GET(request: NextRequest) {
           hasMore: totalResults > skip + take,
         },
       },
-      { status: 200 }
+      { status: 200 },
     );
   } catch (error: unknown) {
     const errorMessage =
       error instanceof Error ? error.message : "Unknown error";
-    console.error(`Search error: ${errorMessage}`);
+    logger.error(`Search error: ${errorMessage}`);
     return NextResponse.json(
       { message: "Internal server error" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

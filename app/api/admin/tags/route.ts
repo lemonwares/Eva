@@ -45,7 +45,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json(tags);
   } catch (error: any) {
-    console.error("Error fetching tags:", error);
+    logger.error("Error fetching tags:", error);
     return NextResponse.json(
       { message: "Internal server error" },
       { status: 500 }
@@ -90,7 +90,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json(tag, { status: 201 });
   } catch (error: any) {
-    console.error("Error creating tag:", error);
+    logger.error("Error creating tag:", error);
     return NextResponse.json(
       { message: "Internal server error" },
       { status: 500 }

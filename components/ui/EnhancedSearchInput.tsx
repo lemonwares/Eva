@@ -41,7 +41,7 @@ export default function EnhancedSearchInput({
             setSlugValidation(data);
           }
         } catch (err) {
-          console.error("Slug validation error:", err);
+          logger.error("Slug validation error:", err);
         } finally {
           setValidating(false);
         }

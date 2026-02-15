@@ -3,6 +3,7 @@
 import VendorLayout from "@/components/vendor/VendorLayout";
 import { useVendorTheme } from "@/components/vendor/VendorThemeContext";
 import { Modal } from "@/components/ui/Modal";
+import Image from "next/image";
 import {
   Star,
   MessageSquare,
@@ -159,8 +160,8 @@ export default function VendorReviewsPage() {
                 providerReply: replyContent,
                 providerRepliedAt: new Date().toISOString(),
               }
-            : r
-        )
+            : r,
+        ),
       );
 
       setReplyModalOpen(false);
@@ -183,8 +184,8 @@ export default function VendorReviewsPage() {
               star <= rating
                 ? "fill-amber-400 text-amber-400"
                 : darkMode
-                ? "text-gray-600"
-                : "text-gray-300"
+                  ? "text-gray-600"
+                  : "text-gray-300"
             }`}
           />
         ))}
@@ -303,7 +304,7 @@ export default function VendorReviewsPage() {
                   setStatusFilter(e.target.value);
                   setPage(1);
                 }}
-                className={`w-full px-3 py-2 rounded-lg ${inputBg} border ${inputBorder} ${textPrimary} focus:outline-none focus:ring-2 focus:ring-rose-500`}
+                className={`w-full px-3 py-2 rounded-lg ${inputBg} border ${inputBorder} ${textPrimary} focus:outline-none focus:ring-2 focus:ring-accent`}
               >
                 <option value="all">All Reviews</option>
                 <option value="pending">Pending Approval</option>
@@ -325,7 +326,7 @@ export default function VendorReviewsPage() {
                   setRatingFilter(e.target.value);
                   setPage(1);
                 }}
-                className={`w-full px-3 py-2 rounded-lg ${inputBg} border ${inputBorder} ${textPrimary} focus:outline-none focus:ring-2 focus:ring-rose-500`}
+                className={`w-full px-3 py-2 rounded-lg ${inputBg} border ${inputBorder} ${textPrimary} focus:outline-none focus:ring-2 focus:ring-accent`}
               >
                 <option value="">All Ratings</option>
                 <option value="5">5 Stars</option>
@@ -349,7 +350,7 @@ export default function VendorReviewsPage() {
                   setSortBy(e.target.value);
                   setPage(1);
                 }}
-                className={`w-full px-3 py-2 rounded-lg ${inputBg} border ${inputBorder} ${textPrimary} focus:outline-none focus:ring-2 focus:ring-rose-500`}
+                className={`w-full px-3 py-2 rounded-lg ${inputBg} border ${inputBorder} ${textPrimary} focus:outline-none focus:ring-2 focus:ring-accent`}
               >
                 <option value="newest">Newest First</option>
                 <option value="oldest">Oldest First</option>
@@ -363,7 +364,7 @@ export default function VendorReviewsPage() {
         {/* Reviews List */}
         {loading ? (
           <div className="flex items-center justify-center py-12">
-            <Loader2 className="w-8 h-8 animate-spin text-rose-500" />
+            <Loader2 className="w-8 h-8 animate-spin text-accent" />
           </div>
         ) : error ? (
           <div
@@ -372,7 +373,7 @@ export default function VendorReviewsPage() {
             <p className="text-red-500">{error}</p>
             <button
               onClick={fetchReviews}
-              className="mt-4 px-4 py-2 bg-rose-500 text-white rounded-lg hover:bg-rose-600"
+              className="mt-4 px-4 py-2 bg-accent text-white rounded-lg hover:bg-accent/90"
             >
               Try Again
             </button>
@@ -408,10 +409,13 @@ export default function VendorReviewsPage() {
                         } shrink-0 overflow-hidden flex items-center justify-center`}
                       >
                         {review.authorImage ? (
-                          <img
+                          <Image
                             src={review.authorImage}
                             alt=""
+                            width={48}
+                            height={48}
                             className="w-full h-full object-cover"
+                            unoptimized
                           />
                         ) : (
                           <User className={`w-6 h-6 ${textMuted}`} />
@@ -465,10 +469,13 @@ export default function VendorReviewsPage() {
                           }}
                           className="shrink-0"
                         >
-                          <img
+                          <Image
                             src={photo}
                             alt={`Review photo ${idx + 1}`}
-                            className="w-20 h-20 object-cover rounded-lg hover:opacity-80 transition-opacity"
+                            width={80}
+                            height={80}
+                            className="object-cover rounded-lg hover:opacity-80 transition-opacity"
+                            unoptimized
                           />
                         </button>
                       ))}
@@ -483,7 +490,7 @@ export default function VendorReviewsPage() {
                       }`}
                     >
                       <div className="flex items-center gap-2 mb-2">
-                        <MessageSquare className="w-4 h-4 text-rose-500" />
+                        <MessageSquare className="w-4 h-4 text-accent" />
                         <span className={`font-medium ${textPrimary}`}>
                           Your Response
                         </span>
@@ -508,7 +515,7 @@ export default function VendorReviewsPage() {
                               } ${textSecondary} hover:${
                                 darkMode ? "bg-gray-700" : "bg-gray-200"
                               }`
-                            : "bg-rose-500 text-white hover:bg-rose-600"
+                            : "bg-accent text-white hover:bg-accent/90"
                         }`}
                       >
                         <MessageSquare className="w-4 h-4" />
@@ -537,7 +544,7 @@ export default function VendorReviewsPage() {
                 className={`p-2 rounded-lg ${cardBg} border ${cardBorder} ${
                   page <= 1
                     ? "opacity-50 cursor-not-allowed"
-                    : "hover:bg-rose-500/10"
+                    : "hover:bg-accent/10"
                 } ${textPrimary}`}
               >
                 <ChevronLeft className="w-5 h-5" />
@@ -548,7 +555,7 @@ export default function VendorReviewsPage() {
                 className={`p-2 rounded-lg ${cardBg} border ${cardBorder} ${
                   page >= pagination.pages
                     ? "opacity-50 cursor-not-allowed"
-                    : "hover:bg-rose-500/10"
+                    : "hover:bg-accent/10"
                 } ${textPrimary}`}
               >
                 <ChevronRight className="w-5 h-5" />
@@ -614,7 +621,7 @@ export default function VendorReviewsPage() {
                     onChange={(e) => setReplyContent(e.target.value)}
                     placeholder="Write a professional response to this review..."
                     rows={5}
-                    className={`w-full px-4 py-3 rounded-lg ${inputBg} border ${inputBorder} ${textPrimary} focus:outline-none focus:ring-2 focus:ring-rose-500 resize-none`}
+                    className={`w-full px-4 py-3 rounded-lg ${inputBg} border ${inputBorder} ${textPrimary} focus:outline-none focus:ring-2 focus:ring-accent resize-none`}
                   />
                   <p className={`text-sm ${textMuted} mt-1`}>
                     {replyContent.length}/2000 characters (min 10)
@@ -655,7 +662,7 @@ export default function VendorReviewsPage() {
                   <button
                     onClick={submitReply}
                     disabled={replying || replyContent.length < 10}
-                    className={`flex-1 px-4 py-3 rounded-lg bg-rose-500 text-white hover:bg-rose-600 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2`}
+                    className={`flex-1 px-4 py-3 rounded-lg bg-accent text-white hover:bg-accent/90 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2`}
                   >
                     {replying ? (
                       <Loader2 className="w-5 h-5 animate-spin" />
@@ -681,10 +688,13 @@ export default function VendorReviewsPage() {
             >
               <X className="w-5 h-5" />
             </button>
-            <img
+            <Image
               src={selectedPhoto}
               alt="Review photo"
+              width={1200}
+              height={800}
               className="w-full max-h-[80vh] object-contain rounded-lg"
+              unoptimized
             />
           </div>
         </Modal>

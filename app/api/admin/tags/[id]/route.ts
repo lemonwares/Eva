@@ -68,7 +68,7 @@ export async function PATCH(
     if (error.code === "P2025") {
       return NextResponse.json({ message: "Tag not found" }, { status: 404 });
     }
-    console.error("Error updating tag:", error);
+    logger.error("Error updating tag:", error);
     return NextResponse.json(
       { message: "Internal server error" },
       { status: 500 }
@@ -98,7 +98,7 @@ export async function DELETE(
     if (error.code === "P2025") {
       return NextResponse.json({ message: "Tag not found" }, { status: 404 });
     }
-    console.error("Error deleting tag:", error);
+    logger.error("Error deleting tag:", error);
     return NextResponse.json(
       { message: "Internal server error" },
       { status: 500 }
