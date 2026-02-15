@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { useDashboardTheme } from "../layout";
+import { useDashboardTheme } from "@/components/dashboard/DashboardThemeContext";
 import { useSession } from "next-auth/react";
 import { formatCurrency, formatDate } from "@/lib/formatters";
 import { FileText, X, CheckCircle, XCircle, Lock, Loader2 } from "lucide-react";

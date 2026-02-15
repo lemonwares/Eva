@@ -25,7 +25,7 @@ import {
   ChevronUp,
   ExternalLink,
 } from "lucide-react";
-import { useDashboardTheme } from "../../layout";
+import { useDashboardTheme } from "@/components/dashboard/DashboardThemeContext";
 import { formatCurrency, formatDate, formatDateTime } from "@/lib/formatters";
 import { logger } from "@/lib/logger";
 
