@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { useDashboardTheme } from "../layout";
+import { useDashboardTheme } from "@/components/dashboard/DashboardThemeContext";
 import ConfirmDeleteModal from "@/components/modals/confirm-delete-modal";
 import {
   Search,

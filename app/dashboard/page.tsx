@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
 import Link from "next/link";
 import Image from "next/image";
-import { useDashboardTheme } from "./layout";
+import { useDashboardTheme } from "@/components/dashboard/DashboardThemeContext";
 import { formatCurrency, formatDate } from "@/lib/formatters";
 import {
   CalendarDays,

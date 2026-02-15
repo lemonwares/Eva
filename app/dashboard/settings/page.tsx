@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useSession } from "next-auth/react";
 import Image from "next/image";
-import { useDashboardTheme } from "../layout";
+import { useDashboardTheme } from "@/components/dashboard/DashboardThemeContext";
 import {
   User,
   Shield,

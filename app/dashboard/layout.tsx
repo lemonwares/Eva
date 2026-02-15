@@ -2,9 +2,6 @@ import { auth } from "@/auth";
 import { redirect } from "next/navigation";
 import DashboardShell from "./DashboardShell";
 
-// Re-export the hook for convenience (used by dashboard sub-pages)
-export { useDashboardTheme } from "@/components/dashboard/DashboardThemeContext";
-
 export default async function DashboardLayout({
   children,
 }: {
