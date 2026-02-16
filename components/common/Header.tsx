@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { useState, useRef, useEffect, useMemo } from "react";
 import { Menu, X, ArrowUpRight } from "lucide-react";
 import { useSession, signOut } from "next-auth/react";
+import { motion, AnimatePresence } from "framer-motion";
 
 import DesktopNav from "./header/DesktopNav";
 import UserDropdown from "./header/UserDropdown";
@@ -171,25 +172,48 @@ export default function Header() {
 
             {/* Mobile hamburger */}
             <button
-              className="md:hidden rounded-full border border-border p-2 text-foreground hover:border-primary hover:text-primary transition-colors"
+              className="md:hidden relative rounded-full border border-border p-2 text-foreground hover:border-primary hover:text-primary transition-all duration-300 active:scale-95"
               onClick={() => setIsMenuOpen((prev) => !prev)}
               aria-label="Toggle navigation"
             >
-              {isMenuOpen ? <X size={20} /> : <Menu size={20} />}
+              <div className="relative w-5 h-5">
+                <motion.div
+                  initial={false}
+                  animate={{ 
+                    rotate: isMenuOpen ? 90 : 0,
+                    opacity: isMenuOpen ? 0 : 1 
+                  }}
+                  className="absolute inset-0 flex items-center justify-center"
+                >
+                  <Menu size={20} />
+                </motion.div>
+                <motion.div
+                  initial={false}
+                  animate={{ 
+                    rotate: isMenuOpen ? 0 : -90,
+                    opacity: isMenuOpen ? 1 : 0 
+                  }}
+                  className="absolute inset-0 flex items-center justify-center"
+                >
+                  <X size={20} />
+                </motion.div>
+              </div>
             </button>
           </div>
 
           {/* Mobile Menu */}
-          {isMenuOpen && (
-            <MobileMenu
-              session={enrichedSession}
-              isLoading={isLoading}
-              dashboardUrl={dashboardUrl}
-              onClose={() => setIsMenuOpen(false)}
-              onSignOut={handleSignOut}
-              onSearch={handleSearch}
-            />
-          )}
+          <AnimatePresence>
+            {isMenuOpen && (
+              <MobileMenu
+                session={enrichedSession}
+                isLoading={isLoading}
+                dashboardUrl={dashboardUrl}
+                onClose={() => setIsMenuOpen(false)}
+                onSignOut={handleSignOut}
+                onSearch={handleSearch}
+              />
+            )}
+          </AnimatePresence>
         </nav>
       </header>
     </>

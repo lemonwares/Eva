@@ -42,7 +42,7 @@ export default function SearchModeToggle({
 }: SearchModeToggleProps) {
   return (
     <div
-      className={`flex border border-border rounded-lg overflow-hidden bg-background ${className}`}
+      className={`flex p-1.5 bg-muted/40 backdrop-blur-sm rounded-2xl gap-1 overflow-x-auto no-scrollbar border border-border/50 ${className}`}
     >
       {searchModes.map((mode) => {
         const Icon = mode.icon;
@@ -53,15 +53,18 @@ export default function SearchModeToggle({
             key={mode.value}
             type="button"
             onClick={() => onChange(mode.value)}
-            className={`flex items-center gap-2 px-3 py-2 text-sm font-medium transition-colors ${
+            className={`relative flex items-center justify-center gap-2 px-4 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition-all duration-300 ${
               isActive
-                ? "bg-accent text-accent-foreground"
-                : "text-muted-foreground hover:text-foreground hover:bg-muted"
+                ? "bg-white text-accent shadow-lg shadow-accent/5 scale-105"
+                : "text-muted-foreground hover:text-foreground hover:bg-white/50"
             }`}
-            title={mode.description}
           >
-            <Icon className="w-4 h-4" />
-            <span className="hidden sm:inline">{mode.label}</span>
+            <Icon className={`w-3.5 h-3.5 ${isActive ? "text-accent" : "text-muted-foreground/60"}`} />
+            <span>{mode.label}</span>
+            
+            {isActive && (
+              <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-1.5 h-1.5 bg-accent rounded-full scale-in duration-300" />
+            )}
           </button>
         );
       })}

@@ -17,8 +17,8 @@ function AuthPageContent() {
 
   return (
     <main className="relative min-h-screen bg-background text-foreground">
-      {/* Top bar */}
-      <div className="absolute top-6 left-6 z-20 flex items-center gap-4">
+      {/* Top bar - Hidden on mobile to avoid overlap */}
+      <div className="absolute top-6 left-6 z-20 hidden sm:flex items-center gap-4">
         <Link
           href="/"
           className="inline-flex items-center gap-2 text-sm font-medium text-muted-foreground hover:text-foreground transition"
@@ -28,7 +28,7 @@ function AuthPageContent() {
         </Link>
       </div>
 
-      <div className="absolute top-6 left-1/2 -translate-x-1/2 z-20">
+      <div className="absolute top-6 left-1/2 -translate-x-1/2 z-20 hidden sm:block">
         <Link href="/" className="inline-flex items-center gap-2">
           <Image
             src="/images/brand/eva-logo-light.png"
@@ -40,7 +40,7 @@ function AuthPageContent() {
         </Link>
       </div>
 
-      <div className="relative z-10 flex min-h-screen items-center justify-center px-4 py-20">
+      <div className="relative z-10 flex min-h-screen items-center justify-center px-4 py-8 sm:py-20">
         <div className="grid w-full max-w-5xl overflow-hidden rounded-3xl border border-border bg-card/90 shadow-xl lg:grid-cols-2">
           {/* Mobile brand strip — visible below lg */}
           <div className="flex items-center justify-center gap-3 bg-linear-to-r from-[#0097b2] to-[#007a91] px-6 py-4 text-white lg:hidden">
@@ -103,12 +103,21 @@ function AuthPageContent() {
           </div>
 
           {/* Form panel */}
-          <div className="bg-card p-8 sm:p-12">
+          <div className="bg-card p-8 sm:p-12 relative">
+            {/* Mobile Back to Home - Only visible on small screens */}
+            <Link
+              href="/"
+              className="inline-flex items-center gap-2 text-xs font-medium text-muted-foreground hover:text-foreground transition mb-6 sm:hidden"
+            >
+              <Home className="h-3 w-3" />
+              Back to Home
+            </Link>
+
             <div className="space-y-2 mb-8">
               <h1 className="font-sans text-3xl font-semibold text-foreground">
                 {activeTab === "login" ? "Welcome back" : "Create your account"}
               </h1>
-              <p className="text-muted-foreground">
+              <p className="text-muted-foreground text-sm sm:text-base">
                 {activeTab === "login"
                   ? "Sign in to your account to continue"
                   : "Join EVA Local and start discovering vendors"}

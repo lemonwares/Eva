@@ -1,35 +1,24 @@
-import { ShieldCheck, Users, Star, Search } from "lucide-react";
-
 const stats = [
-  { label: "Vetted Vendors", value: "120+", icon: Users },
-  { label: "Cultures Supported", value: "50+", icon: Star },
-  { label: "Avg. Review", value: "4.9/5", icon: ShieldCheck },
-  { label: "Smart Search", value: "", icon: Search },
+  { label: "VETTED VENDORS", value: "120+" },
+  { label: "CULTURES SUPPORTED", value: "50+" },
+  { label: "AVG. REVIEW", value: "4.9/5" },
 ];
 
 export default function HeroStats() {
   return (
-    <div className="grid gap-3 sm:grid-cols-4">
-      {stats.map((stat) => (
-        <div
-          key={stat.label}
-          className="flex items-center gap-3 rounded-2xl bg-white/80 border border-border px-4 py-3"
-        >
-          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-teal-light">
-            <stat.icon size={16} className="text-primary" />
-          </div>
-          <div>
-            {stat.value && (
-              <p className="text-lg font-bold text-foreground leading-tight">
-                {stat.value}
-              </p>
-            )}
-            <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+    <div className="card-float !p-4 sm:!p-6 w-full sm:max-w-lg mt-10">
+      <div className="grid grid-cols-3 divide-x divide-border">
+        {stats.map((stat, idx) => (
+          <div key={stat.label} className="flex flex-col items-center text-center px-1 sm:px-2">
+            <p className="text-xl sm:text-2xl lg:text-3xl font-bold text-foreground">
+              {stat.value}
+            </p>
+            <p className="text-[9px] sm:text-[10px] lg:text-[11px] font-bold uppercase tracking-wider text-muted-foreground mt-1 text-center leading-tight">
               {stat.label}
             </p>
           </div>
-        </div>
-      ))}
+        ))}
+      </div>
     </div>
   );
 }

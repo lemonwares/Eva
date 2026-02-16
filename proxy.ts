@@ -31,7 +31,7 @@ const PUBLIC_PREFIXES = [
   "/offline",
 ];
 
-export async function proxy(request: NextRequest) {
+export default async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   // ── Skip public assets & API routes (belt-and-suspenders with matcher) ──
@@ -59,7 +59,10 @@ export async function proxy(request: NextRequest) {
 
   // ── Protected routes: check auth + role ─────────────────────────────────
   for (const route of PROTECTED_ROUTES) {
-    if (pathname.startsWith(route.prefix)) {
+    // Check for exact match or sub-path match (to avoid "/vendors" matching "/vendor")
+    const isMatched = pathname === route.prefix || pathname.startsWith(route.prefix + "/");
+    
+    if (isMatched) {
       // Not logged in → redirect to auth with callback
       if (!isAuthenticated) {
         const callbackUrl = encodeURIComponent(pathname);
@@ -98,7 +101,7 @@ function getRoleDashboard(role: string): string {
 }
 
 // ── Matcher ─────────────────────────────────────────────────────────────────
-// Only run proxy on pages/routes that might need protection.
+// Only run middleware on pages/routes that might need protection.
 // Excludes static files, images, API routes, and service worker assets.
 export const config = {
   matcher: [
