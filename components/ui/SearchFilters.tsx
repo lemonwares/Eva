@@ -233,41 +233,52 @@ export default function SearchFilters({
         </div>
       </aside>
 
-      {/* Mobile Overlay */}
+      {/* Mobile Sidebar (Drawer) */}
       {showFilters && (
         <div className="fixed inset-0 z-50 md:hidden">
+          {/* Backdrop */}
           <div
-            className="absolute inset-0 bg-black/50"
+            className="absolute inset-0 bg-foreground/30 backdrop-blur-sm transition-opacity duration-300"
             onClick={() => setShowFilters(false)}
           />
-          <div className="absolute bottom-0 left-0 right-0 max-h-[80vh] bg-background rounded-t-2xl p-4 overflow-y-auto animate-in slide-in-from-bottom">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="font-semibold text-lg text-foreground">Filters</h2>
+          
+          {/* Drawer Content */}
+          <div className="absolute right-0 top-0 bottom-0 w-[85%] max-w-sm bg-background shadow-2xl flex flex-col animate-in slide-in-from-right duration-300">
+            {/* Header */}
+            <div className="flex items-center justify-between p-6 border-b border-border">
+              <div>
+                <h2 className="font-semibold text-xl text-foreground">Filters</h2>
+                <p className="text-xs text-muted-foreground mt-0.5">Refine your search results</p>
+              </div>
               <button
                 onClick={() => setShowFilters(false)}
-                className="p-2 hover:bg-muted rounded-full"
+                className="p-2.5 hover:bg-muted rounded-full transition-colors border border-border"
               >
-                <X className="w-5 h-5" />
+                <X className="w-5 h-5 text-foreground" />
               </button>
             </div>
             
-            <FilterContent />
+            {/* Scrollable body */}
+            <div className="flex-1 overflow-y-auto p-6">
+              <FilterContent />
+            </div>
 
-            <div className="mt-6 flex gap-3">
+            {/* Footer actions */}
+            <div className="p-6 border-t border-border grid grid-cols-2 gap-3 bg-card">
               <button
                 onClick={() => {
                    clearFilters();
                    setShowFilters(false);
                 }}
-                className="flex-1 py-3 border border-border rounded-xl font-medium"
+                className="py-3 px-4 border border-border rounded-xl font-medium text-foreground hover:bg-muted transition-colors"
               >
-                Clear
+                Reset All
               </button>
               <button
                 onClick={() => setShowFilters(false)}
-                className="flex-1 py-3 bg-accent text-accent-foreground rounded-xl font-medium"
+                className="py-3 px-4 bg-accent text-accent-foreground rounded-xl font-semibold shadow-lg shadow-accent/20 active:scale-[0.98] transition-all"
               >
-                Apply Filters
+                Apply
               </button>
             </div>
           </div>
