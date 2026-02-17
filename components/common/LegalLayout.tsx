@@ -15,7 +15,7 @@ export default function LegalLayout({ children }: LegalLayoutProps) {
         <div className="mx-auto max-w-5xl flex items-center justify-between px-4 py-4">
           <Link href="/" className="inline-flex items-center gap-2">
             <Image
-              src="/images/brand/eva-logo-dark.png"
+              src="/images/brand/eva-logo-light.png"
               alt="EVA Local"
               width={120}
               height={40}

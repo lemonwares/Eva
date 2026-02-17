@@ -39,7 +39,7 @@ export default function PrivacyPage() {
 
         {/* Content */}
         <div className="flex-1 max-w-3xl">
-          <h1 className="text-4xl sm:text-5xl text-foreground mb-2">
+          <h1 className="text-4xl sm:text-5xl font-playfair font-bold text-foreground mb-4 italic">
             Privacy Policy
           </h1>
           <p className="text-muted-foreground mb-12">
@@ -48,7 +48,7 @@ export default function PrivacyPage() {
 
           <div className="space-y-10 text-muted-foreground leading-relaxed">
             <section id="introduction">
-              <h2 className="text-2xl font-semibold text-foreground mb-4">
+              <h2 className="text-2xl font-playfair font-semibold text-foreground mb-4">
                 1. Introduction
               </h2>
               <p>
@@ -76,7 +76,7 @@ export default function PrivacyPage() {
             </section>
 
             <section id="data-controller">
-              <h2 className="text-2xl font-semibold text-foreground mb-4">
+              <h2 className="text-2xl font-playfair font-semibold text-foreground mb-4">
                 2. Data Controller
               </h2>
               <p>
@@ -99,7 +99,7 @@ export default function PrivacyPage() {
             </section>
 
             <section id="data-collected">
-              <h2 className="text-2xl font-semibold text-foreground mb-4">
+              <h2 className="text-2xl font-playfair font-semibold text-foreground mb-4">
                 3. What Data We Collect
               </h2>
               <p>
@@ -172,64 +172,45 @@ export default function PrivacyPage() {
             </section>
 
             <section id="how-we-use">
-              <h2 className="text-2xl font-semibold text-foreground mb-4">
+              <h2 className="text-2xl font-playfair font-semibold text-foreground mb-6">
                 4. How We Use Your Data
               </h2>
-              <p className="mb-4">
+              <p className="mb-6">
                 Under UK GDPR, we must have a lawful basis for processing your
                 personal data:
               </p>
-              <div className="space-y-2">
-                {[
-                  [
-                    "Creating and managing your account",
-                    "Performance of contract — Art. 6(1)(b)",
-                  ],
-                  [
-                    "Processing bookings and payments",
-                    "Performance of contract — Art. 6(1)(b)",
-                  ],
-                  [
-                    "Sending booking confirmations and status updates",
-                    "Performance of contract — Art. 6(1)(b)",
-                  ],
-                  [
-                    "Sending welcome and onboarding emails",
-                    "Legitimate interest — Art. 6(1)(f)",
-                  ],
-                  [
-                    "Displaying vendor profiles publicly",
-                    "Performance of contract — Art. 6(1)(b)",
-                  ],
-                  [
-                    "Sending marketing communications",
-                    "Consent — Art. 6(1)(a)",
-                  ],
-                  [
-                    "Improving our Platform and services",
-                    "Legitimate interest — Art. 6(1)(f)",
-                  ],
-                  [
-                    "Preventing fraud and protecting Platform integrity",
-                    "Legitimate interest — Art. 6(1)(f)",
-                  ],
-                  [
-                    "Complying with legal and regulatory obligations",
-                    "Legal obligation — Art. 6(1)(c)",
-                  ],
-                ].map(([purpose, basis]) => (
-                  <div key={purpose} className="flex gap-3 text-sm">
-                    <span className="font-medium text-foreground min-w-[50%]">
-                      {purpose}
-                    </span>
-                    <span>{basis}</span>
-                  </div>
-                ))}
+              <div className="overflow-hidden rounded-xl border border-border">
+                <table className="w-full text-left text-sm">
+                  <thead className="bg-muted/50 text-foreground font-semibold">
+                    <tr>
+                      <th className="p-4 border-b border-border">Purpose</th>
+                      <th className="p-4 border-b border-border">Lawful Basis</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-border">
+                    {[
+                      ["Creating and managing your account", "Performance of contract — Art. 6(1)(b)"],
+                      ["Processing bookings and payments", "Performance of contract — Art. 6(1)(b)"],
+                      ["Sending confirmations and updates", "Performance of contract — Art. 6(1)(b)"],
+                      ["Sending welcome emails", "Legitimate interest — Art. 6(1)(f)"],
+                      ["Displaying vendor profiles", "Performance of contract — Art. 6(1)(b)"],
+                      ["Marketing communications", "Consent — Art. 6(1)(a)"],
+                      ["Improving our Platform", "Legitimate interest — Art. 6(1)(f)"],
+                      ["Fraud prevention", "Legitimate interest — Art. 6(1)(f)"],
+                      ["Legal compliance", "Legal obligation — Art. 6(1)(c)"],
+                    ].map(([purpose, basis], i) => (
+                      <tr key={i} className="hover:bg-muted/30 transition-colors">
+                        <td className="p-4 align-top text-foreground font-medium">{purpose}</td>
+                        <td className="p-4 align-top">{basis}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
               </div>
             </section>
 
             <section id="data-sharing">
-              <h2 className="text-2xl font-semibold text-foreground mb-4">
+              <h2 className="text-2xl font-playfair font-semibold text-foreground mb-4">
                 5. Who We Share Your Data With
               </h2>
               <p>
@@ -251,7 +232,7 @@ export default function PrivacyPage() {
             </section>
 
             <section id="data-retention">
-              <h2 className="text-2xl font-semibold text-foreground mb-4">
+              <h2 className="text-2xl font-playfair font-semibold text-foreground mb-4">
                 6. Data Retention
               </h2>
               <p>
@@ -277,7 +258,7 @@ export default function PrivacyPage() {
             </section>
 
             <section id="your-rights">
-              <h2 className="text-2xl font-semibold text-foreground mb-4">
+              <h2 className="text-2xl font-playfair font-semibold text-foreground mb-4">
                 7. Your Rights Under UK GDPR
               </h2>
               <p>
@@ -329,7 +310,7 @@ export default function PrivacyPage() {
             </section>
 
             <section id="cookies">
-              <h2 className="text-2xl font-semibold text-foreground mb-4">
+              <h2 className="text-2xl font-playfair font-semibold text-foreground mb-4">
                 8. Cookies
               </h2>
               <h3 className="text-lg font-semibold text-foreground mt-4 mb-2">
@@ -357,7 +338,7 @@ export default function PrivacyPage() {
             </section>
 
             <section id="children">
-              <h2 className="text-2xl font-semibold text-foreground mb-4">
+              <h2 className="text-2xl font-playfair font-semibold text-foreground mb-4">
                 9. Children&apos;s Data
               </h2>
               <p>
@@ -370,7 +351,7 @@ export default function PrivacyPage() {
             </section>
 
             <section id="security">
-              <h2 className="text-2xl font-semibold text-foreground mb-4">
+              <h2 className="text-2xl font-playfair font-semibold text-foreground mb-4">
                 10. Security
               </h2>
               <p>
@@ -402,7 +383,7 @@ export default function PrivacyPage() {
             </section>
 
             <section id="changes">
-              <h2 className="text-2xl font-semibold text-foreground mb-4">
+              <h2 className="text-2xl font-playfair font-semibold text-foreground mb-4">
                 11. Changes to This Policy
               </h2>
               <p>
@@ -414,7 +395,7 @@ export default function PrivacyPage() {
             </section>
 
             <section id="contact">
-              <h2 className="text-2xl font-semibold text-foreground mb-4">
+              <h2 className="text-2xl font-playfair font-semibold text-foreground mb-4">
                 12. Contact Us
               </h2>
               <p>

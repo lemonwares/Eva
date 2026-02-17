@@ -133,8 +133,7 @@ function CategoryCard({ cat }: { cat: Category }) {
         {/* text */}
         <div className="absolute inset-x-0 bottom-0 z-10 p-5">
           <h3
-            className="text-xl font-semibold text-white"
-            style={{ fontFamily: "var(--font-sans)", fontStyle: "normal" }}
+            className="text-2xl font-playfair font-bold text-white tracking-tight"
           >
             {cat.name}
           </h3>
@@ -210,12 +209,11 @@ export default function CategoriesPage() {
             <span>Back to Home</span>
           </Link>
 
-          <h1 className="text-4xl sm:text-5xl text-foreground">
+          <h1 className="text-4xl sm:text-6xl font-playfair text-[#1e2433] leading-tight">
             Browse Categories
           </h1>
           <p className="mt-3 text-lg text-muted-foreground max-w-2xl">
-            Find the perfect vendor for every aspect of your event. From venues
-            to videographers, we&apos;ve got you covered.
+            From photographers to florists, explore our curated categories and find the perfect vendors for your celebration.
           </p>
         </div>
       </section>
@@ -255,7 +253,7 @@ export default function CategoriesPage() {
       {/* Are you a vendor? CTA */}
       <section className="py-16 px-4 sm:px-6 lg:px-8 bg-secondary/30">
         <div className="mx-auto max-w-3xl text-center">
-          <h2 className="text-3xl sm:text-4xl text-foreground mb-4">
+          <h2 className="text-3xl sm:text-5xl font-playfair text-[#1e2433] mb-4">
             Are you a vendor?
           </h2>
           <p className="text-lg text-muted-foreground mb-8 max-w-xl mx-auto">
