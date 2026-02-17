@@ -98,8 +98,7 @@ function CategoryCard({ category }: CategoryCardProps) {
         {/* text overlay at bottom */}
         <div className="absolute inset-x-0 bottom-0 p-5">
           <h3
-            className="text-xl font-semibold text-white"
-            style={{ fontFamily: "var(--font-sans)", fontStyle: "normal" }}
+            className="text-xl font-playfair font-bold text-white tracking-tight"
           >
             {category.name}
           </h3>
@@ -165,7 +164,7 @@ export default function CategorySection() {
             <p className="text-xs font-semibold uppercase tracking-[0.3em] text-primary mb-2">
               Browse Categories
             </p>
-            <h2 className="text-3xl sm:text-4xl leading-tight text-foreground">
+            <h2 className="text-3xl sm:text-5xl font-playfair leading-tight text-foreground">
               Every service you need, curated in one place
             </h2>
             <p className="mt-2 text-muted-foreground max-w-xl">

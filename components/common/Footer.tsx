@@ -264,7 +264,7 @@ export default function Footer() {
           <p>
             &copy; {new Date().getFullYear()} EVA Local. All rights reserved.
           </p>
-          <p>
+          {/* <p>
             Powered by{" "}
             <a
               href="https://www.sparkpoint.agency/"
@@ -274,7 +274,7 @@ export default function Footer() {
             >
               SPARKPOINT
             </a>
-          </p>
+          </p> */}
         </div>
       </div>
 

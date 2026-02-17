@@ -44,7 +44,7 @@ export default function TermsPage() {
 
         {/* Content */}
         <div className="flex-1 max-w-3xl">
-          <h1 className="text-4xl sm:text-5xl text-foreground mb-2">
+          <h1 className="text-4xl sm:text-5xl font-playfair font-bold text-foreground mb-4 italic">
             Terms of Service
           </h1>
           <p className="text-muted-foreground mb-12">
@@ -53,7 +53,7 @@ export default function TermsPage() {
 
           <div className="space-y-10 text-muted-foreground leading-relaxed">
             <section id="introduction">
-              <h2 className="text-2xl font-semibold text-foreground mb-4">
+              <h2 className="text-2xl font-playfair font-semibold text-foreground mb-4">
                 1. Introduction &amp; Acceptance of Terms
               </h2>
               <p>
@@ -84,7 +84,7 @@ export default function TermsPage() {
             </section>
 
             <section id="definitions">
-              <h2 className="text-2xl font-semibold text-foreground mb-4">
+              <h2 className="text-2xl font-playfair font-semibold text-foreground mb-4">
                 2. Definitions
               </h2>
               <p>In these Terms, the following definitions apply:</p>
@@ -123,7 +123,7 @@ export default function TermsPage() {
             </section>
 
             <section id="accounts">
-              <h2 className="text-2xl font-semibold text-foreground mb-4">
+              <h2 className="text-2xl font-playfair font-semibold text-foreground mb-4">
                 3. Account Registration
               </h2>
               <p>
@@ -170,7 +170,7 @@ export default function TermsPage() {
             </section>
 
             <section id="how-it-works">
-              <h2 className="text-2xl font-semibold text-foreground mb-4">
+              <h2 className="text-2xl font-playfair font-semibold text-foreground mb-4">
                 4. How the Platform Works
               </h2>
               <p>
@@ -201,7 +201,7 @@ export default function TermsPage() {
             </section>
 
             <section id="payments">
-              <h2 className="text-2xl font-semibold text-foreground mb-4">
+              <h2 className="text-2xl font-playfair font-semibold text-foreground mb-4">
                 5. Booking &amp; Payment Terms
               </h2>
               <p>
@@ -239,7 +239,7 @@ export default function TermsPage() {
             </section>
 
             <section id="cancellations">
-              <h2 className="text-2xl font-semibold text-foreground mb-4">
+              <h2 className="text-2xl font-playfair font-semibold text-foreground mb-4">
                 6. Cancellation &amp; Refund Policy
               </h2>
               <p>
@@ -306,7 +306,7 @@ export default function TermsPage() {
             </section>
 
             <section id="vendor-obligations">
-              <h2 className="text-2xl font-semibold text-foreground mb-4">
+              <h2 className="text-2xl font-playfair font-semibold text-foreground mb-4">
                 7. Vendor Obligations
               </h2>
               <p>
@@ -353,7 +353,7 @@ export default function TermsPage() {
             </section>
 
             <section id="client-obligations">
-              <h2 className="text-2xl font-semibold text-foreground mb-4">
+              <h2 className="text-2xl font-playfair font-semibold text-foreground mb-4">
                 8. Client Obligations
               </h2>
               <p>
@@ -386,7 +386,7 @@ export default function TermsPage() {
             </section>
 
             <section id="reviews">
-              <h2 className="text-2xl font-semibold text-foreground mb-4">
+              <h2 className="text-2xl font-playfair font-semibold text-foreground mb-4">
                 9. Reviews &amp; Content
               </h2>
               <p>
@@ -422,7 +422,7 @@ export default function TermsPage() {
             </section>
 
             <section id="ip">
-              <h2 className="text-2xl font-semibold text-foreground mb-4">
+              <h2 className="text-2xl font-playfair font-semibold text-foreground mb-4">
                 10. Intellectual Property
               </h2>
               <p>
@@ -444,7 +444,7 @@ export default function TermsPage() {
             </section>
 
             <section id="liability">
-              <h2 className="text-2xl font-semibold text-foreground mb-4">
+              <h2 className="text-2xl font-playfair font-semibold text-foreground mb-4">
                 11. Limitation of Liability
               </h2>
               <p>
@@ -493,7 +493,7 @@ export default function TermsPage() {
             </section>
 
             <section id="disputes">
-              <h2 className="text-2xl font-semibold text-foreground mb-4">
+              <h2 className="text-2xl font-playfair font-semibold text-foreground mb-4">
                 12. Dispute Resolution
               </h2>
               <p>
@@ -527,7 +527,7 @@ export default function TermsPage() {
             </section>
 
             <section id="data-protection">
-              <h2 className="text-2xl font-semibold text-foreground mb-4">
+              <h2 className="text-2xl font-playfair font-semibold text-foreground mb-4">
                 13. Data Protection
               </h2>
               <p>
@@ -552,7 +552,7 @@ export default function TermsPage() {
             </section>
 
             <section id="changes">
-              <h2 className="text-2xl font-semibold text-foreground mb-4">
+              <h2 className="text-2xl font-playfair font-semibold text-foreground mb-4">
                 14. Changes to Terms
               </h2>
               <p>
@@ -575,7 +575,7 @@ export default function TermsPage() {
             </section>
 
             <section id="contact">
-              <h2 className="text-2xl font-semibold text-foreground mb-4">
+              <h2 className="text-2xl font-playfair font-semibold text-foreground mb-4">
                 15. Contact Information
               </h2>
               <p>
@@ -610,7 +610,7 @@ export default function TermsPage() {
             </section>
 
             <section id="governing-law">
-              <h2 className="text-2xl font-semibold text-foreground mb-4">
+              <h2 className="text-2xl font-playfair font-semibold text-foreground mb-4">
                 16. Governing Law
               </h2>
               <p>

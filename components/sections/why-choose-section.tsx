@@ -6,6 +6,8 @@ import {
   MessageSquare,
   CheckCircle2,
   ArrowRight,
+  FileText,
+  Check,
 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
@@ -41,7 +43,7 @@ export default function WhyChooseSection() {
       <section className="py-24 px-4 sm:px-6 lg:px-8 bg-background">
         <div className="mx-auto max-w-7xl">
           <div className="mx-auto max-w-2xl text-center mb-16">
-            <h2 className="text-3xl sm:text-4xl lg:text-5xl text-foreground">
+            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-playfair text-foreground">
               Why choose EVA Local?
             </h2>
             <p className="mt-4 text-lg text-muted-foreground">
@@ -93,7 +95,7 @@ export default function WhyChooseSection() {
             <p className="text-xs font-semibold uppercase tracking-[0.3em] text-primary mb-2">
               Local Discovery
             </p>
-            <h2 className="text-3xl sm:text-4xl text-foreground">
+            <h2 className="text-3xl sm:text-4xl font-playfair text-foreground">
               Tailor Made For You
             </h2>
             <p className="mt-4 text-muted-foreground leading-relaxed max-w-lg">
@@ -149,31 +151,62 @@ export default function WhyChooseSection() {
             />
           </div>
           <div className="lg:order-2">
-            <p className="text-xs font-semibold uppercase tracking-[0.3em] text-primary mb-2">
+            <span className="inline-block px-4 py-1.5 bg-accent/10 text-accent rounded-lg text-xs font-bold uppercase tracking-wider mb-4">
               Seamless Booking
-            </p>
-            <h2 className="text-3xl sm:text-4xl text-foreground">
+            </span>
+            <h2 className="text-3xl sm:text-5xl font-playfair italic text-[#1e2433] mb-6">
               Book with confidence
             </h2>
-            <p className="mt-4 text-muted-foreground leading-relaxed max-w-lg">
+            <p className="text-muted-foreground leading-relaxed max-w-lg mb-10">
               Message vendors directly, discuss your requirements, and get
               personalised quotes. Keep all your conversations and confirmations
               in one place, accessible from any device.
             </p>
-            <div className="mt-6 flex flex-wrap gap-3">
-              {["Message", "Get a quote", "Confirm booking"].map((step) => (
-                <span
-                  key={step}
-                  className="chip-pastel bg-teal-light text-primary"
-                >
-                  {step}
-                </span>
-              ))}
+
+            {/* Steps Flow */}
+            <div className="flex items-start gap-4 sm:gap-6 mb-10">
+              {/* Step 1 */}
+              <div className="flex flex-col items-center gap-3">
+                <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-accent/10 flex items-center justify-center text-accent">
+                  <MessageSquare size={24} />
+                </div>
+                <span className="text-xs sm:text-sm font-bold text-foreground">Message</span>
+              </div>
+
+              {/* Arrow */}
+              <div className="pt-4 sm:pt-5 text-border">
+                <ArrowRight size={20} />
+              </div>
+
+              {/* Step 2 */}
+              <div className="flex flex-col items-center gap-3">
+                <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-accent/10 flex items-center justify-center text-accent">
+                  <FileText size={24} />
+                </div>
+                <span className="text-xs sm:text-sm font-bold text-foreground">Get a quote</span>
+              </div>
+
+              {/* Arrow */}
+              <div className="pt-4 sm:pt-5 text-border">
+                <ArrowRight size={20} />
+              </div>
+
+              {/* Step 3 */}
+              <div className="flex flex-col items-center gap-3">
+                <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-accent/10 flex items-center justify-center text-accent">
+                  <CheckCircle2 size={24} />
+                </div>
+                <span className="text-xs sm:text-sm font-bold text-foreground">Confirm booking</span>
+              </div>
             </div>
-            <div className="mt-8">
-              <Link href="/search" className="btn-eva-primary rounded-full">
+
+            <div>
+              <Link
+                href="/search"
+                className="btn-eva-primary rounded-xl px-8 py-3 h-auto inline-flex items-center gap-2"
+              >
                 Find vendors now
-                <ArrowRight className="h-4 w-4" />
+                <ArrowRight size={18} />
               </Link>
             </div>
           </div>
@@ -187,7 +220,7 @@ export default function WhyChooseSection() {
             <p className="text-xs font-semibold uppercase tracking-[0.3em] text-primary mb-2">
               Local Discovery
             </p>
-            <h2 className="text-3xl sm:text-4xl text-foreground">
+            <h2 className="text-3xl sm:text-4xl font-playfair text-foreground">
               Find What You Need, On The Go
             </h2>
             <p className="mt-4 text-muted-foreground leading-relaxed max-w-lg">

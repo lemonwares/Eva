@@ -175,8 +175,7 @@ function VendorCard({
               {vendor.category}
             </p>
             <h3
-              className="text-lg font-semibold leading-tight"
-              style={{ fontFamily: "var(--font-sans)", fontStyle: "normal" }}
+              className="text-lg font-playfair font-bold leading-tight"
             >
               {vendor.title}
             </h3>
@@ -303,7 +302,7 @@ export default function VendorsSection() {
             <p className="text-xs font-semibold uppercase tracking-[0.3em] text-primary mb-2">
               Featured Vendors
             </p>
-            <h2 className="text-3xl sm:text-4xl text-foreground">
+            <h2 className="text-3xl sm:text-5xl font-playfair text-[#1e2433] leading-tight">
               Trusted by couples, organisers & venues alike
             </h2>
             <p className="mt-3 max-w-xl text-muted-foreground">
@@ -377,10 +376,10 @@ export default function VendorsSection() {
             Explore all vendors
             <ArrowRight size={16} />
           </Link>
-          <p className="text-sm text-muted-foreground">
+          {/* <p className="text-sm text-muted-foreground">
             Discover {vendors.length}+ verified professionals ready to bring
             your vision to life
-          </p>
+          </p> */}
         </div>
       </div>
     </section>
