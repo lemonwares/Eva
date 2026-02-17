@@ -25,7 +25,7 @@ export default function HeroSearchForm() {
         <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground/80">
           Smart Search
         </p>
-        <h3 className="mt-2 text-2xl font-semibold leading-tight text-foreground" style={{ fontFamily: 'var(--font-inter)' }}>
+        <h3 className="mt-2 text-2xl font-semibold leading-tight text-foreground font-playfair">
           Match by category, postcode, and ceremony focus.
         </h3>
 
