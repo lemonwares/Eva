@@ -4,7 +4,7 @@ export function formatDate(
   options?: Intl.DateTimeFormatOptions
 ): string {
   const d = typeof date === "string" ? new Date(date) : date;
-  return d.toLocaleDateString("en-NG", {
+  return d.toLocaleDateString("en-GB", {
     year: "numeric",
     month: "long",
     day: "numeric",
@@ -14,7 +14,7 @@ export function formatDate(
 
 export function formatDateTime(date: Date | string): string {
   const d = typeof date === "string" ? new Date(date) : date;
-  return d.toLocaleString("en-NG", {
+  return d.toLocaleString("en-GB", {
     year: "numeric",
     month: "short",
     day: "numeric",
@@ -25,7 +25,7 @@ export function formatDateTime(date: Date | string): string {
 
 export function formatTime(date: Date | string): string {
   const d = typeof date === "string" ? new Date(date) : date;
-  return d.toLocaleTimeString("en-NG", {
+  return d.toLocaleTimeString("en-GB", {
     hour: "2-digit",
     minute: "2-digit",
   });
@@ -139,7 +139,7 @@ export function formatNumber(
   if (num === null || num === undefined || isNaN(num)) {
     return "0";
   }
-  return new Intl.NumberFormat("en-NG", options).format(num);
+  return new Intl.NumberFormat("en-GB", options).format(num);
 }
 
 export function formatCompactNumber(num: number): string {
@@ -219,27 +219,20 @@ export function formatList(
 // Phone number formatting
 export function formatPhoneNumber(
   phone: string,
-  countryCode: string = "+234"
+  countryCode: string = "+44"
 ): string {
   // Remove all non-digit characters
   const digits = phone.replace(/\D/g, "");
 
-  // Handle Nigerian numbers
-  if (countryCode === "+234") {
-    if (digits.startsWith("234")) {
-      return `+${digits.slice(0, 3)} ${digits.slice(3, 6)} ${digits.slice(
-        6,
-        9
-      )} ${digits.slice(9)}`;
+  // Handle UK numbers
+  if (countryCode === "+44") {
+    if (digits.startsWith("44")) {
+      return `+${digits.slice(0, 2)} ${digits.slice(2, 6)} ${digits.slice(6)}`;
     }
     if (digits.startsWith("0")) {
-      return `+234 ${digits.slice(1, 4)} ${digits.slice(4, 7)} ${digits.slice(
-        7
-      )}`;
+      return `+44 ${digits.slice(1, 5)} ${digits.slice(5)}`;
     }
-    return `+234 ${digits.slice(0, 3)} ${digits.slice(3, 6)} ${digits.slice(
-      6
-    )}`;
+    return `+44 ${digits.slice(0, 4)} ${digits.slice(4)}`;
   }
 
   return phone;

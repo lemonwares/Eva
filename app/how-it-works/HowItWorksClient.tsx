@@ -226,7 +226,7 @@ export default function HowItWorksClient() {
                 initial={{ opacity: 0, x: -20 }}
                 whileInView={{ opacity: 1, x: 0 }}
                 viewport={{ once: true }}
-                className="p-10 rounded-[40px] bg-white border border-transparent shadow-xl shadow-black/[0.02] flex flex-col"
+                className="p-10 rounded-[40px] bg-white border border-transparent shadow-xl shadow-black/2 flex flex-col"
               >
                 <div className="flex items-center gap-4 mb-8">
                   <div className="w-14 h-14 bg-cyan-50 text-cyan-600 rounded-full flex items-center justify-center">
@@ -269,7 +269,7 @@ export default function HowItWorksClient() {
                 initial={{ opacity: 0, x: 20 }}
                 whileInView={{ opacity: 1, x: 0 }}
                 viewport={{ once: true }}
-                className="p-10 rounded-[40px] bg-white border border-transparent shadow-xl shadow-black/[0.02] flex flex-col"
+                className="p-10 rounded-[40px] bg-white border border-transparent shadow-xl shadow-black/2 flex flex-col"
               >
                 <div className="flex items-center gap-4 mb-8">
                   <div className="w-14 h-14 bg-teal-50 text-teal-600 rounded-full flex items-center justify-center">

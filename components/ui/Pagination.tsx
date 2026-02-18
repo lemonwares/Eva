@@ -9,6 +9,7 @@ export interface PaginationProps {
   onPageChange: (page: number) => void;
   siblingCount?: number;
   className?: string;
+  disabled?: boolean;
 }
 
 export function Pagination({
@@ -17,6 +18,7 @@ export function Pagination({
   onPageChange,
   siblingCount = 1,
   className = "",
+  disabled = false,
 }: PaginationProps) {
   const range = (start: number, end: number) => {
     return Array.from({ length: end - start + 1 }, (_, idx) => start + idx);
@@ -56,14 +58,15 @@ export function Pagination({
   }
 
   return (
-    <nav className={`flex items-center justify-center gap-1 ${className}`}>
+    <nav className={`flex flex-wrap items-center justify-center gap-1 ${className}`}>
       <button
+        type="button"
         onClick={() => onPageChange(currentPage - 1)}
-        disabled={currentPage === 1}
-        className="p-2 rounded-lg hover:bg-[oklch(0.95_0.01_280)] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+        disabled={currentPage === 1 || disabled}
+        className="p-1.5 sm:p-2 rounded-lg hover:bg-muted disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-muted-foreground hover:text-foreground"
         aria-label="Previous page"
       >
-        <ChevronLeft className="w-5 h-5 text-[oklch(0.45_0.02_280)]" />
+        <ChevronLeft className="w-4 h-4 sm:w-5 sm:h-5" />
       </button>
 
       {pages.map((page, index) => {
@@ -71,9 +74,9 @@ export function Pagination({
           return (
             <span
               key={`dots-${index}`}
-              className="px-3 py-2 text-[oklch(0.55_0.02_280)]"
+              className="px-2 sm:px-3 py-1.5 sm:py-2 text-muted-foreground"
             >
-              <MoreHorizontal className="w-5 h-5" />
+              <MoreHorizontal className="w-4 h-4 sm:w-5 sm:h-5" />
             </span>
           );
         }
@@ -84,12 +87,14 @@ export function Pagination({
         return (
           <button
             key={pageNumber}
+            type="button"
             onClick={() => onPageChange(pageNumber)}
-            className={`min-w-10 h-10 px-3 rounded-lg font-medium transition-colors ${
+            disabled={disabled}
+            className={`min-w-8 h-8 sm:min-w-10 sm:h-10 px-2 sm:px-3 rounded-lg text-sm sm:text-base font-medium transition-colors ${
               isActive
-                ? "bg-[oklch(0.65_0.25_15)] text-white"
-                : "hover:bg-[oklch(0.95_0.01_280)] text-[oklch(0.45_0.02_280)]"
-            }`}
+                ? "bg-primary text-primary-foreground shadow-sm"
+                : "hover:bg-muted text-muted-foreground hover:text-foreground"
+            } ${disabled ? "opacity-50 cursor-not-allowed" : ""}`}
           >
             {pageNumber}
           </button>
@@ -97,68 +102,14 @@ export function Pagination({
       })}
 
       <button
+        type="button"
         onClick={() => onPageChange(currentPage + 1)}
-        disabled={currentPage === totalPages}
-        className="p-2 rounded-lg hover:bg-[oklch(0.95_0.01_280)] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+        disabled={currentPage === totalPages || disabled}
+        className="p-1.5 sm:p-2 rounded-lg hover:bg-muted disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-muted-foreground hover:text-foreground"
         aria-label="Next page"
       >
-        <ChevronRight className="w-5 h-5 text-[oklch(0.45_0.02_280)]" />
+        <ChevronRight className="w-4 h-4 sm:w-5 sm:h-5" />
       </button>
     </nav>
-  );
-}
-
-// Simple pagination with info text
-export interface SimplePaginationProps {
-  currentPage: number;
-  totalPages: number;
-  total: number;
-  limit: number;
-  onPageChange: (page: number) => void;
-  className?: string;
-}
-
-export function SimplePagination({
-  currentPage,
-  totalPages,
-  total,
-  limit,
-  onPageChange,
-  className = "",
-}: SimplePaginationProps) {
-  const start = (currentPage - 1) * limit + 1;
-  const end = Math.min(currentPage * limit, total);
-
-  return (
-    <div
-      className={`flex flex-col sm:flex-row items-center justify-between gap-4 ${className}`}
-    >
-      <p className="text-sm text-[oklch(0.55_0.02_280)]">
-        Showing{" "}
-        <span className="font-medium text-[oklch(0.35_0.02_280)]">{start}</span>{" "}
-        to{" "}
-        <span className="font-medium text-[oklch(0.35_0.02_280)]">{end}</span>{" "}
-        of{" "}
-        <span className="font-medium text-[oklch(0.35_0.02_280)]">{total}</span>{" "}
-        results
-      </p>
-
-      <div className="flex items-center gap-2">
-        <button
-          onClick={() => onPageChange(currentPage - 1)}
-          disabled={currentPage === 1}
-          className="px-4 py-2 text-sm font-medium rounded-lg border border-[oklch(0.85_0.01_280)] hover:bg-[oklch(0.95_0.01_280)] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-        >
-          Previous
-        </button>
-        <button
-          onClick={() => onPageChange(currentPage + 1)}
-          disabled={currentPage === totalPages}
-          className="px-4 py-2 text-sm font-medium rounded-lg border border-[oklch(0.85_0.01_280)] hover:bg-[oklch(0.95_0.01_280)] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-        >
-          Next
-        </button>
-      </div>
-    </div>
   );
 }

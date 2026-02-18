@@ -55,11 +55,11 @@ export default function SearchResultCard({
       >
         {/* Featured Overlay */}
         {provider.isFeatured && (
-          <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-yellow-400 via-amber-500 to-yellow-400 z-20" />
+          <div className="absolute top-0 left-0 right-0 h-1 bg-linear-to-r from-yellow-400 via-amber-500 to-yellow-400 z-20" />
         )}
 
         {/* Image Container */}
-        <div className="relative aspect-[4/3] overflow-hidden">
+        <div className="relative aspect-4/3 overflow-hidden">
           {provider.coverImage ? (
             <Image
               src={provider.coverImage}
@@ -156,7 +156,7 @@ export default function SearchResultCard({
                   {provider.city || "UK"}
                 </span>
                 {provider.distance !== null && provider.distance !== undefined && (
-                   <span className="text-accent">• {provider.distance.toFixed(1)}m</span>
+                   <span className="text-accent">• {provider.distance.toFixed(1)} mi</span>
                 )}
               </div>
             )}
@@ -179,10 +179,10 @@ export default function SearchResultCard({
   return (
     <Link
       href={`/vendors/${provider.id}`}
-      className="group flex gap-4 p-4 rounded-xl border border-border bg-card hover:shadow-lg transition-all"
+      className="group flex gap-3 sm:gap-4 p-3 sm:p-4 rounded-xl border border-border bg-card hover:shadow-lg transition-all"
     >
       {/* Image */}
-      <div className="relative w-32 sm:w-48 aspect-square rounded-lg overflow-hidden shrink-0">
+      <div className="relative w-24 sm:w-40 aspect-3/4 rounded-lg overflow-hidden shrink-0">
         {provider.coverImage ? (
           <Image
             src={provider.coverImage}
@@ -202,9 +202,9 @@ export default function SearchResultCard({
 
       {/* Content */}
       <div className="flex-1 min-w-0">
-        <div className="flex items-start justify-between gap-4 mb-2">
+        <div className="flex flex-wrap items-start justify-between gap-2 sm:gap-4 mb-2">
           <div>
-            <h3 className="font-semibold text-foreground group-hover:text-accent transition-colors">
+            <h3 className="font-semibold text-sm sm:text-base text-foreground group-hover:text-accent transition-colors line-clamp-1">
               {provider.businessName}
             </h3>
             {(provider.city || provider.distance !== undefined) && (
@@ -221,7 +221,7 @@ export default function SearchResultCard({
             )}
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             <div className="flex items-center gap-1 shrink-0">
               <Star
                 className="w-5 h-5 text-yellow-500 fill-yellow-500 drop-shadow"
@@ -262,7 +262,7 @@ export default function SearchResultCard({
         </div>
 
         {provider.description && (
-          <p className="text-sm text-muted-foreground line-clamp-2 mb-3">
+          <p className="text-xs sm:text-sm text-muted-foreground line-clamp-2 mb-2 sm:mb-3">
             {provider.description}
           </p>
         )}

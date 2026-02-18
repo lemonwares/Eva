@@ -33,7 +33,7 @@ export default function LocationPrompt({
           initial={{ opacity: 0, y: 50, scale: 0.95 }}
           animate={{ opacity: 1, y: 0, scale: 1 }}
           exit={{ opacity: 0, y: 20, scale: 0.95 }}
-          className="fixed bottom-4 left-4 right-4 sm:bottom-6 sm:right-6 sm:left-auto z-[100] max-w-md"
+          className="fixed bottom-4 left-4 right-4 sm:bottom-6 sm:right-6 sm:left-auto z-100 max-w-md"
         >
           <div className="bg-card border border-border rounded-2xl shadow-2xl overflow-hidden p-5 flex flex-col gap-4">
             <div className="flex items-start justify-between">
