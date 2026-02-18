@@ -200,7 +200,7 @@ export default function SignUpForm({
         <span className="bg-white px-3 relative z-10">
           or sign up with email
         </span>
-        <span className="absolute left-0 right-0 top-1/2 -z-0 border-t border-border/40" />
+        <span className="absolute left-0 right-0 top-1/2 z-0 border-t border-border/40" />
       </div>
 
       {error && (

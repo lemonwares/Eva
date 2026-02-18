@@ -94,12 +94,12 @@ export async function GET(request: NextRequest) {
       radius = 5, // User's search radius in miles (Mode A)
       searchMode = "both", // "modeA", "modeB", or "both"
       category,
-      priceFrom,
-      priceTo,
+      minPrice,
+      maxPrice,
       rating,
       cultureTags,
       verifiedOnly,
-      sort = "distance",
+      sortBy = "relevance",
       page = 1,
       limit = 20,
     } = Object.fromEntries(searchParams.entries());
@@ -193,8 +193,12 @@ export async function GET(request: NextRequest) {
     }
 
     // Existing filters (maintain backward compatibility)
-    if (priceFrom) filters.priceFrom = { gte: Number(priceFrom) };
-    if (priceTo) filters.priceFrom = { lte: Number(priceTo) };
+    if (minPrice || maxPrice) {
+      const priceFilter: Record<string, number> = {};
+      if (minPrice) priceFilter.gte = Number(minPrice);
+      if (maxPrice) priceFilter.lte = Number(maxPrice);
+      filters.priceFrom = priceFilter;
+    }
     if (rating) filters.averageRating = { gte: Number(rating) };
     if (cultureTags) {
       filters.cultureTraditionTags = { hasSome: cultureTags.split(",") };
@@ -260,11 +264,17 @@ export async function GET(request: NextRequest) {
         where: filters,
         take: 1000, // Get more for filtering by distance
         orderBy:
-          sort === "rating"
+          sortBy === "rating"
             ? { averageRating: "desc" }
-            : sort === "price"
-              ? { priceFrom: "asc" }
-              : { createdAt: "desc" },
+            : sortBy === "reviews"
+              ? { reviewCount: "desc" }
+              : sortBy === "price_low"
+                ? { priceFrom: "asc" }
+                : sortBy === "price_high"
+                  ? { priceFrom: "desc" }
+                  : sortBy === "newest"
+                    ? { createdAt: "desc" }
+                    : { averageRating: "desc" }, // "relevance" default
       });
 
       // Fetch categories for relevance boosting
@@ -290,11 +300,17 @@ export async function GET(request: NextRequest) {
         where: fallbackFilters,
         take: 1000,
         orderBy:
-          sort === "rating"
+          sortBy === "rating"
             ? { averageRating: "desc" }
-            : sort === "price"
-              ? { priceFrom: "asc" }
-              : { createdAt: "desc" },
+            : sortBy === "reviews"
+              ? { reviewCount: "desc" }
+              : sortBy === "price_low"
+                ? { priceFrom: "asc" }
+                : sortBy === "price_high"
+                  ? { priceFrom: "desc" }
+                  : sortBy === "newest"
+                    ? { createdAt: "desc" }
+                    : { averageRating: "desc" },
       });
     }
 
@@ -378,7 +394,7 @@ export async function GET(request: NextRequest) {
           if (!a.isWithinRadius && b.isWithinRadius) return 1;
 
           // 2. Then by relevance boost if requested
-          if (sort === "relevance") {
+          if (sortBy === "relevance") {
             if (b.relevanceBoost !== a.relevanceBoost) {
               return b.relevanceBoost - a.relevanceBoost;
             }
@@ -392,7 +408,9 @@ export async function GET(request: NextRequest) {
           if (b.distance !== null) return 1;
 
           return 0;
-        });
+        })
+        // Strict filter: only keep providers within the user's radius
+        .filter((p) => p.isWithinRadius);
     }
 
     // Log search for analytics (only if 8+ results for liquidity tracking)
@@ -405,7 +423,7 @@ export async function GET(request: NextRequest) {
           radiusMiles: Number(radius),
           searchMode: searchMode,
           categories: category ? [category] : [],
-          priceFrom: priceFrom ? Number(priceFrom) : null,
+          priceFrom: minPrice ? Number(minPrice) : null,
           minRating: rating ? Number(rating) : null,
           verifiedOnly: verifiedOnly === "true",
           cultureTags: cultureTags ? cultureTags.split(",") : [],
