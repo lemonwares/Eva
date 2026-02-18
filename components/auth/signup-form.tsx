@@ -3,16 +3,22 @@
 import {
   Eye,
   EyeOff,
-  Mail,
   User2,
   Loader2,
   CheckCircle,
   Check,
   X,
+  Search,
+  Heart,
+  Star,
+  MapPin,
+  ShieldCheck,
+  CalendarDays,
 } from "lucide-react";
 import { useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { register, loginWithGoogle } from "@/lib/auth-client";
+import Link from "next/link";
 
 type AccountType = "CLIENT" | "PROFESSIONAL";
 
@@ -38,13 +44,18 @@ export default function SignUpForm({
   const router = useRouter();
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  
+  // Use prop to set initial state. If defaultType is provided, lock to that mode mostly.
   const [accountType, setAccountType] = useState<AccountType>(
     defaultType || "CLIENT",
   );
+  
   const [formData, setFormData] = useState<FormState>(defaultState);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
+
+  const isProfessional = accountType === "PROFESSIONAL";
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData((prev) => ({
@@ -58,23 +69,20 @@ export default function SignUpForm({
     e.preventDefault();
     setError(null);
 
-    // Validate passwords match
     if (formData.password !== formData.confirmPassword) {
       setError("Passwords do not match");
       return;
     }
 
-    // Validate password strength (must match server-side passwordSchema)
     if (formData.password.length < 8) {
       setError("Password must be at least 8 characters long");
       return;
     }
 
+    // Basic complexity check
     if (!/(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/.test(formData.password)) {
-      setError(
-        "Password must contain at least one uppercase letter, one lowercase letter, and one number",
-      );
-      return;
+       setError("Password must contain uppercase, lowercase and number");
+       return;
     }
 
     setLoading(true);
@@ -92,10 +100,7 @@ export default function SignUpForm({
         return;
       }
 
-      // Show success message
       setSuccess(true);
-
-      // Redirect to verify email page after 2 seconds
       setTimeout(() => {
         router.push(
           `/auth/verify-email?email=${encodeURIComponent(formData.email)}`,
@@ -110,7 +115,6 @@ export default function SignUpForm({
 
   const handleGoogleSignup = async () => {
     setLoading(true);
-    // Redirect vendors to onboarding, clients to home
     await loginWithGoogle(
       accountType === "PROFESSIONAL" ? "/vendor/onboarding" : "/",
     );
@@ -128,12 +132,8 @@ export default function SignUpForm({
           </h3>
           <p className="mt-2 text-muted-foreground">
             We&apos;ve sent a verification email to{" "}
-            <strong>{formData.email}</strong>. Please check your inbox and click
-            the link to verify your account.
+            <strong>{formData.email}</strong>. Please check your inbox.
           </p>
-        </div>
-        <div className="text-sm text-muted-foreground">
-          Redirecting to verification page...
         </div>
       </div>
     );
@@ -141,124 +141,39 @@ export default function SignUpForm({
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
-      {error && (
-        <div className="rounded-xl bg-red-50 border border-red-200 p-4 text-sm text-red-700">
-          <div className="flex items-center gap-2">
-            <svg
-              className="h-4 w-4 shrink-0"
-              viewBox="0 0 20 20"
-              fill="currentColor"
-            >
-              <path
-                fillRule="evenodd"
-                d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
-                clipRule="evenodd"
-              />
-            </svg>
-            {error}
-          </div>
-        </div>
-      )}
+      <div className="text-center mb-8">
+        <h1 className="text-3xl font-playfair font-bold italic text-[#1e2433] mb-3">
+          {isProfessional ? "Create a professional account" : "Create your account"}
+        </h1>
+        <p className="text-muted-foreground text-sm max-w-sm mx-auto mb-6">
+          {isProfessional
+            ? "List your business and start receiving inquiries today"
+            : "Find and book trusted local vendors for your events"}
+        </p>
 
-      <div className="grid gap-4 sm:grid-cols-2">
-        <AccountTypeCard
-          title="Client"
-          description="Plan events, compare quotes, and manage every decision."
-          selected={accountType === "CLIENT"}
-          onClick={() => setAccountType("CLIENT")}
-          disabled={loading}
-        />
-        <AccountTypeCard
-          title="Vendor"
-          description="Showcase services, respond to leads, and get paid faster."
-          badge="Pro"
-          selected={accountType === "PROFESSIONAL"}
-          onClick={() => setAccountType("PROFESSIONAL")}
-          disabled={loading}
-        />
-      </div>
-
-      <div className="space-y-2">
-        <label className="block text-sm font-medium text-muted-foreground">
-          Full name
-        </label>
-        <div className="relative">
-          <User2 className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground h-5 w-5" />
-          <input
-            type="text"
-            name="name"
-            placeholder="John Doe"
-            value={formData.name}
-            onChange={handleChange}
-            required
-            disabled={loading}
-            className="w-full rounded-xl border border-border bg-input/60 px-11 py-3 text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30 disabled:opacity-50 disabled:cursor-not-allowed"
-          />
+        {/* Badges */}
+        <div className="flex flex-wrap justify-center gap-2 sm:gap-3 mb-6">
+            {isProfessional ? (
+                <>
+                  <Badge icon={MapPin} text="Reach local clients" dark />
+                  <Badge icon={ShieldCheck} text="Secure payments" dark />
+                  <Badge icon={CalendarDays} text="Manage bookings" dark />
+                </>
+            ) : (
+                <>
+                  <Badge icon={Search} text="Discover vendors" />
+                  <Badge icon={Heart} text="Save favourites" />
+                  <Badge icon={Star} text="Leave reviews" />
+                </>
+            )}
         </div>
       </div>
 
-      <div className="space-y-2">
-        <label className="block text-sm font-medium text-muted-foreground">
-          Email
-        </label>
-        <div className="relative">
-          <Mail className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground h-5 w-5" />
-          <input
-            type="email"
-            name="email"
-            placeholder="you@example.com"
-            value={formData.email}
-            onChange={handleChange}
-            required
-            disabled={loading}
-            className="w-full rounded-xl border border-border bg-input/60 px-11 py-3 text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30 disabled:opacity-50 disabled:cursor-not-allowed"
-          />
-        </div>
-      </div>
-
-      <PasswordFields
-        showPassword={showPassword}
-        showConfirmPassword={showConfirmPassword}
-        onTogglePassword={() => setShowPassword((prev) => !prev)}
-        onToggleConfirmPassword={() => setShowConfirmPassword((prev) => !prev)}
-        formData={formData}
-        onChange={handleChange}
-        disabled={loading}
-      />
-
-      <div className="rounded-2xl border border-dashed border-border/70 bg-secondary/30 p-4 text-sm text-muted-foreground">
-        You are registering as{" "}
-        <span className="font-semibold text-foreground">
-          {accountType === "CLIENT" ? "a client" : "a vendor"}.
-        </span>{" "}
-        You can switch later under account settings.
-      </div>
-
-      <button
-        type="submit"
-        disabled={loading}
-        className="w-full rounded-xl bg-primary py-3 font-semibold text-white shadow-lg transition hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0 flex items-center justify-center gap-2"
-      >
-        {loading ? (
-          <>
-            <Loader2 className="h-5 w-5 animate-spin" />
-            Creating account...
-          </>
-        ) : (
-          "Create free account"
-        )}
-      </button>
-
-      <div className="relative py-2 text-center text-sm text-muted-foreground">
-        <span className="absolute left-0 right-0 top-1/2 -z-10 border-t border-border" />
-        <span className="bg-card px-3">or continue with</span>
-      </div>
-
-      <button
+       <button
         type="button"
         onClick={handleGoogleSignup}
         disabled={loading}
-        className="flex w-full items-center justify-center gap-3 rounded-xl border border-border bg-secondary/50 py-3 font-medium text-muted-foreground transition hover:border-primary/40 hover:text-foreground disabled:opacity-50 disabled:cursor-not-allowed"
+        className="flex w-full items-center justify-center gap-3 rounded-xl border border-border/60 bg-white py-3.5 font-bold text-[#1e2433] transition hover:bg-gray-50 hover:shadow-sm disabled:opacity-50 disabled:cursor-not-allowed text-sm"
       >
         <svg className="h-5 w-5" viewBox="0 0 24 24">
           <path
@@ -280,106 +195,126 @@ export default function SignUpForm({
         </svg>
         Continue with Google
       </button>
+
+      <div className="relative py-2 text-center text-xs text-muted-foreground uppercase tracking-widest font-medium">
+        <span className="bg-white px-3 relative z-10">
+          or sign up with email
+        </span>
+        <span className="absolute left-0 right-0 top-1/2 -z-0 border-t border-border/40" />
+      </div>
+
+      {error && (
+        <div className="rounded-xl bg-red-50 border border-red-200 p-4 text-sm text-red-700">
+          <div className="flex items-center gap-2">
+            <svg className="h-4 w-4 shrink-0" viewBox="0 0 20 20" fill="currentColor">
+              <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+            </svg>
+            {error}
+          </div>
+        </div>
+      )}
+
+      <div className="space-y-4">
+        <div className="space-y-1.5">
+          <label className="text-sm font-bold text-[#1e2433] ml-1">
+            Full Name
+          </label>
+           <input
+            type="text"
+            name="name"
+            placeholder="Your full name"
+            value={formData.name}
+            onChange={handleChange}
+            required
+            disabled={loading}
+              className="w-full rounded-xl border border-transparent bg-[#f3f4f6] px-4 py-3.5 text-foreground placeholder:text-muted-foreground transition-all focus:bg-white focus:border-primary focus:outline-none focus:ring-4 focus:ring-primary/10 disabled:opacity-50"
+          />
+        </div>
+
+        <div className="space-y-1.5">
+          <label className="text-sm font-bold text-[#1e2433] ml-1">
+            {isProfessional ? "Business Email" : "Email"}
+          </label>
+           <input
+            type="email"
+            name="email"
+            placeholder={isProfessional ? "you@yourbusiness.com" : "you@example.com"}
+            value={formData.email}
+            onChange={handleChange}
+            required
+            disabled={loading}
+              className="w-full rounded-xl border border-transparent bg-[#f3f4f6] px-4 py-3.5 text-foreground placeholder:text-muted-foreground transition-all focus:bg-white focus:border-primary focus:outline-none focus:ring-4 focus:ring-primary/10 disabled:opacity-50"
+          />
+        </div>
+
+        <PasswordFields
+            showPassword={showPassword}
+            showConfirmPassword={showConfirmPassword}
+            onTogglePassword={() => setShowPassword((prev) => !prev)}
+            onToggleConfirmPassword={() => setShowConfirmPassword((prev) => !prev)}
+            formData={formData}
+            onChange={handleChange}
+            disabled={loading}
+        />
+        
+        {isProfessional ? (
+            <p className="text-xs text-muted-foreground/80 ml-1">
+                At least 8 characters with letters and numbers
+            </p>
+        ) : (
+             <p className="text-xs text-muted-foreground/80 ml-1">
+                At least 8 characters with letters and numbers
+            </p>
+        )}
+      </div>
+
+       <div className="pt-2">
+            <button
+                type="submit"
+                disabled={loading}
+                className={`w-full rounded-xl py-4 font-bold text-white shadow-lg transition hover:scale-[1.01] disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 ${
+                    isProfessional 
+                    ? "bg-[#1e2433] hover:bg-black shadow-black/10" 
+                    : "bg-[#0097b2] hover:bg-[#0088a0] shadow-cyan-900/10"
+                }`}
+            >
+                {loading ? (
+                <>
+                    <Loader2 className="h-5 w-5 animate-spin" />
+                    Creating account...
+                </>
+                ) : (
+                   isProfessional ? "Create professional account" : "Create account"
+                )}
+            </button>
+       </div>
+       
+       <p className="text-center text-xs text-muted-foreground">
+          I accept the <Link href="/terms" className="text-[#0097b2] hover:underline">terms and conditions</Link> and <Link href="/privacy" className="text-[#0097b2] hover:underline">privacy policy</Link>
+       </p>
+       
+       {isProfessional && (
+           <p className="text-center text-[10px] text-muted-foreground/60 -mt-2">
+               Free to list. 15% commission on completed bookings only.
+           </p>
+       )}
+
     </form>
   );
 }
 
-type AccountTypeCardProps = {
-  title: string;
-  description: string;
-  badge?: string;
-  selected: boolean;
-  onClick: () => void;
-  disabled?: boolean;
-};
-
-function AccountTypeCard({
-  title,
-  description,
-  badge,
-  selected,
-  onClick,
-  disabled,
-}: AccountTypeCardProps) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      disabled={disabled}
-      className={`relative flex h-full flex-col rounded-2xl border p-4 text-left transition hover:border-primary/60 disabled:opacity-50 disabled:cursor-not-allowed ${
-        selected
-          ? "border-primary bg-primary/5 shadow-[0_0_30px_rgba(0,151,178,0.15)]"
-          : "border-border bg-transparent"
-      }`}
-    >
-      <div className="flex items-center gap-3">
-        <div className="flex h-11 min-w-11 items-center justify-center rounded-xl bg-primary/20 text-2xl">
-          {title === "Client" ? "🎉" : "🛠️"}
+function Badge({ icon: Icon, text, dark }: { icon: any; text: string; dark?: boolean }) {
+    return (
+        <div className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold ${
+            dark 
+            ? "bg-[#1e2433] text-white" 
+            : "bg-cyan-100 text-cyan-800"
+        }`}>
+            <Icon size={12} strokeWidth={3} />
+            {text}
         </div>
-        <div>
-          <p className="text-base font-semibold text-foreground">{title}</p>
-          <p className="text-xs text-muted-foreground">
-            {title === "Client" ? "Default role" : "Optional upgrade"}
-          </p>
-        </div>
-        {badge ? (
-          <span className="ml-auto rounded-full bg-emerald-100 px-3 py-0.5 text-xs font-semibold uppercase tracking-wide text-emerald-900">
-            {badge}
-          </span>
-        ) : null}
-      </div>
-      <p className="mt-3 text-sm text-muted-foreground">{description}</p>
-    </button>
-  );
+    )
 }
-
-/* ─── Password helpers ─── */
-
-function getPasswordStrength(password: string) {
-  let score = 0;
-  if (password.length >= 8) score++;
-  if (/[A-Z]/.test(password)) score++;
-  if (/[0-9]/.test(password)) score++;
-  if (/[^A-Za-z0-9]/.test(password)) score++;
-
-  if (score <= 1) return { label: "Weak", color: "bg-red-500", width: "w-1/4" };
-  if (score === 2)
-    return { label: "Fair", color: "bg-orange-400", width: "w-2/4" };
-  if (score === 3)
-    return { label: "Good", color: "bg-yellow-400", width: "w-3/4" };
-  return { label: "Strong", color: "bg-green-500", width: "w-full" };
-}
-
-const PASSWORD_RULES = [
-  {
-    key: "length",
-    label: "At least 8 characters",
-    test: (p: string) => p.length >= 8,
-  },
-  {
-    key: "upper",
-    label: "Uppercase letter",
-    test: (p: string) => /[A-Z]/.test(p),
-  },
-  { key: "number", label: "Number", test: (p: string) => /[0-9]/.test(p) },
-  {
-    key: "special",
-    label: "Special character",
-    test: (p: string) => /[^A-Za-z0-9]/.test(p),
-  },
-] as const;
-
-/* ─── PasswordFields ─── */
-
-type PasswordFieldsProps = {
-  showPassword: boolean;
-  showConfirmPassword: boolean;
-  onTogglePassword: () => void;
-  onToggleConfirmPassword: () => void;
-  formData: FormState;
-  onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
-  disabled?: boolean;
-};
 
 function PasswordFields({
   showPassword,
@@ -389,107 +324,57 @@ function PasswordFields({
   formData,
   onChange,
   disabled,
-}: PasswordFieldsProps) {
-  const strength = useMemo(
-    () => getPasswordStrength(formData.password),
-    [formData.password],
-  );
-  const showStrength = formData.password.length > 0;
-
+}: any) {
   return (
-    <div className="space-y-4">
-      <div className="grid gap-4 sm:grid-cols-2">
-        {[
-          {
-            label: "Password",
-            name: "password" as const,
-            visible: showPassword,
-            toggle: onTogglePassword,
-          },
-          {
-            label: "Confirm password",
-            name: "confirmPassword" as const,
-            visible: showConfirmPassword,
-            toggle: onToggleConfirmPassword,
-          },
-        ].map(({ label, name, visible, toggle }) => (
-          <div key={name} className="space-y-2">
-            <label className="block text-sm font-medium text-muted-foreground">
-              {label}
-            </label>
-            <div className="relative">
-              <input
-                type={visible ? "text" : "password"}
-                name={name}
-                placeholder="••••••••"
-                value={formData[name]}
-                onChange={onChange}
-                required
-                minLength={8}
-                disabled={disabled}
-                className="w-full rounded-xl border border-border bg-input/60 px-4 py-3 pr-12 text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30 disabled:opacity-50 disabled:cursor-not-allowed"
-              />
-              <button
-                type="button"
-                onClick={toggle}
-                disabled={disabled}
-                className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors disabled:opacity-50"
-              >
-                {visible ? (
-                  <EyeOff className="w-5 h-5" />
-                ) : (
-                  <Eye className="w-5 h-5" />
-                )}
-              </button>
-            </div>
-          </div>
-        ))}
-      </div>
-
-      {/* Strength meter */}
-      {showStrength && (
-        <div className="space-y-2">
-          <div className="flex items-center gap-2">
-            <div className="h-1.5 flex-1 rounded-full bg-secondary overflow-hidden">
-              <div
-                className={`h-full rounded-full transition-all duration-300 ${strength.color} ${strength.width}`}
-              />
-            </div>
-            <span className="text-xs font-medium text-muted-foreground w-12 text-right">
-              {strength.label}
-            </span>
-          </div>
-
-          {/* Requirements checklist */}
-          <div className="grid grid-cols-2 gap-x-4 gap-y-1">
-            {PASSWORD_RULES.map(({ key, label, test }) => {
-              const passed = test(formData.password);
-              return (
-                <div
-                  key={key}
-                  className={`flex items-center gap-1.5 text-xs transition-colors ${
-                    passed ? "text-green-600" : "text-muted-foreground"
-                  }`}
-                >
-                  {passed ? (
-                    <Check className="w-3.5 h-3.5 shrink-0" />
-                  ) : (
-                    <X className="w-3.5 h-3.5 shrink-0" />
-                  )}
-                  {label}
-                </div>
-              );
-            })}
-          </div>
+    <>
+      <div className="space-y-1.5">
+        <label className="text-sm font-bold text-[#1e2433] ml-1">Password</label>
+        <div className="relative">
+          <input
+            type={showPassword ? "text" : "password"}
+            name="password"
+            placeholder={showPassword || !formData.password ? "Create a password" : "••••••••"}
+            value={formData.password}
+            onChange={onChange}
+            required
+            minLength={8}
+            disabled={disabled}
+            className="w-full rounded-xl border border-transparent bg-[#f3f4f6] px-4 py-3.5 pr-12 text-foreground placeholder:text-muted-foreground transition-all focus:bg-white focus:border-primary focus:outline-none focus:ring-4 focus:ring-primary/10 disabled:opacity-50"
+          />
+          <button
+            type="button"
+            onClick={onTogglePassword}
+            disabled={disabled}
+            className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors disabled:opacity-50"
+          >
+            {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+          </button>
         </div>
-      )}
-
-      {/* Fallback hint when password not yet typed */}
-      {!showStrength && (
-        <p className="text-xs text-muted-foreground">
-          Password must be at least 8 characters long
-        </p>
-      )}
-    </div>
+      </div>
+      <div className="space-y-1.5">
+        <label className="text-sm font-bold text-[#1e2433] ml-1">Confirm Password</label>
+        <div className="relative">
+          <input
+            type={showConfirmPassword ? "text" : "password"}
+            name="confirmPassword"
+            placeholder={showConfirmPassword || !formData.confirmPassword ? "Confirm your password" : "••••••••"}
+            value={formData.confirmPassword}
+            onChange={onChange}
+            required
+            minLength={8}
+            disabled={disabled}
+            className="w-full rounded-xl border border-transparent bg-[#f3f4f6] px-4 py-3.5 pr-12 text-foreground placeholder:text-muted-foreground transition-all focus:bg-white focus:border-primary focus:outline-none focus:ring-4 focus:ring-primary/10 disabled:opacity-50"
+          />
+           <button
+            type="button"
+            onClick={onToggleConfirmPassword}
+            disabled={disabled}
+            className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors disabled:opacity-50"
+          >
+            {showConfirmPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+          </button>
+        </div>
+      </div>
+    </>
   );
 }

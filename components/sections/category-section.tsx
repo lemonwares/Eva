@@ -161,7 +161,7 @@ export default function CategorySection() {
         {/* header */}
         <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 mb-10">
           <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.3em] text-primary mb-2">
+            <p className="mb-6 inline-flex items-center rounded-full bg-teal-light px-6 py-2 text-sm font-semibold text-primary-dark">
               Browse Categories
             </p>
             <h2 className="text-3xl sm:text-5xl font-playfair leading-tight text-foreground">

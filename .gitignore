@@ -12,6 +12,10 @@
 
 # testing
 /coverage
+test-results/
+playwright-report/
+blob-report/
+playwright/.cache/
 
 # next.js
 /.next/
@@ -19,25 +23,30 @@
 
 # production
 /build
+/dist
 
 # misc
 .DS_Store
 *.pem
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+!.env.example
 
 # debug
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
-
-# env files (can opt-in for committing if needed)
-.env
-.env.local
-.env.development.local
-.env.test.local
-.env.production.local
-# Keep .env.example for reference
-!.env.example
+*.log
+logs
+*.log.*
+pids
+*.pid
+*.seed
+*.pid.lock
 
 # vercel
 .vercel
@@ -49,10 +58,54 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
+# generated
 /app/generated/prisma
-
-# Sentry
 .sentryclirc
 
-# Build output
-/dist
+# IDEs and Editors
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+.idea
+.gemini
+*.swp
+*.swo
+.vs/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# OS Generated Files
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+Desktop.ini
+
+# Optional npm cache directory
+.npm
+
+# Optional eslint cache
+.eslintcache
+
+# Optional stylelint cache
+.stylelintcache
+
+# Yarn Integrity file
+.yarn-integrity
+
+# dotenv environment variables file
+.env.test
+
+# parcel-bundler cache (https://parceljs.org/)
+.cache
+.parcel-cache
+
+# Video/Image artifacts (if generated)
+*.webm
+*.mp4
+*.MOV

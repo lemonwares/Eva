@@ -297,30 +297,30 @@ export default function VendorsSection() {
     <section className="py-20 px-4 sm:px-6 lg:px-8 bg-cream/30">
       <div className="mx-auto max-w-7xl">
         {/* header */}
-        <div className="flex items-end justify-between mb-10">
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.3em] text-primary mb-2">
-              Featured Vendors
-            </p>
-            <h2 className="text-3xl sm:text-5xl font-playfair text-[#1e2433] leading-tight">
-              Trusted by couples, organisers & venues alike
-            </h2>
-            <p className="mt-3 max-w-xl text-muted-foreground">
-              Browse our curated collection of verified vendors across different
-              categories
-            </p>
-          </div>
-          <div className="hidden sm:flex items-center gap-2">
+        {/* header */}
+        <div className="relative mb-12 flex flex-col items-center text-center">
+          <span className="mb-6 inline-flex items-center rounded-full bg-teal-light px-6 py-2 text-sm font-medium text-primary-dark">
+            Featured Vendors
+          </span>
+          <h2 className="mb-6 max-w-3xl font-playfair text-4xl font-bold italic leading-tight text-foreground md:text-5xl">
+            Trusted by couples, organisers, and venues alike
+          </h2>
+          <p className="max-w-2xl text-lg text-muted-foreground">
+            Browse our curated collection of verified vendors across different
+            categories
+          </p>
+
+          <div className="absolute bottom-0 right-0 hidden items-center gap-2 lg:flex">
             <button
               onClick={() => scroll("left")}
-              className="flex h-10 w-10 items-center justify-center rounded-full border border-border bg-white text-foreground hover:border-primary hover:text-primary transition-colors"
+              className="flex h-10 w-10 items-center justify-center rounded-full border border-border bg-white text-foreground transition-colors hover:border-primary hover:text-primary"
               aria-label="Scroll left"
             >
               <ChevronLeft size={18} />
             </button>
             <button
               onClick={() => scroll("right")}
-              className="flex h-10 w-10 items-center justify-center rounded-full border border-border bg-white text-foreground hover:border-primary hover:text-primary transition-colors"
+              className="flex h-10 w-10 items-center justify-center rounded-full border border-border bg-white text-foreground transition-colors hover:border-primary hover:text-primary"
               aria-label="Scroll right"
             >
               <ChevronRight size={18} />
@@ -370,8 +370,8 @@ export default function VendorsSection() {
         {/* CTA */}
         <div className="mt-12 flex flex-col items-center gap-3 text-center">
           <Link
-            href="/vendors"
-            className="btn-eva-primary rounded-full inline-flex"
+            href="/search"
+            className="btn-eva-primary rounded-lg inline-flex"
           >
             Explore all vendors
             <ArrowRight size={16} />

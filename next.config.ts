@@ -8,7 +8,7 @@ const withPWA = withPWAInit({
   disable: process.env.NODE_ENV === "development",
   register: true,
   skipWaiting: true,
-  buildExcludes: [/middleware-manifest\.json$/],
+  buildExcludes: [/middleware-manifest\.json$/, /.*\.js\.map$/],
   fallbacks: {
     document: "/offline", // Fallback page when offline
   },
@@ -95,9 +95,9 @@ const nextConfig: NextConfig = {
   serverExternalPackages: ["@prisma/client"],
   experimental: {
     serverActions: {
-      allowedOrigins: undefined,
+      allowedOrigins: ["localhost:3000", "192.168.100.22:3000"],
     },
-  },
+  } as any,
   generateBuildId: async () => {
     return "build-" + Date.now();
   },
