@@ -22,6 +22,7 @@ import { formatCurrency } from "@/lib/formatters";
 import FavoriteButton from "@/components/common/FavoriteButton";
 import ShareButton from "@/components/common/ShareButton";
 import VendorCard from "@/components/vendors/VendorCard";
+import { logger } from "@/lib/logger";
 
 interface Provider {
   id: string;

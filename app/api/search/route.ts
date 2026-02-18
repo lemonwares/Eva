@@ -6,6 +6,7 @@ import {
   rateLimitResponse,
   rateLimitPresets,
 } from "@/lib/rate-limit";
+import { logger } from "@/lib/logger";
 
 // Helper: Haversine formula for distance in km
 function getDistanceKm(lat1: number, lng1: number, lat2: number, lng2: number) {

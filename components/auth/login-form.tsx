@@ -1,6 +1,6 @@
 "use client";
 
-import { Eye, EyeOff, Mail, Shield, Loader2 } from "lucide-react";
+import { Eye, EyeOff, Loader2 } from "lucide-react";
 import { useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { login, loginWithGoogle } from "@/lib/auth-client";
@@ -31,25 +31,20 @@ export default function LoginForm() {
         return;
       }
 
-      // After login, redirect users based on their role: admins to /admin, vendors to /vendor, clients to /dashboard
       let nextUrl = callbackUrl;
-      // Only do role-based redirect if callbackUrl is "/" or not set
       if (!callbackUrl || callbackUrl === "/") {
         try {
-          // Force fresh session read (no cache) and include cookies so role is accurate right after login.
           const meResponse = await fetch("/api/auth/me", {
             cache: "no-store",
             credentials: "include",
           });
           if (meResponse.ok) {
             const { user } = await meResponse.json();
-            // Route based on user role for optimal landing page
             if (user?.role === "ADMINISTRATOR") {
               nextUrl = "/admin";
             } else if (user?.role === "PROFESSIONAL") {
               nextUrl = "/vendor";
             } else if (user?.role === "CLIENT" || user?.role === "VISITOR") {
-              // Route clients to their dashboard
               nextUrl = "/dashboard";
             }
           }
@@ -60,7 +55,6 @@ export default function LoginForm() {
           );
         }
       }
-      // Always push so router state matches the chosen destination.
       router.push(nextUrl);
       router.refresh();
     } catch (err) {
@@ -77,108 +71,20 @@ export default function LoginForm() {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
-      {error && (
-        <div className="rounded-xl bg-red-50 border border-red-200 p-4 text-sm text-red-700">
-          <div className="flex items-center gap-2">
-            <svg
-              className="h-4 w-4 shrink-0"
-              viewBox="0 0 20 20"
-              fill="currentColor"
-            >
-              <path
-                fillRule="evenodd"
-                d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
-                clipRule="evenodd"
-              />
-            </svg>
-            {error}
-          </div>
-        </div>
-      )}
-
-      <div className="space-y-2">
-        <label className="block text-sm font-medium text-muted-foreground">
-          Email address
-        </label>
-        <div className="relative">
-          <Mail className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground h-5 w-5" />
-          <input
-            type="email"
-            placeholder="you@example.com"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required
-            disabled={loading}
-            className="w-full rounded-xl border border-border bg-input/60 px-11 py-3 text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30 disabled:opacity-50 disabled:cursor-not-allowed"
-          />
-        </div>
-      </div>
-
-      <div className="space-y-2">
-        <label className="block text-sm font-medium text-muted-foreground">
-          Password
-        </label>
-        <div className="relative">
-          <Shield className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground h-5 w-5" />
-          <input
-            type={showPassword ? "text" : "password"}
-            placeholder="••••••••"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-            minLength={6}
-            disabled={loading}
-            className="w-full rounded-xl border border-border bg-input/60 px-11 py-3 text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30 disabled:opacity-50 disabled:cursor-not-allowed"
-          />
-          <button
-            type="button"
-            onClick={() => setShowPassword(!showPassword)}
-            disabled={loading}
-            className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors disabled:opacity-50"
-          >
-            {showPassword ? (
-              <EyeOff className="w-5 h-5" />
-            ) : (
-              <Eye className="w-5 h-5" />
-            )}
-          </button>
-        </div>
-      </div>
-
-      <div className="flex items-center justify-end text-sm">
-        <Link
-          href="/auth/forgot-password"
-          className="font-medium text-primary hover:underline"
-        >
-          Forgot password?
-        </Link>
-      </div>
-
-      <button
-        type="submit"
-        disabled={loading}
-        className="w-full rounded-xl bg-primary py-3 font-semibold text-white shadow-lg transition hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0 flex items-center justify-center gap-2"
-      >
-        {loading ? (
-          <>
-            <Loader2 className="h-5 w-5 animate-spin" />
-            Signing in...
-          </>
-        ) : (
-          "Sign in securely"
-        )}
-      </button>
-
-      <div className="relative py-2 text-center text-sm text-muted-foreground">
-        <span className="absolute left-0 right-0 top-1/2 -z-10 border-t border-border" />
-        <span className="bg-card px-3">or continue with</span>
+      <div className="text-center mb-8">
+        <h1 className="text-3xl font-playfair font-bold italic text-[#1e2433] mb-2">
+          Welcome back
+        </h1>
+        <p className="text-muted-foreground">
+          Sign in to your account to continue
+        </p>
       </div>
 
       <button
         type="button"
         onClick={handleGoogleLogin}
         disabled={loading}
-        className="flex w-full items-center justify-center gap-3 rounded-xl border border-border bg-secondary/50 py-3 font-medium text-muted-foreground transition hover:border-accent/40 hover:text-foreground disabled:opacity-50 disabled:cursor-not-allowed"
+        className="flex w-full items-center justify-center gap-3 rounded-xl border border-border/60 bg-white py-3.5 font-bold text-[#1e2433] transition hover:bg-gray-50 hover:shadow-sm disabled:opacity-50 disabled:cursor-not-allowed text-sm"
       >
         <svg className="h-5 w-5" viewBox="0 0 24 24">
           <path
@@ -199,6 +105,102 @@ export default function LoginForm() {
           />
         </svg>
         Continue with Google
+      </button>
+
+      <div className="relative py-2 text-center text-xs text-muted-foreground uppercase tracking-widest font-medium">
+        <span className="bg-white px-3 relative z-10">
+          or sign in with email
+        </span>
+        <span className="absolute left-0 right-0 top-1/2 -z-0 border-t border-border/40" />
+      </div>
+
+      {error && (
+        <div className="rounded-xl bg-red-50 border border-red-200 p-4 text-sm text-red-700">
+          <div className="flex items-center gap-2">
+            <svg
+              className="h-4 w-4 shrink-0"
+              viewBox="0 0 20 20"
+              fill="currentColor"
+            >
+              <path
+                fillRule="evenodd"
+                d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
+                clipRule="evenodd"
+              />
+            </svg>
+            {error}
+          </div>
+        </div>
+      )}
+
+      <div className="space-y-5">
+        <div className="space-y-1.5">
+          <label className="text-sm font-bold text-[#1e2433] ml-1">
+            Email
+          </label>
+            <input
+              type="email"
+              placeholder="you@example.com"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+              disabled={loading}
+              className="w-full rounded-xl border border-transparent bg-[#f3f4f6] px-4 py-3.5 text-foreground placeholder:text-muted-foreground transition-all focus:bg-white focus:border-primary focus:outline-none focus:ring-4 focus:ring-primary/10 disabled:opacity-50"
+            />
+        </div>
+
+        <div className="space-y-1.5">
+           <div className="flex items-center justify-between ml-1">
+              <label className="text-sm font-bold text-[#1e2433]">
+                Password
+              </label>
+              <Link
+                href="/auth/forgot-password"
+                className="text-xs font-bold text-[#0097b2] hover:underline"
+              >
+                Forgot password?
+              </Link>
+           </div>
+          <div className="relative">
+            <input
+              type={showPassword ? "text" : "password"}
+              placeholder="Enter your password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+              minLength={6}
+              disabled={loading}
+              className="w-full rounded-xl border border-transparent bg-[#f3f4f6] px-4 py-3.5 pr-12 text-foreground placeholder:text-muted-foreground transition-all focus:bg-white focus:border-primary focus:outline-none focus:ring-4 focus:ring-primary/10 disabled:opacity-50"
+            />
+            <button
+              type="button"
+              onClick={() => setShowPassword(!showPassword)}
+              disabled={loading}
+              className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors disabled:opacity-50"
+            >
+              {showPassword ? (
+                <EyeOff className="w-5 h-5" />
+              ) : (
+                <Eye className="w-5 h-5" />
+              )}
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <button
+        type="submit"
+        disabled={loading}
+        className="w-full rounded-xl bg-[#0097b2] py-3.5 font-bold text-white shadow-lg shadow-cyan-900/10 transition hover:bg-[#0088a0] hover:scale-[1.01] hover:shadow-cyan-900/20 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 flex items-center justify-center gap-2 mt-8"
+      >
+        {loading ? (
+          <>
+            <Loader2 className="h-5 w-5 animate-spin" />
+            Signing in...
+          </>
+        ) : (
+          "Sign in"
+        )}
       </button>
     </form>
   );

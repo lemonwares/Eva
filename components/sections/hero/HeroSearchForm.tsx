@@ -20,7 +20,7 @@ export default function HeroSearchForm() {
   };
 
   return (
-    <div className="card-float !p-0 overflow-hidden rounded-3xl border border-black/5 shadow-2xl">
+    <div className="card-float p-0! overflow-hidden rounded-3xl border border-black/5 shadow-2xl">
       <form onSubmit={handleSearch} className="p-8">
         <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground/80">
           Smart Search

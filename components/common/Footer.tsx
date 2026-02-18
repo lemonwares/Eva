@@ -211,11 +211,8 @@ export default function Footer() {
   return (
     <footer className="bg-[#1e2433] text-white">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-16">
-        {/* CTA Banner */}
-        <FooterCTA />
-
         {/* Main footer columns */}
-        <div className="mt-16 grid gap-10 grid-cols-2 md:grid-cols-3 lg:grid-cols-5">
+        <div className="grid gap-10 grid-cols-2 md:grid-cols-3 lg:grid-cols-5">
           <div className="col-span-2 md:col-span-3 lg:col-span-1">
             <FooterBrand />
           </div>
@@ -264,17 +261,14 @@ export default function Footer() {
           <p>
             &copy; {new Date().getFullYear()} EVA Local. All rights reserved.
           </p>
-          {/* <p>
-            Powered by{" "}
-            <a
-              href="https://www.sparkpoint.agency/"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="font-semibold text-white/50 hover:text-white transition-colors"
-            >
-              SPARKPOINT
-            </a>
-          </p> */}
+          {/* <div className="flex gap-4">
+            <Link href="/privacy" className="hover:text-white transition-colors">
+              Privacy Policy
+            </Link>
+            <Link href="/terms" className="hover:text-white transition-colors">
+              Terms of Service
+            </Link>
+          </div> */}
         </div>
       </div>
 

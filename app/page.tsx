@@ -6,6 +6,7 @@ import HeroSection from "@/components/sections/hero-section";
 import TestimonialsSection from "@/components/sections/testimonials-section";
 import VendorsSection from "@/components/sections/vendors-section";
 import WhyChooseSection from "@/components/sections/why-choose-section";
+import PreFooterCTA from "@/components/sections/PreFooterCTA";
 import { auth } from "@/lib/auth-rsc";
 
 export const metadata: Metadata = {
@@ -73,6 +74,7 @@ export default async function HomePage() {
         <CategorySection />
         <WhyChooseSection />
         <TestimonialsSection />
+        <PreFooterCTA />
       </main>
       <Footer />
     </div>
