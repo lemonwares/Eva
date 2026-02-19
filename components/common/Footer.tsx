@@ -261,14 +261,12 @@ export default function Footer() {
           <p>
             &copy; {new Date().getFullYear()} EVA Local. All rights reserved.
           </p>
-          {/* <div className="flex gap-4">
-            <Link href="/privacy" className="hover:text-white transition-colors">
-              Privacy Policy
-            </Link>
-            <Link href="/terms" className="hover:text-white transition-colors">
-              Terms of Service
-            </Link>
-          </div> */}
+          <p className="text-white/30 text-xs">
+            Powered by{" "}
+            <span className="font-semibold text-white/50 hover:text-white transition-colors">
+              SparkPoint
+            </span>
+          </p>
         </div>
       </div>
 
