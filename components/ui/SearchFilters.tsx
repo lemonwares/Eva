@@ -58,7 +58,7 @@ export default function SearchFilters({
     filters.minPrice,
     filters.maxPrice,
     filters.minRating,
-    filters.lat && filters.lat !== "loading" ? filters.lat : "",
+    filters.radius !== "5" ? filters.radius : "",
   ].filter(Boolean).length;
 
   // Lock body scroll when drawer is open
