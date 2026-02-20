@@ -212,7 +212,7 @@ export const registerSchema = z.object({
   email: emailSchema,
   name: z.string().min(1, "Name is required").max(100),
   password: passwordSchema,
-  role: z.enum(["CLIENT", "PROFESSIONAL"]).default("CLIENT"),
+  role: z.enum(["CLIENT", "PROFESSIONAL", "ADMINISTRATOR", "VISITOR"]).default("CLIENT"),
 });
 
 export const resetPasswordSchema = z.object({
