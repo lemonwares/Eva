@@ -149,6 +149,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         token.id = user.id;
         token.role = user.role;
         token.image = user.image || null;
+        console.log(`[AUTH] JWT Callback - Created token for ${user.email}, role: ${user.role}`);
       }
       return token;
     },
@@ -157,20 +158,26 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         session.user.id = token.id as string;
         session.user.role = token.role as string;
         session.user.image = token.image as string | null;
+        console.log(`[AUTH] Session Callback - Session for ${session.user.email}, role: ${session.user.role}`);
       }
       return session;
     },
     async redirect({ url, baseUrl }: { url: string; baseUrl: string }) {
-      // Handle role-based redirects after OAuth sign in
-      // If the callback URL is the base URL or root, redirect to appropriate dashboard
-      if (url === baseUrl || url === baseUrl + "/" || url === "/") {
-        // We can't access session here directly, so return a special URL
-        // that the client will handle
-        return `${baseUrl}/api/auth/redirect`;
-      }
-      // Default: allow relative URLs and same-origin URLs
+      // debug logs for production issues
+      console.log(`[AUTH] Redirect Callback - url: ${url}, baseUrl: ${baseUrl}`);
+
+      // Handle relative URLs
       if (url.startsWith("/")) return `${baseUrl}${url}`;
-      if (new URL(url).origin === baseUrl) return url;
+      
+      // Handle same-origin URLs
+      try {
+        const urlOrigin = new URL(url).origin;
+        if (urlOrigin === baseUrl) return url;
+      } catch (err) {
+        // Fallback for invalid URLs
+      }
+
+      // Default to baseUrl (ensures we stay on our domain)
       return baseUrl;
     },
   },
