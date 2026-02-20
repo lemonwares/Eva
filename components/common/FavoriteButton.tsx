@@ -1,5 +1,6 @@
 "use client";
 
+import { logger } from '@/lib/logger';
 import React, { useState, useEffect, useRef } from "react";
 import { Heart, Loader2 } from "lucide-react";
 import { useSession } from "next-auth/react";

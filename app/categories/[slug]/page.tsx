@@ -1,5 +1,6 @@
 "use client";
 
+import { logger } from '@/lib/logger';
 import { useState, useEffect } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";

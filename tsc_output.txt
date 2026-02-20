@@ -1,0 +1,158 @@
+.next/dev/types/validator.ts(756,31): error TS2344: Type 'typeof import("C:/Users/Uche/Documents/Eva updates and Revamp/Eva/app/api/admin/weekly-schedules/[id]/route")' does not satisfy the constraint 'RouteHandlerConfig<"/api/admin/weekly-schedules/[id]">'.
+  Types of property 'GET' are incompatible.
+    Type '(request: NextRequest, { params }: { params: { id: string; }; }) => Promise<NextResponse<{ error: string; }> | NextResponse<{ schedule: { id: string; createdAt: Date; updatedAt: Date; ... 4 more ...; isClosed: boolean; }; }>>' is not assignable to type '(request: NextRequest, context: { params: Promise<{ id: string; }>; }) => void | Response | Promise<void | Response>'.
+      Types of parameters '__1' and 'context' are incompatible.
+        Type '{ params: Promise<{ id: string; }>; }' is not assignable to type '{ params: { id: string; }; }'.
+          Types of property 'params' are incompatible.
+            Property 'id' is missing in type 'Promise<{ id: string; }>' but required in type '{ id: string; }'.
+.next/dev/types/validator.ts(1305,31): error TS2344: Type 'typeof import("C:/Users/Uche/Documents/Eva updates and Revamp/Eva/app/api/vendor/listings/[id]/route")' does not satisfy the constraint 'RouteHandlerConfig<"/api/vendor/listings/[id]">'.
+  Types of property 'GET' are incompatible.
+    Type '(request: NextRequest, { params }: RouteParams) => Promise<NextResponse<{ message: string; }> | NextResponse<{ listing: { provider: { facebook: string | null; ... 37 more ...; onboardingCompletedAt: Date | null; }; } & { ...; }; }>>' is not assignable to type '(request: NextRequest, context: { params: Promise<{ id: string; }>; }) => void | Response | Promise<void | Response>'.
+      Types of parameters '__1' and 'context' are incompatible.
+        Type '{ params: Promise<{ id: string; }>; }' is not assignable to type 'RouteParams'.
+          Types of property 'params' are incompatible.
+            Property 'id' is missing in type 'Promise<{ id: string; }>' but required in type '{ id: string; }'.
+.next/types/validator.ts(756,31): error TS2344: Type 'typeof import("C:/Users/Uche/Documents/Eva updates and Revamp/Eva/app/api/admin/weekly-schedules/[id]/route")' does not satisfy the constraint 'RouteHandlerConfig<"/api/admin/weekly-schedules/[id]">'.
+  Types of property 'GET' are incompatible.
+    Type '(request: NextRequest, { params }: { params: { id: string; }; }) => Promise<NextResponse<{ error: string; }> | NextResponse<{ schedule: { id: string; createdAt: Date; updatedAt: Date; ... 4 more ...; isClosed: boolean; }; }>>' is not assignable to type '(request: NextRequest, context: { params: Promise<{ id: string; }>; }) => void | Response | Promise<void | Response>'.
+      Types of parameters '__1' and 'context' are incompatible.
+        Type '{ params: Promise<{ id: string; }>; }' is not assignable to type '{ params: { id: string; }; }'.
+          Types of property 'params' are incompatible.
+            Property 'id' is missing in type 'Promise<{ id: string; }>' but required in type '{ id: string; }'.
+.next/types/validator.ts(1305,31): error TS2344: Type 'typeof import("C:/Users/Uche/Documents/Eva updates and Revamp/Eva/app/api/vendor/listings/[id]/route")' does not satisfy the constraint 'RouteHandlerConfig<"/api/vendor/listings/[id]">'.
+  Types of property 'GET' are incompatible.
+    Type '(request: NextRequest, { params }: RouteParams) => Promise<NextResponse<{ message: string; }> | NextResponse<{ listing: { provider: { facebook: string | null; ... 37 more ...; onboardingCompletedAt: Date | null; }; } & { ...; }; }>>' is not assignable to type '(request: NextRequest, context: { params: Promise<{ id: string; }>; }) => void | Response | Promise<void | Response>'.
+      Types of parameters '__1' and 'context' are incompatible.
+        Type '{ params: Promise<{ id: string; }>; }' is not assignable to type 'RouteParams'.
+          Types of property 'params' are incompatible.
+            Property 'id' is missing in type 'Promise<{ id: string; }>' but required in type '{ id: string; }'.
+app/admin/data/page.tsx(153,7): error TS2304: Cannot find name 'logger'.
+app/admin/notifications/page.tsx(98,7): error TS2304: Cannot find name 'logger'.
+app/api/admin/analytics/route.ts(245,5): error TS2304: Cannot find name 'logger'.
+app/api/admin/audit-logs/route.ts(117,5): error TS2304: Cannot find name 'logger'.
+app/api/admin/bookings/route.ts(88,5): error TS2304: Cannot find name 'logger'.
+app/api/admin/export/route.ts(114,5): error TS2304: Cannot find name 'logger'.
+app/api/admin/import/route.ts(171,5): error TS2304: Cannot find name 'logger'.
+app/api/admin/import/route.ts(649,5): error TS2304: Cannot find name 'logger'.
+app/api/admin/providers/[id]/route.ts(40,5): error TS2304: Cannot find name 'logger'.
+app/api/admin/providers/[id]/verify/route.ts(82,5): error TS2304: Cannot find name 'logger'.
+app/api/admin/providers/[id]/verify/route.ts(142,5): error TS2304: Cannot find name 'logger'.
+app/api/admin/providers/route.ts(144,5): error TS2304: Cannot find name 'logger'.
+app/api/admin/reviews/route.ts(88,5): error TS2304: Cannot find name 'logger'.
+app/api/admin/tags/[id]/route.ts(71,5): error TS2304: Cannot find name 'logger'.
+app/api/admin/tags/[id]/route.ts(101,5): error TS2304: Cannot find name 'logger'.
+app/api/admin/tags/route.ts(48,5): error TS2304: Cannot find name 'logger'.
+app/api/admin/tags/route.ts(93,5): error TS2304: Cannot find name 'logger'.
+app/api/admin/users/[id]/route.ts(87,5): error TS2304: Cannot find name 'logger'.
+app/api/admin/users/[id]/route.ts(199,5): error TS2304: Cannot find name 'logger'.
+app/api/admin/users/[id]/route.ts(271,5): error TS2304: Cannot find name 'logger'.
+app/api/admin/users/route.ts(112,5): error TS2304: Cannot find name 'logger'.
+app/api/admin/users/route.ts(190,5): error TS2304: Cannot find name 'logger'.
+app/api/auth/login/route.ts(76,5): error TS2304: Cannot find name 'logger'.
+app/api/auth/me/route.ts(64,5): error TS2304: Cannot find name 'logger'.
+app/api/auth/me/route.ts(151,5): error TS2304: Cannot find name 'logger'.
+app/api/auth/reset-password/route.ts(65,5): error TS2304: Cannot find name 'logger'.
+app/api/bookings/[id]/route.ts(71,5): error TS2304: Cannot find name 'logger'.
+app/api/bookings/[id]/route.ts(151,5): error TS2304: Cannot find name 'logger'.
+app/api/bookings/[id]/route.ts(206,5): error TS2304: Cannot find name 'logger'.
+app/api/bookings/[id]/timeline/route.ts(152,5): error TS2304: Cannot find name 'logger'.
+app/api/categories/[id]/providers/route.ts(116,5): error TS2304: Cannot find name 'logger'.
+app/api/categories/[id]/route.ts(73,5): error TS2304: Cannot find name 'logger'.
+app/api/categories/[id]/route.ts(146,5): error TS2304: Cannot find name 'logger'.
+app/api/categories/[id]/route.ts(213,5): error TS2304: Cannot find name 'logger'.
+app/api/categories/route.ts(81,5): error TS2304: Cannot find name 'logger'.
+app/api/categories/route.ts(138,5): error TS2304: Cannot find name 'logger'.
+app/api/cities/[id]/providers/route.ts(113,5): error TS2304: Cannot find name 'logger'.
+app/api/cities/[id]/route.ts(50,5): error TS2304: Cannot find name 'logger'.
+app/api/cities/[id]/route.ts(115,5): error TS2304: Cannot find name 'logger'.
+app/api/cities/[id]/route.ts(154,5): error TS2304: Cannot find name 'logger'.
+app/api/cities/route.ts(116,5): error TS2304: Cannot find name 'logger'.
+app/api/cities/route.ts(157,5): error TS2304: Cannot find name 'logger'.
+app/api/culture-tags/[id]/route.ts(58,5): error TS2304: Cannot find name 'logger'.
+app/api/culture-tags/[id]/route.ts(126,5): error TS2304: Cannot find name 'logger'.
+app/api/culture-tags/[id]/route.ts(168,5): error TS2304: Cannot find name 'logger'.
+app/api/culture-tags/route.ts(66,5): error TS2304: Cannot find name 'logger'.
+app/api/culture-tags/route.ts(103,5): error TS2304: Cannot find name 'logger'.
+app/api/favorites/[providerId]/route.ts(45,5): error TS2304: Cannot find name 'logger'.
+app/api/favorites/[providerId]/route.ts(77,5): error TS2304: Cannot find name 'logger'.
+app/api/favorites/route.ts(87,5): error TS2304: Cannot find name 'logger'.
+app/api/favorites/route.ts(149,5): error TS2304: Cannot find name 'logger'.
+app/api/inquiries/[id]/messages/route.ts(96,5): error TS2304: Cannot find name 'logger'.
+app/api/inquiries/[id]/route.ts(79,5): error TS2304: Cannot find name 'logger'.
+app/api/inquiries/[id]/route.ts(151,5): error TS2304: Cannot find name 'logger'.
+app/api/inquiries/route.ts(110,5): error TS2304: Cannot find name 'logger'.
+app/api/inquiries/route.ts(263,5): error TS2304: Cannot find name 'logger'.
+app/api/listings/[id]/route.ts(48,5): error TS2304: Cannot find name 'logger'.
+app/api/listings/[id]/route.ts(109,5): error TS2304: Cannot find name 'logger'.
+app/api/listings/[id]/route.ts(160,5): error TS2304: Cannot find name 'logger'.
+app/api/listings/route.ts(58,5): error TS2304: Cannot find name 'logger'.
+app/api/listings/route.ts(118,5): error TS2304: Cannot find name 'logger'.
+app/api/notifications/[id]/route.ts(24,5): error TS2304: Cannot find name 'logger'.
+app/api/notifications/[id]/route.ts(51,5): error TS2304: Cannot find name 'logger'.
+app/api/notifications/route.ts(65,5): error TS2304: Cannot find name 'logger'.
+app/api/providers/[id]/listings/[listingId]/route.ts(49,5): error TS2304: Cannot find name 'logger'.
+app/api/providers/[id]/listings/[listingId]/route.ts(146,5): error TS2304: Cannot find name 'logger'.
+app/api/providers/[id]/listings/[listingId]/route.ts(208,5): error TS2304: Cannot find name 'logger'.
+app/api/providers/[id]/listings/route.ts(30,5): error TS2304: Cannot find name 'logger'.
+app/api/providers/[id]/listings/route.ts(93,5): error TS2304: Cannot find name 'logger'.
+app/api/providers/[id]/route.ts(121,5): error TS2304: Cannot find name 'logger'.
+app/api/providers/[id]/route.ts(181,9): error TS2304: Cannot find name 'logger'.
+app/api/providers/[id]/route.ts(211,5): error TS2304: Cannot find name 'logger'.
+app/api/providers/[id]/route.ts(278,5): error TS2304: Cannot find name 'logger'.
+app/api/providers/recommendations/route.ts(135,5): error TS2304: Cannot find name 'logger'.
+app/api/providers/route.ts(156,5): error TS2304: Cannot find name 'logger'.
+app/api/providers/route.ts(204,9): error TS2304: Cannot find name 'logger'.
+app/api/providers/route.ts(235,5): error TS2304: Cannot find name 'logger'.
+app/api/quotes/[id]/decline/route.ts(92,5): error TS2304: Cannot find name 'logger'.
+app/api/quotes/[id]/route.ts(101,5): error TS2304: Cannot find name 'logger'.
+app/api/quotes/[id]/route.ts(175,5): error TS2304: Cannot find name 'logger'.
+app/api/quotes/[id]/route.ts(247,5): error TS2304: Cannot find name 'logger'.
+app/api/quotes/[id]/send/route.ts(116,5): error TS2304: Cannot find name 'logger'.
+app/api/quotes/route.ts(128,5): error TS2304: Cannot find name 'logger'.
+app/api/quotes/route.ts(288,5): error TS2304: Cannot find name 'logger'.
+app/api/reviews/[id]/moderate/route.ts(121,5): error TS2304: Cannot find name 'logger'.
+app/api/reviews/[id]/report/route.ts(108,9): error TS2304: Cannot find name 'logger'.
+app/api/reviews/[id]/report/route.ts(116,5): error TS2304: Cannot find name 'logger'.
+app/api/reviews/[id]/respond/route.ts(90,5): error TS2304: Cannot find name 'logger'.
+app/api/reviews/[id]/respond/route.ts(163,5): error TS2304: Cannot find name 'logger'.
+app/api/reviews/[id]/respond/route.ts(224,5): error TS2304: Cannot find name 'logger'.
+app/api/reviews/[id]/route.ts(56,5): error TS2304: Cannot find name 'logger'.
+app/api/reviews/[id]/route.ts(124,5): error TS2304: Cannot find name 'logger'.
+app/api/reviews/[id]/route.ts(192,5): error TS2304: Cannot find name 'logger'.
+app/api/reviews/route.ts(88,5): error TS2304: Cannot find name 'logger'.
+app/api/reviews/route.ts(193,5): error TS2304: Cannot find name 'logger'.
+app/api/search/suggestions/route.ts(78,5): error TS2304: Cannot find name 'logger'.
+app/api/slugs/check/route.ts(58,5): error TS2304: Cannot find name 'logger'.
+app/api/stripe/checkout/route.ts(230,5): error TS2304: Cannot find name 'logger'.
+app/api/tags/[id]/route.ts(45,5): error TS2304: Cannot find name 'logger'.
+app/api/tags/[id]/route.ts(110,5): error TS2304: Cannot find name 'logger'.
+app/api/tags/[id]/route.ts(149,5): error TS2304: Cannot find name 'logger'.
+app/api/tags/route.ts(84,9): error TS2304: Cannot find name 'logger'.
+app/api/tags/route.ts(143,5): error TS2304: Cannot find name 'logger'.
+app/api/vendor/analytics/route.ts(233,5): error TS2304: Cannot find name 'logger'.
+app/api/vendor/reviews/route.ts(140,5): error TS2304: Cannot find name 'logger'.
+app/categories/[slug]/page.tsx(154,7): error TS2304: Cannot find name 'logger'.
+app/categories/[slug]/page.tsx(192,7): error TS2304: Cannot find name 'logger'.
+app/locations/[slug]/page.tsx(100,7): error TS2304: Cannot find name 'logger'.
+app/locations/[slug]/page.tsx(114,7): error TS2304: Cannot find name 'logger'.
+app/locations/[slug]/page.tsx(148,7): error TS2304: Cannot find name 'logger'.
+app/vendor/payments/page.tsx(147,7): error TS2304: Cannot find name 'logger'.
+app/vendor/payments/page.tsx(165,7): error TS2304: Cannot find name 'logger'.
+components/common/FavoriteButton.tsx(73,9): error TS2304: Cannot find name 'logger'.
+components/common/FavoriteButton.tsx(117,9): error TS2304: Cannot find name 'logger'.
+components/common/FavoriteButton.tsx(123,7): error TS2304: Cannot find name 'logger'.
+components/pages/quote-review.tsx(53,11): error TS2304: Cannot find name 'logger'.
+components/pages/quote-review.tsx(59,9): error TS2304: Cannot find name 'logger'.
+components/sections/faq-section.tsx(128,7): error TS2304: Cannot find name 'logger'.
+components/ui/ImageUpload.tsx(103,9): error TS2304: Cannot find name 'logger'.
+lib/api-response.ts(178,5): error TS2304: Cannot find name 'logger'.
+lib/auth-rsc.ts(34,9): error TS2322: Type 'string | undefined' is not assignable to type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+lib/cloudinary.ts(66,5): error TS2304: Cannot find name 'logger'.
+lib/cloudinary.ts(78,5): error TS2304: Cannot find name 'logger'.
+lib/notifications.ts(36,5): error TS2304: Cannot find name 'logger'.
+lib/notifications.ts(61,5): error TS2304: Cannot find name 'logger'.
+lib/notifications.ts(214,5): error TS2304: Cannot find name 'logger'.
+lib/notifications.ts(233,5): error TS2304: Cannot find name 'logger'.
+lib/notifications.ts(256,5): error TS2304: Cannot find name 'logger'.
+lib/upload.ts(206,5): error TS2304: Cannot find name 'logger'.

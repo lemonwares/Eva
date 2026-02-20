@@ -1,5 +1,6 @@
 "use client";
 
+import { logger } from '@/lib/logger';
 import VendorLayout from "@/components/vendor/VendorLayout";
 import { useVendorTheme } from "@/components/vendor/VendorThemeContext";
 import { formatCurrency } from "@/lib/formatters";

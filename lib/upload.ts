@@ -14,6 +14,7 @@
  * - SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, SUPABASE_STORAGE_BUCKET (for Supabase)
  */
 
+import { logger } from '@/lib/logger';
 import { randomUUID } from "crypto";
 import path from "path";
 

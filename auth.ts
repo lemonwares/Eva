@@ -4,8 +4,7 @@ import Credentials from "next-auth/providers/credentials";
 import { prisma } from "@/lib/prisma";
 import bcrypt from "bcryptjs";
 import { z } from "zod";
-import { emailTemplates } from "@/templates/templateLoader";
-import { sendEmail } from "@/lib/mail";
+import { emailTemplates, sendTemplatedEmail } from "@/lib/email";
 
 // Custom error classes so NextAuth can relay specific codes to the client
 class EmailNotVerifiedError extends CredentialsSignin {
@@ -122,22 +121,8 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           // Send welcome email if new user
           if (isNewUser) {
             try {
-              const dashboardUrl = `${
-                process.env.AUTH_URL || "http://localhost:3000"
-              }/dashboard`;
-              const helpUrl = `${
-                process.env.AUTH_URL || "http://localhost:3000"
-              }/help`;
-              const htmlContent = emailTemplates.welcome(
-                dbUser.name,
-                dashboardUrl,
-                helpUrl,
-              );
-              await sendEmail({
-                to: dbUser.email,
-                subject: "Welcome to Eva Marketplace! 🎉",
-                html: htmlContent,
-              });
+              const template = emailTemplates.welcome(dbUser.name);
+              await sendTemplatedEmail(dbUser.email, template);
             } catch (emailErr) {
               console.error(
                 "Failed to send welcome email after Google sign in:",

@@ -3,6 +3,7 @@
 import AdminLayout from "@/components/admin/AdminLayout";
 import { useAdminTheme } from "@/components/admin/AdminThemeContext";
 import { Toast } from "@/components/admin/Toast";
+import { logger } from "@/lib/logger";
 import {
   Bell,
   Mail,
