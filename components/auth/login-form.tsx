@@ -24,7 +24,9 @@ export default function LoginForm() {
     setLoading(true);
 
     try {
+      console.log(`[LOGIN] Attempting login for ${email}...`);
       const result = await login({ email, password }, callbackUrl);
+      console.log("[LOGIN] Result:", result);
 
       if (!result.success) {
         setError(result.message || "Invalid email or password");
@@ -34,12 +36,14 @@ export default function LoginForm() {
       let nextUrl = callbackUrl;
       if (!callbackUrl || callbackUrl === "/") {
         try {
+          console.log("[LOGIN] No callbackUrl, looking up role...");
           const meResponse = await fetch("/api/auth/me", {
             cache: "no-store",
             credentials: "include",
           });
           if (meResponse.ok) {
             const { user } = await meResponse.json();
+            console.log("[LOGIN] Role lookup result:", user?.role);
             if (user?.role === "ADMINISTRATOR") {
               nextUrl = "/admin";
             } else if (user?.role === "PROFESSIONAL") {
@@ -55,9 +59,12 @@ export default function LoginForm() {
           );
         }
       }
+      
+      console.log("[LOGIN] Navigating to:", nextUrl);
       router.push(nextUrl);
       router.refresh();
     } catch (err) {
+      console.error("[LOGIN] Unexpected error:", err);
       setError("An unexpected error occurred. Please try again.");
     } finally {
       setLoading(false);

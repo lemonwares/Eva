@@ -14,7 +14,7 @@ export interface RegisterData {
   name: string;
   email: string;
   password: string;
-  role: "CLIENT" | "PROFESSIONAL";
+  role: "CLIENT" | "PROFESSIONAL" | "ADMINISTRATOR" | "VISITOR";
 }
 
 export interface AuthResponse {
