@@ -59,10 +59,8 @@ export default function LoginForm() {
           );
         }
       }
-      
       console.log("[LOGIN] Navigating to:", nextUrl);
       router.push(nextUrl);
-      router.refresh();
     } catch (err) {
       console.error("[LOGIN] Unexpected error:", err);
       setError("An unexpected error occurred. Please try again.");
