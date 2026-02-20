@@ -1,3 +1,4 @@
+import { logger } from '@/lib/logger';
 import { prisma } from "@/lib/prisma";
 
 export type NotificationChannelType = "EMAIL" | "SMS" | "PUSH";

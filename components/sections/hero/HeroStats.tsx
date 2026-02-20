@@ -6,7 +6,7 @@ const stats = [
 
 export default function HeroStats() {
   return (
-    <div className="card-float !p-4 sm:!p-6 w-full sm:max-w-lg mt-10">
+    <div className="card-float p-4! sm:p-6! w-full sm:max-w-lg mt-10">
       <div className="grid grid-cols-3 divide-x divide-border">
         {stats.map((stat, idx) => (
           <div key={stat.label} className="flex flex-col items-center text-center px-1 sm:px-2">

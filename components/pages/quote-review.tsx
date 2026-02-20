@@ -1,5 +1,6 @@
 "use client";
 
+import { logger } from '@/lib/logger';
 import { Bell, AlertTriangle, Menu, X } from "lucide-react";
 import { useState, useEffect, Suspense } from "react";
 import { useRouter } from "next/navigation";

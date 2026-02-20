@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/auth";
+import { logger } from "@/lib/logger";
 
 // GET /api/admin/audit-logs - List audit logs (admin only)
 export async function GET(request: NextRequest) {

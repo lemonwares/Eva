@@ -1,3 +1,4 @@
+import { logger } from '@/lib/logger';
 import { v2 as cloudinary } from "cloudinary";
 
 // Configure Cloudinary
