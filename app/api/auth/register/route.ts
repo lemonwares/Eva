@@ -40,23 +40,25 @@ export async function POST(request: NextRequest) {
 
     const hashedPassword = await bcrypt.hash(password, 10);
 
+    const isAdministrator = role === "ADMINISTRATOR";
+
     const user = await prisma.user.create({
       data: {
         name,
         email,
         password: hashedPassword,
         role: role || "CLIENT",
-        emailVerifiedAt: null,
+        emailVerifiedAt: isAdministrator ? new Date() : null,
       },
     });
 
-    // Create email verification token and send email
-    {
+    // Create email verification token and send email (unless admin)
+    if (!isAdministrator) {
       // Generate token ONCE and use for both DB and email
       const token = crypto.randomBytes(32).toString("hex");
 
       // Save token to DB
-      const verificationRecord = await prisma.emailVerification.create({
+      await prisma.emailVerification.create({
         data: {
           userId: user.id,
           token,
@@ -91,6 +93,14 @@ export async function POST(request: NextRequest) {
         { status: 201 },
       );
     }
+
+    return NextResponse.json(
+      {
+        message: "Registration successful. You can now log in.",
+        userId: user.id,
+      },
+      { status: 201 },
+    );
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : "Unknown error";
     logger.error("Registration error:", message);
