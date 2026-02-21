@@ -152,18 +152,20 @@ export default function AdminSidebar({
               }`}
             >
               <div className="shrink-0">
-                <Image
-                  src={
-                    darkMode
-                      ? "/images/brand/eva-logo-dark.png"
-                      : "/images/brand/eva-logo-light.png"
-                  }
-                  alt="EVA Local"
-                  width={isCollapsed ? 36 : 120}
-                  height={isCollapsed ? 36 : 36}
-                  className="object-contain"
-                  priority
-                />
+                <Link href="/">
+                  <Image
+                    src={
+                      darkMode
+                        ? "/images/brand/eva-logo-dark.png"
+                        : "/images/brand/eva-logo-light.png"
+                    }
+                    alt="EVA Local"
+                    width={isCollapsed ? 36 : 120}
+                    height={isCollapsed ? 36 : 36}
+                    className="object-contain hover:opacity-80 transition-opacity"
+                    priority
+                  />
+                </Link>
               </div>
             </div>
             <button

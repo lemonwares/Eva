@@ -30,6 +30,7 @@ export default function LoginForm() {
 
       if (!result.success) {
         setError(result.message || "Invalid email or password");
+        setLoading(false);
         return;
       }
 
@@ -59,12 +60,13 @@ export default function LoginForm() {
           );
         }
       }
+      
       console.log("[LOGIN] Navigating to:", nextUrl);
-      router.push(nextUrl);
+      window.location.href = nextUrl;
+      // Do not reset loading here, we want the spinner to stay until the page fully unloads.
     } catch (err) {
       console.error("[LOGIN] Unexpected error:", err);
       setError("An unexpected error occurred. Please try again.");
-    } finally {
       setLoading(false);
     }
   };
