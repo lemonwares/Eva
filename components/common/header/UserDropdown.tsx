@@ -70,22 +70,35 @@ export default function UserDropdown({
 
           {/* Menu Items */}
           <div className="py-1">
-            {[
-              { href: dashboardUrl, icon: LayoutDashboard, label: "Dashboard" },
-              { href: "/profile", icon: User, label: "Profile" },
-              { href: "/favorites", icon: Heart, label: "Favorites" },
-              { href: "/settings", icon: Settings, label: "Settings" },
-            ].map((item) => (
-              <Link
-                key={item.label}
-                href={item.href}
-                className="flex items-center gap-3 px-4 py-2.5 text-sm text-foreground hover:bg-teal-light/40 transition-colors"
-                onClick={onClose}
-              >
-                <item.icon size={16} className="text-primary" />
-                {item.label}
-              </Link>
-            ))}
+            {(() => {
+              const role = session.user.role;
+              const items = [
+                { href: dashboardUrl, icon: LayoutDashboard, label: "Dashboard" }
+              ];
+
+              if (role === "ADMINISTRATOR") {
+                items.push({ href: "/admin/settings", icon: Settings, label: "Settings" });
+              } else if (role === "PROFESSIONAL") {
+                items.push({ href: "/vendor/profile", icon: User, label: "Profile" });
+                items.push({ href: "/vendor/settings", icon: Settings, label: "Settings" });
+              } else {
+                items.push({ href: "/profile", icon: User, label: "Profile" });
+                items.push({ href: "/dashboard/favorites", icon: Heart, label: "Favorites" });
+                items.push({ href: "/dashboard/settings", icon: Settings, label: "Settings" });
+              }
+
+              return items.map((item) => (
+                <Link
+                  key={item.label}
+                  href={item.href}
+                  className="flex items-center gap-3 px-4 py-2.5 text-sm text-foreground hover:bg-teal-light/40 transition-colors"
+                  onClick={onClose}
+                >
+                  <item.icon size={16} className="text-primary" />
+                  {item.label}
+                </Link>
+              ));
+            })()}
           </div>
 
           {/* Sign Out */}
