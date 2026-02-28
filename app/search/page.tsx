@@ -3,12 +3,14 @@
 import { useState, useEffect, useCallback, Suspense, useRef, useMemo } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
+import dynamic from "next/dynamic";
 import Header from "@/components/common/Header";
 import Footer from "@/components/common/Footer";
 import {
   Search,
   Grid,
   List,
+  Map,
   Loader2,
   SlidersHorizontal,
   Hash,
@@ -28,6 +30,15 @@ import { useGeolocation } from "@/hooks/useGeolocation";
 import { logger } from "@/lib/logger";
 import { Pagination } from "@/components/ui/Pagination";
 
+const VendorMap = dynamic(() => import("@/components/search/VendorMap"), {
+  ssr: false,
+  loading: () => (
+    <div className="flex items-center justify-center h-[500px] bg-muted/30 rounded-2xl border border-border">
+      <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
+    </div>
+  ),
+});
+
 interface Provider {
   id: string;
   businessName: string;
@@ -43,6 +54,9 @@ interface Provider {
   categories: string[];
   distance?: number | null;
   isWithinRadius?: boolean;
+  geoLat?: number | null;
+  geoLng?: number | null;
+  slug?: string;
 }
 
 interface Category {
@@ -86,7 +100,7 @@ function SearchPageContent() {
   const [loading, setLoading] = useState(true);
   const [totalResults, setTotalResults] = useState(0);
   const [page, setPage] = useState(1);
-  const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
+  const [viewMode, setViewMode] = useState<"grid" | "list" | "map">("grid");
   const [showFilters, setShowFilters] = useState(false);
   const ITEMS_PER_PAGE = 12;
 
@@ -775,6 +789,17 @@ function SearchPageContent() {
                   >
                     <List className="w-4 h-4 sm:w-5 sm:h-5" />
                   </button>
+                  <button
+                    onClick={() => setViewMode("map")}
+                    className={`p-1.5 sm:p-2 ${
+                      viewMode === "map"
+                        ? "bg-accent text-accent-foreground"
+                        : "bg-background text-muted-foreground hover:bg-muted"
+                    }`}
+                    aria-label="Map view"
+                  >
+                    <Map className="w-4 h-4 sm:w-5 sm:h-5" />
+                  </button>
                 </div>
               </div>
             </div>
@@ -803,7 +828,7 @@ function SearchPageContent() {
                   }
                 >
                   {[1, 2, 3, 4, 5, 6].map((i) => (
-                    <SearchResultSkeleton key={i} viewMode={viewMode} />
+                    <SearchResultSkeleton key={i} viewMode={viewMode as "grid" | "list"} />
                   ))}
                 </div>
               ) : providers.length === 0 ? (
@@ -847,6 +872,8 @@ function SearchPageContent() {
                     </div>
                   </div>
                 </div>
+              ) : viewMode === "map" ? (
+                <VendorMap providers={providers} />
               ) : (
                 <>
                   <div className={
@@ -858,7 +885,7 @@ function SearchPageContent() {
                       <SearchResultCard
                         key={provider.id}
                         provider={provider}
-                        viewMode={viewMode}
+                        viewMode={viewMode as "grid" | "list"}
                         isFavorite={favoriteIds.has(provider.id)}
                         onToggleFavorite={() =>
                           handleToggleFavorite(provider.id)
