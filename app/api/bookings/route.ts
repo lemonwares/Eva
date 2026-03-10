@@ -132,6 +132,7 @@ export async function GET(request: NextRequest) {
 }
 
 // POST /api/bookings - Create a new booking (direct from vendor page)
+// This would create the booking thing;
 
 export async function POST(request: NextRequest) {
   try {
