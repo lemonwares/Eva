@@ -85,12 +85,14 @@ export default function DashboardSidebar({
       {/* Logo */}
       <div className="flex items-center justify-between h-16 px-4 border-b border-inherit">
         <Link href="/" className="flex items-center gap-2">
-          <div className="w-8 h-8 bg-accent rounded-lg flex items-center justify-center">
-            <span className="text-white font-bold">E</span>
-          </div>
-          <span className={`font-bold text-lg ${themeClasses.textPrimary}`}>
-            EVA
-          </span>
+          <Image
+            src="/images/brand/eva-logo-light.png"
+            alt="EVA Local"
+            width={100}
+            height={40}
+            className="h-9 w-auto object-contain"
+            priority
+          />
         </Link>
         <button
           onClick={() => setSidebarOpen(false)}
