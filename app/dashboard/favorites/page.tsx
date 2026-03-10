@@ -15,6 +15,7 @@ import {
   Loader2,
   ArrowRight,
   DollarSign,
+  Trash2,
 } from "lucide-react";
 import { logger } from "@/lib/logger";
 
@@ -73,15 +74,15 @@ export default function FavoritesPage() {
 
   const [favoriteToRemove, setFavoriteToRemove] = useState<string | null>(null);
 
-  const removeFavorite = async (favoriteId: string) => {
+  const removeFavorite = async (providerId: string) => {
     try {
-      setRemovingId(favoriteId);
-      const response = await fetch(`/api/favorites/${favoriteId}`, {
+      setRemovingId(providerId);
+      const response = await fetch(`/api/favorites/${providerId}`, {
         method: "DELETE",
       });
 
       if (response.ok) {
-        setFavorites((prev) => prev.filter((f) => f.id !== favoriteId));
+        setFavorites((prev) => prev.filter((f) => f.provider.id !== providerId));
       }
     } catch (error) {
       logger.error("Error removing favorite:", error);
@@ -217,15 +218,16 @@ export default function FavoritesPage() {
                 <button
                   onClick={(e) => {
                     e.preventDefault();
-                    setFavoriteToRemove(favorite.id);
+                    setFavoriteToRemove(favorite.provider.id);
                   }}
-                  disabled={removingId === favorite.id}
-                  className="absolute top-3 right-3 p-2 bg-white/90 backdrop-blur-sm rounded-full text-accent hover:bg-accent hover:text-white transition-colors disabled:opacity-50 shadow-sm"
+                  disabled={removingId === favorite.provider.id}
+                  className="absolute top-3 right-3 p-2 bg-white/90 backdrop-blur-sm rounded-full text-red-500 hover:bg-red-500 hover:text-white transition-colors disabled:opacity-50 shadow-sm"
+                  title="Remove from favorites"
                 >
-                  {removingId === favorite.id ? (
+                  {removingId === favorite.provider.id ? (
                     <Loader2 className="w-5 h-5 animate-spin" />
                   ) : (
-                    <Heart className="w-5 h-5 fill-current" />
+                    <Trash2 className="w-5 h-5" />
                   )}
                 </button>
               </div>
