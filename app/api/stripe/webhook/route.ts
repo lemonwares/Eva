@@ -12,7 +12,7 @@ export const runtime = "nodejs";
 
 async function handleSuccessfulPayment(session: Stripe.Checkout.Session) {
   let bookingId = session.metadata?.bookingId;
-  const paymentType = session.metadata?.paymentType as
+  const paymentType = (session.metadata?.paymentType || "FULL") as
     | "DEPOSIT"
     | "BALANCE"
     | "FULL";
@@ -126,7 +126,18 @@ async function handleSuccessfulPayment(session: Stripe.Checkout.Session) {
       },
     });
   } else {
-    // Find the pending payment by checkout session ID
+    // Booking already exists - update it based on payment
+    booking = await prisma.booking.findUnique({
+      where: { id: bookingId },
+      include: { payments: true, provider: true },
+    });
+    
+    if (!booking) {
+      logger.error("Booking not found:", bookingId);
+      return;
+    }
+
+    // Find the pending payment by checkout session ID or create new one
     const pendingPayment = await prisma.payment.findFirst({
       where: {
         bookingId,
@@ -174,15 +185,6 @@ async function handleSuccessfulPayment(session: Stripe.Checkout.Session) {
     }
 
     // Update booking status based on payment type
-    booking = await prisma.booking.findUnique({
-      where: { id: bookingId },
-      include: { payments: true, provider: true },
-    });
-    if (!booking) {
-      logger.error("Booking not found:", bookingId);
-      return;
-    }
-
     const now = new Date();
     const statusUpdate: Record<string, unknown> = {
       updatedAt: now,
@@ -230,6 +232,7 @@ async function handleSuccessfulPayment(session: Stripe.Checkout.Session) {
         statusUpdate.balancePaidAt = now;
         statusUpdate.stripePaymentIntentId = paymentIntentId;
         statusUpdate.status = "CONFIRMED";
+        statusUpdate.completedAt = now;
         statusUpdate.statusTimeline = [
           ...((booking.statusTimeline as Array<{
             status: string;

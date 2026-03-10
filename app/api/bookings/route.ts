@@ -244,6 +244,7 @@ export async function POST(request: NextRequest) {
         bookingId: booking.id,
         providerId,
         quoteId: quote.id,
+        paymentType: "FULL", // Add payment type for webhook handler
       },
       success_url: successUrl,
       cancel_url: cancelUrl,
