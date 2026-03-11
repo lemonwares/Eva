@@ -238,25 +238,27 @@ export function useOnboarding(): UseOnboardingReturn {
   );
 
   const handleAddListing = useCallback(() => {
-    setListingDraft((draft) => {
-      if (
-        !draft.headline.trim() ||
-        !draft.price ||
-        draft.price <= 0 ||
-        !draft.timeEstimate.trim() ||
-        !draft.coverImageUrl.trim() ||
-        !draft.longDescription.trim()
-      )
-        return draft;
+    // Validate the draft first
+    if (
+      !listingDraft.headline.trim() ||
+      !listingDraft.price ||
+      listingDraft.price <= 0 ||
+      !listingDraft.timeEstimate.trim() ||
+      !listingDraft.coverImageUrl.trim() ||
+      !listingDraft.longDescription.trim()
+    ) {
+      return;
+    }
 
-      setFormData((prev) => ({
-        ...prev,
-        listings: [...prev.listings, draft],
-      }));
+    // Add the listing to formData
+    setFormData((prev) => ({
+      ...prev,
+      listings: [...prev.listings, listingDraft],
+    }));
 
-      return DEFAULT_LISTING_DRAFT;
-    });
-  }, []);
+    // Reset the draft
+    setListingDraft(DEFAULT_LISTING_DRAFT);
+  }, [listingDraft]);
 
   const handleRemoveListing = useCallback(
     (idx: number) =>
@@ -269,17 +271,20 @@ export function useOnboarding(): UseOnboardingReturn {
 
   // ── Team member draft ─────────────────────────────────────────
   const handleAddTeamMember = useCallback(() => {
-    setTeamMemberDraft((draft) => {
-      if (!draft.name.trim()) return draft;
+    // Validate the draft first
+    if (!teamMemberDraft.name.trim()) {
+      return;
+    }
 
-      setFormData((prev) => ({
-        ...prev,
-        teamMembers: [...prev.teamMembers, { ...draft }],
-      }));
+    // Add the team member to formData
+    setFormData((prev) => ({
+      ...prev,
+      teamMembers: [...prev.teamMembers, { ...teamMemberDraft }],
+    }));
 
-      return DEFAULT_TEAM_MEMBER;
-    });
-  }, []);
+    // Reset the draft
+    setTeamMemberDraft(DEFAULT_TEAM_MEMBER);
+  }, [teamMemberDraft]);
 
   const handleRemoveTeamMember = useCallback(
     (idx: number) =>
@@ -407,6 +412,8 @@ export function useOnboarding(): UseOnboardingReturn {
                 timeEstimate: listing.timeEstimate,
                 coverImageUrl: listing.coverImageUrl,
                 galleryUrls: listing.galleryUrls,
+                maxGuests: listing.maxGuests,
+                category: listing.category || null,
               }),
             }),
           ),
@@ -416,12 +423,21 @@ export function useOnboarding(): UseOnboardingReturn {
       }
 
       clearSavedData();
-      router.push("/vendor?welcome=true");
+      
+      // Set success state before redirect
+      setSubmitProgress("Success! Redirecting to your dashboard...");
+      
+      // Wait a moment for the UI to update, then redirect
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      // Force a hard navigation to ensure the redirect works
+      window.location.href = "/vendor?welcome=true";
     } catch (err) {
       setError(err instanceof Error ? err.message : "An error occurred");
+      logger.error("Onboarding submission error:", err);
     } finally {
-      setIsSubmitting(false);
-      setSubmitProgress("");
+      // Don't set isSubmitting to false here if redirect is successful
+      // The page will navigate away anyway
     }
   }, [formData, clearSavedData, router]);
 

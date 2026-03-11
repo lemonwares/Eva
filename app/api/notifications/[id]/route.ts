@@ -1,9 +1,9 @@
 import { logger } from '@/lib/logger';
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
+import { prisma } from "@/lib/prisma";
 
 // PATCH /api/notifications/:id - Mark notification as read
-// Note: Notification model not implemented yet. Returns stub response.
 export async function PATCH(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -15,12 +15,32 @@ export async function PATCH(
     }
 
     const { id } = await params;
+    const body = await request.json();
 
-    // TODO: Implement when Notification model is added
-    return NextResponse.json(
-      { message: "Notification feature not implemented yet" },
-      { status: 501 }
-    );
+    // Verify the notification belongs to the user
+    const notification = await prisma.notification.findFirst({
+      where: {
+        id,
+        userId: session.user.id,
+      },
+    });
+
+    if (!notification) {
+      return NextResponse.json(
+        { message: "Notification not found" },
+        { status: 404 }
+      );
+    }
+
+    // Update the notification
+    const updatedNotification = await prisma.notification.update({
+      where: { id },
+      data: {
+        isRead: body.isRead ?? true,
+      },
+    });
+
+    return NextResponse.json({ notification: updatedNotification });
   } catch (error: any) {
     logger.error("Error updating notification:", error);
     return NextResponse.json(
@@ -43,11 +63,26 @@ export async function DELETE(
 
     const { id } = await params;
 
-    // TODO: Implement when Notification model is added
-    return NextResponse.json(
-      { message: "Notification feature not implemented yet" },
-      { status: 501 }
-    );
+    // Verify the notification belongs to the user
+    const notification = await prisma.notification.findFirst({
+      where: {
+        id,
+        userId: session.user.id,
+      },
+    });
+
+    if (!notification) {
+      return NextResponse.json(
+        { message: "Notification not found" },
+        { status: 404 }
+      );
+    }
+
+    await prisma.notification.delete({
+      where: { id },
+    });
+
+    return NextResponse.json({ message: "Notification deleted" });
   } catch (error: any) {
     logger.error("Error deleting notification:", error);
     return NextResponse.json(

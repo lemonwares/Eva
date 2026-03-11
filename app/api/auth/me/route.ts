@@ -7,8 +7,17 @@ import bcrypt from "bcryptjs";
 
 const updateProfileSchema = z.object({
   name: z.string().min(1).max(100).optional(),
-  phone: z.string().max(20).optional().nullable(),
-  avatar: z.string().url().optional().nullable(),
+  phone: z.string().max(20).optional().nullable().transform(val => val === "" ? null : val),
+  avatar: z.string().optional().nullable().transform(val => {
+    if (!val || val === "") return null;
+    // Validate URL format if value is provided
+    try {
+      new URL(val);
+      return val;
+    } catch {
+      throw new Error("Invalid avatar URL");
+    }
+  }),
   currentPassword: z.string().optional(),
   newPassword: z.string().min(8).optional(),
 });
@@ -83,9 +92,12 @@ export async function PATCH(request: NextRequest) {
     }
 
     const body = await request.json();
+    logger.info("[UPDATE PROFILE] Request body:", body);
+    
     const validation = updateProfileSchema.safeParse(body);
 
     if (!validation.success) {
+      logger.error("[UPDATE PROFILE] Validation failed:", validation.error.issues);
       return NextResponse.json(
         { message: "Invalid request", errors: validation.error.issues },
         { status: 400 }

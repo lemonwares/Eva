@@ -121,6 +121,27 @@ export function ListingsStep({
 
         <div>
           <label className="block text-xs font-medium text-gray-600 mb-1">
+            Category
+          </label>
+          <select
+            value={listingDraft.category}
+            onChange={(e) => handleDraftChange({ category: e.target.value })}
+            className={inputCls()}
+          >
+            <option value="">Select a category (optional)</option>
+            {formData.categories.map((cat) => (
+              <option key={cat} value={cat}>
+                {cat.charAt(0).toUpperCase() + cat.slice(1)}
+              </option>
+            ))}
+          </select>
+          <p className="text-xs text-gray-400 mt-1">
+            Assign this service to a specific category for better organization
+          </p>
+        </div>
+
+        <div>
+          <label className="block text-xs font-medium text-gray-600 mb-1">
             Description
           </label>
           <textarea
@@ -176,6 +197,27 @@ export function ListingsStep({
               />
             </div>
           </div>
+        </div>
+
+        <div>
+          <label className="block text-xs font-medium text-gray-600 mb-1">
+            Maximum Guests
+          </label>
+          <input
+            type="number"
+            min={1}
+            value={listingDraft.maxGuests ?? ""}
+            onChange={(e) =>
+              handleDraftChange({
+                maxGuests: e.target.value ? Number(e.target.value) : null,
+              })
+            }
+            placeholder="e.g., 100"
+            className={inputCls()}
+          />
+          <p className="text-xs text-gray-400 mt-1">
+            Maximum number of guests this service can accommodate
+          </p>
         </div>
 
         <div>

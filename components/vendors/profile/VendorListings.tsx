@@ -8,6 +8,7 @@ export interface Listing {
   longDescription?: string;
   price?: number;
   timeEstimate?: string;
+  maxGuests?: number | null;
   coverImageUrl?: string;
   galleryUrls?: string[];
 }

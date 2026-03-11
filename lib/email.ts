@@ -15,8 +15,10 @@ const EMAIL_STYLE = `
   .container { max-width: 600px; margin: 0 auto; background: #ffffff; border-radius: 20px; box-shadow: 0 4px 24px rgba(124, 58, 237, 0.08); overflow: hidden; }
   .header { padding: 48px 32px; text-align: center; background: linear-gradient(135deg, #7c3aed 0%, #a855f7 100%); }
   .header-green { background: linear-gradient(135deg, #059669 0%, #10b981 100%); }
-  .header-icon { font-size: 56px; margin-bottom: 16px; }
-  .logo { font-size: 28px; font-weight: 900; letter-spacing: 4px; color: #ffffff; margin-bottom: 16px; }
+  .logo-container { margin-bottom: 24px; }
+  .logo { max-width: 140px; height: auto; }
+  .gif-container { margin: 32px 0; text-align: center; }
+  .gif-image { max-width: 200px; height: auto; border-radius: 12px; }
   .header-title { font-size: 26px; font-weight: 700; color: #ffffff; margin-bottom: 0; line-height: 1.3; }
   .body { padding: 40px 32px; }
   .greeting { font-size: 18px; color: #0f172a; margin-bottom: 20px; font-weight: 600; }
@@ -28,7 +30,7 @@ const EMAIL_STYLE = `
   .details-box-green { background: #ecfdf5; border-color: #a7f3d0; }
   .warning-box { background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%); border-left: 4px solid #f59e0b; padding: 18px 24px; margin: 28px 0; border-radius: 12px; font-size: 14px; color: #92400e; line-height: 1.6; }
   .footer { background: #f8fafc; padding: 32px; text-align: center; border-top: 1px solid #e2e8f0; }
-  .footer-logo { font-weight: 800; color: #7c3aed; font-size: 18px; letter-spacing: 2px; margin-bottom: 8px; }
+  .footer-logo { max-width: 100px; height: auto; margin-bottom: 12px; }
   .footer-tagline { color: #64748b; font-size: 13px; margin-bottom: 12px; }
   .footer-contact { color: #94a3b8; font-size: 13px; }
   .footer-contact a { color: #7c3aed; text-decoration: none; }
@@ -36,7 +38,7 @@ const EMAIL_STYLE = `
 
 const EMAIL_LAYOUT = (
   title: string,
-  emoji: string,
+  gifUrl: string,
   headerTitle: string,
   content: string,
   footerTagline: string = "Connecting you with the best event service providers",
@@ -48,28 +50,30 @@ const EMAIL_LAYOUT = (
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
-  <title>\${title}</title>
+  <title>${title}</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Red+Hat+Display:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
   <style>
-    \${EMAIL_STYLE}
+    ${EMAIL_STYLE}
   </style>
 </head>
 <body>
   <div class="email-wrapper">
     <div class="container">
-      <div class="header \${isGreen ? 'header-green' : ''}">
-        <div class="header-icon">\${emoji}</div>
-        <div class="logo">EVA</div>
-        <div class="header-title">\${headerTitle}</div>
+      <div class="header ${isGreen ? 'header-green' : ''}">
+        <div class="logo-container">
+          <img src="${process.env.NEXTAUTH_URL || 'https://evalocal.com'}/images/brand/eva-logo-light.png" alt="EVA Local" class="logo" />
+        </div>
+        ${gifUrl ? `<div class="gif-container"><img src="${gifUrl}" alt="Animation" class="gif-image" /></div>` : ''}
+        <div class="header-title">${headerTitle}</div>
       </div>
       <div class="body">
-        \${content}
+        ${content}
       </div>
       <div class="footer">
-        <div class="footer-logo">EVA</div>
-        <div class="footer-tagline">\${footerTagline}</div>
+        <img src="${process.env.NEXTAUTH_URL || 'https://evalocal.com'}/images/brand/eva-logo-dark.png" alt="EVA Local" class="footer-logo" />
+        <div class="footer-tagline">${footerTagline}</div>
         <div class="footer-contact"><a href="mailto:hello@evalocal.com">hello@evalocal.com</a></div>
       </div>
     </div>
@@ -136,6 +140,21 @@ async function sendWithZeptoMail(options: EmailOptions): Promise<boolean> {
 
 // Send email (uses ZeptoMail)
 export async function sendEmail(options: EmailOptions): Promise<boolean> {
+  // Check if email sending is disabled
+  if (process.env.DISABLE_EMAIL_SENDING === "true") {
+    logger.info(
+      "📧 [EMAIL DISABLED] Email sending is disabled. Email would be sent:",
+      {
+        from: options.from || DEFAULT_FROM,
+        to: options.to,
+        subject: options.subject,
+        preview:
+          options.text?.substring(0, 100) || options.html.substring(0, 100),
+      },
+    );
+    return true;
+  }
+
   // Check if ZeptoMail is configured
   if (!process.env.ZEPTOMAIL_TOKEN || !process.env.ZEPTOMAIL_FROM_EMAIL) {
     logger.warn(
@@ -176,15 +195,15 @@ export async function sendEmail(options: EmailOptions): Promise<boolean> {
 export const emailTemplates = {
   // Welcome email after registration
   welcome: (name: string): EmailTemplate => ({
-    subject: "Welcome to EVA - Your Event Vendor Journey Begins!",
+    subject: "Welcome to EVA Local - Your Event Vendor Journey Begins!",
     html: EMAIL_LAYOUT(
-      "Welcome to EVA!",
-      "🎉",
-      "Welcome to EVA!",
+      "Welcome to EVA Local!",
+      "https://media.giphy.com/media/26u4cqiYI30juCOGY/giphy.gif", // Welcome celebration GIF
+      "Welcome to EVA Local!",
       `
         <div class="greeting">Hi ${name},</div>
         <div class="content-text">
-          Thank you for joining EVA - the premier platform for discovering exceptional event vendors.
+          Thank you for joining EVA Local - the premier platform for discovering exceptional event vendors across the UK.
         </div>
         <div class="content-text">
           Whether you're planning a wedding, corporate event, or cultural celebration, we're here to connect you with the best vendors in your area.
@@ -196,24 +215,24 @@ export const emailTemplates = {
           Need help? Our team is always here for you.
         </div>
         <div class="content-text" style="margin-bottom: 0;">
-          Best regards,<br>The EVA Team
+          Best regards,<br>The EVA Local Team
         </div>
       `,
     ),
-    text: `Hi ${name},\n\nWelcome to EVA! Thank you for joining us.\n\nStart exploring vendors at ${process.env.NEXTAUTH_URL}/browse\n\nBest regards,\nThe EVA Team`,
+    text: `Hi ${name},\n\nWelcome to EVA Local! Thank you for joining us.\n\nStart exploring vendors at ${process.env.NEXTAUTH_URL}/browse\n\nBest regards,\nThe EVA Local Team`,
   }),
 
   // Email verification
   verifyEmail: (name: string, verificationUrl: string): EmailTemplate => ({
-    subject: "Verify Your EVA Account",
+    subject: "Verify Your EVA Local Account",
     html: EMAIL_LAYOUT(
       "Verify Your Email",
-      "📧",
+      "https://media.giphy.com/media/xT9IgG50Fb7Mi0prBC/giphy.gif", // Email verification GIF
       "Verify Your Email",
       `
         <div class="greeting">Hi ${name},</div>
         <div class="content-text">
-          Please verify your email address to complete your EVA registration and start connecting with amazing vendors.
+          Please verify your email address to complete your EVA Local registration and start connecting with amazing vendors.
         </div>
         <div class="button-container">
           <a href="${verificationUrl}" class="button">Verify Email Address</a>
@@ -231,15 +250,15 @@ export const emailTemplates = {
 
   // Password reset
   passwordReset: (name: string, resetUrl: string): EmailTemplate => ({
-    subject: "Reset Your EVA Password",
+    subject: "Reset Your EVA Local Password",
     html: EMAIL_LAYOUT(
       "Reset Your Password",
-      "🔐",
+      "https://media.giphy.com/media/l2JhpjWPccQhsAMfu/giphy.gif", // Security/lock GIF
       "Reset Your Password",
       `
         <div class="greeting">Hi ${name},</div>
         <div class="content-text">
-          We received a request to reset your password for your EVA account. Click the button below to create a new password.
+          We received a request to reset your password for your EVA Local account. Click the button below to create a new password.
         </div>
         <div class="button-container">
           <a href="${resetUrl}" class="button">Reset Password</a>
@@ -263,7 +282,7 @@ export const emailTemplates = {
     subject: `New Inquiry from ${clientName} - ${eventType}`,
     html: EMAIL_LAYOUT(
       "New Inquiry",
-      "🎉",
+      "https://media.giphy.com/media/3o7abKhOpu0NwenH3O/giphy.gif", // Celebration/success GIF
       "New Inquiry!",
       `
         <div class="greeting">Hi ${vendorName},</div>
