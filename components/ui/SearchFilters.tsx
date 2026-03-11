@@ -268,8 +268,8 @@ export default function SearchFilters({
   return (
     <>
       {/* Desktop Sidebar */}
-      <aside className={`w-72 shrink-0 ${className}`}>
-        <div className="sticky top-28 p-4 border border-border rounded-xl bg-card">
+      <aside className={`hidden md:block w-72 shrink-0 sticky top-24 self-start ${className}`}>
+        <div className="max-h-[calc(100vh-7rem)] overflow-y-auto p-4 border border-border rounded-xl bg-card">
           <div className="flex items-center justify-between mb-4">
             <h2 className="font-semibold text-foreground flex items-center gap-2">
               <Filter className="w-4 h-4" />

@@ -12,6 +12,7 @@ interface ServiceModalProps {
   onSubmit: (data: ServiceData) => Promise<void>;
   initialData?: ServiceData;
   darkMode: boolean;
+  categories?: string[];
 }
 
 export interface ServiceData {
@@ -20,6 +21,8 @@ export interface ServiceData {
   minPrice: number | null;
   maxPrice: number | null;
   timeEstimate?: string;
+  maxGuests?: number | null;
+  category?: string;
   coverImageUrl?: string;
   galleryUrls?: string[];
   price: number;
@@ -31,6 +34,7 @@ export default function ServiceModal({
   onSubmit,
   initialData,
   darkMode,
+  categories = [],
 }: ServiceModalProps) {
   const [formData, setFormData] = useState<ServiceData>(
     initialData || {
@@ -39,6 +43,8 @@ export default function ServiceModal({
       minPrice: null,
       maxPrice: null,
       timeEstimate: "",
+      maxGuests: null,
+      category: "",
       coverImageUrl: "",
       galleryUrls: [],
       price: 0,
@@ -68,6 +74,8 @@ export default function ServiceModal({
         coverImageUrl: "",
         galleryUrls: [],
         timeEstimate: "",
+        maxGuests: null,
+        category: "",
       });
       onClose();
     } catch (err) {
@@ -89,6 +97,8 @@ export default function ServiceModal({
           coverImageUrl: "",
           galleryUrls: [],
           timeEstimate: "",
+          maxGuests: null,
+          category: "",
         }
       );
       setError(null);
@@ -189,6 +199,38 @@ export default function ServiceModal({
                       darkMode ? "text-gray-300" : "text-gray-700"
                     }`}
                   >
+                    Category
+                  </label>
+                  <select
+                    value={formData.category || ""}
+                    onChange={(e) =>
+                      setFormData({ ...formData, category: e.target.value })
+                    }
+                    className={`w-full px-4 py-2.5 rounded-lg border transition-colors ${
+                      darkMode
+                        ? "bg-white/5 border-white/10 text-white focus:border-accent focus:ring-1 focus:ring-accent/30"
+                        : "bg-white border-gray-300 text-gray-900 focus:border-accent focus:ring-1 focus:ring-accent/30"
+                    } focus:outline-none`}
+                    disabled={isSubmitting}
+                  >
+                    <option value="">Select a category (optional)</option>
+                    {categories.map((cat) => (
+                      <option key={cat} value={cat}>
+                        {cat.charAt(0).toUpperCase() + cat.slice(1)}
+                      </option>
+                    ))}
+                  </select>
+                  <p className={`text-xs mt-1 ${darkMode ? "text-gray-400" : "text-gray-500"}`}>
+                    Assign this service to a specific category for better organization
+                  </p>
+                </div>
+
+                <div>
+                  <label
+                    className={`block text-sm font-medium mb-2 ${
+                      darkMode ? "text-gray-300" : "text-gray-700"
+                    }`}
+                  >
                     Description
                   </label>
                   <textarea
@@ -222,6 +264,24 @@ export default function ServiceModal({
                     }
                     placeholder="e.g. 2 hours"
                     maxLength={50}
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-1">
+                    Maximum Guests
+                  </label>
+                  <input
+                    type="number"
+                    className="w-full border rounded px-3 py-2"
+                    value={formData.maxGuests || ""}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        maxGuests: e.target.value ? Number(e.target.value) : null,
+                      })
+                    }
+                    placeholder="e.g. 100"
+                    min="1"
                   />
                 </div>
                 <div>

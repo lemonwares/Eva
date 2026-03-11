@@ -81,8 +81,6 @@ export default function VendorLayout({
       <VendorLayoutSidebar
         isOpen={sidebarOpen}
         onClose={() => setSidebarOpen(false)}
-        vendorName={displayVendorName}
-        vendorType={displayVendorType}
       />
 
       <main className="flex-1 min-w-0 flex flex-col h-screen overflow-hidden">

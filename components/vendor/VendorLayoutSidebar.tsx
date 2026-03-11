@@ -41,37 +41,16 @@ const navItems = [
 interface VendorLayoutSidebarProps {
   isOpen: boolean;
   onClose: () => void;
-  vendorName?: string;
-  vendorType?: string;
 }
 
 export default function VendorLayoutSidebar({
   isOpen,
   onClose,
-  vendorName = "EVA Vendor",
-  vendorType = "Vendor Portal",
 }: VendorLayoutSidebarProps) {
   const pathname = usePathname();
   const { darkMode, toggleDarkMode } = useVendorTheme();
   const { data: session } = useSession();
   const [showSignOutModal, setShowSignOutModal] = useState(false);
-
-  const vendorInitial = (vendorName?.[0] || "V").toUpperCase();
-
-  const [vendorImage, setVendorImage] = useState<string | null>(null);
-
-  useEffect(() => {
-    const fetchProfile = async () => {
-      try {
-        const res = await fetch("/api/auth/me");
-        if (res.ok) {
-          const data = await res.json();
-          setVendorImage(data.user?.avatar || null);
-        }
-      } catch {}
-    };
-    fetchProfile();
-  }, []);
 
   const isActive = (href: string) => {
     if (href === "/vendor") {
@@ -98,43 +77,22 @@ export default function VendorLayoutSidebar({
           isOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
         }`}
       >
-        {/* Logo & Vendor Info */}
+        {/* Logo */}
         <div
           className={`p-5 border-b ${
             darkMode ? "border-white/10" : "border-gray-200"
           }`}
         >
-          <div className="flex items-center justify-between mb-0 lg:mb-0">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full overflow-hidden">
-                {vendorImage ? (
-                  <Image
-                    src={vendorImage}
-                    alt={vendorName}
-                    width={40}
-                    height={40}
-                    className="w-full h-full object-cover"
-                    unoptimized
-                  />
-                ) : (
-                  <div className="w-full h-full bg-linear-to-br from-accent to-teal-600 flex items-center justify-center">
-                    <span className="text-white font-bold text-sm">
-                      {vendorInitial}
-                    </span>
-                  </div>
-                )}
-              </div>
-              <div>
-                <p
-                  className={`font-bold text-sm ${
-                    darkMode ? "text-white" : "text-gray-900"
-                  }`}
-                >
-                  {vendorName}
-                </p>
-                <p className="text-gray-500 text-xs">{vendorType}</p>
-              </div>
-            </div>
+          <div className="flex items-center justify-between">
+            <Link href="/vendor" className="flex items-center">
+              <Image
+                src="/images/brand/eva-logo-light.png"
+                alt="EVA Local"
+                width={120}
+                height={40}
+                className="h-8 w-auto"
+              />
+            </Link>
             <button
               onClick={onClose}
               className={`lg:hidden p-2 rounded-lg ${

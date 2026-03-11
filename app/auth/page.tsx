@@ -63,7 +63,13 @@ function AuthPageContent() {
                 <p className="text-muted-foreground">
                   Don&apos;t have an account?{" "}
                   <button
-                    onClick={() => setActiveTab("signup")}
+                    onClick={() => {
+                      setActiveTab("signup");
+                      // Preserve URL parameters when switching tabs
+                      const currentParams = new URLSearchParams(window.location.search);
+                      currentParams.set("tab", "signup");
+                      window.history.replaceState({}, "", `${window.location.pathname}?${currentParams.toString()}`);
+                    }}
                     className="font-bold text-[#1e2433] hover:underline"
                   >
                     Create an account
@@ -73,7 +79,13 @@ function AuthPageContent() {
                 <p className="text-muted-foreground">
                    Already have an account?{" "}
                   <button
-                    onClick={() => setActiveTab("login")}
+                    onClick={() => {
+                      setActiveTab("login");
+                      // Preserve URL parameters when switching tabs
+                      const currentParams = new URLSearchParams(window.location.search);
+                      currentParams.set("tab", "login");
+                      window.history.replaceState({}, "", `${window.location.pathname}?${currentParams.toString()}`);
+                    }}
                      className="font-bold text-[#1e2433] hover:underline"
                   >
                     Sign in to your account

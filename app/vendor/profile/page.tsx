@@ -35,6 +35,7 @@ import {
   ChevronRight,
   Loader2,
   Upload,
+  Clock,
 } from "lucide-react";
 import Image from "next/image";
 import { useState, useEffect, useRef } from "react";
@@ -42,6 +43,7 @@ import { useRouter } from "next/navigation";
 import SocialMediaModal, {
   type SocialMediaData,
 } from "@/components/vendor/modals/SocialMediaModal";
+import BusinessHoursModal from "@/components/vendor/modals/BusinessHoursModal";
 import { logger } from "@/lib/logger";
 interface Provider {
   id: string;
@@ -64,6 +66,7 @@ interface Provider {
   reviewCount: number;
   priceFrom: number | null;
   listings: Listing[];
+  weeklySchedules?: WeeklySchedule[];
   _count: {
     reviews: number;
     bookings: number;
@@ -75,6 +78,14 @@ interface Provider {
   };
 }
 
+interface WeeklySchedule {
+  id?: string;
+  dayOfWeek: number;
+  startTime: string;
+  endTime: string;
+  isClosed: boolean;
+}
+
 interface Listing {
   id: string;
   headline: string;
@@ -84,6 +95,8 @@ interface Listing {
   coverImageUrl: string | null;
   price: number;
   timeEstimate: string | null;
+  maxGuests: number | null;
+  category: string | null;
 }
 
 export default function VendorProfilePage() {
@@ -100,6 +113,7 @@ export default function VendorProfilePage() {
   const [photoModalOpen, setPhotoModalOpen] = useState(false);
   const [descriptionModalOpen, setDescriptionModalOpen] = useState(false);
   const [infoModalOpen, setInfoModalOpen] = useState(false);
+  const [businessHoursModalOpen, setBusinessHoursModalOpen] = useState(false);
   const [editingService, setEditingService] = useState<Listing | null>(null);
   const [bookingModalOpen, setBookingModalOpen] = useState(false);
   const [bookingPrefill, setBookingPrefill] = useState<BookingService[]>([]);
@@ -220,6 +234,31 @@ export default function VendorProfilePage() {
         err instanceof Error
           ? err.message
           : "Failed to save social media links",
+      );
+    }
+  };
+
+  // Business Hours handler
+  const handleSaveBusinessHours = async (schedules: WeeklySchedule[]) => {
+    try {
+      const res = await fetch("/api/vendor/schedule", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          providerId: provider?.id,
+          schedules: schedules.map(s => ({
+            dayOfWeek: s.dayOfWeek,
+            startTime: s.startTime,
+            endTime: s.endTime,
+            isClosed: s.isClosed,
+          })),
+        }),
+      });
+      if (!res.ok) throw new Error("Failed to save business hours");
+      await fetchProfile();
+    } catch (err) {
+      throw new Error(
+        err instanceof Error ? err.message : "Failed to save business hours",
       );
     }
   };
@@ -684,7 +723,7 @@ export default function VendorProfilePage() {
                   .filter((listing) =>
                     selectedCategory === "all"
                       ? true
-                      : provider.categories.includes(selectedCategory),
+                      : listing.category === selectedCategory,
                   )
                   .map((listing) => (
                     <div
@@ -1094,6 +1133,63 @@ export default function VendorProfilePage() {
             </div>
           </div>
 
+          {/* Business Hours */}
+          <div
+            className={`${
+              darkMode
+                ? "bg-[#141414] border-white/10"
+                : "bg-white border-gray-200"
+            } rounded-xl border p-5`}
+          >
+            <div className="flex items-center justify-between mb-4">
+              <h3
+                className={`${
+                  darkMode ? "text-white" : "text-gray-900"
+                } font-semibold`}
+              >
+                Business Hours
+              </h3>
+              <button
+                onClick={() => setBusinessHoursModalOpen(true)}
+                className={`p-2 rounded-lg ${
+                  darkMode ? "hover:bg-white/10" : "hover:bg-gray-100"
+                } transition-colors`}
+              >
+                <Edit3 size={16} className="text-gray-400" />
+              </button>
+            </div>
+            <div className="space-y-2">
+              {provider.weeklySchedules && provider.weeklySchedules.length > 0 ? (
+                provider.weeklySchedules
+                  .sort((a, b) => a.dayOfWeek - b.dayOfWeek)
+                  .map((schedule) => {
+                    const dayNames = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+                    return (
+                      <div key={schedule.dayOfWeek} className="flex items-center justify-between">
+                        <span className={`text-sm font-medium ${darkMode ? "text-white" : "text-gray-900"}`}>
+                          {dayNames[schedule.dayOfWeek]}
+                        </span>
+                        <span className={`text-sm ${darkMode ? "text-gray-400" : "text-gray-600"}`}>
+                          {schedule.isClosed ? (
+                            "Closed"
+                          ) : (
+                            `${schedule.startTime} - ${schedule.endTime}`
+                          )}
+                        </span>
+                      </div>
+                    );
+                  })
+              ) : (
+                <div className="flex items-center gap-2">
+                  <Clock size={16} className="text-gray-400" />
+                  <p className={`text-sm ${darkMode ? "text-gray-500" : "text-gray-400"}`}>
+                    No business hours set yet.
+                  </p>
+                </div>
+              )}
+            </div>
+          </div>
+
           {/* Achievements */}
           {/* <div
             className={`${
@@ -1226,10 +1322,13 @@ export default function VendorProfilePage() {
                 maxPrice: editingService.maxPrice,
                 price: editingService.price,
                 timeEstimate: editingService.timeEstimate || "",
+                maxGuests: editingService.maxGuests,
+                category: editingService.category || "",
                 coverImageUrl: editingService.coverImageUrl || "",
               }
             : undefined
         }
+        categories={provider?.categories || []}
         darkMode={darkMode}
       />
 
@@ -1283,6 +1382,14 @@ export default function VendorProfilePage() {
               }
             : undefined
         }
+        darkMode={darkMode}
+      />
+
+      <BusinessHoursModal
+        isOpen={businessHoursModalOpen}
+        onClose={() => setBusinessHoursModalOpen(false)}
+        onSubmit={handleSaveBusinessHours}
+        initialSchedules={provider?.weeklySchedules || []}
         darkMode={darkMode}
       />
     </VendorLayout>

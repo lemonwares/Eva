@@ -15,8 +15,8 @@ import {
   ShieldCheck,
   CalendarDays,
 } from "lucide-react";
-import { useState, useMemo } from "react";
-import { useRouter } from "next/navigation";
+import { useState, useMemo, useEffect } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { register, loginWithGoogle } from "@/lib/auth-client";
 import Link from "next/link";
 
@@ -42,13 +42,35 @@ export default function SignUpForm({
   defaultType?: "PROFESSIONAL";
 }) {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   
-  // Use prop to set initial state. If defaultType is provided, lock to that mode mostly.
-  const [accountType, setAccountType] = useState<AccountType>(
-    defaultType || "CLIENT",
-  );
+  // Initialize account type from URL params or defaultType
+  const [accountType, setAccountType] = useState<AccountType>(() => {
+    // First try to get from URL params
+    if (typeof window !== 'undefined') {
+      const urlParams = new URLSearchParams(window.location.search);
+      const typeParam = urlParams.get('type');
+      if (typeParam === 'PROFESSIONAL') {
+        return 'PROFESSIONAL';
+      }
+    }
+    // Fallback to defaultType or CLIENT
+    return defaultType || 'CLIENT';
+  });
+
+  // Update account type when URL params change
+  useEffect(() => {
+    const typeParam = searchParams.get('type');
+    
+    if (typeParam === 'PROFESSIONAL') {
+      setAccountType('PROFESSIONAL');
+    } else if (!typeParam && !defaultType) {
+      // Only reset to CLIENT if no URL param and no defaultType
+      setAccountType('CLIENT');
+    }
+  }, [searchParams, defaultType]);
   
   const [formData, setFormData] = useState<FormState>(defaultState);
   const [loading, setLoading] = useState(false);
@@ -88,11 +110,22 @@ export default function SignUpForm({
     setLoading(true);
 
     try {
+      // Read the role directly from URL at submission time to avoid state issues
+      const currentUrl = new URL(window.location.href);
+      const typeParam = currentUrl.searchParams.get('type');
+      let roleToSubmit: AccountType = 'CLIENT';
+      
+      if (typeParam === 'PROFESSIONAL') {
+        roleToSubmit = 'PROFESSIONAL';
+      } else if (accountType === 'PROFESSIONAL') {
+        roleToSubmit = 'PROFESSIONAL';
+      }
+      
       const result = await register({
         name: formData.name,
         email: formData.email,
         password: formData.password,
-        role: accountType,
+        role: roleToSubmit,
       });
 
       if (!result.success) {

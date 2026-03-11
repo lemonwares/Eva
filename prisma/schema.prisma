@@ -63,6 +63,7 @@ model User {
   emailVerifications EmailVerification[]
   accounts           Account[] // Add this for NextAuth
   sessions           Session[]
+  notifications      Notification[]
 
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
@@ -296,6 +297,8 @@ model Listing {
   maxPrice        Float?   @map("max_price")
   price           Float?   @map("price")
   timeEstimate    String?  @map("time_estimate")
+  maxGuests       Int?     @map("max_guests") // Maximum number of guests for this package
+  category        String?  @map("category") // Category this service belongs to
   coverImageUrl   String?  @map("cover_image_url")
   galleryUrls     String[] @map("gallery_urls")
 
@@ -1124,6 +1127,33 @@ model SearchLog {
   @@index([convertedToInquiry])
   @@index([createdAt])
   @@map("search_logs")
+}
+
+// ============================================
+// NOTIFICATIONS
+// ============================================
+
+model Notification {
+  id      String @id @default(cuid())
+  userId  String @map("user_id")
+  title   String
+  message String @db.Text
+  type    String @default("info") // info, success, warning, error
+  isRead  Boolean @default(false) @map("is_read")
+  
+  // Optional metadata
+  metadata Json?
+  
+  // Relationships
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  
+  @@index([userId])
+  @@index([isRead])
+  @@index([createdAt])
+  @@map("notifications")
 }
 
 // ============================================

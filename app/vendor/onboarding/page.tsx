@@ -10,6 +10,7 @@ import {
   AlertCircle,
   Loader2,
 } from "lucide-react";
+import Image from "next/image";
 import { STEPS } from "./types";
 import { useOnboarding } from "./use-onboarding";
 import {
@@ -161,10 +162,14 @@ export default function VendorOnboardingPage() {
       <header className="sticky top-0 z-40 bg-white border-b border-gray-100 shadow-sm">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 py-3 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-lg bg-[#0097b2] flex items-center justify-center">
-              <Store className="w-5 h-5 text-white" />
-            </div>
-            <div className="hidden sm:block">
+            <Image
+              src="/images/brand/eva-logo-light.png"
+              alt="EVA Local"
+              width={100}
+              height={32}
+              className="h-8 w-auto"
+            />
+            <div className="hidden sm:block border-l border-gray-200 pl-3">
               <p className="text-sm font-bold text-gray-800">
                 Vendor Onboarding
               </p>

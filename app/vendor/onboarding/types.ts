@@ -37,6 +37,8 @@ export interface ListingDraft {
   timeEstimate: string;
   coverImageUrl: string;
   galleryUrls: string[];
+  maxGuests: number | null;
+  category: string;
 }
 
 export interface TeamMember {
@@ -218,6 +220,8 @@ export const DEFAULT_LISTING_DRAFT: ListingDraft = {
   timeEstimate: "",
   coverImageUrl: "",
   galleryUrls: [],
+  maxGuests: null,
+  category: "",
 };
 
 export const DEFAULT_TEAM_MEMBER: TeamMember = {

@@ -23,6 +23,9 @@ export async function GET(request: NextRequest) {
         listings: {
           orderBy: { createdAt: "desc" },
         },
+        weeklySchedules: {
+          orderBy: { dayOfWeek: "asc" },
+        },
         _count: {
           select: {
             reviews: true,

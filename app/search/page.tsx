@@ -611,7 +611,7 @@ function SearchPageContent() {
   ), [filters, loading, availableTags, hasActiveFilters, activeFilterCount, showFilters]);
 
   return (
-    <div className="min-h-screen bg-background overflow-x-hidden">
+    <div className="min-h-screen bg-background">
       <Header />
 
       {/* LocationPrompt disabled — using "Use my location" in filters instead */}
@@ -805,7 +805,7 @@ function SearchPageContent() {
             </div>
           </div>
 
-          <div className="flex gap-6 lg:gap-8">
+          <div className="flex items-start gap-6 lg:gap-8">
             <SearchFilters
               filters={filters}
               categories={categories}
@@ -815,7 +815,6 @@ function SearchPageContent() {
               showFilters={showFilters}
               setShowFilters={setShowFilters}
               hasActiveFilters={!!hasActiveFilters}
-              className="hidden md:block" 
             />
 
             <div className="flex-1 min-w-0">

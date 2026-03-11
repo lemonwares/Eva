@@ -204,6 +204,15 @@ export default function VendorDetailPage() {
     0,
   );
 
+  // Helper to get minimum maxGuests from selected listings
+  const minMaxGuests = selectedListingObjects.length > 0
+    ? Math.min(
+        ...selectedListingObjects
+          .map((l) => l.maxGuests)
+          .filter((mg) => mg !== null && mg !== undefined) as number[]
+      )
+    : null;
+
   // Booking mobile scroll function
   const bookingRef = useRef<HTMLDivElement | null>(null);
   const handleBookClick = () => {
@@ -270,6 +279,13 @@ export default function VendorDetailPage() {
     try {
       if (!vendor) throw new Error("Vendor not loaded");
       if (!session?.user) throw new Error("User not authenticated");
+      
+      // Validate guests count against maxGuests
+      const guestsCount = Number(bookingForm.guests);
+      if (minMaxGuests && guestsCount > minMaxGuests) {
+        throw new Error(`Number of guests cannot exceed ${minMaxGuests}`);
+      }
+      
       // Build services array from selected listings
       const services = selectedListingObjects.map((l) => ({
         id: l.id,
@@ -1080,7 +1096,7 @@ export default function VendorDetailPage() {
                     ))}
                   </ul>
                   <button
-                    className="w-full py-4 rounded-full bg-black text-white font-semibold hover:opacity-90 transition flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="w-full md:hidden py-4 rounded-full bg-black text-white font-semibold hover:opacity-90 transition flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                     onClick={handleBookClick}
                     disabled={bookingLoading}
                   >
@@ -1126,6 +1142,11 @@ export default function VendorDetailPage() {
                     <div>
                       <label className="block text-sm font-medium mb-1">
                         Guests <span className="text-red-500">*</span>
+                        {minMaxGuests && (
+                          <span className="text-gray-500 font-normal ml-2">
+                            (Maximum: {minMaxGuests})
+                          </span>
+                        )}
                       </label>
                       <input
                         type="number"
@@ -1137,9 +1158,15 @@ export default function VendorDetailPage() {
                             guests: e.target.value,
                           }))
                         }
+                        max={minMaxGuests || undefined}
                         className="w-full px-4 py-3 rounded-xl border border-border bg-input focus:border-accent focus:ring-2 focus:ring-accent/30"
                         placeholder="100"
                       />
+                      {minMaxGuests && Number(bookingForm.guests) > minMaxGuests && (
+                        <p className="text-red-500 text-sm mt-1">
+                          Number of guests cannot exceed {minMaxGuests}
+                        </p>
+                      )}
                     </div>
                     <div>
                       <label className="block text-sm font-medium mb-1">

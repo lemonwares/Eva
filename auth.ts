@@ -150,7 +150,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         token.id = user.id;
         token.role = user.role;
         token.image = user.image || null;
-        console.log(`[AUTH] JWT Callback - Created token for ${user.email}, role: ${user.role}`);
+        // console.log(`[AUTH] JWT Callback - Created token for ${user.email}, role: ${user.role}`);
       }
       return token;
     },
@@ -159,13 +159,13 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         session.user.id = token.id as string;
         session.user.role = token.role as string;
         session.user.image = token.image as string | null;
-        console.log(`[AUTH] Session Callback - Session for ${session.user.email}, role: ${session.user.role}`);
+        // console.log(`[AUTH] Session Callback - Session for ${session.user.email}, role: ${session.user.role}`);
       }
       return session;
     },
     async redirect({ url, baseUrl }: { url: string; baseUrl: string }) {
       // debug logs for production issues
-      console.log(`[AUTH] Redirect Callback - url: ${url}, baseUrl: ${baseUrl}`);
+      // console.log(`[AUTH] Redirect Callback - url: ${url}, baseUrl: ${baseUrl}`);
 
       // Handle relative URLs
       if (url.startsWith("/")) return `${baseUrl}${url}`;
