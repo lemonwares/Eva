@@ -248,13 +248,15 @@ export default function VendorTable({
                         <div
                           className={`w-10 h-10 rounded-full bg-linear-to-br ${getAvatarColors(
                             provider.businessName,
-                          )} flex items-center justify-center text-white font-semibold text-sm`}
+                          )} flex items-center justify-center text-white font-semibold text-sm shrink-0`}
                         >
                           {getInitials(provider.businessName)}
                         </div>
-                        <div>
-                          <span className={`font-medium ${textPrimary}`}>
-                            {provider.businessName}
+                        <div className="min-w-0 flex-1">
+                          <span className={`font-medium ${textPrimary} block truncate`} title={provider.businessName}>
+                            {provider.businessName.length > 25 
+                              ? `${provider.businessName.substring(0, 25)}...` 
+                              : provider.businessName}
                           </span>
                           <div className="flex items-center gap-2 mt-0.5">
                             {provider.isVerified && (
@@ -377,15 +379,17 @@ export default function VendorTable({
                     <div
                       className={`w-12 h-12 rounded-full bg-linear-to-br ${getAvatarColors(
                         provider.businessName,
-                      )} flex items-center justify-center text-white font-semibold`}
+                      )} flex items-center justify-center text-white font-semibold shrink-0`}
                     >
                       {getInitials(provider.businessName)}
                     </div>
-                    <div>
-                      <p className={`font-medium ${textPrimary}`}>
-                        {provider.businessName}
+                    <div className="min-w-0 flex-1">
+                      <p className={`font-medium ${textPrimary} truncate`} title={provider.businessName}>
+                        {provider.businessName.length > 20 
+                          ? `${provider.businessName.substring(0, 20)}...` 
+                          : provider.businessName}
                       </p>
-                      <p className={`text-sm ${textMuted}`}>
+                      <p className={`text-sm ${textMuted} truncate`}>
                         {(() => {
                           const cats = categories ?? [];
                           const catIds = provider.categories ?? [];

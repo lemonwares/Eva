@@ -252,6 +252,7 @@ export const listingCreateSchema = z.object({
   longDescription: z.string().max(5000).optional(),
   price: z.coerce.number().min(0, "Price must be non-negative"),
   timeEstimate: z.string().min(1, "Time estimate is required").max(100),
+  maxGuests: z.coerce.number().min(1).optional(),
   coverImageUrl: z.string().url().optional().or(z.literal("")),
   galleryUrls: z.array(z.string().url()).max(20).optional(),
 });

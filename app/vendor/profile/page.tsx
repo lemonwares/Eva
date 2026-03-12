@@ -189,10 +189,10 @@ export default function VendorProfilePage() {
   const handleEditService = async (data: ServiceData) => {
     if (!editingService) return;
     try {
-      const res = await fetch(`/api/vendor/listings/${editingService.id}`, {
-        method: "PUT",
+      const res = await fetch("/api/vendor/listings", {
+        method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
+        body: JSON.stringify({ id: editingService.id, ...data }),
       });
 
       if (!res.ok) throw new Error("Failed to update service");

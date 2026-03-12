@@ -253,26 +253,38 @@ export default function ServiceModal({
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium mb-1">
+                  <label className={`block text-sm font-medium mb-2 ${
+                      darkMode ? "text-gray-300" : "text-gray-700"
+                    }`}>
                     Time Estimate
                   </label>
                   <input
-                    className="w-full border rounded px-3 py-2"
-                    value={formData.timeEstimate}
+                    type="text"
+                    value={formData.timeEstimate || ""}
                     onChange={(e) =>
                       setFormData({ ...formData, timeEstimate: e.target.value })
                     }
                     placeholder="e.g. 2 hours"
                     maxLength={50}
+                    className={`w-full px-4 py-2.5 rounded-lg border transition-colors ${
+                      darkMode
+                        ? "bg-white/5 border-white/10 text-white placeholder-gray-500 focus:border-accent focus:ring-1 focus:ring-accent/30"
+                        : "bg-white border-gray-300 text-gray-900 placeholder-gray-400 focus:border-accent focus:ring-1 focus:ring-accent/30"
+                    } focus:outline-none`}
+                    disabled={isSubmitting}
                   />
+                  <p className={`text-xs mt-1 ${darkMode ? "text-gray-400" : "text-gray-500"}`}>
+                    Estimated duration for this service
+                  </p>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium mb-1">
+                  <label className={`block text-sm font-medium mb-2 ${
+                      darkMode ? "text-gray-300" : "text-gray-700"
+                    }`}>
                     Maximum Guests
                   </label>
                   <input
                     type="number"
-                    className="w-full border rounded px-3 py-2"
                     value={formData.maxGuests || ""}
                     onChange={(e) =>
                       setFormData({
@@ -282,24 +294,45 @@ export default function ServiceModal({
                     }
                     placeholder="e.g. 100"
                     min="1"
+                    className={`w-full px-4 py-2.5 rounded-lg border transition-colors ${
+                      darkMode
+                        ? "bg-white/5 border-white/10 text-white placeholder-gray-500 focus:border-accent focus:ring-1 focus:ring-accent/30"
+                        : "bg-white border-gray-300 text-gray-900 placeholder-gray-400 focus:border-accent focus:ring-1 focus:ring-accent/30"
+                    } focus:outline-none`}
+                    disabled={isSubmitting}
                   />
+                  <p className={`text-xs mt-1 ${darkMode ? "text-gray-400" : "text-gray-500"}`}>
+                    Maximum number of guests this service can accommodate
+                  </p>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium mb-1">
+                  <label className={`block text-sm font-medium mb-2 ${
+                      darkMode ? "text-gray-300" : "text-gray-700"
+                    }`}>
                     Price (£)
                   </label>
                   <input
-                    className="w-full border rounded px-3 py-2"
+                    type="number"
                     value={formData.price}
                     onChange={(e) =>
                       setFormData({
                         ...formData,
-                        price: Number(e.target.value),
+                        price: Number(e.target.value) || 0,
                       })
                     }
-                    placeholder="e.g. £100"
-                    maxLength={4}
+                    placeholder="e.g. 100"
+                    min="0"
+                    step="0.01"
+                    className={`w-full px-4 py-2.5 rounded-lg border transition-colors ${
+                      darkMode
+                        ? "bg-white/5 border-white/10 text-white placeholder-gray-500 focus:border-accent focus:ring-1 focus:ring-accent/30"
+                        : "bg-white border-gray-300 text-gray-900 placeholder-gray-400 focus:border-accent focus:ring-1 focus:ring-accent/30"
+                    } focus:outline-none`}
+                    disabled={isSubmitting}
                   />
+                  <p className={`text-xs mt-1 ${darkMode ? "text-gray-400" : "text-gray-500"}`}>
+                    Base price for this service
+                  </p>
                 </div>
                 <div>
                   <label className="block text-sm font-medium mb-1">

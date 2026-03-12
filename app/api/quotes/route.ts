@@ -47,6 +47,7 @@ export async function GET(request: NextRequest) {
     const limit = parseInt(searchParams.get("limit") || "20");
     const status = searchParams.get("status");
     const providerId = searchParams.get("providerId");
+    const search = searchParams.get("search");
     const skip = (page - 1) * limit;
 
     const filters: any = {};
@@ -81,6 +82,16 @@ export async function GET(request: NextRequest) {
       filters.status = status;
     }
 
+    // Add search functionality
+    if (search) {
+      filters.OR = [
+        { id: { contains: search, mode: "insensitive" } },
+        { provider: { businessName: { contains: search, mode: "insensitive" } } },
+        { inquiry: { user: { name: { contains: search, mode: "insensitive" } } } },
+        { inquiry: { user: { email: { contains: search, mode: "insensitive" } } } },
+      ];
+    }
+
     const [quotes, total] = await Promise.all([
       prisma.quote.findMany({
         where: filters,
@@ -98,13 +109,9 @@ export async function GET(request: NextRequest) {
           inquiry: {
             select: {
               id: true,
-              fromName: true,
-              fromEmail: true,
-              fromPhone: true,
-              eventDate: true,
-              guestsCount: true,
-              message: true,
-              createdAt: true,
+              user: {
+                select: { id: true, name: true, email: true },
+              },
             },
           },
           booking: {

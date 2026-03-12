@@ -60,7 +60,7 @@ export async function GET(request: NextRequest) {
             },
           },
         },
-        orderBy: { eventDate: "asc" },
+        orderBy: { createdAt: "desc" },
       }),
       prisma.booking.count({ where: filters }),
       prisma.booking.groupBy({

@@ -47,17 +47,25 @@ export async function GET(request: NextRequest) {
       ];
     }
 
-    if (status === "active") {
-      filters.isPublished = true;
-      filters.isVerified = true;
-    } else if (status === "pending") {
-      filters.isPublished = false;
-    } else if (status === "suspended") {
-      filters.isVerified = false;
+    if (status && status !== "all") {
+      if (status === "ACTIVE") {
+        filters.isPublished = true;
+        filters.isVerified = true;
+      } else if (status === "PENDING") {
+        filters.OR = [
+          { isPublished: false },
+          { isVerified: false }
+        ];
+      } else if (status === "SUSPENDED") {
+        filters.isPublished = false;
+        filters.isVerified = false;
+      }
     }
 
-    if (categoryId) {
-      filters.categoryId = categoryId;
+    if (categoryId && categoryId !== "all") {
+      filters.categories = {
+        has: categoryId
+      };
     }
 
     if (cityId) {
@@ -68,7 +76,7 @@ export async function GET(request: NextRequest) {
       filters.isFeatured = featured === "true";
     }
 
-    const [rawProviders, total, statusCounts] = await Promise.all([
+    const [rawProviders, total] = await Promise.all([
       prisma.provider.findMany({
         where: filters,
         skip,
@@ -88,43 +96,40 @@ export async function GET(request: NextRequest) {
         orderBy: { createdAt: "desc" },
       }),
       prisma.provider.count({ where: filters }),
-      Promise.all([
-        prisma.provider.count({
-          where: { isPublished: true, isVerified: true },
-        }),
-        prisma.provider.count({ where: { isPublished: false } }),
-        prisma.provider.count({ where: { isVerified: false } }),
-      ]),
     ]);
 
     // Transform providers to add status field for frontend
     const providers = rawProviders.map((provider) => {
-      // Get the first category ID if available
-      const firstCategoryId =
-        Array.isArray(provider.categories) && provider.categories.length > 0
-          ? provider.categories[0]
-          : null;
-      let formattedCategory = null;
-      if (firstCategoryId) {
-        const formattedName =
-          firstCategoryId.charAt(0).toUpperCase() +
-          firstCategoryId.slice(1).toLowerCase();
-        formattedCategory = {
-          id: firstCategoryId,
-          name: formattedName,
-          slug: firstCategoryId.toLowerCase(),
-        };
+      // Determine status based on published and verified flags
+      let status = "ACTIVE";
+      if (!provider.isPublished && !provider.isVerified) {
+        status = "SUSPENDED";
+      } else if (!provider.isPublished || !provider.isVerified) {
+        status = "PENDING";
       }
-      // Only set SUSPENDED if not published, otherwise ACTIVE
-      let status = provider.isPublished === false ? "SUSPENDED" : "ACTIVE";
+
       return {
         ...provider,
         status,
-        category: formattedCategory,
       };
     });
 
-    const [activeCount, pendingCount, suspendedCount] = statusCounts;
+    const [activeCount, pendingCount, suspendedCount] = await Promise.all([
+      prisma.provider.count({
+        where: { isPublished: true, isVerified: true },
+      }),
+      prisma.provider.count({
+        where: {
+          OR: [
+            { isPublished: false, isVerified: true },
+            { isPublished: true, isVerified: false }
+          ]
+        }
+      }),
+      prisma.provider.count({
+        where: { isPublished: false, isVerified: false },
+      }),
+    ]);
 
     return NextResponse.json({
       success: true,

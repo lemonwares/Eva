@@ -14,6 +14,7 @@ import {
   FileText,
   Eye,
   X,
+  Search,
 } from "lucide-react";
 import { useState, useEffect, useCallback } from "react";
 
@@ -85,6 +86,8 @@ export default function AdminQuotesPage() {
   const [showStatusDropdown, setShowStatusDropdown] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedQuote, setSelectedQuote] = useState<Quote | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searchTimeout, setSearchTimeout] = useState<NodeJS.Timeout | null>(null);
 
   const fetchQuotes = useCallback(async () => {
     setIsLoading(true);
@@ -95,6 +98,10 @@ export default function AdminQuotesPage() {
 
       if (statusFilter !== "All") {
         params.append("status", statusFilter);
+      }
+
+      if (searchQuery.trim()) {
+        params.append("search", searchQuery.trim());
       }
 
       const res = await fetch(`/api/quotes?${params}`);
@@ -108,11 +115,23 @@ export default function AdminQuotesPage() {
     } finally {
       setIsLoading(false);
     }
-  }, [currentPage, statusFilter]);
+  }, [currentPage, statusFilter, searchQuery]);
 
   useEffect(() => {
     fetchQuotes();
   }, [fetchQuotes]);
+
+  // Debounced search
+  const handleSearchChange = (value: string) => {
+    setSearchQuery(value);
+    if (searchTimeout) {
+      clearTimeout(searchTimeout);
+    }
+    const timeout = setTimeout(() => {
+      setCurrentPage(1);
+    }, 500);
+    setSearchTimeout(timeout);
+  };
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -136,42 +155,65 @@ export default function AdminQuotesPage() {
       title="Quotes Management"
       searchPlaceholder="Search by Quote ID, Client, Vendor..."
     >
-      {/* Filters */}
-      <div className="flex flex-wrap items-center gap-3 mb-6">
-        <div className="relative">
-          <button
-            onClick={() => setShowStatusDropdown(!showStatusDropdown)}
-            className={`flex items-center gap-2 px-4 py-2.5 rounded-lg border ${inputBg} ${inputBorder} ${textPrimary} text-sm font-medium`}
-          >
-            <Filter size={16} />
-            Status: {statusFilter}
-            <ChevronDown size={16} />
-          </button>
-          {showStatusDropdown && (
-            <div
-              className={`absolute top-full left-0 mt-2 w-48 rounded-lg border ${cardBg} ${cardBorder} shadow-lg z-10`}
-            >
-              {statusOptions.map((status) => (
-                <button
-                  key={status}
-                  onClick={() => {
-                    setStatusFilter(status);
-                    setShowStatusDropdown(false);
-                    setCurrentPage(1);
-                  }}
-                  className={`w-full text-left px-4 py-2.5 text-sm ${
-                    statusFilter === status
-                      ? "bg-accent text-white"
-                      : `${textPrimary} ${
-                          darkMode ? "hover:bg-white/10" : "hover:bg-gray-50"
-                        }`
-                  } first:rounded-t-lg last:rounded-b-lg`}
-                >
-                  {status}
-                </button>
-              ))}
+      {/* Search and Filters */}
+      <div className={`${cardBg} border ${cardBorder} rounded-xl p-4 mb-6`}>
+        <div className="flex flex-col md:flex-row gap-4">
+          {/* Search */}
+          <div className="flex-1">
+            <label className={`text-xs font-medium ${textMuted} mb-1.5 block`}>
+              Search
+            </label>
+            <div className="relative">
+              <Search
+                className={`absolute left-3 top-1/2 -translate-y-1/2 ${textMuted}`}
+                size={18}
+              />
+              <input
+                type="text"
+                placeholder="Quote ID, Client, Vendor..."
+                value={searchQuery}
+                onChange={(e) => handleSearchChange(e.target.value)}
+                className={`w-full pl-10 pr-4 py-2.5 rounded-lg border ${inputBg} ${inputBorder} ${textPrimary} text-sm focus:outline-none focus:ring-2 focus:ring-accent/50`}
+              />
             </div>
-          )}
+          </div>
+
+          {/* Status Filter */}
+          <div className="w-full md:w-44">
+            <label className={`text-xs font-medium ${textMuted} mb-1.5 block`}>
+              Status
+            </label>
+            <div className="relative">
+              <button
+                onClick={() => setShowStatusDropdown(!showStatusDropdown)}
+                className={`w-full flex items-center justify-between px-4 py-2.5 rounded-lg border ${inputBg} ${inputBorder} ${textPrimary} text-sm`}
+              >
+                {statusFilter}
+                <ChevronDown size={16} />
+              </button>
+              {showStatusDropdown && (
+                <div
+                  className={`absolute top-full left-0 right-0 mt-1 ${cardBg} border ${cardBorder} rounded-lg shadow-lg z-10 py-1`}
+                >
+                  {statusOptions.map((status) => (
+                    <button
+                      key={status}
+                      onClick={() => {
+                        setStatusFilter(status);
+                        setShowStatusDropdown(false);
+                        setCurrentPage(1);
+                      }}
+                      className={`w-full text-left px-4 py-2 text-sm ${
+                        statusFilter === status ? "text-accent" : textSecondary
+                      } ${darkMode ? "hover:bg-white/5" : "hover:bg-gray-50"}`}
+                    >
+                      {status}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
         </div>
       </div>
 
@@ -264,9 +306,16 @@ export default function AdminQuotesPage() {
                       <td
                         className={`px-6 py-4 text-sm font-medium ${textPrimary}`}
                       >
-                        {quote.inquiry?.user?.name ||
-                          quote.inquiry?.user?.email ||
-                          "N/A"}
+                        <div>
+                          <p className="truncate max-w-[150px]">
+                            {quote.inquiry?.user?.name || "N/A"}
+                          </p>
+                          {quote.inquiry?.user?.email && (
+                            <p className={`text-xs ${textMuted} truncate max-w-[150px]`}>
+                              {quote.inquiry.user.email}
+                            </p>
+                          )}
+                        </div>
                       </td>
                       <td className={`px-6 py-4 text-sm ${textSecondary}`}>
                         {quote.provider.businessName}
