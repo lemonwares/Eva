@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, Loader2 } from "lucide-react";
 import { formatCurrency } from "@/lib/formatters";
@@ -36,22 +36,43 @@ export default function ServiceModal({
   darkMode,
   categories = [],
 }: ServiceModalProps) {
-  const [formData, setFormData] = useState<ServiceData>(
-    initialData || {
-      headline: "",
-      longDescription: "",
-      minPrice: null,
-      maxPrice: null,
-      timeEstimate: "",
-      maxGuests: null,
-      category: "",
-      coverImageUrl: "",
-      galleryUrls: [],
-      price: 0,
-    }
-  );
+  const [formData, setFormData] = useState<ServiceData>({
+    headline: "",
+    longDescription: "",
+    minPrice: null,
+    maxPrice: null,
+    timeEstimate: "",
+    maxGuests: null,
+    category: "",
+    coverImageUrl: "",
+    galleryUrls: [],
+    price: 0,
+  });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Update form data when initialData changes or modal opens
+  useEffect(() => {
+    if (isOpen) {
+      if (initialData) {
+        setFormData(initialData);
+      } else {
+        setFormData({
+          headline: "",
+          longDescription: "",
+          minPrice: null,
+          maxPrice: null,
+          timeEstimate: "",
+          maxGuests: null,
+          category: "",
+          coverImageUrl: "",
+          galleryUrls: [],
+          price: 0,
+        });
+      }
+      setError(null);
+    }
+  }, [isOpen, initialData]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -87,20 +108,6 @@ export default function ServiceModal({
 
   const handleClose = () => {
     if (!isSubmitting) {
-      setFormData(
-        initialData || {
-          headline: "",
-          longDescription: "",
-          minPrice: null,
-          maxPrice: null,
-          price: 0,
-          coverImageUrl: "",
-          galleryUrls: [],
-          timeEstimate: "",
-          maxGuests: null,
-          category: "",
-        }
-      );
       setError(null);
       onClose();
     }
