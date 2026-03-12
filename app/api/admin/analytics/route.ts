@@ -105,7 +105,7 @@ export async function GET(request: NextRequest) {
           },
           bookings: {
             where: { status: "COMPLETED" },
-            select: { totalPrice: true },
+            select: { pricingTotal: true },
           },
         },
         orderBy: { reviewCount: "desc" },
@@ -118,7 +118,10 @@ export async function GET(request: NextRequest) {
           status: "COMPLETED",
           createdAt: { gte: startDate },
         },
-        _sum: { totalPrice: true },
+        _sum: { pricingTotal: true },
+      }).catch(err => {
+        logger.error("Error calculating revenue:", err);
+        return { _sum: { pricingTotal: 0 } };
       }),
     ]);
 
@@ -141,11 +144,11 @@ export async function GET(request: NextRequest) {
     // Calculate total revenue from all completed bookings
     const totalRevenueResult = await prisma.booking.aggregate({
       where: { status: "COMPLETED" },
-      _sum: { totalPrice: true },
+      _sum: { pricingTotal: true },
     });
 
-    const totalRevenue = totalRevenueResult._sum.totalPrice || 0;
-    const periodRevenue = revenueData._sum.totalPrice || 0;
+    const totalRevenue = totalRevenueResult._sum.pricingTotal || 0;
+    const periodRevenue = revenueData._sum.pricingTotal || 0;
     // Calculate growth rates
     const previousPeriodStart = new Date(startDate);
     switch (period) {
@@ -169,23 +172,35 @@ export async function GET(request: NextRequest) {
           where: {
             createdAt: { gte: previousPeriodStart, lt: startDate },
           },
+        }).catch(err => {
+          logger.error("Error counting previous users:", err);
+          return 0;
         }),
         prisma.booking.count({
           where: {
             createdAt: { gte: previousPeriodStart, lt: startDate },
           },
+        }).catch(err => {
+          logger.error("Error counting previous bookings:", err);
+          return 0;
         }),
         prisma.inquiry.count({
           where: {
             createdAt: { gte: previousPeriodStart, lt: startDate },
           },
+        }).catch(err => {
+          logger.error("Error counting previous inquiries:", err);
+          return 0;
         }),
         prisma.booking.aggregate({
           where: {
             status: "COMPLETED",
             createdAt: { gte: previousPeriodStart, lt: startDate },
           },
-          _sum: { totalPrice: true },
+          _sum: { pricingTotal: true },
+        }).catch(err => {
+          logger.error("Error calculating previous revenue:", err);
+          return { _sum: { pricingTotal: 0 } };
         }),
       ]);
 
@@ -253,7 +268,7 @@ export async function GET(request: NextRequest) {
           totalProviders,
           totalReviews,
           averageRating: avgRatingResult._avg.rating || 0,
-          revenueChange: calculateGrowth(periodRevenue, previousRevenue._sum.totalPrice || 0),
+          revenueChange: calculateGrowth(periodRevenue, previousRevenue._sum.pricingTotal || 0),
           usersChange: calculateGrowth(newUsers, previousUsers),
           bookingsChange: calculateGrowth(newBookings, previousBookings),
           providersChange: 0,
@@ -270,7 +285,7 @@ export async function GET(request: NextRequest) {
           bookingCount: p._count.bookings,
           reviewCount: p.reviewCount,
           averageRating: p.averageRating || 0,
-          totalRevenue: p.bookings.reduce((sum, b) => sum + (b.totalPrice || 0), 0),
+          totalRevenue: p.bookings.reduce((sum, b) => sum + (b.pricingTotal || 0), 0),
         })),
         topCategories: categoryStatsWithCounts.map((c) => ({
           id: c.id,
