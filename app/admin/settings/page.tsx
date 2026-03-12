@@ -1100,7 +1100,7 @@ export default function AdminSettingsPage() {
               <div className="w-14 h-14 rounded-full bg-red-100 dark:bg-red-500/15 flex items-center justify-center mb-4">
                 <Trash2 size={24} className="text-red-600 dark:text-red-400" />
               </div>
-              <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
+              <h2 className="text-lg font-semibold text-gray-900 dark:text-white font-serif italic">
                 Delete Account
               </h2>
               <p className="text-sm text-gray-500 dark:text-gray-400 mt-2 text-center">
