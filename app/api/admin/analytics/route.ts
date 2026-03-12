@@ -78,15 +78,12 @@ export async function GET(request: NextRequest) {
       prisma.review.count({ where: { isApproved: true } }),
       prisma.review.count({ where: { isApproved: false } }),
 
-      // Category breakdown - categories don't have isActive field
+      // Category breakdown - count providers by category
       prisma.category.findMany({
         select: {
           id: true,
           name: true,
           slug: true,
-          _count: {
-            select: { subcategories: true },
-          },
         },
         orderBy: { name: "asc" },
         take: 10,
@@ -124,6 +121,22 @@ export async function GET(request: NextRequest) {
         _sum: { totalPrice: true },
       }),
     ]);
+
+    // Calculate provider counts for each category
+    const categoryStatsWithCounts = await Promise.all(
+      categoryStats.map(async (category) => {
+        const providerCount = await prisma.provider.count({
+          where: {
+            categories: { has: category.id },
+            isPublished: true,
+          },
+        });
+        return {
+          ...category,
+          _count: { subcategories: providerCount },
+        };
+      })
+    );
 
     // Calculate total revenue from all completed bookings
     const totalRevenueResult = await prisma.booking.aggregate({
@@ -228,7 +241,7 @@ export async function GET(request: NextRequest) {
         },
       },
       breakdown: {
-        categories: categoryStats,
+        categories: categoryStatsWithCounts,
         topProviders,
       },
       // New format for analytics page (app/admin/analytics/page.tsx)
@@ -259,7 +272,7 @@ export async function GET(request: NextRequest) {
           averageRating: p.averageRating || 0,
           totalRevenue: p.bookings.reduce((sum, b) => sum + (b.totalPrice || 0), 0),
         })),
-        topCategories: categoryStats.map((c) => ({
+        topCategories: categoryStatsWithCounts.map((c) => ({
           id: c.id,
           name: c.name,
           providerCount: c._count.subcategories,

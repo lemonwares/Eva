@@ -180,6 +180,81 @@ export default function VendorDetailPage() {
   const [bookingLoading, setBookingLoading] = useState<boolean>(false);
   const [showFullDescription, setShowFullDescription] = useState(false);
 
+  // Handle booking form submission
+  const handleBookingFormSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setBookingError("");
+
+    // Validate required fields
+    if (!bookingForm.eventDate || !bookingForm.guests || !bookingForm.eventLocation || !bookingForm.notes) {
+      setBookingError("Please fill in all required fields");
+      return;
+    }
+
+    const guestCount = Number(bookingForm.guests);
+    const compatibility = analyzeServiceCompatibility(guestCount);
+
+    // Check service compatibility
+    if (!compatibility.allCompatible) {
+      setBookingError(
+        `Some services cannot accommodate ${guestCount} guests. Please adjust your selection or guest count.`
+      );
+      return;
+    }
+
+    // Check if user is authenticated
+    if (!session) {
+      setShowAuthModal(true);
+      return;
+    }
+
+    setIsBooking(true);
+    try {
+      // Create booking with selected services
+      const bookingData = {
+        providerId: vendor?.id,
+        selectedListings,
+        eventDate: bookingForm.eventDate,
+        guests: guestCount,
+        eventLocation: bookingForm.eventLocation,
+        notes: bookingForm.notes,
+      };
+
+      const response = await fetch("/api/bookings", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(bookingData),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || "Failed to create booking");
+      }
+
+      const result = await response.json();
+      
+      // Redirect to payment or success page
+      if (result.paymentUrl) {
+        window.location.href = result.paymentUrl;
+      } else {
+        // Handle success case
+        setShowBookingForm(false);
+        setBookingForm({
+          eventDate: "",
+          guests: "",
+          eventLocation: "",
+          notes: "",
+        });
+        setSelectedListings([]);
+        // Show success message or redirect
+      }
+    } catch (error) {
+      setBookingError(error instanceof Error ? error.message : "Failed to create booking");
+    } finally {
+      setIsBooking(false);
+    }
+  };
+
   // Recommendations state
   const [recommendations, setRecommendations] = useState<Provider[]>([]);
   const [isRecommendationsLoading, setIsRecommendationsLoading] =
@@ -204,14 +279,67 @@ export default function VendorDetailPage() {
     0,
   );
 
-  // Helper to get minimum maxGuests from selected listings
-  const minMaxGuests = selectedListingObjects.length > 0
-    ? Math.min(
-        ...selectedListingObjects
-          .map((l) => l.maxGuests)
-          .filter((mg) => mg !== null && mg !== undefined) as number[]
-      )
-    : null;
+  // Enhanced service compatibility analysis
+  const analyzeServiceCompatibility = (guestCount: number) => {
+    if (!guestCount || selectedListingObjects.length === 0) {
+      return {
+        allCompatible: true,
+        compatibleServices: [],
+        incompatibleServices: [],
+        maxPossibleGuests: null,
+        hasUnlimitedServices: false,
+      };
+    }
+
+    const serviceAnalysis = selectedListingObjects.map(service => ({
+      id: service.id,
+      name: service.headline,
+      maxGuests: service.maxGuests,
+      price: service.price || 0,
+      isCompatible: !service.maxGuests || guestCount <= service.maxGuests,
+      isUnlimited: !service.maxGuests,
+    }));
+
+    const compatibleServices = serviceAnalysis.filter(s => s.isCompatible);
+    const incompatibleServices = serviceAnalysis.filter(s => !s.isCompatible);
+    const unlimitedServices = serviceAnalysis.filter(s => s.isUnlimited);
+    
+    // Find the maximum guests that would make all services compatible
+    const servicesWithLimits = serviceAnalysis.filter(s => s.maxGuests);
+    const maxPossibleGuests = servicesWithLimits.length > 0 
+      ? Math.min(...servicesWithLimits.map(s => s.maxGuests!))
+      : null;
+
+    return {
+      allCompatible: incompatibleServices.length === 0,
+      compatibleServices,
+      incompatibleServices,
+      maxPossibleGuests,
+      hasUnlimitedServices: unlimitedServices.length > 0,
+      totalCompatiblePrice: compatibleServices.reduce((sum, s) => sum + s.price, 0),
+      totalIncompatiblePrice: incompatibleServices.reduce((sum, s) => sum + s.price, 0),
+    };
+  };
+
+  // Get current compatibility analysis
+  const guestCount = Number(bookingForm.guests) || 0;
+  const compatibility = analyzeServiceCompatibility(guestCount);
+
+  // Helper function to remove incompatible services
+  const removeIncompatibleServices = () => {
+    const compatibleIds = compatibility.compatibleServices.map(s => s.id);
+    setSelectedListings(compatibleIds);
+  };
+
+  // Helper function to adjust guest count to maximum possible
+  const adjustToMaxGuests = () => {
+    if (compatibility.maxPossibleGuests) {
+      setBookingForm(f => ({
+        ...f,
+        guests: compatibility.maxPossibleGuests!.toString(),
+      }));
+    }
+  };
 
   // Booking mobile scroll function
   const bookingRef = useRef<HTMLDivElement | null>(null);
@@ -270,67 +398,6 @@ export default function VendorDetailPage() {
       }, 100);
     }
   }
-
-  // Submit booking form
-  const handleBookingFormSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setBookingLoading(true);
-    setBookingError("");
-    try {
-      if (!vendor) throw new Error("Vendor not loaded");
-      if (!session?.user) throw new Error("User not authenticated");
-      
-      // Validate guests count against maxGuests
-      const guestsCount = Number(bookingForm.guests);
-      if (minMaxGuests && guestsCount > minMaxGuests) {
-        throw new Error(`Number of guests cannot exceed ${minMaxGuests}`);
-      }
-      
-      // Build services array from selected listings
-      const services = selectedListingObjects.map((l) => ({
-        id: l.id,
-        headline: l.headline,
-        minPrice: l.price || 0,
-        maxPrice: l.price || 0,
-      }));
-      const res = await fetch("/api/bookings", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          providerId: vendor.id,
-          services,
-          clientName: session.user.name || "",
-          clientEmail: session.user.email || "",
-          clientPhone: "", // phone not available on session.user, send empty string or collect in form if needed
-          eventDate: bookingForm.eventDate,
-          eventLocation: bookingForm.eventLocation,
-          guestsCount: Number(bookingForm.guests),
-          specialRequests: bookingForm.notes,
-          paymentMode: "FULL_PAYMENT",
-          pricingTotal: totalSelectedPrice,
-        }),
-      });
-      if (res.status === 401) {
-        saveBookingProgress();
-        setShowAuthModal(true);
-        setBookingLoading(false);
-        return;
-      }
-      if (!res.ok) {
-        const data = await res.json();
-        throw new Error(data.message || "Booking failed");
-      }
-      const data = await res.json();
-      if (data.paymentUrl) {
-        window.location.href = data.paymentUrl;
-      } else {
-        setShowBookingForm(false);
-      }
-    } catch (err: any) {
-      setBookingError(err.message || "Booking failed");
-    }
-    setBookingLoading(false);
-  };
 
   // Auto-fill form when user is logged in
   useEffect(() => {
@@ -1142,30 +1209,127 @@ export default function VendorDetailPage() {
                     <div>
                       <label className="block text-sm font-medium mb-1">
                         Guests <span className="text-red-500">*</span>
-                        {minMaxGuests && (
-                          <span className="text-gray-500 font-normal ml-2">
-                            (Maximum: {minMaxGuests})
-                          </span>
-                        )}
                       </label>
                       <input
                         type="number"
                         required
+                        min="1"
                         value={bookingForm.guests}
-                        onChange={(e) =>
+                        onChange={(e) => {
                           setBookingForm((f) => ({
                             ...f,
                             guests: e.target.value,
-                          }))
-                        }
-                        max={minMaxGuests || undefined}
+                          }));
+                        }}
                         className="w-full px-4 py-3 rounded-xl border border-border bg-input focus:border-accent focus:ring-2 focus:ring-accent/30"
-                        placeholder="100"
+                        placeholder="Enter number of guests"
                       />
-                      {minMaxGuests && Number(bookingForm.guests) > minMaxGuests && (
-                        <p className="text-red-500 text-sm mt-1">
-                          Number of guests cannot exceed {minMaxGuests}
-                        </p>
+                      
+                      {/* Service Compatibility Analysis */}
+                      {guestCount > 0 && selectedListingObjects.length > 0 && (
+                        <div className="mt-3 space-y-2">
+                          {compatibility.allCompatible ? (
+                            <div className="flex items-center gap-2 text-green-600 text-sm">
+                              <CircleCheckBig size={16} />
+                              <span>All selected services can accommodate {guestCount} guests</span>
+                            </div>
+                          ) : (
+                            <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg p-3">
+                              <div className="flex items-start gap-2 mb-2">
+                                <div className="w-4 h-4 rounded-full bg-amber-500 shrink-0 mt-0.5"></div>
+                                <div className="flex-1">
+                                  <h4 className="font-medium text-amber-800 dark:text-amber-200 text-sm">
+                                    Guest Count Issue
+                                  </h4>
+                                  <p className="text-xs text-amber-700 dark:text-amber-300 mt-1">
+                                    Some services cannot accommodate {guestCount} guests
+                                  </p>
+                                </div>
+                              </div>
+                              
+                              {/* Compatible Services */}
+                              {compatibility.compatibleServices.length > 0 && (
+                                <div className="mb-3">
+                                  <p className="text-xs font-medium text-green-700 dark:text-green-300 mb-1">
+                                    ✓ Compatible Services:
+                                  </p>
+                                  <ul className="space-y-1">
+                                    {compatibility.compatibleServices.map(service => (
+                                      <li key={service.id} className="text-xs text-green-600 dark:text-green-400 flex justify-between">
+                                        <span>{service.name}</span>
+                                        <span>{service.isUnlimited ? 'No limit' : `Max: ${service.maxGuests}`}</span>
+                                      </li>
+                                    ))}
+                                  </ul>
+                                </div>
+                              )}
+                              
+                              {/* Incompatible Services */}
+                              <div className="mb-3">
+                                <p className="text-xs font-medium text-red-700 dark:text-red-300 mb-1">
+                                  ✗ Cannot Accommodate:
+                                </p>
+                                <ul className="space-y-1">
+                                  {compatibility.incompatibleServices.map(service => (
+                                    <li key={service.id} className="text-xs text-red-600 dark:text-red-400 flex justify-between">
+                                      <span>{service.name}</span>
+                                      <span>Max: {service.maxGuests}</span>
+                                    </li>
+                                  ))}
+                                </ul>
+                              </div>
+                              
+                              {/* Action Buttons */}
+                              <div className="flex flex-col sm:flex-row gap-2">
+                                {compatibility.maxPossibleGuests && (
+                                  <button
+                                    type="button"
+                                    onClick={adjustToMaxGuests}
+                                    className="flex-1 px-3 py-2 text-xs font-medium rounded-lg bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 hover:bg-blue-200 dark:hover:bg-blue-900/50 transition-colors"
+                                  >
+                                    Set to {compatibility.maxPossibleGuests} guests
+                                  </button>
+                                )}
+                                <button
+                                  type="button"
+                                  onClick={removeIncompatibleServices}
+                                  className="flex-1 px-3 py-2 text-xs font-medium rounded-lg bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 hover:bg-amber-200 dark:hover:bg-amber-900/50 transition-colors"
+                                >
+                                  Remove incompatible services
+                                </button>
+                              </div>
+                              
+                              {compatibility.totalIncompatiblePrice > 0 && (
+                                <p className="text-xs text-amber-600 dark:text-amber-400 mt-2">
+                                  Removing incompatible services will reduce total by {formatCurrency(compatibility.totalIncompatiblePrice)}
+                                </p>
+                              )}
+                            </div>
+                          )}
+                          
+                          {/* Service Breakdown */}
+                          {selectedListingObjects.length > 1 && (
+                            <div className="text-xs text-gray-500 dark:text-gray-400">
+                              <p className="font-medium mb-1">Selected Services:</p>
+                              <ul className="space-y-1">
+                                {selectedListingObjects.map(service => (
+                                  <li key={service.id} className="flex justify-between">
+                                    <span>{service.headline}</span>
+                                    <span className={
+                                      !service.maxGuests 
+                                        ? 'text-green-600 dark:text-green-400' 
+                                        : guestCount <= service.maxGuests 
+                                          ? 'text-green-600 dark:text-green-400'
+                                          : 'text-red-600 dark:text-red-400'
+                                    }>
+                                      {!service.maxGuests ? 'No limit' : `Max: ${service.maxGuests}`}
+                                    </span>
+                                  </li>
+                                ))}
+                              </ul>
+                            </div>
+                          )}
+                        </div>
                       )}
                     </div>
                     <div>
@@ -1206,8 +1370,16 @@ export default function VendorDetailPage() {
                     </div>
                     <button
                       type="submit"
-                      disabled={bookingLoading || isBooking}
-                      className="w-full py-4 rounded-full bg-black text-white font-semibold hover:opacity-90 transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                      disabled={
+                        bookingLoading || 
+                        isBooking || 
+                        (guestCount > 0 && selectedListingObjects.length > 0 && !compatibility.allCompatible)
+                      }
+                      className={`w-full py-4 rounded-full font-semibold transition flex items-center justify-center gap-2 ${
+                        guestCount > 0 && selectedListingObjects.length > 0 && !compatibility.allCompatible
+                          ? 'bg-gray-400 text-gray-600 cursor-not-allowed'
+                          : 'bg-black text-white hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed'
+                      }`}
                     >
                       {bookingLoading ? (
                         <>
@@ -1216,6 +1388,8 @@ export default function VendorDetailPage() {
                         </>
                       ) : isBooking ? (
                         "Processing..."
+                      ) : guestCount > 0 && selectedListingObjects.length > 0 && !compatibility.allCompatible ? (
+                        "Resolve Service Compatibility Issues"
                       ) : (
                         "Proceed to Payment"
                       )}
