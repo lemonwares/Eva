@@ -550,7 +550,7 @@ export default function UsersPage() {
         limit: "10",
         ...(searchQuery && { search: searchQuery }),
         ...(roleFilter !== "all" && { role: roleFilter }),
-        ...(statusFilter !== "all" && { status: statusFilter }),
+        ...(statusFilter !== "all" && { status: statusFilter.toUpperCase() }),
       });
 
       const response = await fetch(`/api/admin/users?${params}`);

@@ -36,7 +36,7 @@ export async function GET(request: NextRequest) {
         startDate.setDate(startDate.getDate() - 30);
     }
 
-    // Get counts
+    // Get counts and revenue
     const [
       totalUsers,
       newUsers,
@@ -52,6 +52,7 @@ export async function GET(request: NextRequest) {
       pendingReviews,
       categoryStats,
       topProviders,
+      revenueData,
     ] = await Promise.all([
       // User counts
       prisma.user.count(),
@@ -91,7 +92,7 @@ export async function GET(request: NextRequest) {
         take: 10,
       }),
 
-      // Top providers by reviews
+      // Top providers by reviews and bookings
       prisma.provider.findMany({
         where: { isPublished: true, isVerified: true },
         select: {
@@ -100,12 +101,38 @@ export async function GET(request: NextRequest) {
           averageRating: true,
           reviewCount: true,
           inquiryCount: true,
+          _count: {
+            select: { 
+              bookings: { where: { status: "COMPLETED" } },
+            },
+          },
+          bookings: {
+            where: { status: "COMPLETED" },
+            select: { totalPrice: true },
+          },
         },
         orderBy: { reviewCount: "desc" },
         take: 10,
       }),
+
+      // Revenue calculation from completed bookings
+      prisma.booking.aggregate({
+        where: { 
+          status: "COMPLETED",
+          createdAt: { gte: startDate },
+        },
+        _sum: { totalPrice: true },
+      }),
     ]);
 
+    // Calculate total revenue from all completed bookings
+    const totalRevenueResult = await prisma.booking.aggregate({
+      where: { status: "COMPLETED" },
+      _sum: { totalPrice: true },
+    });
+
+    const totalRevenue = totalRevenueResult._sum.totalPrice || 0;
+    const periodRevenue = revenueData._sum.totalPrice || 0;
     // Calculate growth rates
     const previousPeriodStart = new Date(startDate);
     switch (period) {
@@ -123,7 +150,7 @@ export async function GET(request: NextRequest) {
         break;
     }
 
-    const [previousUsers, previousBookings, previousInquiries] =
+    const [previousUsers, previousBookings, previousInquiries, previousRevenue] =
       await Promise.all([
         prisma.user.count({
           where: {
@@ -139,6 +166,13 @@ export async function GET(request: NextRequest) {
           where: {
             createdAt: { gte: previousPeriodStart, lt: startDate },
           },
+        }),
+        prisma.booking.aggregate({
+          where: {
+            status: "COMPLETED",
+            createdAt: { gte: previousPeriodStart, lt: startDate },
+          },
+          _sum: { totalPrice: true },
         }),
       ]);
 
@@ -200,13 +234,13 @@ export async function GET(request: NextRequest) {
       // New format for analytics page (app/admin/analytics/page.tsx)
       data: {
         overview: {
-          totalRevenue: 0,
+          totalRevenue,
           totalUsers,
           totalBookings,
           totalProviders,
           totalReviews,
           averageRating: avgRatingResult._avg.rating || 0,
-          revenueChange: 0,
+          revenueChange: calculateGrowth(periodRevenue, previousRevenue._sum.totalPrice || 0),
           usersChange: calculateGrowth(newUsers, previousUsers),
           bookingsChange: calculateGrowth(newBookings, previousBookings),
           providersChange: 0,
@@ -220,10 +254,10 @@ export async function GET(request: NextRequest) {
         topProviders: topProviders.map((p) => ({
           id: p.id,
           businessName: p.businessName,
-          bookingCount: 0,
+          bookingCount: p._count.bookings,
           reviewCount: p.reviewCount,
           averageRating: p.averageRating || 0,
-          totalRevenue: 0,
+          totalRevenue: p.bookings.reduce((sum, b) => sum + (b.totalPrice || 0), 0),
         })),
         topCategories: categoryStats.map((c) => ({
           id: c.id,

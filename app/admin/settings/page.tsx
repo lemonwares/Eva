@@ -99,6 +99,10 @@ export default function AdminSettingsPage() {
 
   // Toast state
   const [toasts, setToasts] = useState<Toast[]>([]);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [deleteConfirmText, setDeleteConfirmText] = useState("");
+  const [deletePassword, setDeletePassword] = useState("");
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const addToast = (message: string, type: "success" | "error") => {
     const id = Date.now().toString();
@@ -275,6 +279,45 @@ export default function AdminSettingsPage() {
     } finally {
       setUpdatingPassword(false);
     }
+  };
+
+  const handleDeleteAccount = async () => {
+    if (deleteConfirmText !== "DELETE" || !deletePassword) {
+      addToast("Please type DELETE and enter your password", "error");
+      return;
+    }
+
+    setIsDeleting(true);
+    try {
+      const res = await fetch("/api/auth/delete-account", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ password: deletePassword }),
+      });
+
+      if (!res.ok) {
+        const error = await res.json();
+        throw new Error(error.message || "Failed to delete account");
+      }
+
+      addToast("Account deleted successfully", "success");
+      // Redirect to home page after a delay
+      setTimeout(() => {
+        window.location.href = "/";
+      }, 2000);
+    } catch (err: unknown) {
+      const message =
+        err instanceof Error ? err.message : "Failed to delete account";
+      addToast(message, "error");
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
+  const handleOpenDeleteModal = () => {
+    setShowDeleteModal(true);
+    setDeleteConfirmText("");
+    setDeletePassword("");
   };
 
   const handleCopyId = () => {
@@ -993,12 +1036,7 @@ export default function AdminSettingsPage() {
                 </p>
                 <button
                   className="px-5 py-2 rounded-xl text-sm font-semibold border border-red-300 dark:border-red-800 text-red-600 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-900/30 transition-colors"
-                  onClick={() =>
-                    addToast(
-                      "Please contact support to delete your account",
-                      "error",
-                    )
-                  }
+                  onClick={handleOpenDeleteModal}
                 >
                   Delete Account
                 </button>
@@ -1007,6 +1045,100 @@ export default function AdminSettingsPage() {
           )}
         </div>
       </div>
+
+      {/* Delete Account Confirmation Modal */}
+      {showDeleteModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
+          <div
+            className={`${cardBg} border ${cardBorder} rounded-2xl w-full max-w-md`}
+          >
+            <div className="p-6">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="p-2 rounded-xl bg-red-100 dark:bg-red-900/30">
+                  <Trash2
+                    size={20}
+                    className="text-red-600 dark:text-red-400"
+                  />
+                </div>
+                <div>
+                  <h3 className="text-lg font-bold text-red-700 dark:text-red-400">
+                    Delete Account
+                  </h3>
+                  <p className="text-sm text-red-500/70 dark:text-red-400/50">
+                    This action is irreversible
+                  </p>
+                </div>
+              </div>
+
+              <div className="space-y-4">
+                <p className={`text-sm ${textSecondary}`}>
+                  Are you sure you want to delete your account? All of your data
+                  will be permanently removed and cannot be recovered.
+                </p>
+
+                <div>
+                  <label
+                    className={`text-sm font-medium ${textPrimary} mb-2 block`}
+                  >
+                    Type <span className="font-bold text-red-500">DELETE</span>{" "}
+                    to confirm
+                  </label>
+                  <input
+                    type="text"
+                    value={deleteConfirmText}
+                    onChange={(e) => setDeleteConfirmText(e.target.value)}
+                    placeholder="DELETE"
+                    className={`w-full px-4 py-2.5 rounded-xl border ${inputBg} ${inputBorder} ${textPrimary} text-sm focus:outline-none focus:ring-2 focus:ring-red-500/40 focus:border-red-500/40 transition-all`}
+                  />
+                </div>
+
+                <div>
+                  <label
+                    className={`text-sm font-medium ${textPrimary} mb-2 block`}
+                  >
+                    Enter your password
+                  </label>
+                  <input
+                    type="password"
+                    value={deletePassword}
+                    onChange={(e) => setDeletePassword(e.target.value)}
+                    placeholder="Your current password"
+                    className={`w-full px-4 py-2.5 rounded-xl border ${inputBg} ${inputBorder} ${textPrimary} text-sm focus:outline-none focus:ring-2 focus:ring-red-500/40 focus:border-red-500/40 transition-all`}
+                  />
+                </div>
+
+                <div className="flex gap-3 pt-4">
+                  <button
+                    onClick={() => setShowDeleteModal(false)}
+                    disabled={isDeleting}
+                    className={`flex-1 px-4 py-2.5 rounded-xl font-medium transition-colors ${
+                      darkMode
+                        ? "bg-white/5 hover:bg-white/10 text-gray-300"
+                        : "bg-gray-100 hover:bg-gray-200 text-gray-700"
+                    } disabled:opacity-50 disabled:cursor-not-allowed`}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={handleDeleteAccount}
+                    disabled={
+                      isDeleting ||
+                      deleteConfirmText !== "DELETE" ||
+                      !deletePassword
+                    }
+                    className="flex-1 px-4 py-2.5 rounded-xl font-medium bg-red-600 text-white hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                  >
+                    {isDeleting && (
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    )}
+                    {isDeleting ? "Deleting..." : "Delete Account"}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </AdminLayout>
   );
 }

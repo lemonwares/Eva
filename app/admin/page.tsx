@@ -107,7 +107,7 @@ export default function AdminOverviewPage() {
     try {
       const [analyticsRes, bookingsRes] = await Promise.all([
         fetch("/api/admin/analytics?period=30d"),
-        fetch("/api/admin/bookings?limit=10"),
+        fetch("/api/admin/bookings?limit=10&orderBy=createdAt&order=desc"),
       ]);
 
       if (analyticsRes.ok) {

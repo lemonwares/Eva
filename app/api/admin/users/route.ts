@@ -43,12 +43,27 @@ export async function GET(request: NextRequest) {
       filters.role = role;
     }
 
-    // Map status filter to emailVerifiedAt only if status is provided
-    // if (status === "ACTIVE") {
-    //   filters.emailVerifiedAt = { not: null };
-    // } else if (status === "INACTIVE") {
-    //   filters.emailVerifiedAt = null;
-    // }
+    // Map status filter to emailVerifiedAt and provider status
+    if (status && status !== "all") {
+      if (status === "ACTIVE") {
+        filters.emailVerifiedAt = { not: null };
+      } else if (status === "INACTIVE") {
+        filters.emailVerifiedAt = null;
+      } else if (status === "SUSPENDED") {
+        // For suspended users, we'll check if they have providers that are suspended
+        filters.OR = [
+          { emailVerifiedAt: null },
+          {
+            ownedProviders: {
+              some: {
+                isPublished: false,
+                isVerified: false
+              }
+            }
+          }
+        ];
+      }
+    }
 
     const [rawUsers, total] = await Promise.all([
       prisma.user.findMany({
@@ -87,17 +102,27 @@ export async function GET(request: NextRequest) {
     ]);
 
     // Transform users to include status field expected by frontend
-    const users = rawUsers.map((user) => ({
-      ...user,
-      status: user.emailVerifiedAt ? "ACTIVE" : "INACTIVE",
-      emailVerified: user.emailVerifiedAt?.toISOString() || null,
-      image: user.avatar,
-      _count: {
-        bookings: 0, // Would need to count from bookings table if needed
-        reviews: user._count.reviews,
-        inquiries: user._count.inquiries,
-      },
-    }));
+    const users = rawUsers.map((user) => {
+      let status = "ACTIVE";
+      
+      if (!user.emailVerifiedAt) {
+        status = "INACTIVE";
+      } else if (user.ownedProviders.some(p => !p.isPublished && !p.isVerified)) {
+        status = "SUSPENDED";
+      }
+
+      return {
+        ...user,
+        status,
+        emailVerified: user.emailVerifiedAt?.toISOString() || null,
+        image: user.avatar,
+        _count: {
+          bookings: 0, // Would need to count from bookings table if needed
+          reviews: user._count.reviews,
+          inquiries: user._count.inquiries,
+        },
+      };
+    });
 
     return NextResponse.json({
       success: true,

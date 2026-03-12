@@ -151,7 +151,7 @@ export default function AdminVendorsPage() {
 
       if (searchQuery) params.append("search", searchQuery);
       if (statusFilter !== "All")
-        params.append("status", statusFilter.toLowerCase());
+        params.append("status", statusFilter);
       if (categoryFilter !== "All") {
         const cat = categoriesRef.current.find(
           (c) => c.name === categoryFilter,
