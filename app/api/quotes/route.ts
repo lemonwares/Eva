@@ -111,6 +111,8 @@ export async function GET(request: NextRequest) {
           inquiry: {
             select: {
               id: true,
+              fromName: true,
+              fromEmail: true,
               fromUser: {
                 select: { id: true, name: true, email: true },
               },
