@@ -43,6 +43,8 @@ interface Quote {
   };
   inquiry: {
     id: string;
+    fromName: string;
+    fromEmail: string;
     fromUser: {
       id: string;
       name: string | null;
@@ -308,11 +310,11 @@ export default function AdminQuotesPage() {
                       >
                         <div>
                           <p className="truncate max-w-[150px]">
-                            {quote.inquiry?.fromUser?.name || "N/A"}
+                            {quote.inquiry?.fromUser?.name || quote.inquiry?.fromName || "N/A"}
                           </p>
-                          {quote.inquiry?.fromUser?.email && (
+                          {(quote.inquiry?.fromUser?.email || quote.inquiry?.fromEmail) && (
                             <p className={`text-xs ${textMuted} truncate max-w-[150px]`}>
-                              {quote.inquiry.fromUser.email}
+                              {quote.inquiry?.fromUser?.email || quote.inquiry?.fromEmail}
                             </p>
                           )}
                         </div>
@@ -467,7 +469,9 @@ export default function AdminQuotesPage() {
                   <p className={`text-sm ${textMuted}`}>Client</p>
                   <p className={`font-medium ${textPrimary}`}>
                     {selectedQuote.inquiry?.fromUser?.name ||
+                      selectedQuote.inquiry?.fromName ||
                       selectedQuote.inquiry?.fromUser?.email ||
+                      selectedQuote.inquiry?.fromEmail ||
                       "N/A"}
                   </p>
                 </div>
