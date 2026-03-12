@@ -87,8 +87,10 @@ export async function GET(request: NextRequest) {
       filters.OR = [
         { id: { contains: search, mode: "insensitive" } },
         { provider: { businessName: { contains: search, mode: "insensitive" } } },
-        { inquiry: { user: { name: { contains: search, mode: "insensitive" } } } },
-        { inquiry: { user: { email: { contains: search, mode: "insensitive" } } } },
+        { inquiry: { fromName: { contains: search, mode: "insensitive" } } },
+        { inquiry: { fromEmail: { contains: search, mode: "insensitive" } } },
+        { inquiry: { fromUser: { name: { contains: search, mode: "insensitive" } } } },
+        { inquiry: { fromUser: { email: { contains: search, mode: "insensitive" } } } },
       ];
     }
 
@@ -109,7 +111,7 @@ export async function GET(request: NextRequest) {
           inquiry: {
             select: {
               id: true,
-              user: {
+              fromUser: {
                 select: { id: true, name: true, email: true },
               },
             },

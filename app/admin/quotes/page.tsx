@@ -43,11 +43,11 @@ interface Quote {
   };
   inquiry: {
     id: string;
-    user: {
+    fromUser: {
       id: string;
       name: string | null;
       email: string;
-    };
+    } | null;
   } | null;
 }
 
@@ -308,11 +308,11 @@ export default function AdminQuotesPage() {
                       >
                         <div>
                           <p className="truncate max-w-[150px]">
-                            {quote.inquiry?.user?.name || "N/A"}
+                            {quote.inquiry?.fromUser?.name || "N/A"}
                           </p>
-                          {quote.inquiry?.user?.email && (
+                          {quote.inquiry?.fromUser?.email && (
                             <p className={`text-xs ${textMuted} truncate max-w-[150px]`}>
-                              {quote.inquiry.user.email}
+                              {quote.inquiry.fromUser.email}
                             </p>
                           )}
                         </div>
@@ -466,8 +466,8 @@ export default function AdminQuotesPage() {
                 <div>
                   <p className={`text-sm ${textMuted}`}>Client</p>
                   <p className={`font-medium ${textPrimary}`}>
-                    {selectedQuote.inquiry?.user?.name ||
-                      selectedQuote.inquiry?.user?.email ||
+                    {selectedQuote.inquiry?.fromUser?.name ||
+                      selectedQuote.inquiry?.fromUser?.email ||
                       "N/A"}
                   </p>
                 </div>
