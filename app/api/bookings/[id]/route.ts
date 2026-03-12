@@ -10,6 +10,16 @@ const updateBookingSchema = z.object({
   clientName: z.string().min(1).optional(),
   clientPhone: z.string().min(1).optional(),
   specialRequests: z.string().optional(),
+  status: z.enum([
+    "PENDING_PAYMENT",
+    "DEPOSIT_PAID", 
+    "BALANCE_SCHEDULED",
+    "FULLY_PAID",
+    "CONFIRMED",
+    "COMPLETED",
+    "CANCELLED",
+    "REFUNDED"
+  ]).optional(),
 });
 
 // GET /api/bookings/:id - Get single booking
@@ -123,8 +133,9 @@ export async function PATCH(
       return NextResponse.json({ message: "Forbidden" }, { status: 403 });
     }
 
-    // Cannot update completed or cancelled bookings
-    if (booking.status === "COMPLETED" || booking.status === "CANCELLED") {
+    // Cannot update completed or cancelled bookings (except status updates by admin)
+    if ((booking.status === "COMPLETED" || booking.status === "CANCELLED") && 
+        (!isAdmin || !body.status)) {
       return NextResponse.json(
         { message: `Cannot update a ${booking.status.toLowerCase()} booking` },
         { status: 400 }

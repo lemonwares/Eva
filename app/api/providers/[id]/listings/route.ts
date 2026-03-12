@@ -10,6 +10,7 @@ const listingSchema = z.object({
   longDescription: z.string().optional(),
   price: z.number().min(0),
   timeEstimate: z.string().min(1).max(100),
+  maxGuests: z.number().int().min(1).optional(),
   coverImageUrl: z.string().url().optional().or(z.literal("")),
   galleryUrls: z.array(z.string().url()).optional(),
 });
@@ -75,6 +76,7 @@ export async function POST(
         longDescription: validatedData.longDescription,
         price: validatedData.price,
         timeEstimate: validatedData.timeEstimate,
+        maxGuests: validatedData.maxGuests,
         coverImageUrl: validatedData.coverImageUrl || null,
         galleryUrls: validatedData.galleryUrls || [],
         providerId: id,

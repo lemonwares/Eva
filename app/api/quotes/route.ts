@@ -113,6 +113,7 @@ export async function GET(request: NextRequest) {
               id: true,
               fromName: true,
               fromEmail: true,
+              fromUserId: true,
               fromUser: {
                 select: { id: true, name: true, email: true },
               },

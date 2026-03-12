@@ -5,9 +5,7 @@ import { useAdminTheme } from "@/components/admin/AdminThemeContext";
 import { logger } from "@/lib/logger";
 import { formatCurrency, formatDate } from "@/lib/formatters";
 import {
-  Filter,
   ChevronDown,
-  Calendar,
   ChevronLeft,
   ChevronRight,
   Loader2,
@@ -45,6 +43,7 @@ interface Quote {
     id: string;
     fromName: string;
     fromEmail: string;
+    fromUserId: string | null;
     fromUser: {
       id: string;
       name: string | null;
@@ -89,6 +88,7 @@ export default function AdminQuotesPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedQuote, setSelectedQuote] = useState<Quote | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
+  const [debouncedSearchQuery, setDebouncedSearchQuery] = useState("");
   const [searchTimeout, setSearchTimeout] = useState<NodeJS.Timeout | null>(null);
 
   const fetchQuotes = useCallback(async () => {
@@ -102,8 +102,8 @@ export default function AdminQuotesPage() {
         params.append("status", statusFilter);
       }
 
-      if (searchQuery.trim()) {
-        params.append("search", searchQuery.trim());
+      if (debouncedSearchQuery.trim()) {
+        params.append("search", debouncedSearchQuery.trim());
       }
 
       const res = await fetch(`/api/quotes?${params}`);
@@ -117,22 +117,33 @@ export default function AdminQuotesPage() {
     } finally {
       setIsLoading(false);
     }
-  }, [currentPage, statusFilter, searchQuery]);
+  }, [currentPage, statusFilter, debouncedSearchQuery]);
 
   useEffect(() => {
     fetchQuotes();
   }, [fetchQuotes]);
 
-  // Debounced search
-  const handleSearchChange = (value: string) => {
-    setSearchQuery(value);
+  // Debounced search effect
+  useEffect(() => {
     if (searchTimeout) {
       clearTimeout(searchTimeout);
     }
+    
     const timeout = setTimeout(() => {
+      setDebouncedSearchQuery(searchQuery);
       setCurrentPage(1);
     }, 500);
+    
     setSearchTimeout(timeout);
+
+    return () => {
+      if (timeout) clearTimeout(timeout);
+    };
+  }, [searchQuery]);
+
+  // Handle search input change
+  const handleSearchChange = (value: string) => {
+    setSearchQuery(value);
   };
 
   const getStatusColor = (status: string) => {
@@ -155,7 +166,7 @@ export default function AdminQuotesPage() {
   return (
     <AdminLayout
       title="Quotes Management"
-      searchPlaceholder="Search by Quote ID, Client, Vendor..."
+      // searchPlaceholder="Search by Quote ID, Client, Vendor..."
     >
       {/* Search and Filters */}
       <div className={`${cardBg} border ${cardBorder} rounded-xl p-4 mb-6`}>
@@ -310,11 +321,25 @@ export default function AdminQuotesPage() {
                       >
                         <div>
                           <p className="truncate max-w-[150px]">
-                            {quote.inquiry?.fromUser?.name || quote.inquiry?.fromName || "N/A"}
+                            {(() => {
+                              if (!quote.inquiry) return "Direct Quote";
+                              
+                              // Try registered user name first
+                              if (quote.inquiry.fromUser?.name) return quote.inquiry.fromUser.name;
+                              
+                              // Try guest inquiry name
+                              if (quote.inquiry.fromName) return quote.inquiry.fromName;
+                              
+                              // Fall back to email
+                              if (quote.inquiry.fromUser?.email) return quote.inquiry.fromUser.email;
+                              if (quote.inquiry.fromEmail) return quote.inquiry.fromEmail;
+                              
+                              return "Unknown Client";
+                            })()}
                           </p>
-                          {(quote.inquiry?.fromUser?.email || quote.inquiry?.fromEmail) && (
+                          {quote.inquiry && (
                             <p className={`text-xs ${textMuted} truncate max-w-[150px]`}>
-                              {quote.inquiry?.fromUser?.email || quote.inquiry?.fromEmail}
+                              {quote.inquiry.fromUser?.email || quote.inquiry.fromEmail || ""}
                             </p>
                           )}
                         </div>
@@ -468,11 +493,13 @@ export default function AdminQuotesPage() {
                 <div>
                   <p className={`text-sm ${textMuted}`}>Client</p>
                   <p className={`font-medium ${textPrimary}`}>
-                    {selectedQuote.inquiry?.fromUser?.name ||
-                      selectedQuote.inquiry?.fromName ||
-                      selectedQuote.inquiry?.fromUser?.email ||
-                      selectedQuote.inquiry?.fromEmail ||
-                      "N/A"}
+                    {selectedQuote.inquiry
+                      ? (selectedQuote.inquiry.fromUser?.name ||
+                         selectedQuote.inquiry.fromName ||
+                         selectedQuote.inquiry.fromUser?.email ||
+                         selectedQuote.inquiry.fromEmail ||
+                         "Unknown Client")
+                      : "Direct Quote (No Client)"}
                   </p>
                 </div>
                 <div>

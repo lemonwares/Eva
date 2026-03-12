@@ -73,7 +73,17 @@ interface StatusCounts {
   CANCELLED: number;
 }
 
-const statusOptions = ["All", "PENDING", "CONFIRMED", "COMPLETED", "CANCELLED"];
+const statusOptions = [
+  "All", 
+  "PENDING_PAYMENT", 
+  "DEPOSIT_PAID", 
+  "BALANCE_SCHEDULED", 
+  "FULLY_PAID", 
+  "CONFIRMED", 
+  "COMPLETED", 
+  "CANCELLED", 
+  "REFUNDED"
+];
 
 // View Booking Modal Component
 function ViewBookingModal({
@@ -396,7 +406,7 @@ function EditStatusModal({
   onSave: (status: string) => void;
   darkMode: boolean;
 }) {
-  const [status, setStatus] = useState(booking?.status || "PENDING");
+  const [status, setStatus] = useState(booking?.status || "PENDING_PAYMENT");
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
@@ -436,10 +446,14 @@ function EditStatusModal({
                 : "bg-white border-gray-200 text-gray-900"
             } focus:outline-none focus:ring-2 focus:ring-accent/50`}
           >
-            <option value="PENDING">Pending</option>
+            <option value="PENDING_PAYMENT">Pending Payment</option>
+            <option value="DEPOSIT_PAID">Deposit Paid</option>
+            <option value="BALANCE_SCHEDULED">Balance Scheduled</option>
+            <option value="FULLY_PAID">Fully Paid</option>
             <option value="CONFIRMED">Confirmed</option>
             <option value="COMPLETED">Completed</option>
             <option value="CANCELLED">Cancelled</option>
+            <option value="REFUNDED">Refunded</option>
           </select>
         </div>
         <div className="flex gap-3 pt-4">
@@ -535,10 +549,18 @@ export default function AdminBookingsPage() {
         return "bg-green-500";
       case "COMPLETED":
         return "bg-blue-500";
-      case "PENDING":
+      case "FULLY_PAID":
+        return "bg-emerald-500";
+      case "DEPOSIT_PAID":
+        return "bg-teal-500";
+      case "BALANCE_SCHEDULED":
+        return "bg-cyan-500";
+      case "PENDING_PAYMENT":
         return "bg-amber-500";
       case "CANCELLED":
         return "bg-red-500";
+      case "REFUNDED":
+        return "bg-purple-500";
       default:
         return "bg-gray-500";
     }

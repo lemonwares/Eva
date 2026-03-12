@@ -103,6 +103,8 @@ export default function AdminSettingsPage() {
   const [deleteConfirmText, setDeleteConfirmText] = useState("");
   const [deletePassword, setDeletePassword] = useState("");
   const [isDeleting, setIsDeleting] = useState(false);
+  const [isPasswordValid, setIsPasswordValid] = useState(false);
+  const [isVerifyingPassword, setIsVerifyingPassword] = useState(false);
 
   const addToast = (message: string, type: "success" | "error") => {
     const id = Date.now().toString();
@@ -282,8 +284,8 @@ export default function AdminSettingsPage() {
   };
 
   const handleDeleteAccount = async () => {
-    if (deleteConfirmText !== "DELETE" || !deletePassword) {
-      addToast("Please type DELETE and enter your password", "error");
+    if (deleteConfirmText !== "DELETE" || !deletePassword || !isPasswordValid) {
+      addToast("Please type DELETE and enter your correct password", "error");
       return;
     }
 
@@ -314,10 +316,53 @@ export default function AdminSettingsPage() {
     }
   };
 
+  // Password verification function
+  const verifyPassword = async (password: string) => {
+    if (!password.trim()) {
+      setIsPasswordValid(false);
+      return;
+    }
+
+    setIsVerifyingPassword(true);
+    try {
+      const res = await fetch("/api/auth/verify-password", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ password }),
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        setIsPasswordValid(data.isValid);
+      } else {
+        setIsPasswordValid(false);
+      }
+    } catch (error) {
+      setIsPasswordValid(false);
+    } finally {
+      setIsVerifyingPassword(false);
+    }
+  };
+
+  // Debounced password verification
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      if (deletePassword) {
+        verifyPassword(deletePassword);
+      } else {
+        setIsPasswordValid(false);
+      }
+    }, 500);
+
+    return () => clearTimeout(timeoutId);
+  }, [deletePassword]);
+
   const handleOpenDeleteModal = () => {
     setShowDeleteModal(true);
     setDeleteConfirmText("");
     setDeletePassword("");
+    setIsPasswordValid(false);
+    setIsVerifyingPassword(false);
   };
 
   const handleCopyId = () => {
@@ -1048,92 +1093,96 @@ export default function AdminSettingsPage() {
 
       {/* Delete Account Confirmation Modal */}
       {showDeleteModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
-          <div
-            className={`${cardBg} border ${cardBorder} rounded-2xl w-full max-w-md`}
-          >
-            <div className="p-6">
-              <div className="flex items-center gap-3 mb-4">
-                <div className="p-2 rounded-xl bg-red-100 dark:bg-red-900/30">
-                  <Trash2
-                    size={20}
-                    className="text-red-600 dark:text-red-400"
-                  />
-                </div>
-                <div>
-                  <h3 className="text-lg font-bold text-red-700 dark:text-red-400">
-                    Delete Account
-                  </h3>
-                  <p className="text-sm text-red-500/70 dark:text-red-400/50">
-                    This action is irreversible
-                  </p>
-                </div>
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-700 w-full max-w-md shadow-2xl animate-in zoom-in-95 duration-200">
+            {/* Icon and Header */}
+            <div className="flex flex-col items-center pt-8 pb-2 px-6">
+              <div className="w-14 h-14 rounded-full bg-red-100 dark:bg-red-500/15 flex items-center justify-center mb-4">
+                <Trash2 size={24} className="text-red-600 dark:text-red-400" />
+              </div>
+              <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
+                Delete Account
+              </h2>
+              <p className="text-sm text-gray-500 dark:text-gray-400 mt-2 text-center">
+                This action is irreversible. All of your data will be permanently removed and cannot be recovered.
+              </p>
+            </div>
+
+            {/* Form */}
+            <div className="px-6 pb-6 space-y-4">
+              <div>
+                <label className="text-sm font-medium text-gray-900 dark:text-white mb-2 block">
+                  Type <span className="font-bold text-red-600">DELETE</span> to confirm
+                </label>
+                <input
+                  type="text"
+                  value={deleteConfirmText}
+                  onChange={(e) => setDeleteConfirmText(e.target.value)}
+                  placeholder="DELETE"
+                  className="w-full px-4 py-2.5 text-sm rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-red-500/40 focus:border-red-500/40 transition-all"
+                />
               </div>
 
-              <div className="space-y-4">
-                <p className={`text-sm ${textSecondary}`}>
-                  Are you sure you want to delete your account? All of your data
-                  will be permanently removed and cannot be recovered.
-                </p>
-
-                <div>
-                  <label
-                    className={`text-sm font-medium ${textPrimary} mb-2 block`}
-                  >
-                    Type <span className="font-bold text-red-500">DELETE</span>{" "}
-                    to confirm
-                  </label>
-                  <input
-                    type="text"
-                    value={deleteConfirmText}
-                    onChange={(e) => setDeleteConfirmText(e.target.value)}
-                    placeholder="DELETE"
-                    className={`w-full px-4 py-2.5 rounded-xl border ${inputBg} ${inputBorder} ${textPrimary} text-sm focus:outline-none focus:ring-2 focus:ring-red-500/40 focus:border-red-500/40 transition-all`}
-                  />
-                </div>
-
-                <div>
-                  <label
-                    className={`text-sm font-medium ${textPrimary} mb-2 block`}
-                  >
-                    Enter your password
-                  </label>
+              <div>
+                <label className="text-sm font-medium text-gray-900 dark:text-white mb-2 block">
+                  Enter your password
+                </label>
+                <div className="relative">
                   <input
                     type="password"
                     value={deletePassword}
                     onChange={(e) => setDeletePassword(e.target.value)}
                     placeholder="Your current password"
-                    className={`w-full px-4 py-2.5 rounded-xl border ${inputBg} ${inputBorder} ${textPrimary} text-sm focus:outline-none focus:ring-2 focus:ring-red-500/40 focus:border-red-500/40 transition-all`}
+                    className={`w-full px-4 py-2.5 text-sm rounded-xl border ${
+                      deletePassword && !isVerifyingPassword
+                        ? isPasswordValid
+                          ? "border-green-500 dark:border-green-400"
+                          : "border-red-500 dark:border-red-400"
+                        : "border-gray-300 dark:border-gray-600"
+                    } bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-red-500/40 focus:border-red-500/40 transition-all`}
                   />
+                  {isVerifyingPassword && (
+                    <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                      <div className="w-4 h-4 border-2 border-gray-300 border-t-gray-600 rounded-full animate-spin"></div>
+                    </div>
+                  )}
                 </div>
+                {deletePassword && !isVerifyingPassword && (
+                  <p className={`text-xs mt-1 ${
+                    isPasswordValid 
+                      ? "text-green-600 dark:text-green-400" 
+                      : "text-red-600 dark:text-red-400"
+                  }`}>
+                    {isPasswordValid ? "Password verified" : "Incorrect password"}
+                  </p>
+                )}
+              </div>
 
-                <div className="flex gap-3 pt-4">
-                  <button
-                    onClick={() => setShowDeleteModal(false)}
-                    disabled={isDeleting}
-                    className={`flex-1 px-4 py-2.5 rounded-xl font-medium transition-colors ${
-                      darkMode
-                        ? "bg-white/5 hover:bg-white/10 text-gray-300"
-                        : "bg-gray-100 hover:bg-gray-200 text-gray-700"
-                    } disabled:opacity-50 disabled:cursor-not-allowed`}
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    onClick={handleDeleteAccount}
-                    disabled={
-                      isDeleting ||
-                      deleteConfirmText !== "DELETE" ||
-                      !deletePassword
-                    }
-                    className="flex-1 px-4 py-2.5 rounded-xl font-medium bg-red-600 text-white hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-                  >
-                    {isDeleting && (
-                      <Loader2 className="w-4 h-4 animate-spin" />
-                    )}
-                    {isDeleting ? "Deleting..." : "Delete Account"}
-                  </button>
-                </div>
+              {/* Actions */}
+              <div className="flex gap-3 pt-4">
+                <button
+                  onClick={() => setShowDeleteModal(false)}
+                  disabled={isDeleting}
+                  className="flex-1 px-4 py-2.5 text-sm font-medium rounded-xl border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleDeleteAccount}
+                  disabled={
+                    isDeleting ||
+                    deleteConfirmText !== "DELETE" ||
+                    !deletePassword.trim() ||
+                    !isPasswordValid ||
+                    isVerifyingPassword
+                  }
+                  className="flex-1 px-4 py-2.5 text-sm font-medium rounded-xl bg-red-600 hover:bg-red-700 text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                >
+                  {isDeleting && (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  )}
+                  {isDeleting ? "Deleting..." : "Delete Account"}
+                </button>
               </div>
             </div>
           </div>
