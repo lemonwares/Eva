@@ -112,7 +112,13 @@ export default function AdminOverviewPage() {
 
       if (analyticsRes.ok) {
         const data = await analyticsRes.json();
-        setAnalytics(data);
+        if (data.success) {
+          setAnalytics(data);
+        } else {
+          logger.error("Analytics API returned error:", data.error);
+        }
+      } else {
+        logger.error("Analytics API failed with status:", analyticsRes.status);
       }
 
       if (bookingsRes.ok) {
