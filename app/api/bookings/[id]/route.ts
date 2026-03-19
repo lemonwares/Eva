@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/auth";
 import { z } from "zod";
+import { emailTemplates, sendTemplatedEmail } from "@/lib/email";
 
 const updateBookingSchema = z.object({
   eventDate: z.string().datetime().optional(),
@@ -113,7 +114,8 @@ export async function PATCH(
       where: { id },
       include: {
         provider: {
-          select: { ownerUserId: true },
+          select: { ownerUserId: true, businessName: true },
+          include: { owner: { select: { email: true } } },
         },
       },
     });
@@ -157,6 +159,45 @@ export async function PATCH(
         quote: true,
       },
     });
+
+    // Send status-change emails
+    const baseUrl = process.env.NEXTAUTH_URL || "http://localhost:3000";
+    const bookingUrl = `${baseUrl}/dashboard/bookings/${id}`;
+    const newStatus = validation.data.status;
+
+    if (newStatus && newStatus !== booking.status) {
+      const eventDate = booking.eventDate
+        ? new Date(booking.eventDate).toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" })
+        : "TBD";
+      const vendorName = booking.provider.businessName;
+      const clientName = booking.clientName;
+      const clientEmail = booking.clientEmail;
+      const vendorEmail = (booking.provider as any).owner?.email as string | undefined;
+
+      if (newStatus === "COMPLETED") {
+        if (clientEmail) {
+          await sendTemplatedEmail(
+            clientEmail,
+            emailTemplates.bookingCompleted(clientName, vendorName, "Event", eventDate, bookingUrl),
+          );
+        }
+      } else if (newStatus === "CANCELLED") {
+        const reason = body.cancellationReason || "No reason provided";
+        const cancelledBy = isAdmin ? "Administrator" : "Vendor";
+        if (clientEmail) {
+          await sendTemplatedEmail(
+            clientEmail,
+            emailTemplates.bookingCancelledClient(clientName, vendorName, eventDate, reason, cancelledBy, bookingUrl),
+          );
+        }
+        if (vendorEmail) {
+          await sendTemplatedEmail(
+            vendorEmail,
+            emailTemplates.bookingCancelledVendor(vendorName, clientName, eventDate, reason, cancelledBy, bookingUrl),
+          );
+        }
+      }
+    }
 
     return NextResponse.json(updated);
   } catch (error: any) {

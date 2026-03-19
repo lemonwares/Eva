@@ -3,11 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/auth";
 import { z } from "zod";
-import { sendEmail } from "@/lib/email";
-import {
-  generateInquiryEmailHTML,
-  generateInquiryEmailText,
-} from "@/lib/templates/inquiry-email";
+import { emailTemplates, sendTemplatedEmail } from "@/lib/email";
 
 // Validation schema for inquiry creation
 const inquirySchema = z.object({
@@ -201,53 +197,20 @@ export async function POST(request: NextRequest) {
       const baseUrl = process.env.NEXTAUTH_URL || "http://localhost:3000";
       const inquiryUrl = `${baseUrl}/vendor/inquiries/${inquiry.id}`;
 
-      // Parse budget range to extract numeric value
-      let budgetAmount: number | undefined;
-      if (validatedData.budgetRange) {
-        const budgetMatch = validatedData.budgetRange.match(/\d+/);
-        if (budgetMatch) {
-          budgetAmount = parseInt(budgetMatch[0], 10);
-        }
-      }
+      const eventDate = validatedData.eventDate
+        ? new Date(validatedData.eventDate).toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" })
+        : "TBD";
 
-      const emailHTML = generateInquiryEmailHTML({
-        vendorName:
+      await sendTemplatedEmail(
+        providerWithOwner.owner.email,
+        emailTemplates.newInquiry(
           providerWithOwner.owner.name || providerWithOwner.businessName,
-        clientName: validatedData.fromName,
-        clientEmail: validatedData.fromEmail,
-        eventType: body.eventType || "Event Inquiry",
-        eventDate: validatedData.eventDate
-          ? new Date(validatedData.eventDate).toISOString()
-          : new Date().toISOString(),
-        location: body.location,
-        guestCount: validatedData.guestsCount,
-        budget: budgetAmount,
-        message: validatedData.message,
-        inquiryUrl,
-      });
-
-      const emailText = generateInquiryEmailText({
-        vendorName:
-          providerWithOwner.owner.name || providerWithOwner.businessName,
-        clientName: validatedData.fromName,
-        clientEmail: validatedData.fromEmail,
-        eventType: body.eventType || "Event Inquiry",
-        eventDate: validatedData.eventDate
-          ? new Date(validatedData.eventDate).toISOString()
-          : new Date().toISOString(),
-        location: body.location,
-        guestCount: validatedData.guestsCount,
-        budget: budgetAmount,
-        message: validatedData.message,
-        inquiryUrl,
-      });
-
-      await sendEmail({
-        to: providerWithOwner.owner.email,
-        subject: `New Inquiry from ${validatedData.fromName} - Event Inquiry`,
-        html: emailHTML,
-        text: emailText,
-      });
+          validatedData.fromName,
+          body.eventType || "Event Inquiry",
+          eventDate,
+          inquiryUrl,
+        ),
+      );
     }
 
     return NextResponse.json(

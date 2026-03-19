@@ -419,7 +419,7 @@ const cities = [
 ];
 
 // ─── Vendor seed data ───────────────────────────────────────────
-const SEED_OWNER_EMAIL = "seed-vendor@evalocal.com";
+const SEED_OWNER_EMAIL = "vendor@evalocal.com";
 
 const vendorNames = [
   "Golden Touch",
@@ -513,7 +513,7 @@ export default async function seed() {
   );
 
   // ── 3. Seed owner + test vendors ─────────────────────────────
-  const hashedPassword = await bcrypt.hash("SeedVendor2026!", 10);
+  const hashedPassword = await bcrypt.hash("Password123!", 10);
 
   const seedOwner = await prisma.user.upsert({
     where: { email: SEED_OWNER_EMAIL },

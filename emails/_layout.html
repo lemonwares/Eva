@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <title>{{title}}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Red+Hat+Display:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Red Hat Display', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #fafafa; color: #0f172a; margin: 0; padding: 0; line-height: 1.6; -webkit-font-smoothing: antialiased; }
+    .email-wrapper { background: #fafafa; padding: 40px 20px; }
+    .container { max-width: 600px; margin: 0 auto; background: #ffffff; border-radius: 20px; box-shadow: 0 4px 24px rgba(124, 58, 237, 0.08); overflow: hidden; }
+    .header { padding: 48px 32px; text-align: center; background: linear-gradient(135deg, #7c3aed 0%, #a855f7 100%); }
+    .header-green { background: linear-gradient(135deg, #059669 0%, #10b981 100%); }
+    .logo-container { margin-bottom: 24px; }
+    .logo { max-width: 140px; height: auto; }
+    .gif-container { margin: 32px 0; text-align: center; }
+    .gif-image { max-width: 200px; height: auto; border-radius: 12px; }
+    .header-title { font-size: 26px; font-weight: 700; color: #ffffff; margin-bottom: 0; line-height: 1.3; }
+    .body { padding: 40px 32px; }
+    .greeting { font-size: 18px; color: #0f172a; margin-bottom: 20px; font-weight: 600; }
+    .content-text { color: #475569; margin-bottom: 24px; font-size: 15px; line-height: 1.8; }
+    .button-container { text-align: center; margin: 36px 0; }
+    .button { display: inline-block; padding: 16px 48px; background: linear-gradient(135deg, #7c3aed 0%, #a855f7 100%); color: #ffffff !important; text-decoration: none; border-radius: 12px; font-weight: 700; font-size: 16px; box-shadow: 0 4px 16px rgba(124, 58, 237, 0.35); }
+    .button-green { background: linear-gradient(135deg, #059669 0%, #10b981 100%); box-shadow: 0 4px 16px rgba(16, 185, 129, 0.35); }
+    .details-box { background: #f8fafc; border: 1px solid #e2e8f0; padding: 20px 24px; border-radius: 12px; margin: 24px 0; }
+    .details-box-green { background: #ecfdf5; border-color: #a7f3d0; }
+    .details-box-red { border-left: 4px solid #ef4444; }
+    .warning-box { background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%); border-left: 4px solid #f59e0b; padding: 18px 24px; margin: 28px 0; border-radius: 12px; font-size: 14px; color: #92400e; line-height: 1.6; }
+    .footer { background: #f8fafc; padding: 32px; text-align: center; border-top: 1px solid #e2e8f0; }
+    .footer-logo { max-width: 100px; height: auto; margin-bottom: 12px; }
+    .footer-tagline { color: #64748b; font-size: 13px; margin-bottom: 12px; }
+    .footer-contact { color: #94a3b8; font-size: 13px; }
+    .footer-contact a { color: #7c3aed; text-decoration: none; }
+  </style>
+</head>
+<body>
+  <div class="email-wrapper">
+    <div class="container">
+      <div class="header {{headerClass}}">
+        <div class="logo-container">
+          <img src="https://res.cloudinary.com/duy8dw0cx/image/upload/brand/eva-logo-light.png" alt="EVA Local" class="logo" />
+        </div>
+        {{gifBlock}}
+        <div class="header-title">{{headerTitle}}</div>
+      </div>
+      <div class="body">
+        {{content}}
+      </div>
+      <div class="footer">
+        <img src="https://res.cloudinary.com/duy8dw0cx/image/upload/brand/eva-logo-dark.png" alt="EVA Local" class="footer-logo" />
+        <div class="footer-tagline">{{footerTagline}}</div>
+        <div class="footer-contact"><a href="mailto:hello@evalocal.com">hello@evalocal.com</a></div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

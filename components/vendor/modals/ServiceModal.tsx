@@ -3,8 +3,7 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, Loader2 } from "lucide-react";
-import { formatCurrency } from "@/lib/formatters";
-import ImageUpload, { MultiImageUpload } from "@/components/ui/ImageUpload";
+import ImageUpload from "@/components/ui/ImageUpload";
 
 interface ServiceModalProps {
   isOpen: boolean;
