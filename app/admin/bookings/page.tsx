@@ -23,12 +23,13 @@ import {
   User,
   Store,
   MapPin,
-  Phone,
-  Mail,
   Clock,
   AlertTriangle,
+  Ban,
+  MessageSquare,
 } from "lucide-react";
 import { useState, useEffect, useCallback } from "react";
+import { createPortal } from "react-dom";
 
 interface Booking {
   id: string;
@@ -501,6 +502,83 @@ function EditStatusModal({
   );
 }
 
+// ─── Actions Portal Modal ─────────────────────────────────────────────────────
+
+function BookingActionsModal({
+  booking,
+  isOpen,
+  onClose,
+  onView,
+  onEditStatus,
+  onCancel,
+  onDelete,
+  darkMode,
+}: {
+  booking: Booking | null;
+  isOpen: boolean;
+  onClose: () => void;
+  onView: () => void;
+  onEditStatus: () => void;
+  onCancel: () => void;
+  onDelete: () => void;
+  darkMode: boolean;
+}) {
+  if (!isOpen || !booking) return null;
+
+  const canCancel = booking.status !== "COMPLETED" && booking.status !== "CANCELLED" && booking.status !== "REFUNDED";
+  const hasCancelRequest = booking.statusTimeline?.some((e) => e.status === "CANCELLATION_REQUESTED");
+
+  return createPortal(
+    <div className="fixed inset-0 z-9999 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm" onClick={onClose}>
+      <div
+        className={`w-full max-w-xs rounded-2xl border shadow-2xl overflow-hidden ${darkMode ? "bg-[#1a1a1a] border-white/10" : "bg-white border-gray-200"}`}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className={`px-4 py-3 border-b ${darkMode ? "border-white/10" : "border-gray-100"}`}>
+          <p className={`text-xs font-medium uppercase tracking-wider ${darkMode ? "text-gray-400" : "text-gray-500"}`}>
+            Booking #{booking.id.slice(-8).toUpperCase()}
+          </p>
+          <p className={`text-sm font-semibold mt-0.5 ${darkMode ? "text-white" : "text-gray-900"}`}>
+            {booking.user?.name || booking.clientName || "Client"}
+          </p>
+          {hasCancelRequest && (
+            <span className="inline-flex items-center gap-1 mt-1 px-2 py-0.5 rounded-full text-xs font-medium bg-orange-500/10 text-orange-500">
+              <AlertTriangle size={10} /> Cancel Requested
+            </span>
+          )}
+        </div>
+        <div className="py-1">
+          <button onClick={() => { onView(); onClose(); }}
+            className={`w-full text-left px-4 py-3 text-sm flex items-center gap-3 ${darkMode ? "text-gray-300 hover:bg-white/5" : "text-gray-700 hover:bg-gray-50"} transition-colors`}>
+            <Eye size={16} className="text-gray-400" /> View Details
+          </button>
+          <button onClick={() => { onEditStatus(); onClose(); }}
+            className={`w-full text-left px-4 py-3 text-sm flex items-center gap-3 ${darkMode ? "text-gray-300 hover:bg-white/5" : "text-gray-700 hover:bg-gray-50"} transition-colors`}>
+            <Edit2 size={16} className="text-gray-400" /> Update Status
+          </button>
+          {canCancel && (
+            <button onClick={() => { onCancel(); onClose(); }}
+              className={`w-full text-left px-4 py-3 text-sm flex items-center gap-3 text-amber-600 ${darkMode ? "hover:bg-white/5" : "hover:bg-gray-50"} transition-colors`}>
+              <Ban size={16} /> Cancel Booking
+            </button>
+          )}
+          <button onClick={() => { onDelete(); onClose(); }}
+            className={`w-full text-left px-4 py-3 text-sm flex items-center gap-3 text-red-500 ${darkMode ? "hover:bg-red-500/10" : "hover:bg-red-50"} transition-colors`}>
+            <Trash2 size={16} /> Delete
+          </button>
+        </div>
+        <div className={`px-4 py-3 border-t ${darkMode ? "border-white/10" : "border-gray-100"}`}>
+          <button onClick={onClose}
+            className={`w-full py-2 rounded-lg text-sm font-medium ${darkMode ? "bg-white/10 text-white hover:bg-white/20" : "bg-gray-100 text-gray-700 hover:bg-gray-200"} transition-colors`}>
+            Close
+          </button>
+        </div>
+      </div>
+    </div>,
+    document.body,
+  );
+}
+
 export default function AdminBookingsPage() {
   const {
     darkMode,
@@ -527,7 +605,9 @@ export default function AdminBookingsPage() {
   const [viewModalOpen, setViewModalOpen] = useState(false);
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const [actionMenuOpen, setActionMenuOpen] = useState<string | null>(null);
+  const [actionsModalOpen, setActionsModalOpen] = useState(false);
+  const [cancelDialogOpen, setCancelDialogOpen] = useState(false);
+  const [isCancelling, setIsCancelling] = useState(false);
   const [toast, setToast] = useState<{
     show: boolean;
     message: string;
@@ -745,21 +825,44 @@ export default function AdminBookingsPage() {
   const openViewModal = (booking: Booking) => {
     setSelectedBooking(booking);
     setViewModalOpen(true);
-    setActionMenuOpen(null);
+  };
+
+  // Handle cancel booking (admin)
+  const handleCancelBooking = async () => {
+    if (!selectedBooking) return;
+    setIsCancelling(true);
+    try {
+      const res = await fetch(`/api/bookings/${selectedBooking.id}/cancel`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ reason: "Cancelled by administrator", cancelledBy: "CLIENT" }),
+      });
+      if (res.ok) {
+        setCancelDialogOpen(false);
+        showToast("Booking cancelled — client notified", "success");
+        fetchBookings();
+      } else {
+        const d = await res.json();
+        showToast(d.message || "Failed to cancel booking", "error");
+      }
+    } catch (err) {
+      logger.error("Error cancelling booking:", err);
+      showToast("An error occurred", "error");
+    } finally {
+      setIsCancelling(false);
+    }
   };
 
   // Open edit modal
   const openEditModal = (booking: Booking) => {
     setSelectedBooking(booking);
     setEditModalOpen(true);
-    setActionMenuOpen(null);
   };
 
   // Open delete dialog
   const openDeleteDialog = (booking: Booking) => {
     setSelectedBooking(booking);
     setDeleteDialogOpen(true);
-    setActionMenuOpen(null);
   };
 
   return (
@@ -975,56 +1078,12 @@ export default function AdminBookingsPage() {
                         </div>
                       </td>
                       <td className="px-6 py-4">
-                        <div className="relative">
-                          <button
-                            onClick={() =>
-                              setActionMenuOpen(
-                                actionMenuOpen === booking.id
-                                  ? null
-                                  : booking.id,
-                              )
-                            }
-                            className={`p-2 rounded-lg ${
-                              darkMode
-                                ? "hover:bg-white/10"
-                                : "hover:bg-gray-100"
-                            }`}
-                          >
-                            <MoreVertical size={16} className={textMuted} />
-                          </button>
-                          {actionMenuOpen === booking.id && (
-                            <div
-                              className={`absolute right-0 top-full mt-1 w-40 ${cardBg} border ${cardBorder} rounded-lg shadow-lg z-20 py-1`}
-                            >
-                              <button
-                                onClick={() => openViewModal(booking)}
-                                className={`w-full text-left px-4 py-2 text-sm flex items-center gap-2 ${textSecondary} ${
-                                  darkMode
-                                    ? "hover:bg-white/5"
-                                    : "hover:bg-gray-50"
-                                }`}
-                              >
-                                <Eye size={14} /> View Details
-                              </button>
-                              <button
-                                onClick={() => openEditModal(booking)}
-                                className={`w-full text-left px-4 py-2 text-sm flex items-center gap-2 ${textSecondary} ${
-                                  darkMode
-                                    ? "hover:bg-white/5"
-                                    : "hover:bg-gray-50"
-                                }`}
-                              >
-                                <Edit2 size={14} /> Update Status
-                              </button>
-                              <button
-                                onClick={() => openDeleteDialog(booking)}
-                                className="w-full text-left px-4 py-2 text-sm flex items-center gap-2 text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10"
-                              >
-                                <Trash2 size={14} /> Delete
-                              </button>
-                            </div>
-                          )}
-                        </div>
+                        <button
+                          onClick={() => { setSelectedBooking(booking); setActionsModalOpen(true); }}
+                          className={`p-2 rounded-lg ${darkMode ? "hover:bg-white/10" : "hover:bg-gray-100"}`}
+                        >
+                          <MoreVertical size={16} className={textMuted} />
+                        </button>
                       </td>
                     </tr>
                   ))}
@@ -1077,6 +1136,18 @@ export default function AdminBookingsPage() {
         )}
       </div>
 
+      {/* Actions Portal Modal */}
+      <BookingActionsModal
+        booking={selectedBooking}
+        isOpen={actionsModalOpen}
+        onClose={() => setActionsModalOpen(false)}
+        onView={() => setViewModalOpen(true)}
+        onEditStatus={() => setEditModalOpen(true)}
+        onCancel={() => setCancelDialogOpen(true)}
+        onDelete={() => setDeleteDialogOpen(true)}
+        darkMode={darkMode}
+      />
+
       {/* View Modal */}
       <ViewBookingModal
         booking={selectedBooking}
@@ -1094,15 +1165,25 @@ export default function AdminBookingsPage() {
         darkMode={darkMode}
       />
 
+      {/* Cancel Confirmation */}
+      <ConfirmDialog
+        isOpen={cancelDialogOpen}
+        onClose={() => setCancelDialogOpen(false)}
+        onConfirm={handleCancelBooking}
+        title="Cancel Booking"
+        message={`Cancel booking #${selectedBooking?.id.slice(-8).toUpperCase()}? The client will be notified by email and the vendor will receive a notification.`}
+        confirmText="Cancel Booking"
+        type="danger"
+        isLoading={isCancelling}
+      />
+
       {/* Delete Confirmation */}
       <ConfirmDialog
         isOpen={deleteDialogOpen}
         onClose={() => setDeleteDialogOpen(false)}
         onConfirm={handleDeleteBooking}
         title="Delete Booking"
-        message={`Are you sure you want to delete booking #${selectedBooking?.id
-          .slice(-8)
-          .toUpperCase()}? This action cannot be undone.`}
+        message={`Are you sure you want to delete booking #${selectedBooking?.id.slice(-8).toUpperCase()}? This action cannot be undone.`}
         confirmText="Delete"
         type="danger"
         isLoading={isDeleting}

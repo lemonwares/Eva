@@ -44,13 +44,9 @@ export async function POST(
     });
 
     if (!booking) {
-      return NextResponse.json(
-        { message: "Booking not found" },
-        { status: 404 },
-      );
+      return NextResponse.json({ message: "Booking not found" }, { status: 404 });
     }
 
-    // Determine who is cancelling
     const isOwner = booking.provider.ownerUserId === session.user.id;
     const isClient = booking.clientEmail === session.user.email;
     const isAdmin = session.user.role === "ADMINISTRATOR";
@@ -123,7 +119,7 @@ export async function POST(
     // Notify vendor owner
     const vendorOwner = await prisma.user.findUnique({
       where: { id: booking.provider.ownerUserId },
-      select: { email: true, name: true },
+      select: { id: true, email: true, name: true },
     });
 
     if (vendorOwner?.email) {
@@ -140,6 +136,24 @@ export async function POST(
       ).catch((err) =>
         logger.error("Failed to send cancellation email to vendor:", err),
       );
+    }
+
+    // If admin cancelled and there was a cancellation request, notify vendor their request was approved
+    if (isAdmin && vendorOwner?.id) {
+      const hadCancelRequest = (booking.statusTimeline as any[])?.some(
+        (e: any) => e.status === "CANCELLATION_REQUESTED",
+      );
+      if (hadCancelRequest) {
+        await prisma.notification.create({
+          data: {
+            userId: vendorOwner.id,
+            title: "Cancellation Request Approved",
+            message: `Your cancellation request for booking #${id.slice(-8).toUpperCase()} has been approved by the admin. The booking has been cancelled.`,
+            type: "success",
+            metadata: { bookingId: id },
+          },
+        }).catch((err) => logger.error("Failed to create vendor notification:", err));
+      }
     }
 
     return NextResponse.json({
