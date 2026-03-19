@@ -3,11 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/auth";
 import { z } from "zod";
-import { sendEmail } from "@/lib/email";
-import {
-  generateQuoteEmailHTML,
-  generateQuoteEmailText,
-} from "@/lib/templates/quote-email";
+import { emailTemplates, sendTemplatedEmail } from "@/lib/email";
 
 // Validation schema for quote creation
 const quoteItemSchema = z.object({
@@ -264,26 +260,15 @@ export async function POST(request: NextRequest) {
       if (quote.inquiry && quote.inquiry.fromEmail) {
         const baseUrl = process.env.NEXTAUTH_URL || "http://localhost:3000";
         const quoteUrl = `${baseUrl}/quotes/${quote.id}`;
-        const html = generateQuoteEmailHTML({
-          vendorName: quote.provider.businessName,
-          clientName: quote.inquiry.fromName,
-          clientEmail: quote.inquiry.fromEmail,
-          quoteAmount: quote.totalPrice,
-          quoteUrl,
-        });
-        const text = generateQuoteEmailText({
-          vendorName: quote.provider.businessName,
-          clientName: quote.inquiry.fromName,
-          clientEmail: quote.inquiry.fromEmail,
-          quoteAmount: quote.totalPrice,
-          quoteUrl,
-        });
-        await sendEmail({
-          to: quote.inquiry.fromEmail,
-          subject: `Quote from ${quote.provider.businessName} - €${quote.totalPrice}`,
-          html,
-          text,
-        });
+        await sendTemplatedEmail(
+          quote.inquiry.fromEmail,
+          emailTemplates.quoteSent(
+            quote.inquiry.fromName,
+            quote.provider.businessName,
+            quote.totalPrice,
+            quoteUrl,
+          ),
+        );
       }
     }
 

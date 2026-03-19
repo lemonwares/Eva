@@ -2,16 +2,18 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Search, MapPin, ChevronDown, CheckCircle2, MessageSquare } from "lucide-react";
+import { Search, MapPin, ChevronDown, CheckCircle2, MessageSquare, Loader2 } from "lucide-react";
 
 export default function HeroSearchForm() {
   const router = useRouter();
   const [searchQuery, setSearchQuery] = useState("");
   const [location, setLocation] = useState("");
   const [ceremony, setCeremony] = useState("");
+  const [loading, setLoading] = useState<boolean>(false);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
+    setLoading(true);
     const params = new URLSearchParams();
     if (searchQuery) params.set("q", searchQuery);
     if (location) params.set("city", location);
@@ -89,9 +91,17 @@ export default function HeroSearchForm() {
 
           <button
             type="submit"
-            className="w-full bg-[#0f172a] hover:bg-black text-white font-bold py-4 rounded-2xl mt-4 transition-all active:scale-[0.98]"
+            disabled={loading}
+            className="w-full bg-[#0f172a] hover:bg-black text-white font-bold py-4 rounded-2xl mt-4 transition-all active:scale-[0.98] disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center gap-2"
           >
-            See matches
+            {loading ? (
+              <>
+                <Loader2 className="w-4 h-4 animate-spin" />
+                Searching...
+              </>
+            ) : (
+              "See matches"
+            )}
           </button>
         </div>
       </form>
