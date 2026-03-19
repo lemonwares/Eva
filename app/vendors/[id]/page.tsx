@@ -213,11 +213,16 @@ export default function VendorDetailPage() {
       // Create booking with selected services
       const bookingData = {
         providerId: vendor?.id,
-        selectedListings,
+        services: selectedListingObjects.map((l) => ({
+          id: l.id,
+          headline: l.headline,
+          minPrice: l.price ?? 0,
+        })),
         eventDate: bookingForm.eventDate,
-        guests: guestCount,
+        guestsCount: guestCount,
         eventLocation: bookingForm.eventLocation,
-        notes: bookingForm.notes,
+        specialRequests: bookingForm.notes,
+        pricingTotal: totalSelectedPrice,
       };
 
       const response = await fetch("/api/bookings", {
