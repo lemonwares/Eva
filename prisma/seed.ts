@@ -564,6 +564,9 @@ export default async function seed() {
         const geoLat = (city.latitude ?? 51.5) + (Math.random() - 0.5) * 0.08;
         const geoLng = (city.longitude ?? -0.12) + (Math.random() - 0.5) * 0.08;
 
+        const existing = await prisma.provider.findUnique({ where: { slug } });
+        if (existing) { vendorCount++; continue; }
+
         await prisma.provider.create({
           data: {
             ownerUserId: seedOwner.id,
