@@ -26,6 +26,7 @@ import {
   Phone,
   Mail,
   Clock,
+  AlertTriangle,
 } from "lucide-react";
 import { useState, useEffect, useCallback } from "react";
 
@@ -36,11 +37,13 @@ interface Booking {
   eventType: string | null;
   status: string;
   totalPrice: number;
+  pricingTotal: number;
   clientName: string | null;
   clientEmail: string | null;
   clientPhone: string | null;
   specialRequests: string | null;
   notes: string | null;
+  statusTimeline: { status: string; timestamp: string; note?: string }[];
   createdAt: string;
   user: {
     id: string;
@@ -354,6 +357,23 @@ function ViewBookingModal({
             <p className={darkMode ? "text-gray-300" : "text-gray-600"}>
               {booking.specialRequests}
             </p>
+          </div>
+        )}
+
+        {/* Cancellation Requests */}
+        {booking.statusTimeline?.some((e) => e.status === "CANCELLATION_REQUESTED") && (
+          <div className="p-4 rounded-lg bg-orange-500/10 border border-orange-500/20">
+            <h4 className="font-semibold mb-2 text-orange-600 flex items-center gap-2">
+              <AlertTriangle size={16} /> Cancellation Request
+            </h4>
+            {booking.statusTimeline
+              .filter((e) => e.status === "CANCELLATION_REQUESTED")
+              .map((e, idx) => (
+                <div key={idx} className="text-sm text-orange-700 dark:text-orange-400">
+                  <p className="text-xs text-orange-500 mb-1">{new Date(e.timestamp).toLocaleString()}</p>
+                  <p>{e.note}</p>
+                </div>
+              ))}
           </div>
         )}
 
@@ -937,13 +957,22 @@ export default function AdminBookingsPage() {
                         )}
                       </td>
                       <td className="px-6 py-4">
-                        <span
-                          className={`inline-flex px-2.5 py-1 rounded-full text-xs font-medium text-white ${getStatusColor(
-                            booking.status,
-                          )}`}
-                        >
-                          {booking.status}
-                        </span>
+                        <div className="flex flex-col gap-1">
+                          <span
+                            className={`inline-flex px-2.5 py-1 rounded-full text-xs font-medium text-white ${getStatusColor(
+                              booking.status,
+                            )}`}
+                          >
+                            {booking.status}
+                          </span>
+                          {booking.statusTimeline?.some(
+                            (e) => e.status === "CANCELLATION_REQUESTED",
+                          ) && (
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-orange-500/10 text-orange-500 border border-orange-500/20">
+                              <AlertTriangle size={10} /> Cancel Requested
+                            </span>
+                          )}
+                        </div>
                       </td>
                       <td className="px-6 py-4">
                         <div className="relative">
