@@ -10,27 +10,27 @@
 - [X] Redirect to correct page after registration
 
 ### Sign In
-- [ ] Login with valid credentials
-- [ ] Wrong password shows error
-- [ ] Non-existent email shows error
-- [ ] Redirect to correct dashboard based on role (admin / vendor / user)
+- [X] Login with valid credentials
+- [X] Wrong password shows error
+- [X] Non-existent email shows error
+- [X] Redirect to correct dashboard based on role (admin / vendor / user)
 
 ### Sign Out
-- [ ] Sign out modal appears with correct Playfair Display italic font
-- [ ] Cancel button dismisses modal
-- [ ] Confirm sign out logs user out and redirects to home
+- [X] Sign out modal appears with correct Playfair Display italic font
+- [X] Cancel button dismisses modal
+- [X] Confirm sign out logs user out and redirects to home
 
 ### Forgot / Reset Password
-- [ ] Forgot password sends email
-- [ ] Reset password link works
-- [ ] New password saves correctly
+- [X] Forgot password sends email
+- [X] Reset password link works
+- [X] New password saves correctly
 
 ---
 
 ## 2. ADMIN DASHBOARD (`/admin`)
 
 ### Overview Page
-- [ ] Analytics data loads without 500 error
+- [X] Analytics data loads without 500 error
 - [ ] Total Bookings stat shows correct value
 - [ ] New Inquiries stat shows correct value
 - [ ] New Users stat shows correct value
