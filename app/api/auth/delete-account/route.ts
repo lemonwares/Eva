@@ -56,17 +56,6 @@ export async function DELETE(request: NextRequest) {
       }
     }
 
-    // Prevent admin self-deletion
-    if (user.role === "ADMINISTRATOR") {
-      return NextResponse.json(
-        {
-          message:
-            "Administrator accounts cannot be deleted through this endpoint",
-        },
-        { status: 403 },
-      );
-    }
-
     // Delete user — Prisma schema cascades handle all related records:
     // - Provider (Cascade) → Listings, Inquiries, Quotes, Bookings, Reviews, Favorites, TeamMembers, WeeklySchedules
     // - Favorites (Cascade)
