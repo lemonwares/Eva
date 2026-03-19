@@ -29,6 +29,7 @@ import {
 import { useState, useEffect, useRef, useMemo } from "react";
 import Image from "next/image";
 import DeleteAccountModal from "@/components/modals/delete-account-modal";
+import { signOut } from "next-auth/react";
 
 interface UserProfile {
   id: string;
@@ -295,10 +296,10 @@ export default function AdminSettingsPage() {
       }
 
       addToast("Account deleted successfully", "success");
-      // Redirect to home page after a delay
+      // Sign out and redirect to home
       setTimeout(() => {
-        window.location.href = "/";
-      }, 2000);
+        signOut({ callbackUrl: "/" });
+      }, 1500);
     } catch (err: unknown) {
       const message =
         err instanceof Error ? err.message : "Failed to delete account";

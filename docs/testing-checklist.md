@@ -3,11 +3,11 @@
 ## 1. AUTHENTICATION
 
 ### Sign Up
-- [ ] Register with valid email, name, password
-- [ ] Validation errors show for missing/invalid fields
-- [ ] Duplicate email shows proper error
-- [ ] Email verification flow works
-- [ ] Redirect to correct page after registration
+- [X] Register with valid email, name, password
+- [X] Validation errors show for missing/invalid fields
+- [X] Duplicate email shows proper error
+- [X] Email verification flow works
+- [X] Redirect to correct page after registration
 
 ### Sign In
 - [ ] Login with valid credentials

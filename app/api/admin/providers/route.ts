@@ -3,6 +3,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/auth";
 import { z } from "zod";
+import { randomBytes } from "crypto";
+import { emailTemplates, sendTemplatedEmail } from "@/lib/email";
 
 const moderateProviderSchema = z.object({
   action: z.enum([
@@ -63,9 +65,14 @@ export async function GET(request: NextRequest) {
     }
 
     if (categoryId && categoryId !== "all") {
-      filters.categories = {
-        has: categoryId
-      };
+      // categories field stores slugs — resolve the ID to a slug first
+      const cat = await prisma.category.findUnique({
+        where: { id: categoryId },
+        select: { slug: true },
+      });
+      if (cat) {
+        filters.categories = { has: cat.slug };
+      }
     }
 
     if (cityId) {
@@ -152,6 +159,99 @@ export async function GET(request: NextRequest) {
       { success: false, error: "Internal server error" },
       { status: 500 }
     );
+  }
+}
+
+// POST /api/admin/providers - Create a new vendor account + provider profile
+export async function POST(request: NextRequest) {
+  try {
+    const session = await auth();
+    if (!session?.user?.id || session.user.role !== "ADMINISTRATOR") {
+      return NextResponse.json({ success: false, error: "Forbidden" }, { status: 403 });
+    }
+
+    const body = await request.json();
+    const { businessName, ownerEmail, ownerName, phone, categoryId, description, address, postcode, priceFrom } = body;
+
+    if (!businessName || !ownerEmail) {
+      return NextResponse.json({ success: false, error: "Business name and owner email are required" }, { status: 400 });
+    }
+
+    // Resolve categoryId → slug
+    let categorySlug: string | null = null;
+    if (categoryId) {
+      const cat = await prisma.category.findUnique({ where: { id: categoryId }, select: { slug: true } });
+      categorySlug = cat?.slug ?? null;
+    }
+
+    // Upsert the owner user (create if not exists)
+    let user = await prisma.user.findUnique({ where: { email: ownerEmail } });
+    if (!user) {
+      const bcrypt = await import("bcryptjs");
+      const tempPassword = await bcrypt.hash(randomBytes(16).toString("hex"), 10);
+      user = await prisma.user.create({
+        data: {
+          email: ownerEmail,
+          name: ownerName || ownerEmail.split("@")[0],
+          password: tempPassword,
+          role: "PROFESSIONAL",
+          // NOT pre-verified — they'll verify via the invite link
+        },
+      });
+    }
+
+    // Generate a unique slug
+    const baseSlug = businessName.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+    let slug = baseSlug;
+    let suffix = 1;
+    while (await prisma.provider.findUnique({ where: { slug } })) {
+      slug = `${baseSlug}-${suffix++}`;
+    }
+
+    const provider = await prisma.provider.create({
+      data: {
+        ownerUserId: user.id,
+        businessName,
+        slug,
+        description: description || null,
+        categories: categorySlug ? [categorySlug] : [],
+        address: address || null,
+        postcode: postcode || "N/A",
+        phonePublic: phone || null,
+        priceFrom: priceFrom ? parseFloat(priceFrom) : null,
+        serviceRadiusMiles: 25,
+        isPublished: true,   // PENDING = published but not verified
+        isVerified: false,
+      },
+      include: {
+        owner: { select: { id: true, name: true, email: true } },
+        _count: { select: { reviews: true, bookings: true, inquiries: true } },
+      },
+    });
+
+    // Generate invite token (72 hours) stored in password_resets table
+    const token = randomBytes(32).toString("hex");
+    await prisma.passwordReset.create({
+      data: {
+        userId: user.id,
+        token,
+        expiresAt: new Date(Date.now() + 72 * 60 * 60 * 1000),
+      },
+    });
+
+    const baseUrl = process.env.NEXTAUTH_URL || "http://localhost:3000";
+    const inviteUrl = `${baseUrl}/auth/accept-invite?token=${token}`;
+    const vendorName = ownerName || ownerEmail.split("@")[0];
+
+    await sendTemplatedEmail(
+      ownerEmail,
+      emailTemplates.vendorInvite(vendorName, businessName, inviteUrl),
+    );
+
+    return NextResponse.json({ success: true, provider }, { status: 201 });
+  } catch (error: any) {
+    logger.error("Error creating provider:", error);
+    return NextResponse.json({ success: false, error: "Internal server error" }, { status: 500 });
   }
 }
 

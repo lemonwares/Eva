@@ -42,7 +42,7 @@ interface Provider {
   city: {
     id: string;
     name: string;
-  } | null;
+  } | string | null;
   _count: {
     reviews: number;
     inquiries: number;
@@ -207,77 +207,68 @@ export function ViewVendorModal({
             <div className="space-y-2">
               <p className={`flex items-center gap-2 text-sm ${textSecondary}`}>
                 <Mail size={16} className={textMuted} />
-                {provider.email || provider.owner.email}
+                {provider.email || provider.owner.email || <span className={textMuted}>No email provided</span>}
               </p>
-              {provider.phonePublic && (
-                <p
-                  className={`flex items-center gap-2 text-sm ${textSecondary}`}
-                >
-                  <Phone size={16} className={textMuted} />
-                  {provider.phonePublic}
-                </p>
-              )}
-              {provider.address && (
-                <p
-                  className={`flex items-center gap-2 text-sm ${textSecondary}`}
-                >
-                  <MapPin size={16} className={textMuted} />
-                  {provider.address}
-                </p>
-              )}
-              {provider.website && (
-                <p
-                  className={`flex items-center gap-2 text-sm ${textSecondary}`}
-                >
-                  <Globe size={16} className={textMuted} />
-                  {provider.website}
-                </p>
-              )}
+              <p className={`flex items-center gap-2 text-sm ${textSecondary}`}>
+                <Phone size={16} className={textMuted} />
+                {provider.phonePublic || <span className={textMuted}>No phone provided</span>}
+              </p>
+              <p className={`flex items-center gap-2 text-sm ${textSecondary}`}>
+                <MapPin size={16} className={textMuted} />
+                {provider.address || <span className={textMuted}>No address provided</span>}
+              </p>
+              <p className={`flex items-center gap-2 text-sm ${textSecondary}`}>
+                <Globe size={16} className={textMuted} />
+                {provider.website
+                  ? <a href={provider.website} target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline">{provider.website}</a>
+                  : <span className={textMuted}>No website provided</span>
+                }
+              </p>
             </div>
           </div>
           <div className="space-y-3">
             <h4 className={`font-medium ${textPrimary}`}>Business Details</h4>
             <div className="space-y-2">
               <p className={`text-sm ${textSecondary}`}>
-                <span className={textMuted}>Category:</span>{" "}
+                <span className={textMuted}>Category: </span>
                 {(() => {
                   const catIds = provider.categories ?? [];
-                  if (
-                    Array.isArray(catIds) &&
-                    catIds.length > 0 &&
-                    Array.isArray(categories) &&
-                    categories.length > 0
-                  ) {
-                    const match = categories.find(
-                      (cat: Category) => cat.id === catIds[0],
-                    );
-                    const rawName = match?.name || catIds[0] || "N/A";
-                    return typeof rawName === "string" && rawName.length > 0
-                      ? rawName.charAt(0).toUpperCase() +
-                          rawName.slice(1).toLowerCase()
-                      : rawName;
+                  if (Array.isArray(catIds) && catIds.length > 0 && Array.isArray(categories) && categories.length > 0) {
+                    const match = categories.find((cat: Category) => cat.id === catIds[0]);
+                    const rawName = match?.name || catIds[0] || null;
+                    return rawName ? rawName.charAt(0).toUpperCase() + rawName.slice(1).toLowerCase() : <span className={textMuted}>Not set</span>;
                   }
-                  return "N/A";
+                  return <span className={textMuted}>Not set</span>;
                 })()}
               </p>
               <p className={`text-sm ${textSecondary}`}>
-                <span className={textMuted}>Joined:</span>{" "}
+                <span className={textMuted}>City: </span>
+                {typeof provider.city === "object" && provider.city !== null
+                  ? provider.city.name
+                  : typeof provider.city === "string" && provider.city
+                  ? provider.city
+                  : <span className={textMuted}>Not set</span>}
+              </p>
+              <p className={`text-sm ${textSecondary}`}>
+                <span className={textMuted}>Postcode: </span>
+                {provider.postcode || <span className={textMuted}>Not set</span>}
+              </p>
+              <p className={`text-sm ${textSecondary}`}>
+                <span className={textMuted}>Joined: </span>
                 {formatDate(provider.createdAt)}
               </p>
-              {typeof provider.priceFrom === "number" &&
-                !isNaN(provider.priceFrom) && (
-                  <p className={`text-sm ${textSecondary}`}>
-                    <span className={textMuted}>Starting Price:</span>{" "}
-                    {formatCurrency(provider.priceFrom)}
-                  </p>
-                )}
-              {typeof provider.serviceRadiusMiles === "number" &&
-                !isNaN(provider.serviceRadiusMiles) && (
-                  <p className={`text-sm ${textSecondary}`}>
-                    <span className={textMuted}>Service Radius:</span>{" "}
-                    {provider.serviceRadiusMiles} miles
-                  </p>
-                )}
+              <p className={`text-sm ${textSecondary}`}>
+                <span className={textMuted}>Starting Price: </span>
+                {typeof provider.priceFrom === "number" && !isNaN(provider.priceFrom)
+                  ? formatCurrency(provider.priceFrom)
+                  : <span className={textMuted}>Not set</span>}
+              </p>
+              <p className={`text-sm ${textSecondary}`}>
+                <span className={textMuted}>Service Radius: </span>
+                {typeof provider.serviceRadiusMiles === "number" && !isNaN(provider.serviceRadiusMiles)
+                  ? `${provider.serviceRadiusMiles} miles`
+                  : <span className={textMuted}>Not set</span>}
+              </p>
             </div>
           </div>
         </div>
@@ -429,6 +420,7 @@ export function EditVendorModal({
               onChange={(e) =>
                 setEditForm({ ...editForm, businessName: e.target.value })
               }
+              placeholder="e.g. The Grand Venue"
               className={inputClass}
             />
           </div>
@@ -466,6 +458,7 @@ export function EditVendorModal({
                 setEditForm({ ...editForm, description: e.target.value })
               }
               rows={5}
+              placeholder="Describe the vendor's services, specialities, and experience..."
               className={`${inputClass} resize-none`}
             />
           </div>
@@ -481,6 +474,7 @@ export function EditVendorModal({
                 onChange={(e) =>
                   setEditForm({ ...editForm, phone: e.target.value })
                 }
+                placeholder="e.g. +44 7700 900000"
                 className={inputClass}
               />
             </div>
@@ -492,6 +486,7 @@ export function EditVendorModal({
                 onChange={(e) =>
                   setEditForm({ ...editForm, website: e.target.value })
                 }
+                placeholder="e.g. https://www.example.com"
                 className={inputClass}
               />
             </div>
@@ -504,6 +499,7 @@ export function EditVendorModal({
               onChange={(e) =>
                 setEditForm({ ...editForm, address: e.target.value })
               }
+              placeholder="e.g. 12 High Street, London"
               className={inputClass}
             />
           </div>
@@ -515,6 +511,7 @@ export function EditVendorModal({
               onChange={(e) =>
                 setEditForm({ ...editForm, postcode: e.target.value })
               }
+              placeholder="e.g. SW1A 1AA"
               className={inputClass}
             />
           </div>
@@ -530,6 +527,7 @@ export function EditVendorModal({
                 onChange={(e) =>
                   setEditForm({ ...editForm, priceFrom: e.target.value })
                 }
+                placeholder="e.g. 500"
                 className={inputClass}
               />
             </div>
@@ -541,6 +539,7 @@ export function EditVendorModal({
                 onChange={(e) =>
                   setEditForm({ ...editForm, serviceRadius: e.target.value })
                 }
+                placeholder="e.g. 25"
                 className={inputClass}
               />
             </div>

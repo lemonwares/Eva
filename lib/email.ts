@@ -297,6 +297,21 @@ export const emailTemplates = {
     text: `Hi ${clientName},\n\nHow was your experience with ${vendorName}?\n\nLeave a review: ${reviewUrl}`,
   }),
 
+  vendorInvite: (
+    name: string,
+    businessName: string,
+    inviteUrl: string,
+  ): EmailTemplate => ({
+    subject: `You're invited to join EVA Local as a vendor`,
+    html: loadTemplate("vendor-invite", baseVars({
+      title: "Vendor Invitation",
+      name,
+      businessName,
+      inviteUrl,
+    })),
+    text: `Hi ${name},\n\nYou've been invited to join EVA Local as a vendor for ${businessName}.\n\nAccept your invitation: ${inviteUrl}\n\nThis link expires in 72 hours.`,
+  }),
+
   // Booking confirmation after payment (uses existing .ts templates)
   bookingConfirmationClient: (data: BookingConfirmationEmailData): EmailTemplate => ({
     subject: `✅ Booking Confirmed with ${data.vendorName}! 🎉`,
