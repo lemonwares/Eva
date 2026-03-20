@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/auth";
-import bcrypt from "bcrypt";
+import bcrypt from "bcryptjs";
 
 // POST /api/users/me/password - Change password
 export async function POST(request: NextRequest) {
