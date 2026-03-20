@@ -256,7 +256,7 @@ export const emailTemplates = {
       cancelledBy,
       bookingUrl,
     })),
-    text: `Hi ${clientName},\n\nBooking with ${vendorName} on ${eventDate} cancelled.\n\nBy: ${cancelledBy}\nReason: ${reason}\n\nView: ${bookingUrl}`,
+    text: `Hi ${clientName},\n\nBooking with ${vendorName} on ${eventDate} cancelled.\n\nBy: ${cancelledBy}\nReason: ${reason}\n\nRefund: If a payment was made, a full refund will be processed within 24–48 hours to your original payment method.\n\nView: ${bookingUrl}`,
   }),
 
   bookingCancelledVendor: (

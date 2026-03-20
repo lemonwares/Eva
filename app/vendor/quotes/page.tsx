@@ -39,19 +39,23 @@ interface QuoteItem {
 
 interface Quote {
   id: string;
-  inquiryId: string;
+  inquiryId: string | null;
   inquiry: {
     id: string;
     fromName: string;
     fromEmail: string;
-    fromPhone: string | null;
-    eventDate: string | null;
-    guestsCount: number | null;
-    message: string;
-    createdAt: string;
+    fromPhone?: string | null;
+    eventDate?: string | null;
+    guestsCount?: number | null;
+    message?: string;
+    createdAt?: string;
   } | null;
   items: QuoteItem[];
-  total: number;
+  totalPrice: number;
+  subtotal?: number;
+  tax?: number;
+  discount?: number;
+  depositPercentage?: number;
   validUntil: string;
   status:
     | "DRAFT"
@@ -60,13 +64,10 @@ interface Quote {
     | "ACCEPTED"
     | "DECLINED"
     | "EXPIRED"
-    | "REVISED";
-  paymentMode: "FULL_PAYMENT" | "DEPOSIT_BALANCE" | "CASH_ON_DELIVERY";
-  depositPercent: number | null;
+    | "CANCELLED";
+  allowedPaymentModes?: string[];
   terms: string | null;
   notes: string | null;
-  sentAt: string | null;
-  viewedAt: string | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -197,7 +198,7 @@ export default function VendorQuotesPage() {
       const data = await response.json();
       setQuotes(data.quotes || data);
       if (data.pagination) {
-        setTotalPages(data.pagination.totalPages);
+        setTotalPages(data.pagination.pages || data.pagination.totalPages || 1);
       }
     } catch (error) {
       logger.error("Error fetching quotes:", error);
@@ -213,11 +214,10 @@ export default function VendorQuotesPage() {
 
   const handleViewQuote = async (quote: Quote) => {
     try {
-      // Fetch full quote details
       const response = await fetch(`/api/quotes/${quote.id}`);
       if (!response.ok) throw new Error("Failed to fetch quote details");
-      const fullQuote = await response.json();
-      setSelectedQuote(fullQuote);
+      const data = await response.json();
+      setSelectedQuote(data.quote || data);
       setIsViewModalOpen(true);
     } catch (error) {
       logger.error("Error fetching quote:", error);
@@ -230,20 +230,20 @@ export default function VendorQuotesPage() {
     try {
       const response = await fetch(`/api/quotes/${quote.id}`);
       if (!response.ok) throw new Error("Failed to fetch quote details");
-      const fullQuote = await response.json();
+      const data = await response.json();
+      const fullQuote = data.quote || data;
       setSelectedQuote(fullQuote);
       setEditItems(
-        fullQuote.items.map((item: QuoteItem) => ({
-          id: item.id,
-          description: item.description,
-          quantity: item.quantity,
-          unitPrice: item.unitPrice,
-          total: item.total,
+        (fullQuote.items || []).map((item: any) => ({
+          description: item.name || item.description || "",
+          quantity: item.qty ?? item.quantity ?? 1,
+          unitPrice: item.unitPrice ?? 0,
+          total: item.totalPrice ?? item.total ?? 0,
         })),
       );
-      setEditValidUntil(fullQuote.validUntil.split("T")[0]);
-      setEditPaymentMode(fullQuote.paymentMode);
-      setEditDepositPercent(fullQuote.depositPercent || 0);
+      setEditValidUntil(fullQuote.validUntil?.split("T")[0] || "");
+      setEditPaymentMode(fullQuote.allowedPaymentModes?.[0] || fullQuote.paymentMode || "FULL_PAYMENT");
+      setEditDepositPercent(fullQuote.depositPercentage ?? fullQuote.depositPercent ?? 0);
       setEditTerms(fullQuote.terms || "");
       setEditNotes(fullQuote.notes || "");
       setIsEditModalOpen(true);
@@ -289,14 +289,18 @@ export default function VendorQuotesPage() {
     try {
       setSaving(true);
       const response = await fetch(`/api/quotes/${selectedQuote.id}`, {
-        method: "PUT",
+        method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          items: editItems,
+          items: editItems.map((item) => ({
+            name: item.description,
+            qty: item.quantity,
+            unitPrice: item.unitPrice,
+            totalPrice: item.total,
+          })),
           validUntil: new Date(editValidUntil).toISOString(),
-          paymentMode: editPaymentMode,
-          depositPercent:
-            editPaymentMode === "DEPOSIT_BALANCE" ? editDepositPercent : null,
+          allowedPaymentModes: [editPaymentMode],
+          depositPercentage: editPaymentMode === "DEPOSIT_BALANCE" ? editDepositPercent : 50,
           terms: editTerms || null,
           notes: editNotes || null,
         }),
@@ -566,8 +570,7 @@ export default function VendorQuotesPage() {
                               {quote.inquiry?.eventDate
                                 ? formatDate(quote.inquiry.eventDate)
                                 : "Date not set"}
-                            </p>
-                          </div>
+                            </p>                          </div>
                         </td>
                         <td className="px-6 py-4">
                           <p
@@ -575,7 +578,7 @@ export default function VendorQuotesPage() {
                               isDark ? "text-white" : "text-gray-900"
                             }`}
                           >
-                            {formatCurrency(quote.total)}
+                            {formatCurrency(quote.totalPrice ?? 0)}
                           </p>
                         </td>
                         <td className="px-6 py-4">
@@ -584,7 +587,7 @@ export default function VendorQuotesPage() {
                               isDark ? "text-gray-300" : "text-gray-700"
                             }`}
                           >
-                            {formatDate(quote.validUntil)}
+                            {quote.validUntil ? formatDate(quote.validUntil) : "—"}
                           </p>
                         </td>
                         <td className="px-6 py-4">
@@ -838,7 +841,7 @@ export default function VendorQuotesPage() {
                   Valid Until
                 </p>
                 <p className={isDark ? "text-white" : "text-gray-900"}>
-                  {formatDate(selectedQuote.validUntil)}
+                  {selectedQuote.validUntil ? formatDate(selectedQuote.validUntil) : "—"}
                 </p>
               </div>
               <div>
@@ -850,8 +853,8 @@ export default function VendorQuotesPage() {
                   Sent At
                 </p>
                 <p className={isDark ? "text-white" : "text-gray-900"}>
-                  {selectedQuote.sentAt
-                    ? formatDate(selectedQuote.sentAt)
+                  {(selectedQuote as any).sentAt
+                    ? formatDate((selectedQuote as any).sentAt)
                     : "Not sent"}
                 </p>
               </div>
@@ -864,8 +867,8 @@ export default function VendorQuotesPage() {
                   Viewed At
                 </p>
                 <p className={isDark ? "text-white" : "text-gray-900"}>
-                  {selectedQuote.viewedAt
-                    ? formatDate(selectedQuote.viewedAt)
+                  {(selectedQuote as any).viewedAt
+                    ? formatDate((selectedQuote as any).viewedAt)
                     : "Not viewed"}
                 </p>
               </div>
@@ -927,14 +930,14 @@ export default function VendorQuotesPage() {
                               isDark ? "text-white" : "text-gray-900"
                             }`}
                           >
-                            {item.description}
+                            {(item as any).name || (item as any).description}
                           </td>
                           <td
                             className={`px-4 py-3 text-right ${
                               isDark ? "text-gray-300" : "text-gray-700"
                             }`}
                           >
-                            {item.quantity}
+                            {(item as any).qty ?? (item as any).quantity}
                           </td>
                           <td
                             className={`px-4 py-3 text-right ${
@@ -948,7 +951,7 @@ export default function VendorQuotesPage() {
                               isDark ? "text-white" : "text-gray-900"
                             }`}
                           >
-                            {formatCurrency(item.total)}
+                            {formatCurrency((item as any).totalPrice ?? (item as any).total ?? 0)}
                           </td>
                         </tr>
                       ))}
@@ -974,7 +977,7 @@ export default function VendorQuotesPage() {
                             isDark ? "text-accent" : "text-accent"
                           }`}
                         >
-                          {formatCurrency(selectedQuote.total)}
+                          {formatCurrency(selectedQuote.totalPrice ?? 0)}
                         </td>
                       </tr>
                     </tfoot>
@@ -994,11 +997,10 @@ export default function VendorQuotesPage() {
                   Payment Mode
                 </p>
                 <p className={isDark ? "text-white" : "text-gray-900"}>
-                  {formatPaymentMode(selectedQuote.paymentMode)}
+                  {formatPaymentMode((selectedQuote.allowedPaymentModes?.[0]) || "FULL_PAYMENT")}
                 </p>
               </div>
-              {selectedQuote.paymentMode === "DEPOSIT_BALANCE" &&
-                selectedQuote.depositPercent && (
+              {selectedQuote.depositPercentage && selectedQuote.depositPercentage > 0 && (
                   <div>
                     <p
                       className={`text-sm ${
@@ -1008,10 +1010,9 @@ export default function VendorQuotesPage() {
                       Deposit Amount
                     </p>
                     <p className={isDark ? "text-white" : "text-gray-900"}>
-                      {selectedQuote.depositPercent}% (
+                      {selectedQuote.depositPercentage}% (
                       {formatCurrency(
-                        (selectedQuote.total * selectedQuote.depositPercent) /
-                          100,
+                        ((selectedQuote.totalPrice ?? 0) * selectedQuote.depositPercentage) / 100,
                       )}
                       )
                     </p>
@@ -1450,7 +1451,7 @@ export default function VendorQuotesPage() {
                       isDark ? "text-white" : "text-gray-900"
                     }`}
                   >
-                    {formatCurrency(selectedQuote.total)}
+                    {formatCurrency(selectedQuote.totalPrice ?? 0)}
                   </p>
                 </div>
                 <div className="text-right">

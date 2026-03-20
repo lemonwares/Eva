@@ -1,9 +1,11 @@
 // Date formatting utilities
 export function formatDate(
-  date: Date | string,
+  date: Date | string | null | undefined,
   options?: Intl.DateTimeFormatOptions
 ): string {
+  if (!date) return "—";
   const d = typeof date === "string" ? new Date(date) : date;
+  if (isNaN(d.getTime())) return "—";
   return d.toLocaleDateString("en-GB", {
     year: "numeric",
     month: "long",

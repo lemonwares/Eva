@@ -207,7 +207,7 @@ function QuoteContent({ quoteId }: { quoteId: string }) {
                 {quote.status === "SENT" ? (
                   <>
                     Awaiting Your Response. Expires{" "}
-                    {new Date(quote.validUntil).toLocaleDateString()}.
+                    {quote.validUntil ? new Date(quote.validUntil).toLocaleDateString() : "soon"}.
                   </>
                 ) : (
                   <>Quote {quote.status}</>
@@ -269,7 +269,7 @@ function QuoteContent({ quoteId }: { quoteId: string }) {
                       Valid Until
                     </p>
                     <p className="font-semibold text-sm sm:text-base">
-                      {new Date(quote.validUntil).toLocaleDateString()}
+                      {quote.validUntil ? new Date(quote.validUntil).toLocaleDateString() : "—"}
                     </p>
                   </div>
                 </div>

@@ -173,7 +173,7 @@ function CancelRequestModal({ booking, isOpen, onClose, onSend }: {
   };
 
   return createPortal(
-    <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+    <div className="fixed inset-0 z-9999 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
       <div className="bg-white dark:bg-[#1a1a1a] rounded-2xl border border-gray-200 dark:border-white/10 w-full max-w-md shadow-2xl p-6 space-y-4">
         <div className="flex items-center justify-between">
           <h3 className="text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2">
@@ -219,7 +219,7 @@ function BookingActionsModal({ booking, isOpen, onClose, onView, onMarkComplete,
   const canRequestCancel = booking.status !== "COMPLETED" && booking.status !== "CANCELLED";
 
   return createPortal(
-    <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm" onClick={onClose}>
+    <div className="fixed inset-0 z-9999 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm" onClick={onClose}>
       <div
         className={`w-full max-w-xs rounded-2xl border shadow-2xl overflow-hidden ${darkMode ? "bg-[#1a1a1a] border-white/10" : "bg-white border-gray-200"}`}
         onClick={(e) => e.stopPropagation()}
