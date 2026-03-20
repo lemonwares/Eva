@@ -241,7 +241,7 @@ export const contactSchema = z.object({
 // ---- User profile update schema ----
 export const userProfileUpdateSchema = z.object({
   name: z.string().min(1).max(100).optional(),
-  phone: phoneSchema,
+  phone: z.string().max(30).optional().or(z.literal("")),
   image: z.string().url().optional().or(z.literal("")),
   notificationPreferences: z.record(z.string(), z.boolean()).optional(),
 });
