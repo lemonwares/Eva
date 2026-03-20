@@ -306,6 +306,7 @@ export const vendorProfileUpdateSchema = z.object({
   tiktok: z.string().max(200).optional(),
   facebook: z.string().max(200).optional(),
   coverImage: z.string().optional(),
+  logoUrl: z.string().optional(),
   photos: z.array(z.string()).max(20).optional(),
   priceFrom: z.coerce.number().min(0).optional().nullable(),
   isPublished: z.boolean().optional(),

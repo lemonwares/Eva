@@ -185,6 +185,7 @@ model Provider {
   // Media
   photos     String[] // Array of photo URLs
   coverImage String?  @map("cover_image")
+  logoUrl    String?  @map("logo_url")
 
   // Status & Verification
   isVerified  Boolean  @default(false) @map("is_verified")

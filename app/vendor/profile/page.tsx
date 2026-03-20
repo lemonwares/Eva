@@ -61,6 +61,7 @@ interface Provider {
   tiktok: string | null;
   photos: string[];
   coverImage: string | null;
+  logoUrl?: string | null;
   isVerified: boolean;
   averageRating: number | null;
   reviewCount: number;
@@ -368,7 +369,6 @@ export default function VendorProfilePage() {
     try {
       const formData = new FormData();
       formData.append("files", file);
-      formData.append("type", type === "cover" ? "cover" : "avatar");
 
       const res = await fetch("/api/upload", {
         method: "POST",
@@ -379,21 +379,22 @@ export default function VendorProfilePage() {
       if (!res.ok) throw new Error(data.message);
 
       if (data.url && provider) {
-        // Update the profile with the new image
+        const fieldKey = type === "cover" ? "coverImage" : "logoUrl";
         const updateRes = await fetch("/api/vendor/profile", {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            [type === "cover" ? "coverImage" : "logo"]: data.url,
-          }),
+          body: JSON.stringify({ [fieldKey]: data.url }),
         });
 
         if (updateRes.ok) {
-          // Update local state
           setProvider({
             ...provider,
             coverImage: type === "cover" ? data.url : provider.coverImage,
+            logoUrl: type === "logo" ? data.url : (provider as any).logoUrl,
           });
+        } else {
+          const errData = await updateRes.json();
+          logger.error("Profile update failed:", errData);
         }
       }
     } catch (err) {
@@ -525,9 +526,24 @@ export default function VendorProfilePage() {
                   darkMode ? "border-[#141414]" : "border-white"
                 } overflow-hidden`}
               >
-                <div className="w-full h-full flex items-center justify-center text-white text-3xl font-bold">
-                  {getInitials(provider.businessName)}
-                </div>
+                {isUploading === "logo" ? (
+                  <div className="w-full h-full flex items-center justify-center bg-black/40">
+                    <Loader2 size={24} className="animate-spin text-white" />
+                  </div>
+                ) : provider.logoUrl ? (
+                  <Image
+                    src={provider.logoUrl}
+                    alt={provider.businessName}
+                    width={128}
+                    height={128}
+                    className="w-full h-full object-cover"
+                    unoptimized
+                  />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center text-white text-3xl font-bold">
+                    {getInitials(provider.businessName)}
+                  </div>
+                )}
               </div>
               <input
                 ref={logoInputRef}
@@ -674,7 +690,7 @@ export default function VendorProfilePage() {
               </button>
             </div>
             {/* Category Tabs (below section title) */}
-            {provider.categories && provider.categories.length > 1 && (
+            {provider.categories && provider.categories.length > 0 && (
               <div className="flex gap-2 mb-6">
                 <button
                   className={`px-4 py-1.5 rounded-lg font-medium border transition-colors ${
@@ -723,7 +739,7 @@ export default function VendorProfilePage() {
                   .filter((listing) =>
                     selectedCategory === "all"
                       ? true
-                      : listing.category === selectedCategory,
+                      : listing.category?.toLowerCase() === selectedCategory.toLowerCase(),
                   )
                   .map((listing) => (
                     <div
