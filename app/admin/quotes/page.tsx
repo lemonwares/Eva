@@ -50,6 +50,12 @@ interface Quote {
       email: string;
     } | null;
   } | null;
+  booking?: {
+    id: string;
+    clientName: string;
+    clientEmail: string;
+    clientPhone?: string | null;
+  } | null;
 }
 
 interface Pagination {
@@ -322,26 +328,21 @@ export default function AdminQuotesPage() {
                         <div>
                           <p className="truncate max-w-[150px]">
                             {(() => {
-                              if (!quote.inquiry) return "Direct Quote";
-                              
-                              // Try registered user name first
-                              if (quote.inquiry.fromUser?.name) return quote.inquiry.fromUser.name;
-                              
-                              // Try guest inquiry name
-                              if (quote.inquiry.fromName) return quote.inquiry.fromName;
-                              
-                              // Fall back to email
-                              if (quote.inquiry.fromUser?.email) return quote.inquiry.fromUser.email;
-                              if (quote.inquiry.fromEmail) return quote.inquiry.fromEmail;
-                              
+                              if (quote.inquiry) {
+                                if (quote.inquiry.fromUser?.name) return quote.inquiry.fromUser.name;
+                                if (quote.inquiry.fromName) return quote.inquiry.fromName;
+                                if (quote.inquiry.fromUser?.email) return quote.inquiry.fromUser.email;
+                                if (quote.inquiry.fromEmail) return quote.inquiry.fromEmail;
+                              }
+                              if (quote.booking?.clientName) return quote.booking.clientName;
                               return "Unknown Client";
                             })()}
                           </p>
-                          {quote.inquiry && (
-                            <p className={`text-xs ${textMuted} truncate max-w-[150px]`}>
-                              {quote.inquiry.fromUser?.email || quote.inquiry.fromEmail || ""}
-                            </p>
-                          )}
+                          <p className={`text-xs ${textMuted} truncate max-w-[150px]`}>
+                            {quote.inquiry
+                              ? (quote.inquiry.fromUser?.email || quote.inquiry.fromEmail || "")
+                              : (quote.booking?.clientEmail || "")}
+                          </p>
                         </div>
                       </td>
                       <td className={`px-6 py-4 text-sm ${textSecondary}`}>
@@ -499,8 +500,14 @@ export default function AdminQuotesPage() {
                          selectedQuote.inquiry.fromUser?.email ||
                          selectedQuote.inquiry.fromEmail ||
                          "Unknown Client")
-                      : "Direct Quote (No Client)"}
+                      : (selectedQuote.booking?.clientName || "Unknown Client")}
                   </p>
+                  {!selectedQuote.inquiry && selectedQuote.booking?.clientEmail && (
+                    <p className={`text-xs ${textMuted}`}>{selectedQuote.booking.clientEmail}</p>
+                  )}
+                  {!selectedQuote.inquiry && selectedQuote.booking?.clientPhone && (
+                    <p className={`text-xs ${textMuted}`}>{selectedQuote.booking.clientPhone}</p>
+                  )}
                 </div>
                 <div>
                   <p className={`text-sm ${textMuted}`}>Created</p>
