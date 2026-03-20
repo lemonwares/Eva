@@ -3,8 +3,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import VendorLayout from "@/components/vendor/VendorLayout";
-// import { useVendorTheme } from "@/hooks/useVendorTheme";
-// import Modal from "@/components/ui/Modal";
 import {
   FileText,
   Search,
@@ -23,11 +21,13 @@ import {
   Minus,
   CalendarDays,
   Loader2,
+  X,
 } from "lucide-react";
 import { Modal } from "@/components/ui";
 import { useVendorTheme } from "@/components/vendor/VendorThemeContext";
 import { formatCurrency, formatDate } from "@/lib/formatters";
 import { logger } from "@/lib/logger";
+import { createPortal } from "react-dom";
 
 interface QuoteItem {
   id?: string;
@@ -56,6 +56,7 @@ interface Quote {
     clientEmail: string;
     clientPhone?: string | null;
     eventDate?: string | null;
+    guestsCount?: number | null;
   } | null;
   items: QuoteItem[];
   totalPrice: number;
@@ -150,6 +151,82 @@ const formatPaymentMode = (mode: string) => {
   }
 };
 
+// ─── Actions Modal ────────────────────────────────────────────────────────────
+
+function QuoteActionsModal({ quote, isOpen, onClose, onView, onEdit, onSend, isDark }: {
+  quote: Quote | null; isOpen: boolean; onClose: () => void;
+  onView: () => void; onEdit: () => void; onSend: () => void;
+  isDark: boolean;
+}) {
+  if (!isOpen || !quote) return null;
+
+  const canEdit = quote.status === "DRAFT" || quote.status === "REVISED";
+
+  return createPortal(
+    <div
+      className="fixed inset-0 z-9999 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm"
+      onClick={onClose}
+    >
+      <div
+        className={`w-full max-w-xs rounded-2xl border shadow-2xl overflow-hidden ${
+          isDark ? "bg-[#1a1a1a] border-white/10" : "bg-white border-gray-200"
+        }`}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className={`px-4 py-3 border-b ${isDark ? "border-white/10" : "border-gray-100"}`}>
+          <p className={`text-xs font-medium uppercase tracking-wider ${isDark ? "text-gray-400" : "text-gray-500"}`}>
+            Quote #{quote.id.slice(-8).toUpperCase()}
+          </p>
+          <p className={`text-sm font-semibold mt-0.5 ${isDark ? "text-white" : "text-gray-900"}`}>
+            {quote.inquiry?.fromName || quote.booking?.clientName || "No client"}
+          </p>
+        </div>
+        <div className="py-1">
+          <button
+            onClick={() => { onView(); onClose(); }}
+            className={`w-full text-left px-4 py-3 text-sm flex items-center gap-3 ${
+              isDark ? "text-gray-300 hover:bg-white/5" : "text-gray-700 hover:bg-gray-50"
+            } transition-colors`}
+          >
+            <Eye size={16} className="text-gray-400" /> View Details
+          </button>
+          {canEdit && (
+            <>
+              <button
+                onClick={() => { onEdit(); onClose(); }}
+                className={`w-full text-left px-4 py-3 text-sm flex items-center gap-3 ${
+                  isDark ? "text-gray-300 hover:bg-white/5" : "text-gray-700 hover:bg-gray-50"
+                } transition-colors`}
+              >
+                <Edit size={16} className="text-gray-400" /> Edit Quote
+              </button>
+              <button
+                onClick={() => { onSend(); onClose(); }}
+                className={`w-full text-left px-4 py-3 text-sm flex items-center gap-3 text-blue-500 ${
+                  isDark ? "hover:bg-white/5" : "hover:bg-gray-50"
+                } transition-colors`}
+              >
+                <Send size={16} /> Send to Client
+              </button>
+            </>
+          )}
+        </div>
+        <div className={`px-4 py-3 border-t ${isDark ? "border-white/10" : "border-gray-100"}`}>
+          <button
+            onClick={onClose}
+            className={`w-full py-2 rounded-lg text-sm font-medium ${
+              isDark ? "bg-white/10 text-white hover:bg-white/20" : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+            } transition-colors`}
+          >
+            Close
+          </button>
+        </div>
+      </div>
+    </div>,
+    document.body,
+  );
+}
+
 export default function VendorQuotesPage() {
   const router = useRouter();
   const { darkMode: isDark } = useVendorTheme();
@@ -158,8 +235,9 @@ export default function VendorQuotesPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("ALL");
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
-  const [currentPage, setCurrentPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
+  const [actionsModalOpen, setActionsModalOpen] = useState(false);
+  const [actionQuote, setActionQuote] = useState<Quote | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);  const [totalPages, setTotalPages] = useState(1);
   const [toast, setToast] = useState<{
     show: boolean;
     message: string;
@@ -230,7 +308,6 @@ export default function VendorQuotesPage() {
       logger.error("Error fetching quote:", error);
       showToast("Failed to load quote details", "error");
     }
-    setOpenMenuId(null);
   };
 
   const handleEditQuote = async (quote: Quote) => {
@@ -258,13 +335,11 @@ export default function VendorQuotesPage() {
       logger.error("Error fetching quote:", error);
       showToast("Failed to load quote for editing", "error");
     }
-    setOpenMenuId(null);
   };
 
   const handleSendQuote = async (quote: Quote) => {
     setSelectedQuote(quote);
     setIsSendModalOpen(true);
-    setOpenMenuId(null);
   };
 
   const confirmSendQuote = async () => {
@@ -606,71 +681,19 @@ export default function VendorQuotesPage() {
                           </span>
                         </td>
                         <td className="px-6 py-4 text-right">
-                          <div className="relative inline-block">
-                            <button
-                              onClick={() =>
-                                setOpenMenuId(
-                                  openMenuId === quote.id ? null : quote.id,
-                                )
-                              }
-                              className={`p-2 rounded-lg ${
-                                isDark
-                                  ? "hover:bg-gray-700 text-gray-400"
-                                  : "hover:bg-gray-100 text-gray-600"
-                              }`}
-                            >
-                              <MoreHorizontal className="h-5 w-5" />
-                            </button>
-
-                            {openMenuId === quote.id && (
-                              <div
-                                className={`absolute right-0 mt-1 w-48 rounded-lg shadow-lg border z-10 ${
-                                  isDark
-                                    ? "bg-gray-800 border-gray-700"
-                                    : "bg-white border-gray-200"
-                                }`}
-                              >
-                                <button
-                                  onClick={() => handleViewQuote(quote)}
-                                  className={`w-full px-4 py-2 text-left text-sm flex items-center gap-2 ${
-                                    isDark
-                                      ? "hover:bg-gray-700 text-gray-300"
-                                      : "hover:bg-gray-50 text-gray-700"
-                                  }`}
-                                >
-                                  <Eye className="h-4 w-4" />
-                                  View Details
-                                </button>
-                                {(quote.status === "DRAFT" ||
-                                  quote.status === "REVISED") && (
-                                  <>
-                                    <button
-                                      onClick={() => handleEditQuote(quote)}
-                                      className={`w-full px-4 py-2 text-left text-sm flex items-center gap-2 ${
-                                        isDark
-                                          ? "hover:bg-gray-700 text-gray-300"
-                                          : "hover:bg-gray-50 text-gray-700"
-                                      }`}
-                                    >
-                                      <Edit className="h-4 w-4" />
-                                      Edit Quote
-                                    </button>
-                                    <button
-                                      onClick={() => handleSendQuote(quote)}
-                                      className={`w-full px-4 py-2 text-left text-sm flex items-center gap-2 ${
-                                        isDark
-                                          ? "hover:bg-gray-700 text-blue-400"
-                                          : "hover:bg-gray-50 text-blue-600"
-                                      }`}
-                                    >
-                                      <Send className="h-4 w-4" />
-                                      Send to Client
-                                    </button>
-                                  </>
-                                )}
-                              </div>
-                            )}
-                          </div>
+                          <button
+                            onClick={() => {
+                              setActionQuote(quote);
+                              setActionsModalOpen(true);
+                            }}
+                            className={`p-2 rounded-lg ${
+                              isDark
+                                ? "hover:bg-gray-700 text-gray-400"
+                                : "hover:bg-gray-100 text-gray-600"
+                            }`}
+                          >
+                            <MoreHorizontal className="h-5 w-5" />
+                          </button>
                         </td>
                       </tr>
                     );
@@ -716,6 +739,17 @@ export default function VendorQuotesPage() {
           </div>
         )}
       </div>
+
+      {/* Quote Actions Modal */}
+      <QuoteActionsModal
+        quote={actionQuote}
+        isOpen={actionsModalOpen}
+        onClose={() => { setActionsModalOpen(false); setActionQuote(null); }}
+        onView={() => actionQuote && handleViewQuote(actionQuote)}
+        onEdit={() => actionQuote && handleEditQuote(actionQuote)}
+        onSend={() => actionQuote && handleSendQuote(actionQuote)}
+        isDark={isDark}
+      />
 
       {/* View Quote Modal */}
       <Modal
@@ -785,10 +819,10 @@ export default function VendorQuotesPage() {
                       isDark ? "text-gray-400" : "text-gray-500"
                     }`}
                   >
-                    Inquiry
+                    Source
                   </p>
                   <p className={isDark ? "text-white" : "text-gray-900"}>
-                    View inquiry details
+                    {selectedQuote.inquiry ? "From Inquiry" : selectedQuote.booking ? "From Booking" : "Direct"}
                   </p>
                 </div>
                 <div>
@@ -816,7 +850,7 @@ export default function VendorQuotesPage() {
                     Guest Count
                   </p>
                   <p className={isDark ? "text-white" : "text-gray-900"}>
-                    {selectedQuote.inquiry?.guestsCount || "-"}
+                    {selectedQuote.inquiry?.guestsCount ?? selectedQuote.booking?.guestsCount ?? "-"}
                   </p>
                 </div>
               </div>

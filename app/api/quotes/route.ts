@@ -110,6 +110,7 @@ export async function GET(request: NextRequest) {
               fromName: true,
               fromEmail: true,
               fromUserId: true,
+              fromPhone: true,
               eventDate: true,
               guestsCount: true,
               fromUser: {

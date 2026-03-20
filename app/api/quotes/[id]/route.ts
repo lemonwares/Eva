@@ -69,7 +69,7 @@ export async function GET(
           },
         },
         booking: {
-          select: { id: true, status: true, eventDate: true, clientName: true, clientEmail: true, clientPhone: true },
+          select: { id: true, status: true, eventDate: true, guestsCount: true, clientName: true, clientEmail: true, clientPhone: true },
         },
       },
     });
