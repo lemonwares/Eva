@@ -3,80 +3,85 @@
 ## 1. AUTHENTICATION
 
 ### Sign Up
-- [X] Register with valid email, name, password
-- [X] Validation errors show for missing/invalid fields
-- [X] Duplicate email shows proper error
-- [X] Email verification flow works
-- [X] Redirect to correct page after registration
+
+- [x] Register with valid email, name, password
+- [x] Validation errors show for missing/invalid fields
+- [x] Duplicate email shows proper error
+- [x] Email verification flow works
+- [x] Redirect to correct page after registration
 
 ### Sign In
-- [X] Login with valid credentials
-- [X] Wrong password shows error
-- [X] Non-existent email shows error
-- [X] Redirect to correct dashboard based on role (admin / vendor / user)
+
+- [x] Login with valid credentials
+- [x] Wrong password shows error
+- [x] Non-existent email shows error
+- [x] Redirect to correct dashboard based on role (admin / vendor / user)
 
 ### Sign Out
-- [X] Sign out modal appears with correct Playfair Display italic font
-- [X] Cancel button dismisses modal
-- [X] Confirm sign out logs user out and redirects to home
+
+- [x] Sign out modal appears with correct Playfair Display italic font
+- [x] Cancel button dismisses modal
+- [x] Confirm sign out logs user out and redirects to home
 
 ### Forgot / Reset Password
-- [X] Forgot password sends email
-- [X] Reset password link works
-- [X] New password saves correctly
+
+- [x] Forgot password sends email
+- [x] Reset password link works
+- [x] New password saves correctly
 
 ---
 
 ## 2. ADMIN DASHBOARD (`/admin`)
 
 ### Overview Page
-- [X] Analytics data loads without 500 error
-- [ ] Total Bookings stat shows correct value
+
+- [x] Analytics data loads without 500 error
+- [x] Total Bookings stat shows correct value
 - [ ] New Inquiries stat shows correct value
 - [ ] New Users stat shows correct value
 - [ ] Pending Approvals stat shows correct value
-- [ ] Platform Overview section shows Total Users, Active Vendors, Completed, Reviews
-- [ ] Platform Health indicator reflects correct status
-- [ ] Action Required section shows pending reviews/vendor approvals
-- [ ] Recent Activity feed shows latest bookings
-- [ ] Top Vendors list shows correct data
-- [ ] Recent Bookings list shows latest at top
-- [ ] Refresh button reloads data
-- [ ] All stat cards link to correct pages
+- [x] Platform Overview section shows Total Users, Active Vendors, Completed, Reviews
+- [x] Platform Health indicator reflects correct status
+- [x] Action Required section shows pending reviews/vendor approvals
+- [x] Recent Activity feed shows latest bookings
+- [x] Top Vendors list shows correct data
+- [x] Recent Bookings list shows latest at top
+- [x] Refresh button reloads data
+- [x] All stat cards link to correct pages
 
 ---
 
 ## 3. ADMIN VENDORS (`/admin/vendors`)
 
-- [ ] Vendor list loads correctly
-- [ ] Vendor initials display correctly (not shrunken)
-- [ ] Business name truncates properly on mobile and desktop
-- [ ] Status filter works: Active, Pending, Suspended
-- [ ] Category filter works correctly
-- [ ] Search works correctly
-- [ ] Pagination works (next/prev pages)
-- [ ] Clicking a vendor opens detail/edit view
-- [ ] Approve pending vendor works
-- [ ] Suspend vendor works
+- [x] Vendor list loads correctly
+- [x] Vendor initials display correctly (not shrunken)
+- [x] Business name truncates properly on mobile and desktop
+- [x] Status filter works: Active, Pending, Suspended
+- [x] Category filter works correctly
+- [x] Search works correctly
+- [x] Pagination works (next/prev pages)
+- [x] Clicking a vendor opens detail/edit view
+- [x] Approve pending vendor works
+- [x] Suspend vendor works
 
 ---
 
 ## 4. ADMIN USERS (`/admin/users`)
 
-- [ ] User list loads correctly
-- [ ] Status filter works: Active, Inactive, Suspended
-- [ ] Search works correctly
-- [ ] Pagination works
-- [ ] User details display correctly
+- [X] User list loads correctly
+- [X] Status filter works: Active, Inactive, Suspended
+- [X] Search works correctly
+- [X] Pagination works
+- [X] User details display correctly
 
 ---
 
 ## 5. ADMIN BOOKINGS (`/admin/bookings`)
 
-- [ ] Bookings list loads with latest at top
-- [ ] Pagination works
-- [ ] Status update dropdown works (PENDING_PAYMENT, CONFIRMED, COMPLETED, CANCELLED, etc.)
-- [ ] Payment status update works
+- [X] Bookings list loads with latest at top
+- [X] Pagination works
+- [X] Status update dropdown works (PENDING_PAYMENT, CONFIRMED, COMPLETED, CANCELLED, etc.)
+- [X] Payment status update works
 - [ ] Search/filter works correctly
 
 ---
@@ -105,6 +110,7 @@
 ## 8. ADMIN SETTINGS (`/admin/settings`)
 
 ### Profile Tab
+
 - [ ] Profile data loads correctly (name, email, phone)
 - [ ] Avatar upload works
 - [ ] Save changes updates name and phone
@@ -112,6 +118,7 @@
 - [ ] User ID copy button works
 
 ### Security Tab
+
 - [ ] Change password works with correct current password
 - [ ] Wrong current password shows error
 - [ ] New password mismatch shows error
@@ -119,6 +126,7 @@
 - [ ] Password must be at least 8 characters
 
 ### Delete Account Modal
+
 - [ ] Modal opens when clicking Delete Account button
 - [ ] Title uses Playfair Display italic font (matches sign-out modal)
 - [ ] Only Cancel button shows by default
@@ -139,12 +147,14 @@
 ## 9. VENDOR PROFILE (`/vendor/profile`)
 
 ### Service Modal (Add)
+
 - [ ] Add New Service modal opens blank
 - [ ] All fields save correctly (name, description, price, max guests, time estimate, category)
 - [ ] Cover image upload works
 - [ ] Validation shows error if service name is empty
 
 ### Service Modal (Edit)
+
 - [ ] Clicking pencil icon immediately populates form with existing data (no blank form on first click)
 - [ ] All fields show correct existing values
 - [ ] Editing and saving updates the service correctly
@@ -152,6 +162,7 @@
 - [ ] Closing and reopening shows correct data
 
 ### Service Guest Limits
+
 - [ ] Services with maxGuests set enforce the limit during booking
 - [ ] Incompatible services show warning when guest count exceeds limit
 - [ ] "Remove incompatible services" button works
@@ -163,6 +174,7 @@
 ## 10. VENDOR DETAIL PAGE (`/vendors/[id]`)
 
 ### General
+
 - [ ] Page loads correctly
 - [ ] Gallery images display
 - [ ] Vendor info (name, rating, location, categories) shows correctly
@@ -171,6 +183,7 @@
 - [ ] Share button works
 
 ### Booking Flow
+
 - [ ] Services list loads correctly
 - [ ] Selecting a service adds it to booking
 - [ ] Deselecting removes it
@@ -184,6 +197,7 @@
 - [ ] Successful booking redirects to payment or shows success
 
 ### Inquiry Form
+
 - [ ] Inquiry form opens
 - [ ] All fields validate correctly
 - [ ] Submitting sends inquiry successfully
@@ -204,24 +218,29 @@
 ## 12. USER DASHBOARD
 
 ### Bookings
+
 - [ ] Bookings list loads correctly
 - [ ] Booking details page works
 - [ ] Cancel booking works (where applicable)
 
 ### Favorites
+
 - [ ] Favorites list loads
 - [ ] Remove from favorites works
 
 ### Inquiries
+
 - [ ] Inquiries list loads
 - [ ] Inquiry detail/messages work
 
 ### Quotes
+
 - [ ] Quotes list loads
 - [ ] Accept quote works
 - [ ] Decline quote works
 
 ### Settings
+
 - [ ] Profile update works
 - [ ] Password change works
 
