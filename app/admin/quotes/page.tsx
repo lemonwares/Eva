@@ -44,6 +44,8 @@ interface Quote {
     fromName: string;
     fromEmail: string;
     fromUserId: string | null;
+    fromPhone?: string | null;
+    guestsCount?: number | null;
     fromUser: {
       id: string;
       name: string | null;
@@ -55,6 +57,7 @@ interface Quote {
     clientName: string;
     clientEmail: string;
     clientPhone?: string | null;
+    guestsCount?: number | null;
   } | null;
 }
 
@@ -502,12 +505,28 @@ export default function AdminQuotesPage() {
                          "Unknown Client")
                       : (selectedQuote.booking?.clientName || "Unknown Client")}
                   </p>
-                  {!selectedQuote.inquiry && selectedQuote.booking?.clientEmail && (
-                    <p className={`text-xs ${textMuted}`}>{selectedQuote.booking.clientEmail}</p>
-                  )}
-                  {!selectedQuote.inquiry && selectedQuote.booking?.clientPhone && (
-                    <p className={`text-xs ${textMuted}`}>{selectedQuote.booking.clientPhone}</p>
-                  )}
+                </div>
+                <div>
+                  <p className={`text-sm ${textMuted}`}>Client Email</p>
+                  <p className={`font-medium ${textPrimary} text-sm`}>
+                    {selectedQuote.inquiry
+                      ? (selectedQuote.inquiry.fromUser?.email || selectedQuote.inquiry.fromEmail || "-")
+                      : (selectedQuote.booking?.clientEmail || "-")}
+                  </p>
+                </div>
+                <div>
+                  <p className={`text-sm ${textMuted}`}>Client Phone</p>
+                  <p className={textSecondary}>
+                    {selectedQuote.inquiry
+                      ? (selectedQuote.inquiry.fromPhone || "-")
+                      : (selectedQuote.booking?.clientPhone || "-")}
+                  </p>
+                </div>
+                <div>
+                  <p className={`text-sm ${textMuted}`}>Guest Count</p>
+                  <p className={textSecondary}>
+                    {selectedQuote.inquiry?.guestsCount ?? selectedQuote.booking?.guestsCount ?? "-"}
+                  </p>
                 </div>
                 <div>
                   <p className={`text-sm ${textMuted}`}>Created</p>
