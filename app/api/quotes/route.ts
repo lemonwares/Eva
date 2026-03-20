@@ -118,7 +118,7 @@ export async function GET(request: NextRequest) {
             },
           },
           booking: {
-            select: { id: true, status: true },
+            select: { id: true, status: true, clientName: true, clientEmail: true, clientPhone: true },
           },
         },
         orderBy: { createdAt: "desc" },

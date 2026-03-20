@@ -50,6 +50,13 @@ interface Quote {
     message?: string;
     createdAt?: string;
   } | null;
+  booking?: {
+    id: string;
+    clientName: string;
+    clientEmail: string;
+    clientPhone?: string | null;
+    eventDate?: string | null;
+  } | null;
   items: QuoteItem[];
   totalPrice: number;
   subtotal?: number;
@@ -542,14 +549,14 @@ export default function VendorQuotesPage() {
                                 isDark ? "text-white" : "text-gray-900"
                               }`}
                             >
-                              {quote.inquiry?.fromName || "No client info"}
+                              {quote.inquiry?.fromName || quote.booking?.clientName || "No client info"}
                             </p>
                             <p
                               className={`text-sm ${
                                 isDark ? "text-gray-400" : "text-gray-500"
                               }`}
                             >
-                              {quote.inquiry?.fromEmail || ""}
+                              {quote.inquiry?.fromEmail || quote.booking?.clientEmail || ""}
                             </p>
                           </div>
                         </td>
@@ -745,7 +752,7 @@ export default function VendorQuotesPage() {
                     Name
                   </p>
                   <p className={isDark ? "text-white" : "text-gray-900"}>
-                    {selectedQuote.inquiry?.fromName || "No client info"}
+                    {selectedQuote.inquiry?.fromName || selectedQuote.booking?.clientName || "No client info"}
                   </p>
                 </div>
                 <div>
@@ -757,7 +764,7 @@ export default function VendorQuotesPage() {
                     Email
                   </p>
                   <p className={isDark ? "text-white" : "text-gray-900"}>
-                    {selectedQuote.inquiry?.fromEmail || "-"}
+                    {selectedQuote.inquiry?.fromEmail || selectedQuote.booking?.clientEmail || "-"}
                   </p>
                 </div>
                 <div>
@@ -769,7 +776,7 @@ export default function VendorQuotesPage() {
                     Phone
                   </p>
                   <p className={isDark ? "text-white" : "text-gray-900"}>
-                    {selectedQuote.inquiry?.fromPhone || "-"}
+                    {selectedQuote.inquiry?.fromPhone || selectedQuote.booking?.clientPhone || "-"}
                   </p>
                 </div>
                 <div>
@@ -795,7 +802,9 @@ export default function VendorQuotesPage() {
                   <p className={isDark ? "text-white" : "text-gray-900"}>
                     {selectedQuote.inquiry?.eventDate
                       ? formatDate(selectedQuote.inquiry.eventDate)
-                      : "Not specified"}
+                      : selectedQuote.booking?.eventDate
+                        ? formatDate(selectedQuote.booking.eventDate)
+                        : "Not specified"}
                   </p>
                 </div>
                 <div>
