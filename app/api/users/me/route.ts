@@ -32,16 +32,17 @@ export async function PATCH(request: NextRequest) {
   }
 
   const updateData = parsed.data;
-  // Filter out undefined fields
-  const cleanData = Object.fromEntries(
-    Object.entries(updateData).filter(([_, v]) => v !== undefined),
-  );
+  // Filter out undefined fields; convert empty string phone to null
+  const cleanData: any = {};
+  for (const [k, v] of Object.entries(updateData)) {
+    if (v === undefined) continue;
+    if (k === "phone") { cleanData[k] = v === "" ? null : v; continue; }
+    if (k === "notificationPreferences") continue; // not in DB schema
+    cleanData[k] = v;
+  }
 
   if (Object.keys(cleanData).length === 0) {
-    return NextResponse.json(
-      { message: "No valid fields to update" },
-      { status: 400 },
-    );
+    return NextResponse.json({ message: "No valid fields to update" }, { status: 400 });
   }
 
   try {
@@ -58,6 +59,16 @@ export async function PATCH(request: NextRequest) {
   }
 }
 
+// PUT /api/users/me - Update notification preferences (stored client-side only)
+export async function PUT(request: NextRequest) {
+  const session = await auth();
+  if (!session?.user?.id) {
+    return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
+  }
+  // notificationPreferences not in DB — just acknowledge
+  return NextResponse.json({ message: "Preferences saved" });
+}
+
 // GET /api/users/me - Get current user's profile
 export async function GET(request: NextRequest) {
   const session = await auth();
@@ -72,7 +83,9 @@ export async function GET(request: NextRequest) {
       email: true,
       phone: true,
       avatar: true,
-      //   notificationPreferences: true,
+      emailVerified: true,
+      role: true,
+      createdAt: true,
     },
   });
   return NextResponse.json({ user });

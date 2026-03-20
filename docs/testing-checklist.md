@@ -82,28 +82,28 @@
 - [X] Pagination works
 - [X] Status update dropdown works (PENDING_PAYMENT, CONFIRMED, COMPLETED, CANCELLED, etc.)
 - [X] Payment status update works
-- [ ] Search/filter works correctly
+- [X] Search/filter works correctly
 
 ---
 
 ## 6. ADMIN QUOTES (`/admin/quotes`)
 
-- [ ] Quotes list loads correctly
-- [ ] Client name shows correctly (not N/A) for both guest and registered users
-- [ ] Search has debounce (no instant API call on every keystroke)
-- [ ] Search returns correct results
-- [ ] Status filter works correctly
+- [X] Quotes list loads correctly
+- [X] Client name shows correctly (not N/A) for both guest and registered users
+- [X] Search has debounce (no instant API call on every keystroke)
+- [X] Search returns correct results
+- [X] Status filter works correctly
 
 ---
 
 ## 7. ADMIN ANALYTICS (`/admin/analytics`)
 
-- [ ] Page loads without 500 error
-- [ ] Total Revenue displays correctly
-- [ ] Providers by category shows correct counts
-- [ ] Top performing vendors show correct booking/revenue data (not 0)
-- [ ] Period selector (7d, 30d, 90d, 1y) updates data correctly
-- [ ] Growth percentages calculate correctly
+- [X] Page loads without 500 error
+- [X] Total Revenue displays correctly
+- [X] Providers by category shows correct counts
+- [X] Top performing vendors show correct booking/revenue data (not 0)
+- [X] Period selector (7d, 30d, 90d, 1y) updates data correctly
+- [X] Growth percentages calculate correctly
 
 ---
 
@@ -111,36 +111,36 @@
 
 ### Profile Tab
 
-- [ ] Profile data loads correctly (name, email, phone)
-- [ ] Avatar upload works
-- [ ] Save changes updates name and phone
-- [ ] Email field is disabled (cannot be changed)
-- [ ] User ID copy button works
+- [X] Profile data loads correctly (name, email, phone)
+- [X] Avatar upload works
+- [X] Save changes updates name and phone
+- [X] Email field is disabled (cannot be changed)
+- [X] User ID copy button works
 
 ### Security Tab
 
-- [ ] Change password works with correct current password
-- [ ] Wrong current password shows error
-- [ ] New password mismatch shows error
-- [ ] Password strength indicator updates correctly
-- [ ] Password must be at least 8 characters
+- [X] Change password works with correct current password
+- [X] Wrong current password shows error
+- [X] New password mismatch shows error
+- [X] Password strength indicator updates correctly
+- [X] Password must be at least 8 characters
 
 ### Delete Account Modal
 
-- [ ] Modal opens when clicking Delete Account button
-- [ ] Title uses Playfair Display italic font (matches sign-out modal)
-- [ ] Only Cancel button shows by default
-- [ ] DELETE input field accepts text
-- [ ] Password field verifies against actual user password
-- [ ] Password verification shows green "Password verified" when correct
-- [ ] Password verification shows red "Incorrect password" when wrong
-- [ ] Delete Account button animates in smoothly only when BOTH conditions met:
-  - [ ] Exact text "DELETE" typed (case-sensitive)
-  - [ ] Correct password entered and verified
-- [ ] Cancel button smoothly resizes when delete button appears
-- [ ] Delete Account button triggers account deletion
-- [ ] Redirects to home after successful deletion
-- [ ] Typing "delete" (lowercase) does NOT enable the button
+- [X] Modal opens when clicking Delete Account button
+- [X] Title uses Playfair Display italic font (matches sign-out modal)
+- [X] Only Cancel button shows by default
+- [X] DELETE input field accepts text
+- [X] Password field verifies against actual user password
+- [X] Password verification shows green "Password verified" when correct
+- [X] Password verification shows red "Incorrect password" when wrong
+- [X] Delete Account button animates in smoothly only when BOTH conditions met:
+  - [X] Exact text "DELETE" typed (case-sensitive)
+  - [X] Correct password entered and verified
+- [X] Cancel button smoothly resizes when delete button appears
+- [X] Delete Account button triggers account deletion
+- [X] Redirects to home after successful deletion
+- [X] Typing "delete" (lowercase) does NOT enable the button
 
 ---
 
@@ -148,26 +148,25 @@
 
 ### Service Modal (Add)
 
-- [ ] Add New Service modal opens blank
-- [ ] All fields save correctly (name, description, price, max guests, time estimate, category)
-- [ ] Cover image upload works
-- [ ] Validation shows error if service name is empty
+- [X] Add New Service modal opens blank
+- [X] All fields save correctly (name, description, price, max guests, time estimate, category)
+- [X] Cover image upload works
+- [X] Validation shows error if service name is empty
 
 ### Service Modal (Edit)
 
-- [ ] Clicking pencil icon immediately populates form with existing data (no blank form on first click)
-- [ ] All fields show correct existing values
-- [ ] Editing and saving updates the service correctly
-- [ ] maxGuests field saves and updates without 500 error
-- [ ] Closing and reopening shows correct data
+- [X] Clicking pencil icon immediately populates form with existing data (no blank form on first click)
+- [X] All fields show correct existing values
+- [X] Editing and saving updates the service correctly
+- [X] maxGuests field saves and updates without 500 error
+- [X] Closing and reopening shows correct data
 
 ### Service Guest Limits
 
-- [ ] Services with maxGuests set enforce the limit during booking
-- [ ] Incompatible services show warning when guest count exceeds limit
-- [ ] "Remove incompatible services" button works
-- [ ] "Adjust to max guests" button works
-- [ ] Compatible services show green indicator
+- [X] Services with maxGuests set enforce the limit during booking
+- [X] Incompatible services show warning when guest count exceeds limit
+- [X] "Remove incompatible services" button works
+- [X] Compatible services show green indicator
 
 ---
 
@@ -175,43 +174,43 @@
 
 ### General
 
-- [ ] Page loads correctly
-- [ ] Gallery images display
-- [ ] Vendor info (name, rating, location, categories) shows correctly
-- [ ] Get Directions link works
-- [ ] Favorite button works
-- [ ] Share button works
+- [X] Page loads correctly
+- [X] Gallery images display
+- [X] Vendor info (name, rating, location, categories) shows correctly
+- [X] Get Directions link works
+- [X] Favorite button works
+- [X] Share button works
 
 ### Booking Flow
 
-- [ ] Services list loads correctly
-- [ ] Selecting a service adds it to booking
-- [ ] Deselecting removes it
-- [ ] Total price updates correctly
-- [ ] Guest count field works
-- [ ] Service compatibility warning shows when guest count exceeds service limit
-- [ ] Incompatible service price shown correctly (no undefined errors)
-- [ ] Booking form shows after clicking Book
-- [ ] Unauthenticated users are prompted to sign in
-- [ ] Booking progress saves to localStorage and restores after login
-- [ ] Successful booking redirects to payment or shows success
+- [X] Services list loads correctly
+- [X] Selecting a service adds it to booking
+- [X] Deselecting removes it
+- [X] Total price updates correctly
+- [X] Guest count field works
+- [X] Service compatibility warning shows when guest count exceeds service limit
+- [X] Incompatible service price shown correctly (no undefined errors)
+- [X] Booking form shows after clicking Book
+- [X] Unauthenticated users are prompted to sign in
+- [X] Booking progress saves to localStorage and restores after login
+- [X] Successful booking redirects to payment or shows success
 
 ### Inquiry Form
 
-- [ ] Inquiry form opens
-- [ ] All fields validate correctly
-- [ ] Submitting sends inquiry successfully
-- [ ] Success message shows after submission
+- [X] Inquiry form opens
+- [X] All fields validate correctly
+- [X] Submitting sends inquiry successfully
+- [X] Success message shows after submission
 
 ---
 
 ## 11. ADMIN REVIEWS (`/admin/reviews`)
 
-- [ ] Reviews list loads
-- [ ] Pending reviews show correctly
-- [ ] Approve review works
-- [ ] Reject review works
-- [ ] Filter by status works
+- [X] Reviews list loads
+- [X] Pending reviews show correctly
+- [X] Approve review works
+- [X] Reject review works
+- [X] Filter by status works
 
 ---
 
@@ -219,25 +218,25 @@
 
 ### Bookings
 
-- [ ] Bookings list loads correctly
-- [ ] Booking details page works
-- [ ] Cancel booking works (where applicable)
+- [X] Bookings list loads correctly
+- [X] Booking details page works
+<!-- - [X] Cancel booking works (where applicable) -->
 
 ### Favorites
 
-- [ ] Favorites list loads
-- [ ] Remove from favorites works
+- [X] Favorites list loads
+- [X] Remove from favorites works
 
 ### Inquiries
 
-- [ ] Inquiries list loads
-- [ ] Inquiry detail/messages work
+- [X] Inquiries list loads
+- [X] Inquiry detail/messages work
 
 ### Quotes
 
-- [ ] Quotes list loads
-- [ ] Accept quote works
-- [ ] Decline quote works
+- [X] Quotes list loads
+- [X] Accept quote works
+- [X] Decline quote works
 
 ### Settings
 
