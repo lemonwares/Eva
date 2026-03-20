@@ -240,39 +240,39 @@
 
 ### Settings
 
-- [ ] Profile update works
-- [ ] Password change works
+- [X] Profile update works
+- [X] Password change works
 
 ---
 
 ## 13. PUBLIC PAGES
 
-- [ ] Home page loads
-- [ ] Vendors listing page loads and filters work
-- [ ] Category pages load
-- [ ] Search works with debounce
-- [ ] Vendor detail page loads for all vendors
-- [ ] Contact page form submits correctly
+- [X] Home page loads
+- [X] Vendors listing page loads and filters work
+- [X] Category pages load
+- [X] Search works with debounce
+- [X] Vendor detail page loads for all vendors
+- [X] Contact page form submits correctly
 
 ---
 
 ## 14. MOBILE RESPONSIVENESS
 
-- [ ] Admin dashboard is usable on mobile
-- [ ] Vendor detail page booking flow works on mobile
-- [ ] Booking form scrolls into view on mobile after clicking Book
-- [ ] Modals (sign-out, delete account) display correctly on mobile
-- [ ] Navigation menus work on mobile
+- [X] Admin dashboard is usable on mobile
+- [X] Vendor detail page booking flow works on mobile
+- [X] Booking form scrolls into view on mobile after clicking Book
+- [X] Modals (sign-out, delete account) display correctly on mobile
+- [X] Navigation menus work on mobile
 
 ---
 
 ## 15. EDGE CASES
 
-- [ ] Admin analytics with zero data (new platform) shows 0s not errors
-- [ ] Vendor with no services shows empty state
-- [ ] Vendor with no reviews shows empty state
-- [ ] Booking with no listings selected shows validation error
-- [ ] Delete account with wrong password keeps button disabled
-- [ ] Delete account with "delete" (lowercase) keeps button disabled
-- [ ] Service modal with no category selected still saves
-- [ ] Pagination on last page doesn't break
+- [X] Admin analytics with zero data (new platform) shows 0s not errors
+- [X] Vendor with no services shows empty state
+- [X] Vendor with no reviews shows empty state
+- [X] Booking with no listings selected shows validation error
+- [X] Delete account with wrong password keeps button disabled
+- [X] Delete account with "delete" (lowercase) keeps button disabled
+- [X] Service modal with no category selected still saves
+- [X] Pagination on last page doesn't break

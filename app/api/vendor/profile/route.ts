@@ -298,6 +298,7 @@ export async function PUT(request: NextRequest) {
       tiktok,
       facebook,
       coverImage,
+      logoUrl,
       photos,
       priceFrom,
       isPublished,
@@ -349,6 +350,7 @@ export async function PUT(request: NextRequest) {
         ...(tiktok !== undefined && { tiktok }),
         ...(facebook !== undefined && { facebook }),
         ...(coverImage !== undefined && { coverImage }),
+        ...(logoUrl !== undefined && { logoUrl }),
         ...(photos !== undefined && { photos }),
         ...(priceFrom !== undefined && {
           priceFrom: priceFrom ? Number(priceFrom) : null,
