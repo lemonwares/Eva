@@ -44,7 +44,10 @@ export default async function proxy(request: NextRequest) {
   // even if the user visited via 'https:'. We explicitly tell getToken to look for
   // the secure '__Secure-authjs.session-token' cookie if appropriately deployed.
   const isProduction = process.env.NODE_ENV === "production";
-  const secureCookie = isProduction || request.headers.get("x-forwarded-proto") === "https";
+  // Only use secure cookie when actually on HTTPS — not on plain HTTP even if NODE_ENV=production
+  const secureCookie = isProduction && 
+    (request.headers.get("x-forwarded-proto") === "https" || 
+     request.nextUrl.protocol === "https:");
 
   const token = await getToken({
     req: request,

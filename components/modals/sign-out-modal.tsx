@@ -1,13 +1,14 @@
 "use client";
 
-import { LogOut, X } from "lucide-react";
-import { useEffect, useRef } from "react";
+import { LogOut, Loader2, X } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
+import { signOut } from "next-auth/react";
 
 interface SignOutModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onConfirm: () => void;
+  onConfirm?: () => void; // kept for backwards compat but no longer required
 }
 
 export default function SignOutModal({
@@ -16,11 +17,17 @@ export default function SignOutModal({
   onConfirm,
 }: SignOutModalProps) {
   const modalRef = useRef<HTMLDivElement>(null);
+  const [isLoading, setIsLoading] = useState(false);
 
-  // Close on Escape key
+  // Reset loading state when modal closes
+  useEffect(() => {
+    if (!isOpen) setIsLoading(false);
+  }, [isOpen]);
+
+  // Close on Escape key (disabled while signing out)
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onClose();
+      if (e.key === "Escape" && !isLoading) onClose();
     };
     if (isOpen) {
       document.addEventListener("keydown", handleKeyDown);
@@ -30,12 +37,26 @@ export default function SignOutModal({
       document.removeEventListener("keydown", handleKeyDown);
       document.body.style.overflow = "";
     };
-  }, [isOpen, onClose]);
+  }, [isOpen, isLoading, onClose]);
 
-  // Close on backdrop click
+  // Close on backdrop click (disabled while signing out)
   const handleBackdropClick = (e: React.MouseEvent) => {
+    if (isLoading) return;
     if (modalRef.current && !modalRef.current.contains(e.target as Node)) {
       onClose();
+    }
+  };
+
+  const handleConfirm = async () => {
+    setIsLoading(true);
+    try {
+      if (onConfirm) {
+        onConfirm();
+      } else {
+        await signOut({ callbackUrl: "/", redirect: true });
+      }
+    } catch {
+      setIsLoading(false);
     }
   };
 
@@ -53,14 +74,19 @@ export default function SignOutModal({
         {/* Icon */}
         <div className="flex flex-col items-center pt-8 pb-2 px-6">
           <div className="w-14 h-14 rounded-full bg-red-100 dark:bg-red-500/15 flex items-center justify-center mb-4">
-            <LogOut size={24} className="text-red-600 dark:text-red-400" />
+            {isLoading ? (
+              <Loader2 size={24} className="text-red-600 dark:text-red-400 animate-spin" />
+            ) : (
+              <LogOut size={24} className="text-red-600 dark:text-red-400" />
+            )}
           </div>
           <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
-            Sign Out
+            {isLoading ? "Signing out..." : "Sign Out"}
           </h2>
           <p className="text-sm text-gray-500 dark:text-gray-400 mt-2 text-center">
-            Are you sure you want to sign out? You&apos;ll need to sign in again
-            to access your account.
+            {isLoading
+              ? "Please wait while we sign you out."
+              : "Are you sure you want to sign out? You'll need to sign in again to access your account."}
           </p>
         </div>
 
@@ -68,15 +94,24 @@ export default function SignOutModal({
         <div className="flex gap-3 p-6">
           <button
             onClick={onClose}
-            className="flex-1 px-4 py-2.5 text-sm font-medium rounded-xl border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+            disabled={isLoading}
+            className="flex-1 px-4 py-2.5 text-sm font-medium rounded-xl border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
             Cancel
           </button>
           <button
-            onClick={onConfirm}
-            className="flex-1 px-4 py-2.5 text-sm font-medium rounded-xl bg-red-600 hover:bg-red-700 text-white transition-colors"
+            onClick={handleConfirm}
+            disabled={isLoading}
+            className="flex-1 px-4 py-2.5 text-sm font-medium rounded-xl bg-red-600 hover:bg-red-700 text-white transition-colors disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center gap-2"
           >
-            Sign Out
+            {isLoading ? (
+              <>
+                <Loader2 size={15} className="animate-spin" />
+                Signing out...
+              </>
+            ) : (
+              "Sign Out"
+            )}
           </button>
         </div>
       </div>

@@ -1,19 +1,20 @@
 "use client";
 
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import Image from "next/image";
+import { useSession } from "next-auth/react";
 import { useDashboardTheme } from "@/components/dashboard/DashboardThemeContext";
 import {
   MessageSquare,
   CalendarDays,
   Users,
   DollarSign,
-  Send,
   ArrowLeft,
   Loader2,
 } from "lucide-react";
 import { logger } from "@/lib/logger";
+import { InquiryChat } from "@/components/chat/InquiryChat";
 
 interface Message {
   sender: string;
@@ -43,6 +44,7 @@ interface Inquiry {
 }
 
 export default function InquiriesPage() {
+  const { data: session } = useSession();
   const {
     darkMode,
     cardBg,
@@ -50,17 +52,12 @@ export default function InquiriesPage() {
     textPrimary,
     textSecondary,
     textMuted,
-    inputBg,
-    inputBorder,
   } = useDashboardTheme();
 
   const [inquiries, setInquiries] = useState<Inquiry[]>([]);
   const [loading, setLoading] = useState(true);
   const [statusFilter, setStatusFilter] = useState("all");
   const [selectedInquiry, setSelectedInquiry] = useState<Inquiry | null>(null);
-  const [newMessage, setNewMessage] = useState("");
-  const [sending, setSending] = useState(false);
-  const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const fetchInquiries = useCallback(async () => {
     try {
@@ -72,7 +69,16 @@ export default function InquiriesPage() {
 
       const response = await fetch(`/api/inquiries?${params}`);
       const data = await response.json();
-      setInquiries(data.inquiries || []);
+      const fetched = data.inquiries || [];
+      // Sort: unreplied (no messages from vendor) first, then by date
+      fetched.sort((a: Inquiry, b: Inquiry) => {
+        const aHasVendorReply = a.messages?.some((m: any) => m.sender === "vendor");
+        const bHasVendorReply = b.messages?.some((m: any) => m.sender === "vendor");
+        if (!aHasVendorReply && bHasVendorReply) return -1;
+        if (aHasVendorReply && !bHasVendorReply) return 1;
+        return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+      });
+      setInquiries(fetched);
     } catch (error) {
       logger.error("Error fetching inquiries:", error);
     } finally {
@@ -83,11 +89,6 @@ export default function InquiriesPage() {
   useEffect(() => {
     fetchInquiries();
   }, [fetchInquiries]);
-
-  // Auto-scroll to bottom when messages change
-  useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [selectedInquiry?.messages]);
 
   const getStatusColor = (status: string) => {
     const colors: Record<string, string> = {
@@ -123,34 +124,6 @@ export default function InquiriesPage() {
     });
   };
 
-  const sendMessage = async () => {
-    if (!selectedInquiry || !newMessage.trim()) return;
-
-    try {
-      setSending(true);
-      const response = await fetch(
-        `/api/inquiries/${selectedInquiry.id}/messages`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ text: newMessage }),
-        },
-      );
-
-      if (response.ok) {
-        setNewMessage("");
-        const inquiryRes = await fetch(`/api/inquiries/${selectedInquiry.id}`);
-        const inquiryData = await inquiryRes.json();
-        setSelectedInquiry(inquiryData.inquiry || inquiryData);
-        fetchInquiries();
-      }
-    } catch (error) {
-      logger.error("Error sending message:", error);
-    } finally {
-      setSending(false);
-    }
-  };
-
   const handleSelectInquiry = (inquiry: Inquiry) => {
     setSelectedInquiry(inquiry);
   };
@@ -159,7 +132,7 @@ export default function InquiriesPage() {
     setSelectedInquiry(null);
   };
 
-  const inputClass = `px-3 py-2 rounded-lg ${inputBg} border ${inputBorder} ${textPrimary} focus:outline-none focus:ring-2 focus:ring-accent`;
+  const inputClass = `px-3 py-2 rounded-lg`;
 
   return (
     <div className="space-y-4 sm:space-y-6">
@@ -408,91 +381,15 @@ export default function InquiriesPage() {
                 </div>
               )}
 
-              {/* Messages */}
-              <div className="flex-1 overflow-y-auto p-3 sm:p-4 space-y-3 sm:space-y-4 min-h-[300px] max-h-[calc(100vh-24rem)] sm:max-h-[400px]">
-                {/* Initial inquiry */}
-                <div className="flex justify-end">
-                  <div className="max-w-[85%] sm:max-w-[80%]">
-                    <div className="bg-accent text-white p-3 rounded-xl rounded-tr-none">
-                      <p className="text-sm sm:text-base">
-                        {selectedInquiry.message}
-                      </p>
-                    </div>
-                    <p
-                      className={`text-[10px] sm:text-xs ${textMuted} mt-1 text-right`}
-                    >
-                      {formatDate(selectedInquiry.createdAt)} at{" "}
-                      {formatTime(selectedInquiry.createdAt)}
-                    </p>
-                  </div>
-                </div>
-
-                {/* Conversation messages */}
-                {selectedInquiry.messages &&
-                  selectedInquiry.messages.map((msg, index) => (
-                    <div
-                      key={index}
-                      className={`flex ${
-                        msg.sender === "client"
-                          ? "justify-end"
-                          : "justify-start"
-                      }`}
-                    >
-                      <div className="max-w-[85%] sm:max-w-[80%]">
-                        <div
-                          className={`p-3 rounded-xl ${
-                            msg.sender === "client"
-                              ? "bg-accent text-white rounded-tr-none"
-                              : darkMode
-                                ? "bg-white/5 text-white rounded-tl-none"
-                                : "bg-gray-100 text-gray-900 rounded-tl-none"
-                          }`}
-                        >
-                          <p className="text-sm sm:text-base">{msg.text}</p>
-                        </div>
-                        <p
-                          className={`text-[10px] sm:text-xs ${textMuted} mt-1 ${
-                            msg.sender === "client" ? "text-right" : ""
-                          }`}
-                        >
-                          {formatDate(msg.timestamp)} at{" "}
-                          {formatTime(msg.timestamp)}
-                        </p>
-                      </div>
-                    </div>
-                  ))}
-                <div ref={messagesEndRef} />
-              </div>
-
-              {/* Message Input */}
-              <div className={`p-3 sm:p-4 border-t ${cardBorder}`}>
-                <div className="flex gap-2">
-                  <input
-                    type="text"
-                    value={newMessage}
-                    onChange={(e) => setNewMessage(e.target.value)}
-                    placeholder="Type your message..."
-                    className={`flex-1 text-sm sm:text-base ${inputClass}`}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter" && !e.shiftKey) {
-                        e.preventDefault();
-                        sendMessage();
-                      }
-                    }}
-                    disabled={sending}
-                  />
-                  <button
-                    onClick={sendMessage}
-                    disabled={!newMessage.trim() || sending}
-                    className="px-3 sm:px-4 py-2 bg-accent text-white rounded-lg hover:bg-accent/90 disabled:opacity-50 transition-colors"
-                  >
-                    {sending ? (
-                      <Loader2 className="w-5 h-5 animate-spin" />
-                    ) : (
-                      <Send className="w-5 h-5" />
-                    )}
-                  </button>
-                </div>
+              {/* Messages + Chat */}
+              <div className="flex-1 p-3 sm:p-4">
+                <InquiryChat
+                  inquiryId={selectedInquiry.id}
+                  currentUserId={session?.user?.id || ""}
+                  currentUserRole="client"
+                  darkMode={darkMode}
+                  disabled={selectedInquiry.status === "ARCHIVED"}
+                />
               </div>
             </>
           ) : (

@@ -5,7 +5,6 @@ import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { useState, useEffect } from "react";
 import { Session } from "next-auth";
-import { signOut } from "next-auth/react";
 import SignOutModal from "@/components/modals/sign-out-modal";
 import {
   Home,
@@ -51,6 +50,7 @@ export default function DashboardSidebar({
   const pathname = usePathname();
   const [isSignOutModalOpen, setIsSignOutModalOpen] = useState(false);
   const [freshAvatar, setFreshAvatar] = useState<string | null>(null);
+  const [unreadInquiries, setUnreadInquiries] = useState(0);
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -63,6 +63,22 @@ export default function DashboardSidebar({
       } catch {}
     };
     fetchProfile();
+  }, []);
+
+  // Poll for unread inquiries
+  useEffect(() => {
+    const fetchUnread = async () => {
+      try {
+        const res = await fetch("/api/inquiries?status=NEW&limit=1");
+        if (res.ok) {
+          const data = await res.json();
+          setUnreadInquiries(data.pagination?.total || 0);
+        }
+      } catch {}
+    };
+    fetchUnread();
+    const interval = setInterval(fetchUnread, 30000);
+    return () => clearInterval(interval);
   }, []);
 
   const userImage = freshAvatar || session.user?.image;
@@ -109,6 +125,7 @@ export default function DashboardSidebar({
         {navigation.map((item) => {
           const active = isActive(item.href);
           const Icon = item.icon;
+          const isInquiries = item.href === "/dashboard/inquiries";
           return (
             <Link
               key={item.name}
@@ -123,7 +140,12 @@ export default function DashboardSidebar({
               onClick={() => setSidebarOpen(false)}
             >
               <Icon className="w-5 h-5" />
-              {item.name}
+              <span className="flex-1">{item.name}</span>
+              {isInquiries && unreadInquiries > 0 && (
+                <span className="ml-auto min-w-[20px] h-5 px-1.5 rounded-full bg-accent text-white text-[10px] font-bold flex items-center justify-center">
+                  {unreadInquiries > 99 ? "99+" : unreadInquiries}
+                </span>
+              )}
             </Link>
           );
         })}
@@ -183,10 +205,6 @@ export default function DashboardSidebar({
       <SignOutModal
         isOpen={isSignOutModalOpen}
         onClose={() => setIsSignOutModalOpen(false)}
-        onConfirm={() => {
-          setIsSignOutModalOpen(false);
-          signOut({ callbackUrl: "/", redirect: true });
-        }}
       />
     </aside>
   );

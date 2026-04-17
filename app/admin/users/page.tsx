@@ -1045,15 +1045,15 @@ export default function UsersPage() {
             </>
           )}
 
-          {/* Pagination */}
-          {!loading && totalPages > 1 && (
+          {/* Pagination — always visible, inactive when only 1 page */}
+          {!loading && (
             <div
               className={`px-6 py-4 flex flex-col sm:flex-row items-center justify-between gap-4 border-t ${
                 darkMode ? "border-white/10" : "border-gray-200"
               }`}
             >
               <p className={`text-sm ${textMuted}`}>
-                Showing page {currentPage} of {totalPages} ({totalUsers} users)
+                Showing page {currentPage} of {Math.max(1, totalPages)} ({totalUsers} users)
               </p>
               <div className="flex items-center gap-1">
                 <button
@@ -1061,12 +1061,12 @@ export default function UsersPage() {
                   disabled={currentPage === 1}
                   className={`p-2 rounded ${
                     darkMode ? "hover:bg-white/10" : "hover:bg-gray-100"
-                  } transition-colors disabled:opacity-50`}
+                  } transition-colors disabled:opacity-30 disabled:cursor-not-allowed`}
                 >
                   <ChevronLeft size={18} className={textMuted} />
                 </button>
                 <div className="flex items-center gap-1">
-                  {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                  {Array.from({ length: Math.max(1, Math.min(5, totalPages)) }, (_, i) => {
                     let pageNum;
                     if (totalPages <= 5) {
                       pageNum = i + 1;
@@ -1081,11 +1081,12 @@ export default function UsersPage() {
                     return (
                       <button
                         key={pageNum}
-                        onClick={() => setCurrentPage(pageNum)}
+                        onClick={() => totalPages > 1 && setCurrentPage(pageNum)}
+                        disabled={totalPages <= 1}
                         className={`w-9 h-9 rounded flex items-center justify-center text-sm transition-colors ${
                           currentPage === pageNum
                             ? "bg-accent text-white"
-                            : `${textSecondary} ${darkMode ? "hover:bg-white/10" : "hover:bg-gray-100"}`
+                            : `${textSecondary} ${darkMode ? "hover:bg-white/10" : "hover:bg-gray-100"} disabled:opacity-30 disabled:cursor-not-allowed`
                         }`}
                       >
                         {pageNum}
@@ -1094,13 +1095,11 @@ export default function UsersPage() {
                   })}
                 </div>
                 <button
-                  onClick={() =>
-                    setCurrentPage((p) => Math.min(totalPages, p + 1))
-                  }
-                  disabled={currentPage === totalPages}
+                  onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                  disabled={currentPage === totalPages || totalPages <= 1}
                   className={`p-2 rounded ${
                     darkMode ? "hover:bg-white/10" : "hover:bg-gray-100"
-                  } transition-colors disabled:opacity-50`}
+                  } transition-colors disabled:opacity-30 disabled:cursor-not-allowed`}
                 >
                   <ChevronRight size={18} className={textMuted} />
                 </button>

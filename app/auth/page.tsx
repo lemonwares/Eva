@@ -105,26 +105,6 @@ function AuthPageContent() {
                </Link>
              </p>
            )}
-           {activeTab === "signup" && !initialType && (
-              <div className="bg-white inline-flex items-center gap-2 px-6 py-4 rounded-2xl shadow-sm border border-border/40">
-                 <p className="text-sm text-muted-foreground">
-                   Are you a vendor or service provider?{" "}
-                   <Link href="/auth?tab=signup&type=PROFESSIONAL" className="font-bold text-[#0097b2] hover:underline block sm:inline">
-                     Create a professional account
-                   </Link>
-                 </p>
-              </div>
-           )}
-           {activeTab === "signup" && initialType === "PROFESSIONAL" && (
-              <div className="bg-white inline-flex items-center gap-2 px-6 py-4 rounded-2xl shadow-sm border border-border/40">
-                 <p className="text-sm text-muted-foreground">
-                   Looking to book vendors for your event?{" "}
-                    <button onClick={() => window.location.href = "/auth?tab=signup"} className="font-bold text-[#0097b2] hover:underline block sm:inline">
-                     Create a customer account
-                   </button>
-                 </p>
-              </div>
-           )}
         </div>
       </div>
     </main>

@@ -47,7 +47,6 @@ const contentNavItems = [
 const systemNavItems = [
   { icon: Bell, label: "Notifications", href: "/admin/notifications" },
   { icon: ClipboardList, label: "Audit Logs", href: "/admin/audit-logs" },
-  { icon: Database, label: "Data Management", href: "/admin/data" },
   { icon: Settings, label: "Settings", href: "/admin/settings" },
 ];
 

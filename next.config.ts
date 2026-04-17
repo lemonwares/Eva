@@ -1,30 +1,35 @@
 import type { NextConfig } from "next";
 import { resolve } from "path";
-import withPWAInit from "next-pwa";
+import withPWAInit from "@ducanh2912/next-pwa";
 import { withSentryConfig } from "@sentry/nextjs";
 
 const withPWA = withPWAInit({
   dest: "public",
   disable: process.env.NODE_ENV === "development",
   register: true,
-  skipWaiting: true,
-  buildExcludes: [/middleware-manifest\.json$/, /.*\.js\.map$/],
   fallbacks: {
-    document: "/offline", // Fallback page when offline
+    document: "/~offline",
   },
-  runtimeCaching: [
-    {
-      urlPattern: /^https:\/\/nominatim\.openstreetmap\.org\/.*/i,
-      handler: "NetworkFirst",
-      options: {
-        cacheName: "geocoding-api",
-        expiration: {
-          maxEntries: 100,
-          maxAgeSeconds: 60 * 60 * 24 * 7, // 7 days
+  reloadOnOnline: false,
+  cacheOnFrontEndNav: true,
+  aggressiveFrontEndNavCaching: true,
+  workboxOptions: {
+    disableDevLogs: true,
+    cleanupOutdatedCaches: true,
+    runtimeCaching: [
+      {
+        urlPattern: /^https:\/\/nominatim\.openstreetmap\.org\/.*/i,
+        handler: "NetworkFirst",
+        options: {
+          cacheName: "geocoding-api",
+          expiration: {
+            maxEntries: 100,
+            maxAgeSeconds: 60 * 60 * 24 * 7,
+          },
         },
       },
-    },
-  ],
+    ],
+  },
 });
 
 // { protocol: "https", hostname: "lh3.googleusercontent.com" },
@@ -95,7 +100,15 @@ const nextConfig: NextConfig = {
   serverExternalPackages: ["@prisma/client"],
   experimental: {
     serverActions: {
-      allowedOrigins: ["localhost:3000", "192.168.100.22:3000"],
+      allowedOrigins: (() => {
+        const base = process.env.NEXTAUTH_URL || process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000";
+        try {
+          const { host } = new URL(base);
+          return [host];
+        } catch {
+          return ["localhost:3000"];
+        }
+      })(),
     },
   } as any,
   generateBuildId: async () => {

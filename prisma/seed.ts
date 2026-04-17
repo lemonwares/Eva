@@ -467,6 +467,401 @@ const cityPostcodes: Record<string, string[]> = {
   bristol: ["BS1 3XD", "BS2 0JA"],
 };
 
+// ─── Category-specific listings ─────────────────────────────────────────────
+function getCategoryListings(categorySlug: string, vendorCount: number) {
+  const v = vendorCount % 5;
+  const listings: Record<string, any[]> = {
+    venues: [
+      {
+        headline: "Half-Day Venue Hire",
+        longDescription:
+          "Up to 6 hours exclusive use of our main hall, tables, chairs, and basic AV setup. Perfect for intimate gatherings and daytime events.",
+        price: 800 + v * 100,
+        minPrice: 800,
+        maxPrice: 1200,
+        timeEstimate: "6 Hours",
+        maxGuests: 80,
+        category: "venues",
+      },
+      {
+        headline: "Full-Day Venue Hire",
+        longDescription:
+          "12 hours exclusive use including setup and breakdown time. Includes full AV system, stage, dance floor, and dedicated event coordinator.",
+        price: 1800 + v * 200,
+        minPrice: 1800,
+        maxPrice: 2500,
+        timeEstimate: "12 Hours",
+        maxGuests: 200,
+        category: "venues",
+      },
+      {
+        headline: "Weekend Wedding Package",
+        longDescription:
+          "Two-day exclusive hire for weddings. Includes bridal suite, ceremony room, reception hall, catering kitchen access, and on-site parking.",
+        price: 4500 + v * 300,
+        minPrice: 4500,
+        maxPrice: 6000,
+        timeEstimate: "2 Days",
+        maxGuests: 300,
+        category: "venues",
+      },
+    ],
+    photographers: [
+      {
+        headline: "2-Hour Portrait Session",
+        longDescription:
+          "Professional portrait session at a location of your choice. Includes 30 edited high-resolution digital images delivered within 7 days.",
+        price: 250 + v * 30,
+        minPrice: 250,
+        maxPrice: 350,
+        timeEstimate: "2 Hours",
+        maxGuests: 10,
+        category: "photographers",
+      },
+      {
+        headline: "Wedding Day Coverage",
+        longDescription:
+          "Full wedding day photography from bridal prep to first dance. Two photographers, 500+ edited images, online gallery, and USB delivery.",
+        price: 1800 + v * 200,
+        minPrice: 1800,
+        maxPrice: 2800,
+        timeEstimate: "Full Day",
+        maxGuests: 300,
+        category: "photographers",
+      },
+      {
+        headline: "Event Photography Package",
+        longDescription:
+          "Professional coverage of your corporate event, birthday, or celebration. Includes 200+ edited images and same-week delivery.",
+        price: 600 + v * 80,
+        minPrice: 600,
+        maxPrice: 900,
+        timeEstimate: "4 Hours",
+        maxGuests: 150,
+        category: "photographers",
+      },
+    ],
+    caterers: [
+      {
+        headline: "Canape & Drinks Reception",
+        longDescription:
+          "Elegant canape selection with 8 varieties, served by uniformed staff. Includes soft drinks, juice, and sparkling water for up to 50 guests.",
+        price: 600 + v * 50,
+        minPrice: 600,
+        maxPrice: 900,
+        timeEstimate: "2 Hours",
+        maxGuests: 50,
+        category: "caterers",
+      },
+      {
+        headline: "3-Course Sit-Down Dinner",
+        longDescription:
+          "Formal three-course dinner with starter, main, and dessert. Choice of 3 menus including vegetarian and halal options. Includes table service.",
+        price: 2200 + v * 200,
+        minPrice: 2200,
+        maxPrice: 3500,
+        timeEstimate: "4 Hours",
+        maxGuests: 100,
+        category: "caterers",
+      },
+      {
+        headline: "Buffet Package",
+        longDescription:
+          "Hot and cold buffet with 12 dishes including rice, salads, mains, and desserts. Suitable for all dietary requirements. Includes setup and service staff.",
+        price: 1200 + v * 100,
+        minPrice: 1200,
+        maxPrice: 2000,
+        timeEstimate: "3 Hours",
+        maxGuests: 150,
+        category: "caterers",
+      },
+    ],
+    "music-djs": [
+      {
+        headline: "4-Hour DJ Set",
+        longDescription:
+          "Professional DJ with full PA system, lighting rig, and wireless microphone. Plays your requested playlist and takes live requests throughout the event.",
+        price: 400 + v * 50,
+        minPrice: 400,
+        maxPrice: 600,
+        timeEstimate: "4 Hours",
+        maxGuests: 200,
+        category: "music-djs",
+      },
+      {
+        headline: "Full Evening Entertainment",
+        longDescription:
+          "8-hour DJ package with ceremony music, cocktail hour playlist, and full evening reception. Includes photo booth and LED dance floor.",
+        price: 1200 + v * 100,
+        minPrice: 1200,
+        maxPrice: 1800,
+        timeEstimate: "8 Hours",
+        maxGuests: 300,
+        category: "music-djs",
+      },
+      {
+        headline: "Live Band + DJ Combo",
+        longDescription:
+          "3-piece live band for 2 hours followed by DJ for the rest of the evening. Perfect for weddings and milestone celebrations.",
+        price: 2500 + v * 200,
+        minPrice: 2500,
+        maxPrice: 3500,
+        timeEstimate: "6 Hours",
+        maxGuests: 250,
+        category: "music-djs",
+      },
+    ],
+    florists: [
+      {
+        headline: "Bridal Bouquet & Buttonholes",
+        longDescription:
+          "Hand-tied bridal bouquet with matching bridesmaid posies and 6 buttonholes. Seasonal flowers in your chosen colour palette.",
+        price: 350 + v * 40,
+        minPrice: 350,
+        maxPrice: 500,
+        timeEstimate: "Delivery",
+        maxGuests: 1,
+        category: "florists",
+      },
+      {
+        headline: "Full Wedding Floral Package",
+        longDescription:
+          "Complete wedding florals including bridal party flowers, ceremony arch, top table centrepiece, and 10 guest table arrangements.",
+        price: 1800 + v * 200,
+        minPrice: 1800,
+        maxPrice: 2800,
+        timeEstimate: "Full Day Setup",
+        maxGuests: 200,
+        category: "florists",
+      },
+      {
+        headline: "Event Table Centrepieces",
+        longDescription:
+          "Bespoke floral centrepieces for your event tables. Price per table includes vase, foam, and seasonal flowers. Minimum 5 tables.",
+        price: 85 + v * 10,
+        minPrice: 85,
+        maxPrice: 150,
+        timeEstimate: "Per Table",
+        maxGuests: 10,
+        category: "florists",
+      },
+    ],
+    "event-planners": [
+      {
+        headline: "Day-Of Coordination",
+        longDescription:
+          "Professional coordinator manages your event on the day. Includes vendor liaison, timeline management, and problem-solving so you can enjoy your day.",
+        price: 800 + v * 100,
+        minPrice: 800,
+        maxPrice: 1200,
+        timeEstimate: "Full Day",
+        maxGuests: 300,
+        category: "event-planners",
+      },
+      {
+        headline: "Full Event Planning Package",
+        longDescription:
+          "End-to-end event planning from concept to execution. Includes venue sourcing, vendor management, budget tracking, and on-the-day coordination.",
+        price: 3500 + v * 300,
+        minPrice: 3500,
+        maxPrice: 5000,
+        timeEstimate: "3-6 Months",
+        maxGuests: 300,
+        category: "event-planners",
+      },
+      {
+        headline: "Partial Planning Consultation",
+        longDescription:
+          "3 planning sessions plus email support to help you organise your event. Ideal if you've started planning but need expert guidance.",
+        price: 500 + v * 50,
+        minPrice: 500,
+        maxPrice: 800,
+        timeEstimate: "3 Sessions",
+        maxGuests: 1,
+        category: "event-planners",
+      },
+    ],
+    bakers: [
+      {
+        headline: "2-Tier Celebration Cake",
+        longDescription:
+          "Custom 2-tier cake serving 40-60 guests. Choice of sponge, filling, and fondant or buttercream finish. Includes delivery and setup.",
+        price: 280 + v * 30,
+        minPrice: 280,
+        maxPrice: 400,
+        timeEstimate: "Delivery",
+        maxGuests: 60,
+        category: "bakers",
+      },
+      {
+        headline: "3-Tier Wedding Cake",
+        longDescription:
+          "Elegant 3-tier wedding cake serving 80-120 guests. Fully bespoke design consultation included. Flavours include vanilla, lemon, chocolate, and red velvet.",
+        price: 650 + v * 60,
+        minPrice: 650,
+        maxPrice: 900,
+        timeEstimate: "Delivery",
+        maxGuests: 120,
+        category: "bakers",
+      },
+      {
+        headline: "Dessert Table Package",
+        longDescription:
+          "Full dessert table setup including mini cakes, macarons, cake pops, brownies, and cupcakes. Serves 80 guests. Includes display stands and signage.",
+        price: 900 + v * 80,
+        minPrice: 900,
+        maxPrice: 1300,
+        timeEstimate: "Setup Included",
+        maxGuests: 80,
+        category: "bakers",
+      },
+    ],
+    decorators: [
+      {
+        headline: "Balloon Arch & Backdrop",
+        longDescription:
+          "Organic balloon arch in your chosen colours with matching backdrop. Perfect for photo opportunities. Includes setup and collection.",
+        price: 350 + v * 40,
+        minPrice: 350,
+        maxPrice: 500,
+        timeEstimate: "Half Day",
+        maxGuests: 200,
+        category: "decorators",
+      },
+      {
+        headline: "Full Venue Transformation",
+        longDescription:
+          "Complete venue styling including ceiling draping, table linen, centrepieces, chair covers, lighting, and entrance decor. Includes setup and breakdown.",
+        price: 2500 + v * 250,
+        minPrice: 2500,
+        maxPrice: 4000,
+        timeEstimate: "Full Day",
+        maxGuests: 200,
+        category: "decorators",
+      },
+      {
+        headline: "Table Centrepiece Hire",
+        longDescription:
+          "Luxury centrepiece hire per table. Options include candelabras, mirror balls, floral arrangements, and lanterns. Minimum 5 tables.",
+        price: 65 + v * 10,
+        minPrice: 65,
+        maxPrice: 120,
+        timeEstimate: "Per Table",
+        maxGuests: 10,
+        category: "decorators",
+      },
+    ],
+    "makeup-artists": [
+      {
+        headline: "Bridal Makeup",
+        longDescription:
+          "Full bridal makeup application using premium products. Includes trial session, on-the-day application, and touch-up kit. Lasts all day.",
+        price: 280 + v * 30,
+        minPrice: 280,
+        maxPrice: 400,
+        timeEstimate: "3 Hours",
+        maxGuests: 1,
+        category: "makeup-artists",
+      },
+      {
+        headline: "Bridal Party Package",
+        longDescription:
+          "Makeup for bride and up to 4 bridesmaids. Includes trial for bride, morning-of application for all, and touch-up products.",
+        price: 750 + v * 80,
+        minPrice: 750,
+        maxPrice: 1100,
+        timeEstimate: "Full Morning",
+        maxGuests: 5,
+        category: "makeup-artists",
+      },
+      {
+        headline: "Glam Event Makeup",
+        longDescription:
+          "Professional makeup for parties, proms, and special occasions. Includes lashes and setting spray for long-lasting wear.",
+        price: 120 + v * 15,
+        minPrice: 120,
+        maxPrice: 180,
+        timeEstimate: "1.5 Hours",
+        maxGuests: 1,
+        category: "makeup-artists",
+      },
+    ],
+    videographers: [
+      {
+        headline: "Highlight Reel Package",
+        longDescription:
+          "3-5 minute cinematic highlight video of your event. Delivered within 4 weeks. Includes drone footage where permitted.",
+        price: 800 + v * 100,
+        minPrice: 800,
+        maxPrice: 1200,
+        timeEstimate: "Full Day",
+        maxGuests: 300,
+        category: "videographers",
+      },
+      {
+        headline: "Full Wedding Film",
+        longDescription:
+          "Full wedding day videography including ceremony, speeches, and reception. Delivered as feature film (60-90 min) plus highlight reel. 4K quality.",
+        price: 2200 + v * 200,
+        minPrice: 2200,
+        maxPrice: 3200,
+        timeEstimate: "Full Day",
+        maxGuests: 300,
+        category: "videographers",
+      },
+      {
+        headline: "Social Media Content Package",
+        longDescription:
+          "Short-form video content optimised for Instagram and TikTok. Includes 3 reels and 10 story clips delivered within 48 hours.",
+        price: 400 + v * 50,
+        minPrice: 400,
+        maxPrice: 600,
+        timeEstimate: "4 Hours",
+        maxGuests: 50,
+        category: "videographers",
+      },
+    ],
+  };
+
+  return (
+    listings[categorySlug] || [
+      {
+        headline: "Essential Package",
+        longDescription:
+          "Our entry-level service covering all the basics for your event.",
+        price: 400 + v * 50,
+        minPrice: 400,
+        maxPrice: 600,
+        timeEstimate: "Half Day",
+        maxGuests: 50,
+        category: categorySlug,
+      },
+      {
+        headline: "Standard Package",
+        longDescription:
+          "Our most popular service with everything you need for a great event.",
+        price: 800 + v * 100,
+        minPrice: 800,
+        maxPrice: 1200,
+        timeEstimate: "Full Day",
+        maxGuests: 100,
+        category: categorySlug,
+      },
+      {
+        headline: "Premium Package",
+        longDescription:
+          "The full experience — our most comprehensive service for unforgettable events.",
+        price: 1800 + v * 200,
+        minPrice: 1800,
+        maxPrice: 2500,
+        timeEstimate: "Full Day",
+        maxGuests: 200,
+        category: categorySlug,
+      },
+    ]
+  );
+}
+
 // ─── Seed function ──────────────────────────────────────────────
 
 export default async function seed() {
@@ -512,62 +907,74 @@ export default async function seed() {
     `✅ Cities    — ${cityCreated} created, ${cityUpdated} already existed (updated)`,
   );
 
-  // ── 3. Seed owner + test vendors ─────────────────────────────
+  // ── 3. Seed admin + vendor accounts ─────────────────────────
   const hashedPassword = await bcrypt.hash("Password123!", 10);
 
+  await prisma.user.upsert({
+    where: { email: "admin@evalocal.com" },
+    update: {},
+    create: {
+      email: "admin@evalocal.com",
+      name: "EVA Admin",
+      password: hashedPassword,
+      role: UserRole.ADMINISTRATOR,
+      emailVerifiedAt: new Date(),
+    },
+  });
+  console.log(`✅ Admin     — admin@evalocal.com ready`);
+
+  await prisma.user.upsert({
+    where: { email: "client@evalocal.com" },
+    update: {},
+    create: {
+      email: "client@evalocal.com",
+      name: "Test Client",
+      password: hashedPassword,
+      role: UserRole.CLIENT,
+      emailVerifiedAt: new Date(),
+    },
+  });
+  console.log(`✅ Client    — client@evalocal.com ready`);
+
+  // ── 4. Seed owner + test vendors ─────────────────────────────
   const seedOwner = await prisma.user.upsert({
     where: { email: SEED_OWNER_EMAIL },
-    update: {},
+    update: { emailVerifiedAt: new Date() },
     create: {
       email: SEED_OWNER_EMAIL,
       name: "Eva Seed Vendor",
       password: hashedPassword,
       role: UserRole.PROFESSIONAL,
+      emailVerifiedAt: new Date(),
     },
   });
 
-  // Check if vendors already exist for this seed owner
-  const existingVendorCount = await prisma.provider.count({
-    where: { ownerUserId: seedOwner.id },
+  const allCategories = await prisma.category.findMany();
+  const seedCities = await prisma.city.findMany({
+    where: {
+      slug: { in: ["london", "birmingham", "manchester", "leeds", "bristol"] },
+    },
   });
 
-  if (existingVendorCount > 0) {
-    console.log(
-      `✅ Vendors   — skipped (${existingVendorCount} seed vendors already exist)`,
-    );
-  } else {
-    // Get all categories from DB (includes any admin-added ones)
-    const allCategories = await prisma.category.findMany();
-    // Use the first 5 seeded cities for vendor locations
-    const seedCities = await prisma.city.findMany({
-      where: {
-        slug: {
-          in: ["london", "birmingham", "manchester", "leeds", "bristol"],
-        },
-      },
-    });
+  let vendorCount = 0;
+  let vendorsCreated = 0;
+  let listingsUpserted = 0;
 
-    let vendorCount = 0;
+  for (const cat of allCategories) {
+    for (let i = 0; i < 8; i++) {
+      const city = seedCities[i % seedCities.length];
+      const nameBase = vendorNames[(vendorCount + i) % vendorNames.length];
+      const bName = `${nameBase} ${cat.name.replace(/s$/, "")}`;
+      const slug = `${bName.toLowerCase().replace(/[^a-z0-9]+/g, "-")}-${String(vendorCount).padStart(3, "0")}`;
+      const postcodes = cityPostcodes[city.slug] ?? ["SW1A 1AA"];
+      const postcode = postcodes[i % postcodes.length];
+      const geoLat = (city.latitude ?? 51.5) + (Math.random() - 0.5) * 0.08;
+      const geoLng = (city.longitude ?? -0.12) + (Math.random() - 0.5) * 0.08;
 
-    for (const cat of allCategories) {
-      // 8 vendors per category
-      for (let i = 0; i < 8; i++) {
-        const city = seedCities[i % seedCities.length];
-        const nameBase = vendorNames[(vendorCount + i) % vendorNames.length];
-        const bName = `${nameBase} ${cat.name.replace(/s$/, "")}`;
-        const slug = `${bName.toLowerCase().replace(/[^a-z0-9]+/g, "-")}-${String(vendorCount).padStart(3, "0")}`;
+      let provider = await prisma.provider.findUnique({ where: { slug } });
 
-        const postcodes = cityPostcodes[city.slug] ?? ["SW1A 1AA"];
-        const postcode = postcodes[i % postcodes.length];
-
-        // Small random offset so map pins don't stack
-        const geoLat = (city.latitude ?? 51.5) + (Math.random() - 0.5) * 0.08;
-        const geoLng = (city.longitude ?? -0.12) + (Math.random() - 0.5) * 0.08;
-
-        const existing = await prisma.provider.findUnique({ where: { slug } });
-        if (existing) { vendorCount++; continue; }
-
-        await prisma.provider.create({
+      if (!provider) {
+        provider = await prisma.provider.create({
           data: {
             ownerUserId: seedOwner.id,
             businessName: bName,
@@ -582,35 +989,13 @@ export default async function seed() {
             serviceRadiusMiles: 25,
             isPublished: true,
             isVerified: true,
-            isFeatured: i < 2, // first 2 per category are featured
+            isFeatured: i < 2,
             planTier: PlanTier.PREMIUM,
             priceFrom: 200 + (vendorCount % 8) * 100,
             averageRating: 4 + Math.random(),
             reviewCount: 10 + (vendorCount % 50),
             coverImage: cat.coverImage,
             photos: vendorPhotos,
-
-            // Listings (services)
-            listings: {
-              create: [
-                {
-                  headline: "Standard Package",
-                  longDescription:
-                    "Our most popular package including all essentials for a perfect day.",
-                  price: 500 + (vendorCount % 5) * 100,
-                  timeEstimate: "Half Day",
-                },
-                {
-                  headline: "Premium Experience",
-                  longDescription:
-                    "A full-day immersive experience with all our premium features included.",
-                  price: 1500 + (vendorCount % 5) * 200,
-                  timeEstimate: "Full Day",
-                },
-              ],
-            },
-
-            // Weekly schedule (Mon-Sat open, Sun closed)
             weeklySchedules: {
               create: [
                 { dayOfWeek: 1, startTime: "09:00", endTime: "18:00" },
@@ -627,8 +1012,6 @@ export default async function seed() {
                 },
               ],
             },
-
-            // Reviews
             reviews: {
               create: [
                 {
@@ -645,8 +1028,6 @@ export default async function seed() {
                 },
               ],
             },
-
-            // Team members
             teamMembers: {
               create: [
                 {
@@ -665,14 +1046,43 @@ export default async function seed() {
             },
           },
         });
-        vendorCount++;
+        vendorsCreated++;
       }
-    }
 
-    console.log(
-      `✅ Vendors   — ${vendorCount} created across ${allCategories.length} categories`,
-    );
+
+      // Listings — always replace with category-specific ones
+      await prisma.listing.deleteMany({ where: { providerId: provider.id } });
+      const listingData = getCategoryListings(cat.slug, vendorCount);
+      await prisma.listing.createMany({
+        data: listingData.map((l) => ({ ...l, providerId: provider!.id })),
+      });
+      listingsUpserted += listingData.length;
+
+      // Reviews — create if none, approve all existing
+      const existingReviews = await prisma.review.count({ where: { providerId: provider.id } });
+      if (existingReviews === 0) {
+        await prisma.review.createMany({
+          data: [
+            { providerId: provider.id, rating: 5, authorName: "Sarah Johnson", authorEmail: "sarah@example.com", body: "Absolutely wonderful service! They exceeded all our expectations and made our day truly special.", isApproved: true, isVerifiedBooking: true },
+            { providerId: provider.id, rating: 4, authorName: "Mark Wilson", authorEmail: "mark@example.com", body: "Very professional and great quality. Highly recommended for any event.", isApproved: true, isVerifiedBooking: true },
+            { providerId: provider.id, rating: 5, authorName: "Aisha Patel", authorEmail: "aisha@example.com", body: "Outstanding experience from start to finish. Will definitely book again!", isApproved: true },
+          ],
+        });
+      } else {
+        await prisma.review.updateMany({
+          where: { providerId: provider.id, isApproved: false },
+          data: { isApproved: true },
+        });
+      }
+
+      vendorCount++;
+    }
   }
+
+  console.log(
+    `✅ Vendors   — ${vendorsCreated} created, ${vendorCount - vendorsCreated} already existed`,
+  );
+  console.log(`✅ Listings  — ${listingsUpserted} created across vendors`);
 
   console.log("\n🌱 Seed complete!");
 }
