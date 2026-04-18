@@ -1,6 +1,10 @@
-import type { Metadata, Viewport } from "next";
+  import type { Metadata, Viewport } from "next";
 import { Inter, Playfair_Display } from "next/font/google";
 import { SessionProvider } from "@/components/providers/session-provider";
+// import { GoogleAnalytics } from "@/lib/analytics"; // Uncomment when ready for production
+import { PWARegister } from "@/components/pwa-register";
+import { OfflineDetector } from "@/components/offline-detector";
+import { Toaster } from "sonner";
 import "./globals.css";
 
 const inter = Inter({
@@ -86,6 +90,10 @@ export default function RootLayout({
       <body
         className={`${inter.variable} ${playfairDisplay.variable} antialiased`}
       >
+        {/* <GoogleAnalytics /> */}{/* Uncomment when ready for production */}
+        <PWARegister />
+        <OfflineDetector />
+        <Toaster position="top-center" richColors />
         <SessionProvider>{children}</SessionProvider>
       </body>
     </html>

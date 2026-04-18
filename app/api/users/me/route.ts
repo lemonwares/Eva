@@ -83,7 +83,7 @@ export async function GET(request: NextRequest) {
       email: true,
       phone: true,
       avatar: true,
-      emailVerified: true,
+      emailVerifiedAt: true,
       role: true,
       createdAt: true,
     },

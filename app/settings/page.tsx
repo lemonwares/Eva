@@ -172,11 +172,6 @@ export default function SettingsPage() {
     setIsSignOutModalOpen(true);
   };
 
-  const confirmSignOut = async () => {
-    setIsSignOutModalOpen(false);
-    await signOut({ callbackUrl: "/" });
-  };
-
   const tabs = [
     { id: "account" as const, label: "Account", icon: User },
     { id: "security" as const, label: "Security", icon: Lock },
@@ -679,7 +674,6 @@ export default function SettingsPage() {
       <SignOutModal
         isOpen={isSignOutModalOpen}
         onClose={() => setIsSignOutModalOpen(false)}
-        onConfirm={confirmSignOut}
       />
     </>
   );

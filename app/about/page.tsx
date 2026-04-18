@@ -393,7 +393,7 @@ export default function AboutPage() {
 
               <div className="text-sm font-medium text-muted-foreground/80">
                 <p className="mb-2">Interested in joining our mission?</p>
-                <a href="mailto:hello@eva-local.co.uk" className="inline-flex items-center gap-2 text-[#0e7490] hover:underline">
+                <a href="mailto:hello@evalocal.com" className="inline-flex items-center gap-2 text-[#0e7490] hover:underline">
                   <Mail size={16} />
                   Get in touch
                 </a>

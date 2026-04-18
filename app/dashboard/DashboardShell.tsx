@@ -17,7 +17,7 @@ export default function DashboardShell({
 }: {
   children: React.ReactNode;
 }) {
-  const { data: session, status } = useSession();
+  const { data: session, status, update } = useSession();
   const router = useRouter();
   const [darkMode, setDarkMode] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -27,6 +27,12 @@ export default function DashboardShell({
       router.push("/auth?callbackUrl=/dashboard");
     }
   }, [status, router]);
+
+  // Force session refresh on mount — needed after server action redirects
+  // where the client-side session cache may be stale
+  useEffect(() => {
+    update();
+  }, []);
 
   useEffect(() => {
     const savedTheme = localStorage.getItem("dashboard-theme");

@@ -114,7 +114,6 @@ export async function PATCH(
       where: { id },
       include: {
         provider: {
-          select: { ownerUserId: true, businessName: true },
           include: { owner: { select: { email: true } } },
         },
       },

@@ -37,7 +37,7 @@ interface UserProfile {
   avatar?: string;
   image?: string;
   role?: string;
-  emailVerified?: string | null;
+  emailVerifiedAt?: string | null;
   createdAt?: string;
   notificationPreferences?: {
     email: boolean;
@@ -599,7 +599,7 @@ export default function SettingsPage() {
                       Email Status
                     </p>
                     <div className="flex items-center gap-2">
-                      {profile?.emailVerified ? (
+                      {profile?.emailVerifiedAt? (
                         <>
                           <ShieldCheck className="h-4 w-4 text-green-500" />
                           <span className="text-sm font-medium text-green-600 dark:text-green-400">

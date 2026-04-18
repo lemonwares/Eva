@@ -108,8 +108,19 @@ function baseVars(overrides: Record<string, string> = {}): Record<string, string
   };
 }
 
-function gifBlock(url: string): string {
-  return `<div class="gif-container"><img src="${url}" alt="Animation" class="gif-image" /></div>`;
+function iconBlock(type: "welcome" | "verify" | "reset" | "inquiry" | "quote" | "booking" | "cancel" | "review" | "invite"): string {
+  const icons: Record<string, string> = {
+    welcome: `<div style="margin:28px 0;text-align:center"><div style="display:inline-flex;align-items:center;justify-content:center;width:72px;height:72px;border-radius:50%;background:rgba(255,255,255,0.2)"><svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg></div></div>`,
+    verify: `<div style="margin:28px 0;text-align:center"><div style="display:inline-flex;align-items:center;justify-content:center;width:72px;height:72px;border-radius:50%;background:rgba(255,255,255,0.2)"><svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg></div></div>`,
+    reset: `<div style="margin:28px 0;text-align:center"><div style="display:inline-flex;align-items:center;justify-content:center;width:72px;height:72px;border-radius:50%;background:rgba(255,255,255,0.2)"><svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></div></div>`,
+    inquiry: `<div style="margin:28px 0;text-align:center"><div style="display:inline-flex;align-items:center;justify-content:center;width:72px;height:72px;border-radius:50%;background:rgba(255,255,255,0.2)"><svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></div></div>`,
+    quote: `<div style="margin:28px 0;text-align:center"><div style="display:inline-flex;align-items:center;justify-content:center;width:72px;height:72px;border-radius:50%;background:rgba(255,255,255,0.2)"><svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg></div></div>`,
+    booking: `<div style="margin:28px 0;text-align:center"><div style="display:inline-flex;align-items:center;justify-content:center;width:72px;height:72px;border-radius:50%;background:rgba(255,255,255,0.2)"><svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></div></div>`,
+    cancel: `<div style="margin:28px 0;text-align:center"><div style="display:inline-flex;align-items:center;justify-content:center;width:72px;height:72px;border-radius:50%;background:rgba(255,255,255,0.2)"><svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg></div></div>`,
+    review: `<div style="margin:28px 0;text-align:center"><div style="display:inline-flex;align-items:center;justify-content:center;width:72px;height:72px;border-radius:50%;background:rgba(255,255,255,0.2)"><svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg></div></div>`,
+    invite: `<div style="margin:28px 0;text-align:center"><div style="display:inline-flex;align-items:center;justify-content:center;width:72px;height:72px;border-radius:50%;background:rgba(255,255,255,0.2)"><svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/><line x1="20" y1="8" x2="20" y2="14"/><line x1="23" y1="11" x2="17" y2="11"/></svg></div></div>`,
+  };
+  return icons[type] || "";
 }
 
 // ─── Email templates ──────────────────────────────────────────────────────────
@@ -120,7 +131,7 @@ export const emailTemplates = {
     html: loadTemplate("welcome", baseVars({
       title: "Welcome to EVA Local!",
       headerTitle: "Welcome to EVA Local!",
-      gifBlock: gifBlock("https://media.giphy.com/media/26u4cqiYI30juCOGY/giphy.gif"),
+      gifBlock: iconBlock("welcome"),
       name,
     })),
     text: `Hi ${name},\n\nWelcome to EVA Local!\n\nStart exploring: ${APP_URL}/vendors\n\nBest regards,\nThe EVA Local Team`,
@@ -131,7 +142,7 @@ export const emailTemplates = {
     html: loadTemplate("verify-email", baseVars({
       title: "Verify Your Email",
       headerTitle: "Verify Your Email",
-      gifBlock: gifBlock("https://media.giphy.com/media/xT9IgG50Fb7Mi0prBC/giphy.gif"),
+      gifBlock: iconBlock("verify"),
       name,
       verificationUrl,
     })),
@@ -143,7 +154,7 @@ export const emailTemplates = {
     html: loadTemplate("password-reset", baseVars({
       title: "Reset Your Password",
       headerTitle: "Reset Your Password",
-      gifBlock: gifBlock("https://media.giphy.com/media/l2JhpjWPccQhsAMfu/giphy.gif"),
+      gifBlock: iconBlock("reset"),
       name,
       resetUrl,
     })),
@@ -162,6 +173,7 @@ export const emailTemplates = {
       title: "New Inquiry",
       headerTitle: "New Inquiry!",
       headerClass: "header-green",
+      gifBlock: iconBlock("inquiry"),
       footerTagline: "Providing you with the best tools to grow your event business",
       vendorName,
       clientName,
@@ -184,6 +196,7 @@ export const emailTemplates = {
       html: loadTemplate("quote-sent", baseVars({
         title: "New Quote Received",
         headerTitle: "You've Got a Quote!",
+        gifBlock: iconBlock("quote"),
         clientName,
         vendorName,
         formattedPrice,
@@ -205,6 +218,7 @@ export const emailTemplates = {
       title: "Booking Confirmed",
       headerTitle: "Booking Confirmed!",
       headerClass: "header-green",
+      gifBlock: iconBlock("booking"),
       footerTagline: "Thank you for choosing EVA for your event needs",
       name,
       vendorName,
@@ -227,6 +241,7 @@ export const emailTemplates = {
       title: "Booking Completed",
       headerTitle: "Event Completed!",
       headerClass: "header-green",
+      gifBlock: iconBlock("booking"),
       footerTagline: "Thank you for using EVA for your event",
       clientName,
       vendorName,
@@ -249,6 +264,7 @@ export const emailTemplates = {
     html: loadTemplate("booking-cancelled-client", baseVars({
       title: "Booking Cancelled",
       headerTitle: "Booking Cancelled",
+      gifBlock: iconBlock("cancel"),
       clientName,
       vendorName,
       eventDate,
@@ -271,6 +287,7 @@ export const emailTemplates = {
     html: loadTemplate("booking-cancelled-vendor", baseVars({
       title: "Booking Cancelled",
       headerTitle: "Booking Cancelled",
+      gifBlock: iconBlock("cancel"),
       vendorName,
       clientName,
       eventDate,
@@ -290,6 +307,7 @@ export const emailTemplates = {
     html: loadTemplate("review-request", baseVars({
       title: "Share Your Experience",
       headerTitle: "Share Your Experience",
+      gifBlock: iconBlock("review"),
       clientName,
       vendorName,
       reviewUrl,
@@ -305,6 +323,7 @@ export const emailTemplates = {
     subject: `You're invited to join EVA Local as a vendor`,
     html: loadTemplate("vendor-invite", baseVars({
       title: "Vendor Invitation",
+      gifBlock: iconBlock("invite"),
       name,
       businessName,
       inviteUrl,

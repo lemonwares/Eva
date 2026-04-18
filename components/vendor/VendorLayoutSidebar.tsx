@@ -21,7 +21,7 @@ import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { useVendorTheme } from "./VendorThemeContext";
 import { useState, useEffect } from "react";
-import { signOut, useSession } from "next-auth/react";
+import { useSession } from "next-auth/react";
 import SignOutModal from "@/components/modals/sign-out-modal";
 
 const navItems = [
@@ -51,6 +51,23 @@ export default function VendorLayoutSidebar({
   const { darkMode, toggleDarkMode } = useVendorTheme();
   const { data: session } = useSession();
   const [showSignOutModal, setShowSignOutModal] = useState(false);
+  const [unreadInquiries, setUnreadInquiries] = useState(0);
+
+  // Poll for new/unread inquiries
+  useEffect(() => {
+    const fetchUnread = async () => {
+      try {
+        const res = await fetch("/api/inquiries?status=NEW&limit=1");
+        if (res.ok) {
+          const data = await res.json();
+          setUnreadInquiries(data.pagination?.total || 0);
+        }
+      } catch {}
+    };
+    fetchUnread();
+    const interval = setInterval(fetchUnread, 30000);
+    return () => clearInterval(interval);
+  }, []);
 
   const isActive = (href: string) => {
     if (href === "/vendor") {
@@ -111,6 +128,7 @@ export default function VendorLayoutSidebar({
           <div className="space-y-1">
             {navItems.map((item) => {
               const active = isActive(item.href);
+              const isInquiries = item.href === "/vendor/inquiries";
               return (
                 <Link
                   key={item.href}
@@ -125,7 +143,12 @@ export default function VendorLayoutSidebar({
                   }`}
                 >
                   <item.icon size={20} />
-                  <span className="font-medium text-sm">{item.label}</span>
+                  <span className="font-medium text-sm flex-1">{item.label}</span>
+                  {isInquiries && unreadInquiries > 0 && (
+                    <span className="min-w-[20px] h-5 px-1.5 rounded-full bg-accent text-white text-[10px] font-bold flex items-center justify-center">
+                      {unreadInquiries > 99 ? "99+" : unreadInquiries}
+                    </span>
+                  )}
                 </Link>
               );
             })}
@@ -179,10 +202,6 @@ export default function VendorLayoutSidebar({
         <SignOutModal
           isOpen={showSignOutModal}
           onClose={() => setShowSignOutModal(false)}
-          onConfirm={() => {
-            setShowSignOutModal(false);
-            signOut({ callbackUrl: "/", redirect: true });
-          }}
         />
       </aside>
     </>

@@ -17,16 +17,16 @@ import {
   DollarSign,
   Phone,
   MessageSquare,
-  Send,
   FileText,
-  Clock,
   Archive,
   Plus,
   Minus,
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { useSession } from "next-auth/react";
 import { logger } from "@/lib/logger";
+import { InquiryChat } from "@/components/chat/InquiryChat";
 
 const statusFilters = ["All", "NEW", "VIEWED", "QUOTED", "ARCHIVED"];
 
@@ -65,36 +65,22 @@ function ViewInquiryModal({
   inquiry,
   isOpen,
   onClose,
-  onReply,
   onArchive,
   onCreateQuote,
   darkMode,
   archiving,
+  currentUserId,
 }: {
   inquiry: Inquiry | null;
   isOpen: boolean;
   onClose: () => void;
-  onReply: (message: string) => Promise<void>;
   onArchive: () => void;
   onCreateQuote: () => void;
   darkMode: boolean;
   archiving?: boolean;
+  currentUserId: string;
 }) {
-  const [replyMessage, setReplyMessage] = useState("");
-  const [sending, setSending] = useState(false);
-
   if (!inquiry) return null;
-
-  const handleSendReply = async () => {
-    if (!replyMessage.trim()) return;
-    setSending(true);
-    try {
-      await onReply(replyMessage);
-      setReplyMessage("");
-    } finally {
-      setSending(false);
-    }
-  };
 
   const formatDate = (dateStr: string) => {
     return new Date(dateStr).toLocaleDateString("en-NG", {
@@ -208,84 +194,37 @@ function ViewInquiryModal({
           <p className="text-gray-700 whitespace-pre-wrap">{inquiry.message}</p>
         </div>
 
-        {/* Conversation History */}
-        {inquiry.messages && inquiry.messages.length > 0 && (
-          <div className="bg-gray-50 rounded-lg p-4">
-            <h4 className="font-semibold mb-3 flex items-center gap-2">
-              <Clock size={16} /> Conversation
-            </h4>
-            <div className="space-y-3 max-h-48 overflow-y-auto">
-              {inquiry.messages.map((msg, idx) => (
-                <div
-                  key={idx}
-                  className={`p-3 rounded-lg ${
-                    msg.sender === "vendor"
-                      ? "bg-accent/10 ml-4"
-                      : "bg-white mr-4"
-                  }`}
-                >
-                  <div className="flex justify-between items-center mb-1">
-                    <span className="text-xs font-medium text-gray-500">
-                      {msg.sender === "vendor" ? "You" : inquiry.fromName}
-                    </span>
-                    <span className="text-xs text-gray-400">
-                      {new Date(msg.timestamp).toLocaleString()}
-                    </span>
-                  </div>
-                  <p className="text-sm">{msg.text}</p>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
+        {/* Conversation */}
+        <div>
+          <h4 className="font-semibold mb-3 flex items-center gap-2">
+            <MessageSquare size={16} /> Conversation
+          </h4>
+          <InquiryChat
+            inquiryId={inquiry.id}
+            currentUserId={currentUserId}
+            currentUserRole="vendor"
+            darkMode={darkMode}
+            disabled={inquiry.status === "ARCHIVED"}
+          />
+        </div>
 
-        {/* Reply Section */}
-        {inquiry.status !== "ARCHIVED" && (
-          <div className="border-t pt-4">
-            <label className="block text-sm font-medium mb-2">
-              Send a Reply
-            </label>
-            <textarea
-              value={replyMessage}
-              onChange={(e) => setReplyMessage(e.target.value)}
-              placeholder="Type your message..."
-              rows={3}
-              className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-accent/50 resize-none"
-            />
-            <div className="flex gap-3 mt-4">
-              <button
-                onClick={onArchive}
-                disabled={archiving}
-                className="flex items-center gap-2 px-4 py-2 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium transition-colors disabled:opacity-50"
-              >
-                {archiving ? (
-                  <Loader2 size={16} className="animate-spin" />
-                ) : (
-                  <Archive size={16} />
-                )}{" "}
-                {archiving ? "Archiving..." : "Archive"}
-              </button>
-              <button
-                onClick={onCreateQuote}
-                className="flex items-center gap-2 px-4 py-2 rounded-lg bg-blue-500 hover:bg-blue-600 text-white font-medium transition-colors"
-              >
-                <FileText size={16} /> Create Quote
-              </button>
-              <button
-                onClick={handleSendReply}
-                disabled={!replyMessage.trim() || sending}
-                className="flex-1 flex items-center justify-center gap-2 px-4 py-2 rounded-lg bg-accent hover:bg-accent/90 text-white font-medium transition-colors disabled:opacity-50"
-              >
-                {sending ? (
-                  <Loader2 size={16} className="animate-spin" />
-                ) : (
-                  <Send size={16} />
-                )}{" "}
-                {sending ? "Sending..." : "Send Reply"}
-              </button>
-            </div>
-          </div>
-        )}
+        {/* Action buttons */}
+        <div className="flex gap-3 pt-2 border-t">
+          <button
+            onClick={onArchive}
+            disabled={archiving}
+            className="flex items-center gap-2 px-4 py-2 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium transition-colors disabled:opacity-50"
+          >
+            {archiving ? <Loader2 size={16} className="animate-spin" /> : <Archive size={16} />}
+            {archiving ? "Archiving..." : "Archive"}
+          </button>
+          <button
+            onClick={onCreateQuote}
+            className="flex items-center gap-2 px-4 py-2 rounded-lg bg-blue-500 hover:bg-blue-600 text-white font-medium transition-colors"
+          >
+            <FileText size={16} /> Create Quote
+          </button>
+        </div>
       </div>
     </Modal>
   );
@@ -507,6 +446,7 @@ function CreateQuoteModal({
 
 function InquiriesContent() {
   const router = useRouter();
+  const { data: session } = useSession();
   const [activeFilter, setActiveFilter] = useState("All");
   const [filterSidebarOpen, setFilterSidebarOpen] = useState(false);
   const [inquiries, setInquiries] = useState<Inquiry[]>([]);
@@ -931,7 +871,6 @@ function InquiriesContent() {
         inquiry={selectedInquiry}
         isOpen={viewModalOpen}
         onClose={() => setViewModalOpen(false)}
-        onReply={handleReply}
         onArchive={handleArchive}
         onCreateQuote={() => {
           setViewModalOpen(false);
@@ -939,6 +878,7 @@ function InquiriesContent() {
         }}
         darkMode={darkMode}
         archiving={archiving}
+        currentUserId={session?.user?.id || ""}
       />
 
       {/* Create Quote Modal */}

@@ -135,9 +135,18 @@ export default function VendorTable({
   };
 
   const renderPagination = () => {
-    if (!pagination || pagination.totalPages <= 1) return null;
-    const pages: number[] = [];
+    if (!pagination) return null;
     const { totalPages } = pagination;
+
+    if (totalPages <= 1) {
+      return (
+        <button className={`w-9 h-9 rounded flex items-center justify-center text-sm bg-accent text-white`}>
+          1
+        </button>
+      );
+    }
+
+    const pages: number[] = [];
     pages.push(1);
     if (currentPage > 3) pages.push(-1);
     for (
@@ -472,8 +481,8 @@ export default function VendorTable({
             ))}
           </div>
 
-          {/* Pagination */}
-          {pagination && pagination.totalPages > 1 && (
+          {/* Pagination — always visible */}
+          {pagination && (
             <div
               className={`flex flex-col sm:flex-row items-center justify-between gap-4 px-6 py-4 border-t ${
                 darkMode ? "border-white/10" : "border-gray-200"
@@ -482,11 +491,8 @@ export default function VendorTable({
               <p className={`text-sm ${textMuted}`}>
                 Showing{" "}
                 <span className={textPrimary}>
-                  {(pagination.page - 1) * pagination.limit + 1}-
-                  {Math.min(
-                    pagination.page * pagination.limit,
-                    pagination.total,
-                  )}
+                  {pagination.total === 0 ? 0 : (pagination.page - 1) * pagination.limit + 1}-
+                  {Math.min(pagination.page * pagination.limit, pagination.total)}
                 </span>{" "}
                 of <span className={textPrimary}>{pagination.total}</span>
               </p>
@@ -496,7 +502,7 @@ export default function VendorTable({
                   disabled={currentPage === 1}
                   className={`px-3 py-1.5 rounded text-sm ${textSecondary} ${
                     darkMode ? "hover:bg-white/10" : "hover:bg-gray-100"
-                  } transition-colors disabled:opacity-50`}
+                  } transition-colors disabled:opacity-30 disabled:cursor-not-allowed`}
                 >
                   <ChevronLeft size={18} />
                 </button>
@@ -504,14 +510,14 @@ export default function VendorTable({
                   {renderPagination()}
                 </div>
                 <span className={`sm:hidden text-sm ${textMuted}`}>
-                  {currentPage} / {pagination.totalPages}
+                  {currentPage} / {Math.max(1, pagination.totalPages)}
                 </span>
                 <button
                   onClick={() => onPageChange(currentPage + 1)}
-                  disabled={currentPage === pagination.totalPages}
+                  disabled={currentPage === pagination.totalPages || pagination.totalPages <= 1}
                   className={`px-3 py-1.5 rounded text-sm ${textSecondary} ${
                     darkMode ? "hover:bg-white/10" : "hover:bg-gray-100"
-                  } transition-colors disabled:opacity-50`}
+                  } transition-colors disabled:opacity-30 disabled:cursor-not-allowed`}
                 >
                   <ChevronRight size={18} />
                 </button>

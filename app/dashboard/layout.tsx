@@ -14,10 +14,13 @@ export default async function DashboardLayout({
     // Stale/invalid JWT cookie — redirect to auth
   }
 
-  // Server-side guard: unauthenticated users are redirected before any client JS runs
   if (!session?.user) {
     redirect("/auth?callbackUrl=/dashboard");
   }
+
+  const role = (session.user as any).role;
+  if (role === "ADMINISTRATOR") redirect("/admin");
+  if (role === "PROFESSIONAL") redirect("/vendor");
 
   return <DashboardShell>{children}</DashboardShell>;
 }

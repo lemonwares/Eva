@@ -62,6 +62,14 @@ next-env.d.ts
 /app/generated/prisma
 .sentryclirc
 
+# PWA build artifacts (regenerated on each build)
+/public/sw.js
+/public/sw.js.map
+/public/workbox-*.js
+/public/workbox-*.js.map
+/public/fallback-build-*.js
+# Note: public/sw-custom.js is a source file and should NOT be ignored
+
 # IDEs and Editors
 .vscode/*
 !.vscode/extensions.json
