@@ -9,7 +9,7 @@
     "build:debug": "node scripts/build.js --debug",
     "build:original": "next build --webpack",
     "build:fallback": "next build --webpack || echo Build completed with warnings",
-    "start": "next start",
+    "start": "next start -p 3010",
     "screenshot": "tsx scripts/screenshot.ts",
     "create-admin": "tsx scripts/create-admin.ts",
     "lint": "eslint",
