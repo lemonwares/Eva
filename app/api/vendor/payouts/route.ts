@@ -3,9 +3,14 @@ import { prisma } from "@/lib/prisma";
 import { auth } from "@/auth";
 import { z } from "zod";
 import { logger } from "@/lib/logger";
+import { getPlatformFee } from "@/lib/platform-settings";
 
 const payoutSchema = z.object({
-  amount: z.number().positive("Amount must be greater than 0"),
+  amount: z.union([z.number(), z.string()]).transform((val) => {
+    const num = typeof val === "string" ? parseFloat(val) : val;
+    if (isNaN(num) || num <= 0) throw new Error("Amount must be greater than 0");
+    return num;
+  }),
   bankName: z.string().min(2, "Bank name is required"),
   accountName: z.string().min(2, "Account name is required"),
   accountNumber: z.string().min(6, "Account number is required"),
@@ -26,7 +31,10 @@ export async function GET(request: NextRequest) {
       select: { id: true },
     });
     if (!provider) {
-      return NextResponse.json({ payouts: [], pagination: { total: 0, page: 1, limit: 20, totalPages: 1 } });
+      return NextResponse.json({
+        payouts: [],
+        pagination: { total: 0, page: 1, limit: 20, totalPages: 1 },
+      });
     }
 
     const { searchParams } = request.nextUrl;
@@ -81,7 +89,6 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ message: "Provider profile not found" }, { status: 404 });
     }
 
-    // Calculate available balance
     const availableBalance = await getAvailableBalance(provider.id);
 
     if (amount > availableBalance) {
@@ -104,18 +111,25 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    return NextResponse.json({ payout, message: "Payout request submitted successfully" }, { status: 201 });
+    return NextResponse.json(
+      { payout, message: "Payout request submitted successfully" },
+      { status: 201 }
+    );
   } catch (error) {
     logger.error("Error creating payout:", error);
     return NextResponse.json({ message: "Internal server error" }, { status: 500 });
   }
 }
 
-// Helper: calculate available balance (completed bookings minus platform fee minus already requested/paid payouts)
 async function getAvailableBalance(providerId: string): Promise<number> {
+  const platformFee = await getPlatformFee();
+
   const [bookings, payouts] = await Promise.all([
     prisma.booking.findMany({
-      where: { providerId, status: "COMPLETED" },
+      where: {
+        providerId,
+        status: { in: ["CONFIRMED", "DEPOSIT_PAID", "COMPLETED"] },
+      },
       select: { pricingTotal: true },
     }),
     prisma.payout.findMany({
@@ -127,8 +141,8 @@ async function getAvailableBalance(providerId: string): Promise<number> {
     }),
   ]);
 
-  const totalEarned = bookings.reduce((sum, b) => sum + (b.pricingTotal || 0), 0);
-  const afterFees = totalEarned * 0.95; // 5% platform fee
+  const totalCollected = bookings.reduce((sum, b) => sum + (b.pricingTotal || 0), 0);
+  const afterFees = totalCollected * (1 - platformFee);
   const alreadyRequested = payouts.reduce((sum, p) => sum + p.amount, 0);
 
   return Math.max(0, afterFees - alreadyRequested);

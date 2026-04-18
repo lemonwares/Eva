@@ -62,6 +62,7 @@ export default function VendorPaymentsPage() {
   });
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
+  const [typeFilter, setTypeFilter] = useState<"all" | "income" | "withdrawal">("all");
   const [showWithdrawModal, setShowWithdrawModal] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [withdrawForm, setWithdrawForm] = useState<WithdrawForm>({
@@ -80,10 +81,14 @@ export default function VendorPaymentsPage() {
   async function fetchPaymentData() {
     setIsLoading(true);
     try {
-      const [bookingsRes, payoutsRes] = await Promise.all([
+      const [bookingsRes, payoutsRes, feeRes] = await Promise.all([
         fetch("/api/bookings?limit=100"),
         fetch("/api/vendor/payouts?limit=100"),
+        fetch("/api/settings/platform-fee"),
       ]);
+
+      const platformFeePercent = feeRes.ok ? (await feeRes.json()).percent : 15;
+      const vendorShare = 1 - platformFeePercent / 100;
 
       let totalEarned = 0;
       let pendingAmount = 0;
@@ -101,9 +106,11 @@ export default function VendorPaymentsPage() {
           const amount = booking.pricingTotal || booking.quote?.totalPrice || 0;
           const eventDate = new Date(booking.eventDate);
           const isCompleted = booking.status === "COMPLETED";
-          const isPending = ["PENDING", "CONFIRMED", "DEPOSIT_PAID"].includes(booking.status);
+          const isPaid = ["CONFIRMED", "DEPOSIT_PAID", "COMPLETED"].includes(booking.status);
+          const isPending = ["PENDING_PAYMENT", "PENDING"].includes(booking.status);
+          const isCancelled = ["CANCELLED", "CANCEL_REQUESTED"].includes(booking.status);
 
-          if (amount > 0) {
+          if (amount > 0 && !isCancelled) {
             txns.push({
               id: booking.id,
               description: booking.eventType || "Booking",
@@ -116,10 +123,10 @@ export default function VendorPaymentsPage() {
 
             if (isCompleted) {
               totalEarned += amount;
-              const fee = amount * 0.05;
+              const fee = amount * (platformFeePercent / 100);
               txns.push({
                 id: `${booking.id}-fee`,
-                description: "Platform Fee (5%)",
+                description: `Platform Fee (${platformFeePercent}%)`,
                 date: eventDate.toLocaleDateString("en-GB", { month: "short", day: "numeric", year: "numeric" }),
                 type: "fee",
                 status: "completed",
@@ -127,7 +134,12 @@ export default function VendorPaymentsPage() {
               });
             }
 
+            // Pending = awaiting payment only
             if (isPending) { pendingAmount += amount; pendingCount++; }
+
+            // Total collected = money actually received (confirmed + completed)
+            if (isPaid) totalEarned += amount;
+
             if (eventDate >= thisMonthStart) thisMonthEarned += amount;
           }
         });
@@ -150,15 +162,22 @@ export default function VendorPaymentsPage() {
 
       txns.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
-      // Available = earned after fees minus pending/approved/paid payouts
-      const afterFees = totalEarned * 0.95;
+      // Available balance = completed earnings after fees + pending bookings - already requested payouts
+      const completedAfterFees = totalEarned * vendorShare;
       const requestedPayouts = txns
         .filter((t) => t.type === "withdrawal" && t.status !== "failed")
         .reduce((sum, t) => sum + Math.abs(t.amount), 0);
-      const availableBalance = Math.max(0, afterFees - requestedPayouts);
+      // Available = completed (after fees) + pending - already requested
+      const availableBalance = Math.max(0, completedAfterFees + pendingAmount - requestedPayouts);
 
       setTransactions(txns);
-      setStats({ availableBalance, pendingAmount, thisMonth: thisMonthEarned, totalEarned, pendingCount });
+      setStats({
+        availableBalance,
+        pendingAmount,
+        thisMonth: thisMonthEarned,
+        totalEarned, // money actually collected (confirmed + completed bookings)
+        pendingCount,
+      });
     } catch (err) {
       logger.error("Error fetching payment data:", err);
     } finally {
@@ -205,11 +224,16 @@ export default function VendorPaymentsPage() {
     }
   }
 
-  const filteredTransactions = transactions.filter(
-    (tx) =>
+  const filteredTransactions = transactions.filter((tx) => {
+    const matchesSearch =
       tx.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      tx.clientName?.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+      tx.clientName?.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesType =
+      typeFilter === "all" ||
+      (typeFilter === "income" && (tx.type === "income" || tx.type === "fee")) ||
+      (typeFilter === "withdrawal" && tx.type === "withdrawal");
+    return matchesSearch && matchesType;
+  });
 
   const card = `${darkMode ? "bg-[#141414] border-white/10" : "bg-white border-gray-200"} rounded-xl border`;
   const text = darkMode ? "text-white" : "text-gray-900";
@@ -248,9 +272,9 @@ export default function VendorPaymentsPage() {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
             {[
               { label: "Available Balance", value: stats.availableBalance, icon: DollarSign, color: "green", sub: "Available for withdrawal" },
-              { label: "Pending", value: stats.pendingAmount, icon: Clock, color: "yellow", sub: `${stats.pendingCount} pending` },
+              { label: "Awaiting Payment", value: stats.pendingAmount, icon: Clock, color: "yellow", sub: `${stats.pendingCount} booking${stats.pendingCount !== 1 ? "s" : ""} pending` },
               { label: "This Month", value: stats.thisMonth, icon: TrendingUp, color: "accent", sub: "Current month earnings" },
-              { label: "Total Earned", value: stats.totalEarned, icon: DollarSign, color: "blue", sub: "Lifetime earnings" },
+              { label: "Total Collected", value: stats.totalEarned, icon: DollarSign, color: "blue", sub: "Confirmed & completed" },
             ].map(({ label, value, icon: Icon, color, sub }) => (
               <div key={label} className={`${card} p-5`}>
                 <div className="flex items-center justify-between mb-3">
@@ -278,6 +302,23 @@ export default function VendorPaymentsPage() {
                   darkMode ? "bg-[#141414] text-white border-white/10" : "bg-white text-gray-900 border-gray-200"
                 }`}
               />
+            </div>
+            <div className={`flex rounded-lg border overflow-hidden ${darkMode ? "border-white/10" : "border-gray-200"}`}>
+              {(["all", "income", "withdrawal"] as const).map((f) => (
+                <button
+                  key={f}
+                  onClick={() => setTypeFilter(f)}
+                  className={`px-4 py-2.5 text-sm font-medium capitalize transition-colors ${
+                    typeFilter === f
+                      ? "bg-accent text-white"
+                      : darkMode
+                        ? "bg-[#141414] text-gray-400 hover:bg-white/10"
+                        : "bg-white text-gray-600 hover:bg-gray-50"
+                  }`}
+                >
+                  {f === "all" ? "All" : f === "income" ? "Incoming" : "Withdrawals"}
+                </button>
+              ))}
             </div>
             <button className={`flex items-center gap-2 px-4 py-3 rounded-lg border transition-colors text-sm ${
               darkMode ? "bg-[#141414] border-white/10 text-white hover:bg-white/10" : "bg-white border-gray-200 text-gray-900 hover:bg-gray-50"
@@ -339,12 +380,12 @@ export default function VendorPaymentsPage() {
 
       {/* Withdraw Modal */}
       {showWithdrawModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-          <div className={`${darkMode ? "bg-[#141414] border-white/10" : "bg-white border-gray-200"} border rounded-2xl w-full max-w-md shadow-2xl`}>
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 bg-black/60 backdrop-blur-sm overflow-y-auto">
+          <div className={`relative my-auto ${darkMode ? "bg-[#141414] border-white/10" : "bg-white border-gray-200"} border rounded-2xl w-full max-w-md shadow-2xl`}>
             {/* Header */}
-            <div className={`flex items-center justify-between p-6 border-b ${darkMode ? "border-white/10" : "border-gray-200"}`}>
+            <div className={`flex items-center justify-between p-5 border-b ${darkMode ? "border-white/10" : "border-gray-200"}`}>
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-accent/15 flex items-center justify-center">
+                <div className="w-10 h-10 rounded-xl bg-accent/15 flex items-center justify-center shrink-0">
                   <Banknote size={20} className="text-accent" />
                 </div>
                 <div>
@@ -352,92 +393,117 @@ export default function VendorPaymentsPage() {
                   <p className="text-xs text-gray-500">Available: {formatCurrency(stats.availableBalance)}</p>
                 </div>
               </div>
-              <button onClick={() => setShowWithdrawModal(false)} className={`p-2 rounded-lg ${darkMode ? "hover:bg-white/10" : "hover:bg-gray-100"}`}>
+              <button
+                onClick={() => setShowWithdrawModal(false)}
+                className={`p-2 rounded-lg ${darkMode ? "hover:bg-white/10" : "hover:bg-gray-100"} transition-colors`}
+              >
                 <X size={18} className={muted} />
               </button>
             </div>
 
-            {/* Form */}
-            <form onSubmit={handleWithdrawSubmit} className="p-6 space-y-4">
-              <div>
-                <label className={`block text-sm font-medium mb-1.5 ${text}`}>Amount (£) *</label>
-                <input
-                  type="number"
-                  step="0.01"
-                  min="1"
-                  max={stats.availableBalance}
-                  value={withdrawForm.amount}
-                  onChange={(e) => setWithdrawForm({ ...withdrawForm, amount: e.target.value })}
-                  placeholder={`Max: ${formatCurrency(stats.availableBalance)}`}
-                  required
-                  className={inputCls}
-                />
-              </div>
-
-              <div>
-                <label className={`block text-sm font-medium mb-1.5 ${text}`}>Bank Name *</label>
-                <input
-                  type="text"
-                  value={withdrawForm.bankName}
-                  onChange={(e) => setWithdrawForm({ ...withdrawForm, bankName: e.target.value })}
-                  placeholder="e.g. Barclays, HSBC, Lloyds"
-                  required
-                  className={inputCls}
-                />
-              </div>
-
-              <div>
-                <label className={`block text-sm font-medium mb-1.5 ${text}`}>Account Name *</label>
-                <input
-                  type="text"
-                  value={withdrawForm.accountName}
-                  onChange={(e) => setWithdrawForm({ ...withdrawForm, accountName: e.target.value })}
-                  placeholder="Name on the bank account"
-                  required
-                  className={inputCls}
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
+            {/* Scrollable Form */}
+            <form onSubmit={handleWithdrawSubmit}>
+              <div className="p-5 space-y-4 max-h-[60vh] overflow-y-auto">
                 <div>
-                  <label className={`block text-sm font-medium mb-1.5 ${text}`}>Account Number *</label>
+                  <label className={`block text-sm font-medium mb-1.5 ${text}`}>Amount (£) *</label>
+                  <div className="relative">
+                    <input
+                      type="number"
+                      step="0.01"
+                      min="1"
+                      max={stats.availableBalance}
+                      value={withdrawForm.amount}
+                      onChange={(e) => {
+                        const val = parseFloat(e.target.value);
+                        if (!isNaN(val) && val > stats.availableBalance) {
+                          setWithdrawForm({ ...withdrawForm, amount: stats.availableBalance.toFixed(2) });
+                        } else {
+                          setWithdrawForm({ ...withdrawForm, amount: e.target.value });
+                        }
+                      }}
+                      placeholder="0.00"
+                      required
+                      className={inputCls}
+                    />
+                  </div>
+                  <div className="flex items-center justify-between mt-1.5">
+                    <p className="text-xs text-gray-500">Maximum withdrawal amount</p>
+                    <button
+                      type="button"
+                      onClick={() => setWithdrawForm({ ...withdrawForm, amount: stats.availableBalance.toFixed(2) })}
+                      className="text-xs text-accent font-medium hover:underline"
+                    >
+                      Use max ({formatCurrency(stats.availableBalance)})
+                    </button>
+                  </div>
+                </div>
+
+                <div>
+                  <label className={`block text-sm font-medium mb-1.5 ${text}`}>Bank Name *</label>
                   <input
                     type="text"
-                    value={withdrawForm.accountNumber}
-                    onChange={(e) => setWithdrawForm({ ...withdrawForm, accountNumber: e.target.value })}
-                    placeholder="12345678"
+                    value={withdrawForm.bankName}
+                    onChange={(e) => setWithdrawForm({ ...withdrawForm, bankName: e.target.value })}
+                    placeholder="e.g. Barclays, HSBC, Lloyds"
                     required
                     className={inputCls}
                   />
                 </div>
+
                 <div>
-                  <label className={`block text-sm font-medium mb-1.5 ${text}`}>Sort Code</label>
+                  <label className={`block text-sm font-medium mb-1.5 ${text}`}>Account Name *</label>
                   <input
                     type="text"
-                    value={withdrawForm.sortCode}
-                    onChange={(e) => setWithdrawForm({ ...withdrawForm, sortCode: e.target.value })}
-                    placeholder="00-00-00"
+                    value={withdrawForm.accountName}
+                    onChange={(e) => setWithdrawForm({ ...withdrawForm, accountName: e.target.value })}
+                    placeholder="Name on the bank account"
+                    required
                     className={inputCls}
                   />
                 </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className={`block text-sm font-medium mb-1.5 ${text}`}>Account Number *</label>
+                    <input
+                      type="text"
+                      value={withdrawForm.accountNumber}
+                      onChange={(e) => setWithdrawForm({ ...withdrawForm, accountNumber: e.target.value })}
+                      placeholder="12345678"
+                      required
+                      className={inputCls}
+                    />
+                  </div>
+                  <div>
+                    <label className={`block text-sm font-medium mb-1.5 ${text}`}>Sort Code</label>
+                    <input
+                      type="text"
+                      value={withdrawForm.sortCode}
+                      onChange={(e) => setWithdrawForm({ ...withdrawForm, sortCode: e.target.value })}
+                      placeholder="00-00-00"
+                      className={inputCls}
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className={`block text-sm font-medium mb-1.5 ${text}`}>Notes (optional)</label>
+                  <textarea
+                    value={withdrawForm.notes}
+                    onChange={(e) => setWithdrawForm({ ...withdrawForm, notes: e.target.value })}
+                    placeholder="Any additional information..."
+                    rows={2}
+                    className={`${inputCls} resize-none`}
+                  />
+                </div>
+
+                <div className={`p-3 rounded-lg text-xs ${darkMode ? "bg-white/5 text-gray-400" : "bg-gray-50 text-gray-500"}`}>
+                  ℹ️ Withdrawals are processed within 2–3 business days. You'll be notified once your request is approved.
+                </div>
               </div>
 
-              <div>
-                <label className={`block text-sm font-medium mb-1.5 ${text}`}>Notes (optional)</label>
-                <textarea
-                  value={withdrawForm.notes}
-                  onChange={(e) => setWithdrawForm({ ...withdrawForm, notes: e.target.value })}
-                  placeholder="Any additional information..."
-                  rows={2}
-                  className={`${inputCls} resize-none`}
-                />
-              </div>
-
-              <div className={`p-3 rounded-lg text-xs ${darkMode ? "bg-white/5 text-gray-400" : "bg-gray-50 text-gray-500"}`}>
-                ℹ️ Withdrawals are processed within 2–3 business days. You'll be notified once your request is approved.
-              </div>
-
-              <div className="flex gap-3 pt-2">
+              {/* Sticky footer buttons */}
+              <div className={`flex gap-3 p-5 border-t ${darkMode ? "border-white/10" : "border-gray-200"}`}>
                 <button
                   type="button"
                   onClick={() => setShowWithdrawModal(false)}

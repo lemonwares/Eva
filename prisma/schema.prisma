@@ -16,6 +16,16 @@ datasource db {
 // USERS & AUTHENTICATION
 // ============================================
 
+// Platform-wide key-value settings (e.g. platform_fee_percent)
+model PlatformSetting {
+  key       String   @id
+  value     String
+  updatedAt DateTime @updatedAt @map("updated_at")
+  updatedBy String?  @map("updated_by")
+
+  @@map("platform_settings")
+}
+
 enum UserRole {
   VISITOR
   CLIENT
