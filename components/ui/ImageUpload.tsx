@@ -4,6 +4,10 @@ import { logger } from '@/lib/logger';
 import { useState, useRef, useCallback } from "react";
 import { Upload, X, Loader2, ImageIcon } from "lucide-react";
 import Image from "next/image";
+import { toast } from "sonner";
+
+const MAX_SIZE_BYTES = 500 * 1024; // 500KB
+const MAX_SIZE_LABEL = "500KB";
 
 interface ImageUploadProps {
   value?: string;
@@ -13,7 +17,7 @@ interface ImageUploadProps {
   type?: "avatar" | "cover" | "gallery" | "listing" | "general";
   className?: string;
   aspectRatio?: "square" | "video" | "portrait" | "auto";
-  maxSizeMB?: number;
+  maxSizeMB?: number; // kept for backwards compat but ignored — limit is always 500KB
   disabled?: boolean;
   placeholder?: string;
 }
@@ -26,7 +30,7 @@ export default function ImageUpload({
   type = "general",
   className = "",
   aspectRatio = "auto",
-  maxSizeMB = 10,
+  maxSizeMB = 0.5, // ignored — always 500KB
   disabled = false,
   placeholder = "Click or drag to upload",
 }: ImageUploadProps) {
@@ -47,22 +51,18 @@ export default function ImageUpload({
     async (file: File) => {
       setError(null);
 
-      // Validate file type
-      const allowedTypes = [
-        "image/jpeg",
-        "image/png",
-        "image/webp",
-        "image/gif",
-      ];
+      const allowedTypes = ["image/jpeg", "image/png", "image/webp", "image/avif"];
       if (!allowedTypes.includes(file.type)) {
-        setError("Please upload a JPEG, PNG, WebP, or GIF image");
+        const msg = "Please upload a JPEG, PNG, WebP, or AVIF image";
+        setError(msg);
+        toast.error(msg);
         return;
       }
 
-      // Validate file size
-      const maxSize = maxSizeMB * 1024 * 1024;
-      if (file.size > maxSize) {
-        setError(`File too large. Maximum size is ${maxSizeMB}MB`);
+      if (file.size > MAX_SIZE_BYTES) {
+        const msg = `Image too large. Maximum size is ${MAX_SIZE_LABEL}. Please compress your image before uploading.`;
+        setError(msg);
+        toast.error(msg);
         return;
       }
 
@@ -236,7 +236,7 @@ export default function ImageUpload({
             </div>
             <span className="text-sm text-center">{placeholder}</span>
             <span className="text-xs text-gray-400">
-              JPEG, PNG, WebP, GIF up to {maxSizeMB}MB
+              JPEG, PNG, WebP, AVIF — max {MAX_SIZE_LABEL}
             </span>
           </div>
         )}
@@ -267,7 +267,7 @@ export function MultiImageUpload({
   type = "gallery",
   className = "",
   disabled = false,
-  maxSizeMB = 3,
+  maxSizeMB = 0.5, // ignored — always 500KB
 }: MultiImageUploadProps) {
   const [isUploading, setIsUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -281,10 +281,11 @@ export function MultiImageUpload({
     }
 
     const filesToUpload = Array.from(files).slice(0, remainingSlots);
-    // Validate all files
     for (const file of filesToUpload) {
-      if (file.size > maxSizeMB * 1024 * 1024) {
-        setError(`Each image must not exceed ${maxSizeMB}MB.`);
+      if (file.size > MAX_SIZE_BYTES) {
+        const msg = `"${file.name}" is too large. Maximum size is ${MAX_SIZE_LABEL}.`;
+        setError(msg);
+        toast.error(msg);
         return;
       }
     }

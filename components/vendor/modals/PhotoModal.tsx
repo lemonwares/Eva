@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { X, Loader2, Upload, Trash2 } from "lucide-react";
 import Image from "next/image";
 import ConfirmDeleteModal from "@/components/modals/confirm-delete-modal";
+import { toast } from "sonner";
 
 interface PhotoModalProps {
   isOpen: boolean;
@@ -50,8 +51,9 @@ export default function PhotoModal({
       return;
     }
 
-    if (file.size > 5 * 1024 * 1024) {
-      setError("File size must be less than 5MB");
+    if (file.size > 500 * 1024) {
+      setError("Image must be less than 500KB. Please compress your image first.");
+      toast.error("Image too large. Maximum size is 500KB.");
       return;
     }
 
@@ -229,7 +231,7 @@ export default function PhotoModal({
                             darkMode ? "text-gray-500" : "text-gray-500"
                           }`}
                         >
-                          PNG, JPG, WebP up to 5MB
+                          PNG, JPG, WebP — max 500KB
                         </p>
                       </label>
 

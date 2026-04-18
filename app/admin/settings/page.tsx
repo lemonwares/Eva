@@ -206,8 +206,8 @@ export default function AdminSettingsPage() {
       return;
     }
 
-    if (file.size > 2 * 1024 * 1024) {
-      addToast("Image must be less than 2MB", "error");
+    if (file.size > 500 * 1024) {
+      addToast("Image must be less than 500KB. Please compress your image first.", "error");
       return;
     }
 
@@ -585,7 +585,7 @@ export default function AdminSettingsPage() {
                         </button>
                       </div>
                       <p className={`text-xs ${textMuted} mt-3 ml-0 sm:ml-28`}>
-                        Accepted formats: JPG, PNG, GIF. Max file size: 2MB
+                        Accepted formats: JPG, PNG, WebP. Max file size: 500KB
                       </p>
                     </div>
                   </div>

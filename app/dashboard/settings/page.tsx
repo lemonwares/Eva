@@ -226,8 +226,15 @@ export default function SettingsPage() {
   const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+
+    if (file.size > 500 * 1024) {
+      showMessage("error", "Image must be less than 500KB");
+      return;
+    }
+
     const formData = new FormData();
     formData.append("files", file);
+    formData.append("type", "avatar");
     setAvatarUploading(true);
     try {
       const res = await fetch("/api/upload", {
@@ -235,11 +242,23 @@ export default function SettingsPage() {
         body: formData,
       });
       const data = await res.json();
-      if (res.ok && data.url) {
+      if (!res.ok || !data.url) {
+        showMessage("error", data.message || "Upload failed");
+        return;
+      }
+
+      // Save the URL to the DB
+      const saveRes = await fetch("/api/auth/me", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ avatar: data.url }),
+      });
+
+      if (saveRes.ok) {
         await fetchProfile();
         showMessage("success", "Avatar updated!");
       } else {
-        showMessage("error", data.message || "Upload failed");
+        showMessage("error", "Failed to save avatar");
       }
     } catch {
       showMessage("error", "Upload failed");
