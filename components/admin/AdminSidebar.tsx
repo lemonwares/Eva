@@ -14,11 +14,11 @@ import {
   ChevronLeft,
   Tag,
   MapPin,
-  Database,
   MessageSquare,
   FileText,
   Bell,
   ClipboardList,
+  Banknote,
 } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
@@ -35,6 +35,7 @@ const mainNavItems = [
   { icon: Calendar, label: "Bookings", href: "/admin/bookings" },
   { icon: FileText, label: "Quotes", href: "/admin/quotes" },
   { icon: MessageSquare, label: "Reviews", href: "/admin/reviews" },
+  { icon: Banknote, label: "Payouts", href: "/admin/payouts" },
   { icon: BarChart3, label: "Analytics", href: "/admin/analytics" },
 ];
 

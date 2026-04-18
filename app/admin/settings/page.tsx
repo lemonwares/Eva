@@ -61,6 +61,12 @@ const tabs = [
     icon: Shield,
     description: "Password & safety",
   },
+  {
+    id: "platform",
+    label: "Platform",
+    icon: BadgeCheck,
+    description: "Fees & configuration",
+  },
 ];
 
 export default function AdminSettingsPage() {
@@ -81,6 +87,11 @@ export default function AdminSettingsPage() {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const avatarInputRef = useRef<HTMLInputElement>(null);
   const [copiedId, setCopiedId] = useState(false);
+
+  // Platform fee state
+  const [platformFee, setPlatformFee] = useState<number>(15);
+  const [loadingFee, setLoadingFee] = useState(false);
+  const [savingFee, setSavingFee] = useState(false);
 
   // Profile state
   const [profile, setProfile] = useState<UserProfile | null>(null);
@@ -153,6 +164,39 @@ export default function AdminSettingsPage() {
     fetchProfile();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // Fetch platform fee
+  useEffect(() => {
+    if (activeTab !== "platform") return;
+    setLoadingFee(true);
+    fetch("/api/admin/settings/platform-fee")
+      .then((r) => r.json())
+      .then((d) => setPlatformFee(d.percent ?? 15))
+      .catch(() => {})
+      .finally(() => setLoadingFee(false));
+  }, [activeTab]);
+
+  const handleSavePlatformFee = async () => {
+    if (platformFee < 0 || platformFee > 100) {
+      addToast("Fee must be between 0 and 100", "error");
+      return;
+    }
+    setSavingFee(true);
+    try {
+      const res = await fetch("/api/admin/settings/platform-fee", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ percent: platformFee }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message);
+      addToast(data.message, "success");
+    } catch (err: any) {
+      addToast(err.message || "Failed to update fee", "error");
+    } finally {
+      setSavingFee(false);
+    }
+  };
 
   const handleAvatarUpload = async (file: File) => {
     if (!file) return;
@@ -1035,6 +1079,84 @@ export default function AdminSettingsPage() {
                 </button>
               </div>
             </>
+          )}
+
+          {/* Platform Tab */}
+          {activeTab === "platform" && (
+            <div className={`${cardBg} border ${cardBorder} rounded-2xl p-6`}>
+              <div className="flex items-center gap-3 mb-6">
+                <div className="p-2.5 rounded-xl bg-accent/10">
+                  <BadgeCheck size={20} className="text-accent" />
+                </div>
+                <div>
+                  <h3 className={`font-semibold ${textPrimary}`}>Platform Commission</h3>
+                  <p className={`text-sm ${textMuted}`}>Set the percentage EVA takes from each completed booking</p>
+                </div>
+              </div>
+
+              {loadingFee ? (
+                <div className="flex items-center gap-2 py-4">
+                  <Loader2 size={18} className={`animate-spin ${textMuted}`} />
+                  <span className={`text-sm ${textMuted}`}>Loading...</span>
+                </div>
+              ) : (
+                <div className="space-y-6">
+                  <div>
+                    <label className={`block text-sm font-medium mb-2 ${textPrimary}`}>
+                      Platform Fee (%)
+                    </label>
+                    <div className="flex items-center gap-4">
+                      <div className="relative flex-1 max-w-xs">
+                        <input
+                          type="number"
+                          min="0"
+                          max="100"
+                          step="0.5"
+                          value={platformFee}
+                          onChange={(e) => setPlatformFee(parseFloat(e.target.value) || 0)}
+                          className={`w-full px-4 py-2.5 pr-10 rounded-lg border text-sm focus:outline-none focus:ring-2 focus:ring-accent/50 ${inputBg} ${inputBorder} ${textPrimary}`}
+                        />
+                        <span className={`absolute right-3 top-1/2 -translate-y-1/2 text-sm font-medium ${textMuted}`}>%</span>
+                      </div>
+                      <div className={`text-sm ${textSecondary}`}>
+                        Vendor receives <span className={`font-semibold ${textPrimary}`}>{(100 - platformFee).toFixed(1)}%</span>
+                      </div>
+                    </div>
+                    <p className={`text-xs mt-2 ${textMuted}`}>
+                      Current: EVA keeps {platformFee}% · Vendor keeps {(100 - platformFee).toFixed(1)}%
+                    </p>
+                  </div>
+
+                  {/* Visual breakdown */}
+                  <div className={`p-4 rounded-xl ${darkMode ? "bg-white/5" : "bg-gray-50"} space-y-3`}>
+                    <p className={`text-xs font-semibold uppercase tracking-wider ${textMuted}`}>Example on £1,000 booking</p>
+                    <div className="space-y-2">
+                      <div className="flex justify-between text-sm">
+                        <span className={textSecondary}>Booking total</span>
+                        <span className={`font-medium ${textPrimary}`}>£1,000.00</span>
+                      </div>
+                      <div className="flex justify-between text-sm">
+                        <span className="text-red-500">Platform fee ({platformFee}%)</span>
+                        <span className="text-red-500 font-medium">−£{(1000 * platformFee / 100).toFixed(2)}</span>
+                      </div>
+                      <div className={`flex justify-between text-sm pt-2 border-t ${darkMode ? "border-white/10" : "border-gray-200"}`}>
+                        <span className="text-green-600 font-medium">Vendor receives</span>
+                        <span className="text-green-600 font-bold">£{(1000 * (1 - platformFee / 100)).toFixed(2)}</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <button
+                    onClick={handleSavePlatformFee}
+                    disabled={savingFee}
+                    className="flex items-center gap-2 px-5 py-2.5 bg-accent text-white rounded-xl text-sm font-medium hover:bg-accent/90 transition-colors disabled:opacity-50"
+                  >
+                    {savingFee ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
+                    {savingFee ? "Saving..." : "Save Changes"}
+                  </button>
+                </div>
+              )}
+            </div>
           )}
         </div>
       </div>
