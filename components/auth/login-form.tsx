@@ -79,7 +79,8 @@ export default function LoginForm() {
 
   const handleGoogleLogin = async () => {
     setLoading(true);
-    window.location.href = `/api/auth/signin/google?callbackUrl=${encodeURIComponent(callbackUrl || "/")}`;
+    const { signIn } = await import("next-auth/react");
+    await signIn("google", { callbackUrl: callbackUrl || "/" });
   };
 
   return (
