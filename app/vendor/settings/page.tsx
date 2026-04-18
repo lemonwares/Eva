@@ -3,6 +3,7 @@
 import VendorLayout from "@/components/vendor/VendorLayout";
 import { useVendorTheme } from "@/components/vendor/VendorThemeContext";
 import ImageUpload from "@/components/ui/ImageUpload";
+import { toast } from "sonner";
 import {
   User,
   Building,
@@ -393,27 +394,44 @@ export default function VendorSettingsPage() {
                               input.type = "file";
                               input.accept = "image/*";
                               input.onchange = async (e) => {
-                                const file = (e.target as HTMLInputElement)
-                                  .files?.[0];
-                                if (file) {
-                                  const formData = new FormData();
-                                  formData.append("files", file);
-                                  formData.append("type", "avatar");
-                                  try {
-                                    const res = await fetch("/api/upload", {
-                                      method: "POST",
-                                      body: formData,
-                                    });
-                                    const data = await res.json();
-                                    if (data.url) {
-                                      setProfile({
-                                        ...profile,
-                                        avatar: data.url,
-                                      });
-                                    }
-                                  } catch (err) {
-                                    logger.error("Upload failed:", err);
+                                const file = (e.target as HTMLInputElement).files?.[0];
+                                if (!file) return;
+
+                                if (file.size > 500 * 1024) {
+                                  toast.error("Image must be less than 500KB");
+                                  return;
+                                }
+
+                                const formData = new FormData();
+                                formData.append("files", file);
+                                formData.append("type", "avatar");
+                                try {
+                                  const res = await fetch("/api/upload", {
+                                    method: "POST",
+                                    body: formData,
+                                  });
+                                  const data = await res.json();
+                                  if (!res.ok || !data.url) {
+                                    toast.error(data.message || "Upload failed");
+                                    return;
                                   }
+
+                                  // Save to DB
+                                  const saveRes = await fetch("/api/auth/me", {
+                                    method: "PATCH",
+                                    headers: { "Content-Type": "application/json" },
+                                    body: JSON.stringify({ avatar: data.url }),
+                                  });
+
+                                  if (saveRes.ok) {
+                                    setProfile({ ...profile, avatar: data.url });
+                                    toast.success("Avatar updated!");
+                                  } else {
+                                    toast.error("Failed to save avatar");
+                                  }
+                                } catch (err) {
+                                  logger.error("Upload failed:", err);
+                                  toast.error("Upload failed");
                                 }
                               };
                               input.click();

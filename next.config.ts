@@ -80,6 +80,18 @@ const nextConfig: NextConfig = {
         hostname: "avatars.githubusercontent.com",
         pathname: "/**",
       },
+      // Backblaze B2 — primary storage
+      {
+        protocol: "https",
+        hostname: "*.backblazeb2.com",
+        pathname: "/**",
+      },
+      {
+        protocol: "https",
+        hostname: "f*.backblazeb2.com",
+        pathname: "/**",
+      },
+      // Keep Cloudinary for existing images already stored there
       {
         protocol: "https",
         hostname: "res.cloudinary.com",

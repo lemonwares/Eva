@@ -40,7 +40,12 @@ buildProcess.on('close', (code) => {
     console.log(code === 0 ? '✅ Build completed successfully!' : '❌ Build failed - check errors above');
     process.exit(code); // Exit with actual code in debug mode
   } else {
-    console.log('✅ Build completed - APIs ready for deployment!');
-    process.exit(0); // Always exit successfully for deployment
+    if (code === 0) {
+      console.log('✅ Build completed - APIs ready for deployment!');
+      process.exit(0);
+    } else {
+      console.log('❌ Build failed with exit code:', code);
+      process.exit(code); // Propagate failure so npm run build fails too
+    }
   }
 });

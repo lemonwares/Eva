@@ -83,9 +83,9 @@ export default function RootLayout({
   return (
     <html lang="en">
       <head>
-        {/* Preconnect to external image CDNs for faster loading */}
-        <link rel="preconnect" href="https://res.cloudinary.com" />
-        <link rel="dns-prefetch" href="https://res.cloudinary.com" />
+        {/* Preconnect to B2 storage for faster image loading */}
+        <link rel="preconnect" href="https://f003.backblazeb2.com" />
+        <link rel="dns-prefetch" href="https://f003.backblazeb2.com" />
       </head>
       <body
         className={`${inter.variable} ${playfairDisplay.variable} antialiased`}
