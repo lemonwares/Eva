@@ -211,8 +211,7 @@ export default function InquiriesPage() {
                         ? "hover:bg-white/5"
                         : "hover:bg-gray-50"
                   }`}
-                >
-                  <div className="flex items-start gap-3">
+                >                  <div className="flex items-start gap-3">
                     <div
                       className={`w-10 h-10 rounded-lg ${
                         darkMode ? "bg-gray-600" : "bg-gray-100"

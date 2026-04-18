@@ -219,6 +219,7 @@ model Provider {
   favorites       Favorite[]
   teamMembers     TeamMember[]
   weeklySchedules WeeklySchedule[]
+  payouts         Payout[]
 
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
@@ -595,11 +596,16 @@ model Refund {
 // PAYOUT LOGS (v1.1 - for Stripe Connect payouts)
 // ============================================
 
+// ============================================
+// PAYOUT REQUESTS (manual bank transfer payouts)
+// ============================================
+
 enum PayoutStatus {
   PENDING
-  IN_TRANSIT
+  APPROVED
+  PROCESSING
   PAID
-  FAILED
+  REJECTED
   CANCELLED
 }
 
@@ -640,24 +646,26 @@ model Payout {
   amount   Float
   currency String @default("GBP")
 
-  // Stripe Connect
-  stripePayoutId  String? @unique @map("stripe_payout_id")
-  stripeAccountId String  @map("stripe_account_id")
+  // Bank details
+  bankName      String  @map("bank_name")
+  accountName   String  @map("account_name")
+  accountNumber String  @map("account_number")
+  sortCode      String? @map("sort_code")
+  notes         String? @db.Text
 
-  status PayoutStatus @default(PENDING)
+  status        PayoutStatus @default(PENDING)
+  processedBy   String?      @map("processed_by") // Admin user ID
+  processedAt   DateTime?    @map("processed_at")
+  rejectedReason String?     @map("rejected_reason") @db.Text
 
-  // Timing
-  arrivalDate DateTime? @map("arrival_date")
-
-  failureReason String? @map("failure_reason")
-  metadata      Json?
+  // Relationships
+  provider Provider @relation(fields: [providerId], references: [id], onDelete: Cascade)
 
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
   @@index([providerId])
   @@index([status])
-  @@index([stripePayoutId])
   @@map("payouts")
 }
 
