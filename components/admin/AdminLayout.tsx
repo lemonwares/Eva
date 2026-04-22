@@ -5,6 +5,10 @@ import AdminSidebar from "./AdminSidebar";
 import AdminHeader from "./AdminHeader";
 import { useAdminTheme } from "./AdminThemeContext";
 
+// Module-level variable — persists across client-side navigations
+// because the module is only loaded once per session.
+let persistedCollapsed = false;
+
 interface AdminLayoutProps {
   children: ReactNode;
   title: string;
@@ -27,8 +31,13 @@ export default function AdminLayout({
   searchPlaceholder,
 }: AdminLayoutProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(persistedCollapsed);
   const { darkMode, pageBg, textPrimary } = useAdminTheme();
+
+  const handleToggleCollapse = () => {
+    persistedCollapsed = !sidebarCollapsed;
+    setSidebarCollapsed(persistedCollapsed);
+  };
 
   return (
     <div
@@ -38,7 +47,7 @@ export default function AdminLayout({
         isOpen={sidebarOpen}
         onClose={() => setSidebarOpen(false)}
         isCollapsed={sidebarCollapsed}
-        onToggleCollapse={() => setSidebarCollapsed(!sidebarCollapsed)}
+        onToggleCollapse={handleToggleCollapse}
       />
 
       <main className="flex-1 min-w-0 flex flex-col h-screen overflow-hidden">
