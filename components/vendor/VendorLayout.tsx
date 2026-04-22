@@ -6,6 +6,10 @@ import VendorLayoutHeader from "./VendorLayoutHeader";
 import { useVendorTheme } from "./VendorThemeContext";
 import { logger } from "@/lib/logger";
 
+// Module-level cache — survives client-side navigations
+let cachedProviderName: string | undefined;
+let cachedProviderType: string | undefined;
+
 interface VendorLayoutProps {
   children: ReactNode;
   title: string;
@@ -29,16 +33,17 @@ export default function VendorLayout({
 }: VendorLayoutProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [providerName, setProviderName] = useState<string | undefined>(
-    vendorName,
+    vendorName ?? cachedProviderName,
   );
   const [providerType, setProviderType] = useState<string | undefined>(
-    vendorType,
+    vendorType ?? cachedProviderType,
   );
   const { darkMode } = useVendorTheme();
 
-  // Fetch provider details if not explicitly provided via props
+  // Fetch provider details if not already cached
   useEffect(() => {
     if (vendorName && vendorType) return;
+    if (cachedProviderName && cachedProviderType) return;
 
     let isMounted = true;
 
@@ -52,10 +57,12 @@ export default function VendorLayout({
         if (!provider) return;
 
         if (isMounted) {
-          setProviderName(vendorName ?? provider.businessName);
-          setProviderType(
-            vendorType ?? provider.categories?.[0] ?? "Vendor Portal",
-          );
+          const name = vendorName ?? provider.businessName;
+          const type = vendorType ?? provider.categories?.[0] ?? "Vendor Portal";
+          cachedProviderName = name;
+          cachedProviderType = type;
+          setProviderName(name);
+          setProviderType(type);
         }
       } catch (error) {
         logger.error("Failed to load provider details for sidebar:", error);
