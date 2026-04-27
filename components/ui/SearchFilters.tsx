@@ -51,6 +51,29 @@ export default function SearchFilters({
   const [isClosing, setIsClosing] = useState(false);
   const drawerRef = useRef<HTMLDivElement>(null);
 
+  // Local price state — debounced before pushing to parent filters
+  const [localMinPrice, setLocalMinPrice] = useState(filters.minPrice);
+  const [localMaxPrice, setLocalMaxPrice] = useState(filters.maxPrice);
+  const debounceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Sync local price state if parent resets filters (e.g. clearFilters)
+  useEffect(() => {
+    setLocalMinPrice(filters.minPrice);
+  }, [filters.minPrice]);
+  useEffect(() => {
+    setLocalMaxPrice(filters.maxPrice);
+  }, [filters.maxPrice]);
+
+  const handlePriceChange = (field: "minPrice" | "maxPrice", value: string) => {
+    if (field === "minPrice") setLocalMinPrice(value);
+    else setLocalMaxPrice(value);
+
+    if (debounceTimer.current) clearTimeout(debounceTimer.current);
+    debounceTimer.current = setTimeout(() => {
+      setFilters((prev: any) => ({ ...prev, [field]: value }));
+    }, 600);
+  };
+
   // Count active filters for badge
   const activeFilterCount = [
     filters.category,
@@ -81,7 +104,7 @@ export default function SearchFilters({
     }, 250);
   };
 
-  const FilterContent = () => (
+  const filterContent = (
     <div className="space-y-5 sm:space-y-6">
       {/* Category Filter */}
       <div>
@@ -199,13 +222,8 @@ export default function SearchFilters({
               type="number"
               inputMode="numeric"
               placeholder="Min"
-              value={filters.minPrice}
-              onChange={(e) =>
-                setFilters((prev: any) => ({
-                  ...prev,
-                  minPrice: e.target.value,
-                }))
-              }
+              value={localMinPrice}
+              onChange={(e) => handlePriceChange("minPrice", e.target.value)}
               className="w-full pl-7 pr-2 py-2.5 sm:py-2 border border-border rounded-xl sm:rounded-lg bg-background text-foreground text-sm [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
             />
           </div>
@@ -216,23 +234,17 @@ export default function SearchFilters({
               type="number"
               inputMode="numeric"
               placeholder="Max"
-              value={filters.maxPrice}
-              onChange={(e) =>
-                setFilters((prev: any) => ({
-                  ...prev,
-                  maxPrice: e.target.value,
-                }))
-              }
+              value={localMaxPrice}
+              onChange={(e) => handlePriceChange("maxPrice", e.target.value)}
               className="w-full pl-7 pr-2 py-2.5 sm:py-2 border border-border rounded-xl sm:rounded-lg bg-background text-foreground text-sm [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
             />
           </div>
         </div>
       </div>
 
-      {/* Minimum Rating */}
       <div>
         <label className="block text-sm font-medium text-foreground mb-2">
-          Minimum Rating
+          Rating
           {filters.minRating && (
             <span className="ml-1.5 text-[10px] text-muted-foreground font-normal">(tap again to clear)</span>
           )}
@@ -257,7 +269,7 @@ export default function SearchFilters({
               }`}
             >
               <Star className="w-3.5 h-3.5 fill-current" />
-              {rating}+
+              {rating}
             </button>
           ))}
         </div>
@@ -289,7 +301,7 @@ export default function SearchFilters({
               </button>
             )}
           </div>
-          <FilterContent />
+          {filterContent}
         </div>
       </aside>
 
@@ -334,7 +346,7 @@ export default function SearchFilters({
             
             {/* Scrollable body */}
             <div className="flex-1 overflow-y-auto overscroll-contain px-5 py-5 themed-scrollbar">
-              <FilterContent />
+              {filterContent}
             </div>
 
             {/* Footer with safe-area */}

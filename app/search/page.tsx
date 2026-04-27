@@ -206,7 +206,7 @@ function SearchPageContent() {
     city: searchParams.get("city") || "",
     minPrice: searchParams.get("minPrice") || "",
     maxPrice: searchParams.get("maxPrice") || "",
-    minRating: searchParams.get("minRating") || "",
+    minRating: searchParams.get("rating") || "",
     sortBy: searchParams.get("sortBy") || "relevance",
     tags: searchParams.get("tags")?.split(",").filter(Boolean) || [],
     slug: searchParams.get("slug") || "",
