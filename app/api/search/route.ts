@@ -199,7 +199,7 @@ export async function GET(request: NextRequest) {
       if (maxPrice) priceFilter.lte = Number(maxPrice);
       filters.priceFrom = priceFilter;
     }
-    if (rating) filters.averageRating = { gte: Number(rating) };
+    if (rating) filters.averageRating = { gte: Number(rating), lt: Number(rating) + 1 };
     if (cultureTags) {
       filters.cultureTraditionTags = { hasSome: cultureTags.split(",") };
     }
