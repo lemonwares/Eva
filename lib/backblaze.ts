@@ -1,6 +1,6 @@
 /**
- * Backblaze B2 upload using Node.js https module + AWS Signature V4
- * Uses https directly to avoid fetch's Content-Length restrictions
+ * Backblaze B2 upload using the native B2 API (not S3-compatible)
+ * Flow: authorize → get upload URL → upload file
  */
 import { logger } from "@/lib/logger";
 import crypto from "crypto";
@@ -9,10 +9,8 @@ import { URL } from "url";
 
 const BUCKET_NAME = process.env.B2_BUCKET_NAME!;
 const PUBLIC_URL = process.env.B2_PUBLIC_URL!;
-const ENDPOINT = process.env.B2_ENDPOINT!;
-const REGION = process.env.B2_REGION || "eu-central-003";
-const ACCESS_KEY = process.env.B2_KEY_ID!;
-const SECRET_KEY = process.env.B2_APPLICATION_KEY!;
+const KEY_ID = process.env.B2_KEY_ID!;
+const APPLICATION_KEY = process.env.B2_APPLICATION_KEY!;
 
 export interface UploadResult {
   secure_url: string;
@@ -26,102 +24,159 @@ export interface UploadOptions {
   folder?: string;
 }
 
-// ── AWS Signature V4 helpers ──────────────────────────────────────────────────
+// ── HTTP helper ───────────────────────────────────────────────────────────────
 
-function hmac(key: Buffer | string, data: string): Buffer {
-  return crypto.createHmac("sha256", key).update(data).digest();
-}
-
-function sha256hex(data: Buffer | string): string {
-  return crypto.createHash("sha256").update(data).digest("hex");
-}
-
-function getSigningKey(dateStamp: string): Buffer {
-  const kDate = hmac(`AWS4${SECRET_KEY}`, dateStamp);
-  const kRegion = hmac(kDate, REGION);
-  const kService = hmac(kRegion, "s3");
-  return hmac(kService, "aws4_request");
-}
-
-function httpsRequest(options: https.RequestOptions & { url: string }, body: Buffer): Promise<{ status: number; body: string }> {
+function httpsRequest(
+  url: string,
+  options: {
+    method: string;
+    headers: Record<string, string>;
+    body?: Buffer | string;
+  }
+): Promise<{ status: number; body: string }> {
   return new Promise((resolve, reject) => {
-    const parsed = new URL(options.url);
+    const parsed = new URL(url);
+    const bodyBuffer =
+      options.body instanceof Buffer
+        ? options.body
+        : options.body
+        ? Buffer.from(options.body, "utf8")
+        : Buffer.alloc(0);
+
     const reqOptions: https.RequestOptions = {
       hostname: parsed.hostname,
-      port: parsed.port || 443,
+      port: 443,
       path: parsed.pathname + parsed.search,
       method: options.method,
-      headers: options.headers,
+      headers: {
+        ...options.headers,
+        "Content-Length": bodyBuffer.length.toString(),
+      },
     };
 
     const req = https.request(reqOptions, (res) => {
-      let data = "";
-      res.on("data", (chunk) => { data += chunk; });
-      res.on("end", () => resolve({ status: res.statusCode || 0, body: data }));
+      const chunks: Buffer[] = [];
+      res.on("data", (chunk: Buffer) => chunks.push(chunk));
+      res.on("end", () =>
+        resolve({
+          status: res.statusCode || 0,
+          body: Buffer.concat(chunks).toString("utf8"),
+        })
+      );
     });
 
     req.on("error", reject);
-    req.write(body);
-    req.end();
+    req.end(bodyBuffer);
   });
 }
 
-async function signedPut(key: string, body: Buffer, contentType: string): Promise<void> {
-  const host = ENDPOINT.replace("https://", "");
-  const now = new Date();
-  const amzDate = now.toISOString().replace(/[-:]|\.\d{3}/g, "").slice(0, 15) + "Z";
-  const dateStamp = amzDate.slice(0, 8);
+// ── B2 API calls ──────────────────────────────────────────────────────────────
 
-  const payloadHash = sha256hex(body);
-  const contentLength = body.length.toString();
+interface B2AuthResult {
+  authorizationToken: string;
+  apiUrl: string;
+  accountId: string;
+}
 
-  const canonicalHeaders =
-    `content-length:${contentLength}\n` +
-    `content-type:${contentType}\n` +
-    `host:${host}\n` +
-    `x-amz-content-sha256:${payloadHash}\n` +
-    `x-amz-date:${amzDate}\n`;
+async function authorizeAccount(): Promise<B2AuthResult> {
+  const credentials = Buffer.from(`${KEY_ID}:${APPLICATION_KEY}`).toString("base64");
 
-  const signedHeaders = "content-length;content-type;host;x-amz-content-sha256;x-amz-date";
+  const res = await httpsRequest(
+    "https://api.backblazeb2.com/b2api/v2/b2_authorize_account",
+    {
+      method: "GET",
+      headers: { Authorization: `Basic ${credentials}` },
+    }
+  );
 
-  const canonicalRequest = [
-    "PUT",
-    `/${BUCKET_NAME}/${key}`,
-    "",
-    canonicalHeaders,
-    signedHeaders,
-    payloadHash,
-  ].join("\n");
+  if (res.status !== 200) {
+    throw new Error(`B2 authorize failed: ${res.status} ${res.body}`);
+  }
 
-  const credentialScope = `${dateStamp}/${REGION}/s3/aws4_request`;
-  const stringToSign = [
-    "AWS4-HMAC-SHA256",
-    amzDate,
-    credentialScope,
-    sha256hex(canonicalRequest),
-  ].join("\n");
+  const data = JSON.parse(res.body);
+  return {
+    authorizationToken: data.authorizationToken,
+    apiUrl: data.apiUrl,
+    accountId: data.accountId,
+  };
+}
 
-  const signature = hmac(getSigningKey(dateStamp), stringToSign).toString("hex");
-  const authorization =
-    `AWS4-HMAC-SHA256 Credential=${ACCESS_KEY}/${credentialScope}, ` +
-    `SignedHeaders=${signedHeaders}, Signature=${signature}`;
+// Cache bucket ID so we don't call list_buckets on every upload
+let cachedBucketId: string | null = null;
 
-  const url = `${ENDPOINT}/${BUCKET_NAME}/${key}`;
+async function getBucketId(apiUrl: string, authToken: string, accountId: string): Promise<string> {
+  if (cachedBucketId) return cachedBucketId;
 
-  const result = await httpsRequest({
-    url,
-    method: "PUT",
+  const res = await httpsRequest(`${apiUrl}/b2api/v2/b2_list_buckets`, {
+    method: "POST",
     headers: {
-      "Content-Type": contentType,
-      "Content-Length": contentLength,
-      "x-amz-content-sha256": payloadHash,
-      "x-amz-date": amzDate,
-      Authorization: authorization,
+      Authorization: authToken,
+      "Content-Type": "application/json",
     },
-  }, body);
+    body: JSON.stringify({ accountId, bucketName: BUCKET_NAME }),
+  });
 
-  if (result.status < 200 || result.status >= 300) {
-    throw new Error(`B2 upload failed: ${result.status} ${result.body}`);
+  if (res.status !== 200) {
+    throw new Error(`B2 list_buckets failed: ${res.status} ${res.body}`);
+  }
+
+  const data = JSON.parse(res.body);
+  const bucket = data.buckets?.find((b: any) => b.bucketName === BUCKET_NAME);
+  if (!bucket) {
+    throw new Error(`Bucket "${BUCKET_NAME}" not found`);
+  }
+
+  cachedBucketId = bucket.bucketId;
+  return bucket.bucketId;
+}
+
+async function getUploadUrl(
+  apiUrl: string,
+  authToken: string,
+  bucketId: string
+): Promise<{ uploadUrl: string; authorizationToken: string }> {
+  const res = await httpsRequest(`${apiUrl}/b2api/v2/b2_get_upload_url`, {
+    method: "POST",
+    headers: {
+      Authorization: authToken,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ bucketId }),
+  });
+
+  if (res.status !== 200) {
+    throw new Error(`B2 get_upload_url failed: ${res.status} ${res.body}`);
+  }
+
+  const data = JSON.parse(res.body);
+  return {
+    uploadUrl: data.uploadUrl,
+    authorizationToken: data.authorizationToken,
+  };
+}
+
+async function uploadFileToB2(
+  uploadUrl: string,
+  uploadAuthToken: string,
+  fileName: string,
+  buffer: Buffer,
+  contentType: string
+): Promise<void> {
+  const sha1 = crypto.createHash("sha1").update(buffer).digest("hex");
+
+  const res = await httpsRequest(uploadUrl, {
+    method: "POST",
+    headers: {
+      Authorization: uploadAuthToken,
+      "X-Bz-File-Name": encodeURIComponent(fileName),
+      "Content-Type": contentType,
+      "X-Bz-Content-Sha1": sha1,
+    },
+    body: buffer,
+  });
+
+  if (res.status !== 200) {
+    throw new Error(`B2 upload failed: ${res.status} ${res.body}`);
   }
 }
 
@@ -148,13 +203,17 @@ export async function uploadImage(
   }
 
   const ext = mimeType.split("/")[1]?.replace("jpeg", "jpg") || "jpg";
-  const key = `${folder}/${crypto.randomUUID()}.${ext}`;
+  const fileName = `${folder}/${crypto.randomUUID()}.${ext}`;
 
   try {
-    await signedPut(key, buffer, mimeType);
+    const { authorizationToken, apiUrl, accountId } = await authorizeAccount();
+    const bucketId = await getBucketId(apiUrl, authorizationToken, accountId);
+    const { uploadUrl, authorizationToken: uploadAuthToken } = await getUploadUrl(apiUrl, authorizationToken, bucketId);
+    await uploadFileToB2(uploadUrl, uploadAuthToken, fileName, buffer, mimeType);
+
     return {
-      secure_url: `${PUBLIC_URL}/${key}`,
-      public_id: key,
+      secure_url: `${PUBLIC_URL}/${fileName}`,
+      public_id: fileName,
       width: 0,
       height: 0,
       format: ext,
@@ -166,50 +225,43 @@ export async function uploadImage(
 }
 
 export async function deleteImage(publicId: string): Promise<void> {
-  const host = ENDPOINT.replace("https://", "");
-  const now = new Date();
-  const amzDate = now.toISOString().replace(/[-:]|\.\d{3}/g, "").slice(0, 15) + "Z";
-  const dateStamp = amzDate.slice(0, 8);
-
-  const payloadHash = sha256hex("");
-  const canonicalHeaders =
-    `host:${host}\n` +
-    `x-amz-content-sha256:${payloadHash}\n` +
-    `x-amz-date:${amzDate}\n`;
-  const signedHeaders = "host;x-amz-content-sha256;x-amz-date";
-
-  const canonicalRequest = [
-    "DELETE",
-    `/${BUCKET_NAME}/${publicId}`,
-    "",
-    canonicalHeaders,
-    signedHeaders,
-    payloadHash,
-  ].join("\n");
-
-  const credentialScope = `${dateStamp}/${REGION}/s3/aws4_request`;
-  const stringToSign = [
-    "AWS4-HMAC-SHA256",
-    amzDate,
-    credentialScope,
-    sha256hex(canonicalRequest),
-  ].join("\n");
-
-  const signature = hmac(getSigningKey(dateStamp), stringToSign).toString("hex");
-  const authorization =
-    `AWS4-HMAC-SHA256 Credential=${ACCESS_KEY}/${credentialScope}, ` +
-    `SignedHeaders=${signedHeaders}, Signature=${signature}`;
-
   try {
-    await httpsRequest({
-      url: `${ENDPOINT}/${BUCKET_NAME}/${publicId}`,
-      method: "DELETE",
+    const { authorizationToken, apiUrl, accountId } = await authorizeAccount();
+    const bucketId = await getBucketId(apiUrl, authorizationToken, accountId);
+
+    // Find the file to get its fileId
+    const listRes = await httpsRequest(`${apiUrl}/b2api/v2/b2_list_file_names`, {
+      method: "POST",
       headers: {
-        "x-amz-content-sha256": payloadHash,
-        "x-amz-date": amzDate,
-        Authorization: authorization,
+        Authorization: authorizationToken,
+        "Content-Type": "application/json",
       },
-    }, Buffer.alloc(0));
+      body: JSON.stringify({ bucketId, prefix: publicId, maxFileCount: 1 }),
+    });
+
+    if (listRes.status !== 200) {
+      throw new Error(`B2 list_file_names failed: ${listRes.status} ${listRes.body}`);
+    }
+
+    const listData = JSON.parse(listRes.body);
+    const file = listData.files?.[0];
+    if (!file) {
+      logger.warn(`B2 delete: file not found for publicId ${publicId}`);
+      return;
+    }
+
+    const deleteRes = await httpsRequest(`${apiUrl}/b2api/v2/b2_delete_file_version`, {
+      method: "POST",
+      headers: {
+        Authorization: authorizationToken,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ fileName: file.fileName, fileId: file.fileId }),
+    });
+
+    if (deleteRes.status !== 200) {
+      throw new Error(`B2 delete failed: ${deleteRes.status} ${deleteRes.body}`);
+    }
   } catch (error) {
     logger.error("Backblaze delete error:", error);
     throw new Error("Failed to delete image");
