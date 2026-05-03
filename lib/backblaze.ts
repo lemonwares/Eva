@@ -69,7 +69,7 @@ function httpsRequest(options: https.RequestOptions & { url: string }, body: Buf
 async function signedPut(key: string, body: Buffer, contentType: string): Promise<void> {
   const host = ENDPOINT.replace("https://", "");
   const now = new Date();
-  const amzDate = now.toISOString().replace(/[:-]|\.\d{3}/g, "").slice(0, 15) + "Z";
+  const amzDate = now.toISOString().replace(/[-:]|\.\d{3}/g, "").slice(0, 15) + "Z";
   const dateStamp = amzDate.slice(0, 8);
 
   const payloadHash = sha256hex(body);
@@ -168,7 +168,7 @@ export async function uploadImage(
 export async function deleteImage(publicId: string): Promise<void> {
   const host = ENDPOINT.replace("https://", "");
   const now = new Date();
-  const amzDate = now.toISOString().replace(/[:-]|\.\d{3}/g, "").slice(0, 15) + "Z";
+  const amzDate = now.toISOString().replace(/[-:]|\.\d{3}/g, "").slice(0, 15) + "Z";
   const dateStamp = amzDate.slice(0, 8);
 
   const payloadHash = sha256hex("");
