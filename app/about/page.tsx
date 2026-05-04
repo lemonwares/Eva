@@ -42,36 +42,30 @@ const values = [
     icon: Heart,
     title: "Community First",
     description:
-      "We believe in supporting local. Every connection on EVA strengthens neighbourhood trade and keeps the heart of your community thriving.",
+      "We prioritize local connections and community support, helping neighbourhoods thrive through local commerce.",
     bg: "bg-red-50 text-red-500",
   },
   {
     icon: Globe,
     title: "Cultural Respect",
     description:
-      "Your celebration reflects your heritage. We celebrate diverse traditions and ensure vendors understand the cultural nuances that matter to you.",
+      "Every tradition matters. We celebrate diversity and ensure vendors understand cultural significance.",
     bg: "bg-indigo-50 text-indigo-500",
   },
   {
     icon: ShieldCheck,
     title: "Transparency",
     description:
-      "Clear GBP pricing, honest reviews, and straightforward terms — no hidden fees or surprises. What you see is what you get.",
+      "Clear GBP pricing, honest reviews, and straightforward terms — no hidden fees or surprises.",
     bg: "bg-emerald-50 text-emerald-500",
   },
-  {
-    icon: Sparkles,
-    title: "Trust",
-    description: "Every vendor is vetted and verified. We prioritize safety and reliability, so you can book with confidence.",
-     bg: "bg-amber-50 text-amber-500"
-  },
-].slice(0, 3);
+];
 
 const differentiators = [
   {
     icon: MapPin,
     title: "Radius-First Discovery",
-    text: "Find vendors within your area first. We prioritise proximity so you get local talent who knows your neighbourhood.",
+    text: "Default 3-mile radius cuts travel costs and time. Find quality vendors right in your neighbourhood.",
     bg: "bg-cyan-50 text-cyan-700"
   },
   {
@@ -81,9 +75,9 @@ const differentiators = [
     bg: "bg-pink-50 text-pink-700"
   },
   {
-    icon: UserCheck, // Or Zap if preferred
+    icon: UserCheck,
     title: "Frictionless Vendor Onboarding",
-    text: "Vendors can set up their profile and start receiving enquiries in minutes, not weeks.",
+    text: "Social media import makes setup easy. Vendors can showcase their best work from Instagram instantly and start receiving enquiries in minutes.",
     bg: "bg-emerald-50 text-emerald-700"
   },
   {
@@ -102,9 +96,11 @@ const differentiators = [
 
 const team = [
   {
-    name: "Omonlua Orhewere",
+    name: "Abiodun Orhewere",
     role: "Co-founder & CEO",
-    initials: "OO",
+    initials: "AO",
+    image: null,
+    imagePosition: null,
     color: "bg-cyan-100 text-cyan-700",
     bio: "Former event planner with 10+ years experience connecting communities with exceptional local talent.",
   },
@@ -112,6 +108,8 @@ const team = [
     name: "Adebayo Adeleye",
     role: "Head of Technology",
     initials: "AA",
+    image: "/adebobo.jpeg",
+    imagePosition: "object-top",
     color: "bg-emerald-100 text-emerald-700",
     bio: "Tech innovator passionate about building platforms that empower local businesses and communities.",
   },
@@ -119,8 +117,10 @@ const team = [
     name: "Nana Bakare",
     role: "Community & Culture Lead",
     initials: "NB",
+    image: null,
+    imagePosition: null,
     color: "bg-purple-100 text-purple-700",
-    bio: "Cultural ambassador dedicated to celebrating and respecting diverse traditions across all communities.",
+    bio: "Cultural consultant ensuring EVA celebrates and respects diverse traditions across all communities.",
   },
 ];
 
@@ -159,22 +159,26 @@ export default function AboutPage() {
                 
                 <div className="space-y-6 text-muted-foreground/80 leading-relaxed font-medium">
                   <p>
-                    We recognised a fundamental challenge: finding qualified event
-                    vendors shouldn&apos;t demand excessive time, expense, or
-                    complexity. The best vendors are often right around the corner —
-                    neighbourhood professionals who understand cultural traditions
-                    and respect your budget.
+                    EVA was born from a simple observation: finding the right event
+                    vendors shouldn&apos;t be complicated, expensive, or time-consuming.
+                    Too many people struggle to discover talented local professionals
+                    who understand their cultural traditions and can work within their
+                    budget and location constraints.
                   </p>
                   <p>
-                    But clients were often stuck searching within a 25-mile radius,
-                    scrolling through endless generic listings with no way to filter
-                    by the traditions and cultural understanding that matter most
-                    for their celebrations.
+                    We recognised that the best vendors are often right around the
+                    corner, not miles away. By focusing on hyper-local discovery
+                    within a 3-mile radius, we help clients minimise travel costs and
+                    support their local communities. Our platform celebrates cultural
+                    diversity with specialised tags for South Asian, African,
+                    Caribbean, Chinese, and Middle Eastern traditions, ensuring
+                    vendors truly understand what makes each celebration unique.
                   </p>
                   <p>
-                    That&apos;s why we built EVA — a hyper-local events marketplace
-                    that puts community, culture, and convenience at the centre of
-                    every connection.
+                    Today, EVA is transforming how people plan events across London,
+                    Manchester, Birmingham, Leeds, and Bristol — with many more cities
+                    on the horizon. We&apos;re building a platform where quality vendors
+                    thrive and clients find exactly what they need, when they need it.
                   </p>
                 </div>
               </div>
@@ -229,9 +233,10 @@ export default function AboutPage() {
               </h3>
               <p className="text-muted-foreground/80 leading-relaxed font-medium">
                 To democratise event planning by connecting clients with
-                exceptional local vendors who meet their budget, location, and
-                cultural needs — making quality event services accessible to
-                everyone, everywhere.
+                exceptional local vendors who respect their budget, location, and
+                cultural traditions. We believe everyone deserves access to quality
+                event services without the hassle of endless searching or breaking
+                the bank on travel costs.
               </p>
             </div>
 
@@ -244,8 +249,10 @@ export default function AboutPage() {
               </h3>
               <p className="text-muted-foreground/80 leading-relaxed font-medium">
                 To become the UK&apos;s leading hyper-local events marketplace,
-                where cultural diversity is celebrated, every local talent
-                thrives, and every celebration is exactly as it should be.
+                where cultural diversity is celebrated, local talent thrives, and
+                every event — from intimate gatherings to grand celebrations — is
+                powered by trusted professionals who truly understand their
+                communities.
               </p>
             </div>
           </div>
@@ -339,8 +346,9 @@ export default function AboutPage() {
               Meet the Leadership
             </h2>
             <p className="text-muted-foreground/80 font-medium mb-16 max-w-2xl mx-auto">
-              We&apos;re united by a single goal: making quality event services
-              accessible to everyone, everywhere.
+              Our diverse team brings together expertise in technology, event planning,
+              community engagement, and cultural understanding. We&apos;re united by a
+              single goal: making quality event services accessible to everyone, everywhere.
             </p>
 
             <div className="grid gap-8 sm:grid-cols-2 md:grid-cols-3">
@@ -349,8 +357,12 @@ export default function AboutPage() {
                   key={member.name}
                   className="bg-[#fafafa] rounded-[32px] p-8 text-center hover:bg-white hover:shadow-xl transition-all duration-300"
                 >
-                  <div className={`mx-auto mb-6 h-20 w-20 flex items-center justify-center rounded-full text-2xl font-bold tracking-wider ${member.color}`}>
-                    {member.initials}
+                  <div className={`mx-auto mb-6 h-20 w-20 flex items-center justify-center rounded-full text-2xl font-bold tracking-wider overflow-hidden ${member.image ? "" : member.color}`}>
+                    {member.image ? (
+                      <Image src={member.image} alt={member.name} width={80} height={80} className={`object-cover w-full h-full rounded-full ${member.imagePosition || "object-center"}`} />
+                    ) : (
+                      member.initials
+                    )}
                   </div>
                   <h4 className="font-playfair font-bold text-xl text-[#1e2433] mb-1">
                     {member.name}
