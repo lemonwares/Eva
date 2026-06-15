@@ -14,9 +14,14 @@ Eva is a comprehensive platform that simplifies event planning by connecting cli
 
 Built from the ground up with modern technologies and production best practices.
 
+![Home](./screenshots/evalocal.png)
+![Authentication](./screenshots/evalocalauth.png)
+![Browser](./screenshots/evalocalbrowse.png)
+
 ## Key Features
 
 ### For Clients
+
 - Search & browse vendors by category, location, and culture tags
 - View detailed vendor profiles with portfolios, reviews & availability
 - Send inquiries and receive custom quotes
@@ -25,6 +30,7 @@ Built from the ground up with modern technologies and production best practices.
 - Client dashboard for managing bookings, favorites, and reviews
 
 ### For Vendors
+
 - Guided onboarding wizard
 - Manage service listings with multiple images and pricing tiers
 - Respond to inquiries and send itemised quotes
@@ -33,6 +39,7 @@ Built from the ground up with modern technologies and production best practices.
 - SEO-optimized public vendor profiles
 
 ### For Admins
+
 - Full vendor & user moderation
 - Booking, quote, and review oversight
 - Category, subcategory, and culture tag management
@@ -76,6 +83,7 @@ npm run dev
 ```
 
 ## Challenges & Learnings
+
 - Built a complex multi-role platform (Client + Vendor + Admin) with proper authorization and data isolation.
 - Implemented secure payment flows with Stripe webhooks and partial payments.
 - Designed a flexible category + culture tag system for multicultural events in the UK.
@@ -84,5 +92,3 @@ npm run dev
 - Maintained clean architecture while scaling to 23+ API modules.
 
 #### This project significantly improved my ability to build large-scale marketplaces with real payment and user management systems.
-
-
